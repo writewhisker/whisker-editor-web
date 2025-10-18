@@ -7,6 +7,7 @@
   import PassageList from './lib/components/PassageList.svelte';
   import PropertiesPanel from './lib/components/PropertiesPanel.svelte';
   import VariableManager from './lib/components/VariableManager.svelte';
+  import GraphView from './lib/components/GraphView.svelte';
   import { projectActions, currentStory, currentFilePath } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
@@ -14,6 +15,7 @@
   let showNewDialog = false;
   let newProjectTitle = '';
   let fileHandle: FileHandle | null = null;
+  let viewMode: 'list' | 'graph' | 'split' = 'list';
 
   // Handle New Project
   function handleNewProject() {
@@ -125,7 +127,7 @@
   }
 
   onMount(() => {
-    console.log('Whisker Visual Editor - Phase 2');
+    console.log('Whisker Visual Editor - Phase 3: Graph View');
   });
 </script>
 
@@ -146,28 +148,78 @@
     onAddPassage={handleAddPassage}
   />
 
+  <!-- View Mode Switcher -->
+  {#if $currentStory}
+    <div class="bg-gray-100 border-b border-gray-300 px-4 py-2 flex items-center gap-2">
+      <span class="text-sm font-medium text-gray-700">View:</span>
+      <button
+        class="px-3 py-1 text-sm rounded {viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+        on:click={() => viewMode = 'list'}
+      >
+        📋 List
+      </button>
+      <button
+        class="px-3 py-1 text-sm rounded {viewMode === 'graph' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+        on:click={() => viewMode = 'graph'}
+      >
+        🗺️ Graph
+      </button>
+      <button
+        class="px-3 py-1 text-sm rounded {viewMode === 'split' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+        on:click={() => viewMode = 'split'}
+      >
+        ⚡ Split
+      </button>
+    </div>
+  {/if}
+
   <main class="flex-1 overflow-hidden bg-gray-50 flex">
     {#if $currentStory}
-      <!-- Three-panel layout -->
-      <div class="flex w-full h-full">
-        <!-- Left: Passage List -->
-        <div class="w-64 flex-shrink-0">
-          <PassageList
-            onAddPassage={handleAddPassage}
-            onDeletePassage={handleDeletePassage}
-          />
-        </div>
+      {#if viewMode === 'list'}
+        <!-- List View: Three-panel layout -->
+        <div class="flex w-full h-full">
+          <!-- Left: Passage List -->
+          <div class="w-64 flex-shrink-0">
+            <PassageList
+              onAddPassage={handleAddPassage}
+              onDeletePassage={handleDeletePassage}
+            />
+          </div>
 
-        <!-- Center: Properties Panel -->
-        <div class="flex-1 min-w-0">
-          <PropertiesPanel />
-        </div>
+          <!-- Center: Properties Panel -->
+          <div class="flex-1 min-w-0">
+            <PropertiesPanel />
+          </div>
 
-        <!-- Right: Variable Manager -->
-        <div class="w-80 flex-shrink-0">
-          <VariableManager />
+          <!-- Right: Variable Manager -->
+          <div class="w-80 flex-shrink-0">
+            <VariableManager />
+          </div>
         </div>
-      </div>
+      {:else if viewMode === 'graph'}
+        <!-- Graph View: Full screen graph -->
+        <div class="flex-1 h-full">
+          <GraphView />
+        </div>
+      {:else if viewMode === 'split'}
+        <!-- Split View: Graph + Properties -->
+        <div class="flex w-full h-full">
+          <!-- Left: Graph View -->
+          <div class="flex-1 min-w-0">
+            <GraphView />
+          </div>
+
+          <!-- Right: Properties + Variables -->
+          <div class="w-96 flex-shrink-0 flex flex-col">
+            <div class="flex-1 overflow-hidden">
+              <PropertiesPanel />
+            </div>
+            <div class="h-64 border-t border-gray-300">
+              <VariableManager />
+            </div>
+          </div>
+        </div>
+      {/if}
     {:else}
       <!-- Welcome screen -->
       <div class="flex-1 flex items-center justify-center">
@@ -191,8 +243,8 @@
           </div>
           <div class="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg max-w-md mx-auto">
             <p class="text-sm text-green-800">
-              <strong>Phase 2 Complete!</strong><br />
-              List view, passage editing, variables, and undo/redo are ready.
+              <strong>Phase 3 Complete!</strong><br />
+              Visual node graph, auto-layout, minimap, and multiple view modes are ready.
             </p>
           </div>
         </div>

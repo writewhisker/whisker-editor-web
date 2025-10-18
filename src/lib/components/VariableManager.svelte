@@ -143,7 +143,7 @@
             {#if variable.type === 'boolean'}
               <select
                 value={String(variable.initial)}
-                on:change={(e) => updateVariableValue(variable.name, e.target.value)}
+                on:change={(e) => updateVariableValue(variable.name, (e.target as HTMLSelectElement).value)}
                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="false">false</option>
@@ -153,7 +153,7 @@
               <input
                 type={variable.type === 'number' ? 'number' : 'text'}
                 value={variable.initial}
-                on:input={(e) => updateVariableValue(variable.name, e.target.value)}
+                on:input={(e) => updateVariableValue(variable.name, (e.target as HTMLInputElement).value)}
                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             {/if}

@@ -201,7 +201,7 @@
                 <input
                   type="text"
                   value={choice.text}
-                  on:input={(e) => updateChoiceText(choice.id, e.target.value)}
+                  on:input={(e) => updateChoiceText(choice.id, (e.target as HTMLInputElement).value)}
                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter choice text..."
                 />
@@ -214,7 +214,7 @@
                 </label>
                 <select
                   value={choice.target}
-                  on:change={(e) => updateChoiceTarget(choice.id, e.target.value)}
+                  on:change={(e) => updateChoiceTarget(choice.id, (e.target as HTMLSelectElement).value)}
                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">-- Select target --</option>
@@ -232,7 +232,7 @@
                 <input
                   type="text"
                   value={choice.condition || ''}
-                  on:input={(e) => updateChoiceCondition(choice.id, e.target.value)}
+                  on:input={(e) => updateChoiceCondition(choice.id, (e.target as HTMLInputElement).value)}
                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                   placeholder="e.g., health > 50"
                 />

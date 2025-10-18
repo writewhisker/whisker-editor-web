@@ -1,6 +1,8 @@
 import { writable, derived } from 'svelte/store';
 import { Story } from '../models/Story';
+import { Passage } from '../models/Passage';
 import type { ProjectData } from '../models/types';
+import { historyActions } from './historyStore';
 
 // Current project state
 export const currentStory = writable<Story | null>(null);
@@ -86,5 +88,64 @@ export const projectActions = {
     currentFilePath.set(null);
     unsavedChanges.set(false);
     selectedPassageId.set(null);
+    historyActions.clear();
+  },
+
+  // Passage operations
+  addPassage(title?: string) {
+    currentStory.update(story => {
+      if (!story) return story;
+
+      // Save current state to history
+      historyActions.pushState(story.serialize());
+
+      const passage = new Passage({
+        title: title || 'New Passage',
+        content: '',
+        position: { x: 0, y: 0 },
+      });
+
+      story.addPassage(passage);
+      selectedPassageId.set(passage.id);
+      unsavedChanges.set(true);
+
+      return story;
+    });
+  },
+
+  deletePassage(passageId: string) {
+    currentStory.update(story => {
+      if (!story) return story;
+
+      // Save current state to history
+      historyActions.pushState(story.serialize());
+
+      story.removePassage(passageId);
+
+      // Clear selection if deleted passage was selected
+      selectedPassageId.update(id => id === passageId ? null : id);
+      unsavedChanges.set(true);
+
+      return story;
+    });
+  },
+
+  // Undo/Redo
+  undo() {
+    const previousState = historyActions.undo();
+    if (previousState) {
+      const story = Story.deserialize(previousState);
+      currentStory.set(story);
+      unsavedChanges.set(true);
+    }
+  },
+
+  redo() {
+    const nextState = historyActions.redo();
+    if (nextState) {
+      const story = Story.deserialize(nextState);
+      currentStory.set(story);
+      unsavedChanges.set(true);
+    }
   },
 };

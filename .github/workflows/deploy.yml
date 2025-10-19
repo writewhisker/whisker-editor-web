@@ -36,9 +36,6 @@ jobs:
 
     - name: Build application
       run: npm run build
-      env:
-        # Update base path for GitHub Pages if needed
-        # BASE_URL: /whisker-editor-web
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3

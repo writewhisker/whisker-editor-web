@@ -37,8 +37,15 @@
 - **Zoom/Pan Controls** - Smooth navigation through story graphs
 - **View Modes** - Switch between list view, graph view, and split view
 
-### Coming Soon (Phases 4-10)
-- 🔍 Search and filtering
+### Phase 4: Search and Filtering ✅
+- **Advanced Search** - Search across passage titles, content, tags, and choice text
+- **Tag Filtering** - Filter passages by tags with multi-select support
+- **Type Filtering** - Filter by passage type (start, orphan, dead-end, normal)
+- **Unified Filtering** - Consistent search/filter experience across list and graph views
+- **Visual Feedback** - Active filter chips, result counts, and clear filter options
+- **Smart Integration** - Filters apply to both passage list and graph view simultaneously
+
+### Coming Soon (Phases 5-10)
 - 🏷️ Advanced tagging system
 - 🎯 Variable and condition management UI
 - 🎨 Theming and customization
@@ -145,9 +152,10 @@ npm run test:ui
 npm run test:coverage
 ```
 
-Current test coverage: **60 tests, 100% passing**
+Current test coverage: **76 tests, 100% passing**
 - 40 model tests (Story, Passage, Choice, Variable, History)
 - 20 graph layout tests (hierarchical, circular, grid)
+- 16 filter and search tests (filterStore, tag filtering, passage type filtering)
 
 ## 🎨 Development
 
@@ -234,7 +242,7 @@ We're actively working on Phases 4-10. See the [project board](https://github.co
 - [x] **Phase 1**: Core data models and state management
 - [x] **Phase 2**: Basic UI components
 - [x] **Phase 3**: Visual node graph
-- [ ] **Phase 4**: Search and filtering
+- [x] **Phase 4**: Search and filtering
 - [ ] **Phase 5**: Advanced tagging
 - [ ] **Phase 6**: Variable management UI
 - [ ] **Phase 7**: Story testing

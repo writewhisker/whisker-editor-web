@@ -127,7 +127,7 @@
   }
 
   onMount(() => {
-    console.log('Whisker Visual Editor - Phase 3: Graph View');
+    console.log('Whisker Visual Editor - Phase 4: Search and Filtering');
   });
 </script>
 
@@ -243,8 +243,8 @@
           </div>
           <div class="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg max-w-md mx-auto">
             <p class="text-sm text-green-800">
-              <strong>Phase 3 Complete!</strong><br />
-              Visual node graph, auto-layout, minimap, and multiple view modes are ready.
+              <strong>Phase 4 Complete!</strong><br />
+              Advanced search and filtering across passages, tags, and types with unified experience in list and graph views.
             </p>
           </div>
         </div>

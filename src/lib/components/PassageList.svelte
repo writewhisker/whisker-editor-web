@@ -1,20 +1,16 @@
 <script lang="ts">
-  import { currentStory, passageList, selectedPassageId } from '../stores/projectStore';
+  import { currentStory, selectedPassageId } from '../stores/projectStore';
+  import { filteredPassages } from '../stores/filterStore';
   import type { Passage } from '../models/Passage';
+  import SearchBar from './SearchBar.svelte';
 
   export let onAddPassage: () => void;
   export let onDeletePassage: (id: string) => void;
 
-  let searchQuery = '';
   let showContextMenu = false;
   let contextMenuX = 0;
   let contextMenuY = 0;
   let contextMenuPassageId: string | null = null;
-
-  $: filteredPassages = $passageList.filter(passage =>
-    passage.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    passage.content.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   function selectPassage(id: string) {
     selectedPassageId.set(id);
@@ -84,7 +80,7 @@
 <div class="flex flex-col h-full bg-white border-r border-gray-300">
   <!-- Header -->
   <div class="p-3 border-b border-gray-300">
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between">
       <h3 class="font-semibold text-gray-800">Passages</h3>
       <button
         class="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -94,22 +90,19 @@
         + Add
       </button>
     </div>
-    <input
-      type="text"
-      placeholder="Search passages..."
-      bind:value={searchQuery}
-      class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
   </div>
+
+  <!-- Search and Filter Bar -->
+  <SearchBar />
 
   <!-- Passage List -->
   <div class="flex-1 overflow-y-auto">
-    {#if filteredPassages.length === 0}
+    {#if $filteredPassages.length === 0}
       <div class="p-4 text-sm text-gray-400 text-center">
-        {searchQuery ? 'No passages match your search' : 'No passages yet'}
+        No passages match your filters
       </div>
     {:else}
-      {#each filteredPassages as passage (passage.id)}
+      {#each $filteredPassages as passage (passage.id)}
         <button
           class="w-full text-left px-3 py-2 border-b border-gray-200 hover:bg-gray-50 transition-colors"
           class:bg-blue-50={$selectedPassageId === passage.id}
@@ -149,13 +142,6 @@
       {/each}
     {/if}
   </div>
-
-  <!-- Stats Footer -->
-  {#if $currentStory}
-    <div class="p-2 border-t border-gray-300 text-xs text-gray-600">
-      {filteredPassages.length} of {$passageList.length} passage{$passageList.length !== 1 ? 's' : ''}
-    </div>
-  {/if}
 </div>
 
 <!-- Context Menu -->

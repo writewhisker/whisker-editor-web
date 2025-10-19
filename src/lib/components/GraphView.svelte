@@ -10,7 +10,9 @@
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
+  import { filteredPassages, hasActiveFilters } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
+  import SearchBar from './SearchBar.svelte';
   import {
     getLayoutedElements,
     getForceLayoutElements,
@@ -36,11 +38,15 @@
       return;
     }
 
+    // Get filtered passage IDs for quick lookup
+    const filteredIds = new Set($filteredPassages.map(p => p.id));
+
     // Create nodes from passages
     const flowNodes: Node[] = Array.from($currentStory.passages.values()).map((passage) => {
       const isStart = $currentStory.startPassage === passage.id;
       const isOrphan = !isStart && !hasIncomingConnections(passage.id);
       const isDead = passage.choices.length === 0;
+      const isFiltered = filteredIds.has(passage.id);
 
       return {
         id: passage.id,
@@ -50,8 +56,10 @@
           isStart,
           isOrphan,
           isDead,
+          isFiltered,
         },
         position: passage.position || { x: 0, y: 0 },
+        hidden: $hasActiveFilters && !isFiltered,
       };
     });
 
@@ -60,6 +68,10 @@
     $currentStory.passages.forEach((passage) => {
       passage.choices.forEach((choice) => {
         if (choice.target) {
+          // Hide edge if either source or target is hidden
+          const sourceHidden = $hasActiveFilters && !filteredIds.has(passage.id);
+          const targetHidden = $hasActiveFilters && !filteredIds.has(choice.target);
+
           flowEdges.push({
             id: `${passage.id}-${choice.id}`,
             source: passage.id,
@@ -68,6 +80,7 @@
             type: choice.condition ? 'step' : 'smoothstep',
             animated: !!choice.condition,
             style: choice.condition ? 'stroke-dasharray: 5, 5' : undefined,
+            hidden: sourceHidden || targetHidden,
           });
         }
       });
@@ -153,8 +166,13 @@
     }
   }
 
-  // React to story changes
+  // React to story changes and filter changes
   $: if ($currentStory) {
+    updateGraph();
+  }
+
+  // Update graph when filters change
+  $: if ($filteredPassages || $hasActiveFilters !== undefined) {
     updateGraph();
   }
 
@@ -173,6 +191,9 @@
 </script>
 
 <div class="flex flex-col h-full bg-gray-50">
+  <!-- Search and Filter Bar -->
+  <SearchBar />
+
   <!-- Toolbar -->
   <div class="bg-white border-b border-gray-300 p-2 flex items-center gap-2 z-10">
     <span class="text-sm font-medium text-gray-700">Layout:</span>
@@ -218,12 +239,6 @@
       />
       Left-Right
     </label>
-
-    <div class="flex-1"></div>
-
-    <div class="text-sm text-gray-600">
-      {$nodes.length} passage{$nodes.length !== 1 ? 's' : ''} • {$edges.length} connection{$edges.length !== 1 ? 's' : ''}
-    </div>
   </div>
 
   <!-- Graph -->

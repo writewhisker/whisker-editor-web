@@ -45,14 +45,67 @@
 - **Visual Feedback** - Active filter chips, result counts, and clear filter options
 - **Smart Integration** - Filters apply to both passage list and graph view simultaneously
 
-### Coming Soon (Phases 5-10)
-- 🏷️ Advanced tagging system
-- 🎯 Variable and condition management UI
-- 🎨 Theming and customization
-- 📤 Export to Whisker format
-- 🧪 Story testing and validation
-- 🌐 Multi-language support
-- 📊 Story statistics and analytics
+### Phase 5: Visual Connection Editing & Advanced Tagging
+- **Visual Connection Creation** - Drag from node ports to create connections visually
+- **Connection Editing** - Edit choice text, conditions, and targets directly on connections
+- **Connection Styling** - Differentiate conditional vs. unconditional connections
+- **Connection Validation** - Detect and warn about invalid or orphaned connections
+- **Tag Management** - Centralized tag library with rename, merge, and delete operations
+- **Tag Colors** - Assign colors to tags for visual organization
+- **Tag Autocomplete** - Quick tag selection from existing tags
+- **Inline Tag Input** - Improved tag editing UX without prompts
+
+### Phase 6: Enhanced View Modes & Navigation
+- **View Synchronization** - Perfect sync between list, graph, and properties
+- **View Preferences** - Save and restore view mode settings per project
+- **Panel Controls** - Show/hide, maximize/minimize individual panels
+- **Layout Persistence** - Remember panel sizes and positions
+- **Focus Mode** - Distraction-free writing with minimal UI
+- **Zoom to Selection** - Quick navigation to selected passages
+- **Keyboard Navigation** - Arrow keys to navigate between passages
+- **Breadcrumb Trail** - Visual path showing current location in story
+
+### Phase 7: Live Preview & Testing
+- **In-Editor Player** - Test stories without leaving the editor
+- **Debug Mode** - Step through passages, inspect variables, view execution log
+- **Variable Inspector** - Live view of variable values during testing
+- **Playthrough Recording** - Record and replay test sessions
+- **Quick Jump** - Jump to any passage during testing
+- **State Reset** - Restart testing from any point
+- **Error Highlighting** - Show runtime errors with passage context
+- **Test Scenarios** - Save and load test variable configurations
+
+### Phase 8: Validation & Quality Tools
+- **Story Validator** - Comprehensive checks for common issues
+- **Error Panel** - Grouped display of warnings and errors with click-to-fix
+- **Dead Link Detection** - Find broken passage connections
+- **Orphan Detection** - Identify unreachable passages
+- **Variable Analysis** - Detect undefined or unused variables
+- **Complexity Metrics** - Measure story branching and path lengths
+- **Quality Score** - Overall story health indicator
+- **Auto-Fix Tools** - Automated fixes for common problems
+
+### Phase 9: Export & Publishing
+- **Whisker JSON Export** - Standard format for Whisker runtime
+- **Standalone HTML** - Self-contained playable HTML file
+- **Package Export** - ZIP with story and all assets
+- **Export Presets** - Quick export with saved configurations
+- **Import System** - Import from Twine, JSON, and other formats
+- **Asset Bundling** - Include images, audio, and other media
+- **Minification** - Optimized output for production
+- **Version Control** - Export with version metadata
+
+### Phase 10: Polish, Performance & Documentation
+- **Performance Optimization** - Handle 500+ passage stories smoothly
+- **Lazy Loading** - Load large graphs progressively
+- **Virtualization** - Optimize rendering for large lists
+- **Animations** - Smooth transitions and visual feedback
+- **Accessibility** - ARIA labels, keyboard navigation, screen reader support
+- **Onboarding Tutorial** - Interactive guide for new users
+- **Help System** - In-app documentation and tooltips
+- **Keyboard Shortcuts Guide** - Reference for all shortcuts
+- **Template Gallery** - Starter templates for common story types
+- **User Documentation** - Comprehensive guide and video tutorials
 
 ## 🛠️ Technology Stack
 
@@ -216,7 +269,9 @@ Contributions are welcome! Please read our contributing guidelines:
 
 ### Development Priorities
 
-We're actively working on Phases 4-10. See the [project board](https://github.com/writewhisker/whisker-editor-web/projects) for current priorities.
+We're actively working on **Phase 5: Visual Connection Editing & Advanced Tagging**. See the [roadmap](#-roadmap) for the complete phase plan and the [project board](https://github.com/writewhisker/whisker-editor-web/projects) for current tasks.
+
+**Note:** The phase plan has been reconciled with the [official implementation guide](../whisker-implementation/visual-editor/VISUAL_EDITOR_PHASES.md) to ensure a comprehensive, well-structured development path.
 
 ## 🔗 Related Projects
 
@@ -243,12 +298,61 @@ We're actively working on Phases 4-10. See the [project board](https://github.co
 - [x] **Phase 2**: Basic UI components
 - [x] **Phase 3**: Visual node graph
 - [x] **Phase 4**: Search and filtering
-- [ ] **Phase 5**: Advanced tagging
-- [ ] **Phase 6**: Variable management UI
-- [ ] **Phase 7**: Story testing
-- [ ] **Phase 8**: Export functionality
-- [ ] **Phase 9**: Theming
-- [ ] **Phase 10**: Polish and optimization
+- [ ] **Phase 5**: Visual connection editing & advanced tagging
+- [ ] **Phase 6**: Enhanced view modes & navigation
+- [ ] **Phase 7**: Live preview & testing
+- [ ] **Phase 8**: Validation & quality tools
+- [ ] **Phase 9**: Export & publishing
+- [ ] **Phase 10**: Polish, performance & documentation
+
+### Phase Dependencies
+
+```
+Phase 1 (Foundation)
+    ↓
+Phase 2 (Basic UI) ──→ Phase 5 (Connections & Tags)
+    ↓                       ↓
+Phase 3 (Graph) ────────→ Phase 6 (View Modes)
+    ↓                       ↓
+Phase 4 (Search) ────────→ Phase 7 (Preview & Testing)
+                            ↓
+                         Phase 8 (Validation)
+                            ↓
+                         Phase 9 (Export)
+                            ↓
+                         Phase 10 (Polish)
+```
+
+**Minimum Viable Product (MVP):** Phases 1-7
+**Full Feature Complete:** Phases 1-10
+
+### About This Phase Plan
+
+This roadmap reconciles the original [VISUAL_EDITOR_PHASES.md](../whisker-implementation/visual-editor/VISUAL_EDITOR_PHASES.md) specification with the actual development progress. Key changes:
+
+**What We Kept from the Original:**
+- All core features from the official phases
+- Focus on visual editing and node-based workflow
+- Emphasis on quality tools and validation
+- Comprehensive testing and preview capabilities
+
+**What We Adapted:**
+- **Phase 4 Addition**: Added "Search and Filtering" as a valuable enhancement not in the original plan
+- **Phase 5 Combination**: Combined "Visual Connection Editing" (official Phase 4) with "Advanced Tagging" for better feature grouping
+- **Phase Reordering**: Moved some features to better align with natural development flow
+- **Web-First Focus**: Optimized for web-based implementation using Svelte 5 instead of React
+
+**Why These Changes:**
+- **Natural Progression**: Each phase builds logically on previous work
+- **User Value**: Delivers usable features early (MVP at Phase 7)
+- **Technical Dependencies**: Respects implementation dependencies
+- **Modern Stack**: Leverages Svelte 5's reactive features for better performance
+
+**Impact:**
+- Phases 1-4 complete with excellent test coverage (76 tests, 100% passing)
+- Clear path to MVP (Phases 5-7)
+- Full feature parity with original vision by Phase 10
+- Enhanced with additional features (search/filtering) for better UX
 
 ---
 

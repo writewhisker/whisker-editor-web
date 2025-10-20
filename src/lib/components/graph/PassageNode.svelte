@@ -7,12 +7,14 @@
     isStart: boolean;
     isOrphan: boolean;
     isDead: boolean;
+    isFiltered?: boolean;
   };
 
   $: passage = data.passage;
   $: isStart = data.isStart;
   $: isOrphan = data.isOrphan;
   $: isDead = data.isDead;
+  $: isFiltered = data.isFiltered ?? true;
 
   // Truncate content for preview
   function truncateContent(text: string, maxLength: number = 80): string {
@@ -68,8 +70,29 @@
   </div>
 
   <!-- Handles for connections -->
+  <!-- Target handle (incoming connections) -->
   <Handle type="target" position={Position.Top} class="!bg-blue-500 !w-3 !h-3" />
-  <Handle type="source" position={Position.Bottom} class="!bg-blue-500 !w-3 !h-3" />
+
+  <!-- Source handles (one per choice + one for new connections) -->
+  {#each passage.choices as choice, i (choice.id)}
+    <Handle
+      type="source"
+      position={Position.Bottom}
+      id={`choice-${choice.id}`}
+      style="left: {((i + 1) * 100) / (passage.choices.length + 1)}%"
+      class="!bg-green-500 !w-3 !h-3"
+      title={choice.text || 'Untitled choice'}
+    />
+  {/each}
+
+  <!-- Handle for creating new connections -->
+  <Handle
+    type="source"
+    position={Position.Right}
+    id="new-connection"
+    class="!bg-blue-400 !w-4 !h-4 !border-2 !border-white"
+    title="Drag to create new connection"
+  />
 </div>
 
 <style>

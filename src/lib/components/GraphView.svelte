@@ -7,12 +7,14 @@
     MiniMap,
     type Node,
     type Edge,
+    type Connection,
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
   import { filteredPassages, hasActiveFilters } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
   import SearchBar from './SearchBar.svelte';
+  import { Choice } from '../models/Choice';
   import {
     getLayoutedElements,
     getForceLayoutElements,
@@ -166,6 +168,70 @@
     }
   }
 
+  // Handle connection creation
+  function handleConnect(connection: Connection) {
+    if (!$currentStory) return;
+
+    const sourceId = connection.source;
+    const targetId = connection.target;
+    const sourceHandleId = connection.sourceHandle;
+
+    // Validate connection
+    if (!sourceId || !targetId) return;
+    if (sourceId === targetId) {
+      console.warn('Cannot connect passage to itself');
+      return;
+    }
+
+    const sourcePassage = $currentStory.getPassage(sourceId);
+    const targetPassage = $currentStory.getPassage(targetId);
+
+    if (!sourcePassage || !targetPassage) {
+      console.warn('Invalid passage connection');
+      return;
+    }
+
+    // Check if connecting from an existing choice handle or the "new connection" handle
+    if (sourceHandleId && sourceHandleId.startsWith('choice-')) {
+      // Connecting from existing choice - update its target
+      const choiceId = sourceHandleId.replace('choice-', '');
+      const choice = sourcePassage.choices.find(c => c.id === choiceId);
+
+      if (choice) {
+        // Check if this would create a duplicate connection
+        if (choice.target === targetId) {
+          console.warn('Connection already exists');
+          return;
+        }
+
+        // Update existing choice target
+        choice.target = targetId;
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    } else {
+      // Creating new connection from "new-connection" handle
+      // Check for duplicate connections
+      const hasDuplicate = sourcePassage.choices.some(c => c.target === targetId);
+      if (hasDuplicate) {
+        console.warn('Connection to this passage already exists');
+        return;
+      }
+
+      // Create new choice
+      const newChoice = new Choice({
+        text: `Go to ${targetPassage.title}`,
+        target: targetId,
+      });
+
+      sourcePassage.addChoice(newChoice);
+      currentStory.update(s => s);
+      projectActions.markChanged();
+      updateGraph();
+    }
+  }
+
   // React to story changes and filter changes
   $: if ($currentStory) {
     updateGraph();
@@ -252,6 +318,7 @@
         on:nodedragstop={handleNodeDragStop}
         on:nodeclick={handleNodeClick}
         on:nodedoubleclick={handleNodeDoubleClick}
+        on:connect={handleConnect}
       >
         <Background />
         <Controls />

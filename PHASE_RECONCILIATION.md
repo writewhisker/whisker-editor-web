@@ -10,8 +10,8 @@ This document explains the reconciliation between the original [VISUAL_EDITOR_PH
 | 2 | List View & Basic Editing | Basic UI Components | ✅ Complete | Equivalent - passage list, properties panel, CRUD |
 | 3 | Visual Node Graph | Visual Node Graph | ✅ Complete | Matches original - graph rendering, layouts, zoom/pan |
 | 4 | Visual Connection Editing | Search and Filtering | ✅ Complete | **Added feature** - enhances discoverability |
-| 5 | Multiple View Modes | Visual Connection Editing & Advanced Tagging | 🔄 Next | Combines original Phase 4 + tagging improvements |
-| 6 | Live Preview & Testing | Enhanced View Modes & Navigation | Planned | Original Phase 5 - view sync, preferences |
+| 5 | Multiple View Modes | Visual Connection Editing & Advanced Tagging | ✅ Complete | Combines original Phase 4 + tagging improvements |
+| 6 | Live Preview & Testing | Enhanced View Modes & Navigation | 🔄 Next | Original Phase 5 - view sync, preferences |
 | 7 | Rich Text & Advanced Editing | Live Preview & Testing | Planned | Original Phase 6 - in-editor player, debugging |
 | 8 | Validation & Quality Tools | Validation & Quality Tools | Planned | Matches original - story health checks |
 | 9 | Export & Publishing | Export & Publishing | Planned | Matches original - multiple export formats |
@@ -139,15 +139,15 @@ Phase 10: Polish & Performance
 
 ## Success Criteria per Phase
 
-### Phase 5: Visual Connection Editing & Advanced Tagging
-- [ ] Can create connections by dragging from node ports
-- [ ] Can edit choice text directly on connections
-- [ ] Conditional connections are visually distinct
-- [ ] Tag library shows all tags with usage counts
-- [ ] Can rename tags globally
-- [ ] Tag colors are applied consistently
-- [ ] Tag autocomplete works when adding tags
-- [ ] No orphaned connections after deletion
+### Phase 5: Visual Connection Editing & Advanced Tagging ✅
+- [x] Can create connections by dragging from node ports
+- [x] Can edit choice text directly on connections
+- [x] Conditional connections are visually distinct
+- [x] Tag library shows all tags with usage counts
+- [x] Can rename tags globally
+- [x] Tag colors are applied consistently
+- [x] Tag autocomplete works when adding tags
+- [x] No orphaned connections after deletion
 
 ### Phase 6: Enhanced View Modes & Navigation
 - [ ] Selection syncs perfectly across all views
@@ -226,16 +226,15 @@ Based on original estimates:
 
 | Phase | Original Est. | Actual Progress | Remaining |
 |-------|--------------|-----------------|-----------|
-| 1-4 | 9-13 weeks | ✅ Complete | 0 weeks |
-| 5 | 2-3 weeks | In progress | 2-3 weeks |
+| 1-5 | 11-16 weeks | ✅ Complete | 0 weeks |
 | 6 | 2 weeks | Not started | 2 weeks |
 | 7 | 2-3 weeks | Not started | 2-3 weeks |
 | 8 | 1-2 weeks | Not started | 1-2 weeks |
 | 9 | 1-2 weeks | Not started | 1-2 weeks |
 | 10 | 2 weeks | Not started | 2 weeks |
 
-**Total Remaining:** 10-14 weeks to full feature complete
-**MVP Remaining:** 6-9 weeks
+**Total Remaining:** 8-11 weeks to full feature complete
+**MVP Remaining:** 4-7 weeks
 
 ## Conclusion
 

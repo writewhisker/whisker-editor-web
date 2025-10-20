@@ -4,6 +4,7 @@
 
   import type { ConnectionIssue } from '../../utils/connectionValidator';
   import { tagActions } from '../../stores/tagStore';
+  import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
 
   export let data: {
     passage: Passage;
@@ -25,6 +26,16 @@
   $: errorCount = validationIssues.filter(i => i.severity === 'error').length;
   $: warningCount = validationIssues.filter(i => i.severity === 'warning').length;
 
+  // Preview state
+  $: hasBreakpoint = $breakpoints.has(passage.id);
+  $: isCurrentPreview = $currentPreviewPassage?.id === passage.id;
+  $: wasVisitedInPreview = ($visitedPassages.get(passage.id) || 0) > 0;
+
+  function toggleBreakpoint(event: MouseEvent) {
+    event.stopPropagation();
+    playerActions.toggleBreakpoint(passage.id);
+  }
+
   // Generate tooltip for validation issues
   $: validationTooltip = validationIssues.length > 0
     ? validationIssues.map(i => `${i.type}: ${i.message}`).join('\n')
@@ -38,19 +49,48 @@
 
   // Get node color based on status
   function getNodeColor(): string {
+    if (isCurrentPreview) return 'border-purple-500 bg-purple-100 shadow-purple-400';
     if (isStart) return 'border-green-500 bg-green-50';
     if (isDead) return 'border-red-300 bg-red-50';
     if (isOrphan) return 'border-orange-300 bg-orange-50';
     return 'border-blue-300 bg-white';
   }
+
+  function getNodeOpacity(): string {
+    if (wasVisitedInPreview && !isCurrentPreview) return 'opacity-70';
+    return 'opacity-100';
+  }
 </script>
 
-<div class="passage-node {getNodeColor()} border-2 rounded-lg shadow-md hover:shadow-lg transition-shadow min-w-[200px] max-w-[300px]">
+<div class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all min-w-[200px] max-w-[300px] relative">
+  <!-- Breakpoint Indicator -->
+  {#if $debugMode}
+    <button
+      class="absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all {hasBreakpoint ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600 hover:bg-red-400 hover:text-white'}"
+      on:click={toggleBreakpoint}
+      title={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
+    >
+      {hasBreakpoint ? '🔴' : '⚪'}
+    </button>
+  {/if}
+
+  <!-- Current Preview Indicator -->
+  {#if isCurrentPreview}
+    <div class="absolute -top-1 -right-1 z-10">
+      <span class="relative flex h-4 w-4">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-4 w-4 bg-purple-500"></span>
+      </span>
+    </div>
+  {/if}
+
   <!-- Header -->
-  <div class="p-2 border-b {isStart ? 'bg-green-100' : isDead ? 'bg-red-100' : isOrphan ? 'bg-orange-100' : 'bg-gray-50'}">
+  <div class="p-2 border-b {isCurrentPreview ? 'bg-purple-100' : isStart ? 'bg-green-100' : isDead ? 'bg-red-100' : isOrphan ? 'bg-orange-100' : 'bg-gray-50'}">
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
-        {#if isStart}
+        {#if isCurrentPreview}
+          <span class="text-purple-600" title="Current passage in preview">▶️</span>
+        {:else if isStart}
           <span class="text-green-600" title="Start passage">⭐</span>
         {/if}
         {#if isOrphan}

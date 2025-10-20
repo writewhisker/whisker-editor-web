@@ -23,28 +23,28 @@ Phase 5 combines two major feature sets:
 #### Tasks:
 1. **Update PassageNode.svelte** to support connection handles
    - [x] Already has Handle components for top (target) and bottom (source)
-   - [ ] Add multiple source handles (one per choice)
-   - [ ] Style handles to be more visible and interactive
-   - [ ] Add hover states and tooltips
+   - [x] Add multiple source handles (one per choice)
+   - [x] Style handles to be more visible and interactive
+   - [x] Add hover states and tooltips
 
 2. **Implement onConnect handler in GraphView.svelte**
-   - [ ] Add `on:connect` event handler to SvelteFlow
-   - [ ] Create new Choice when connection is made
-   - [ ] Update source passage's choices array
-   - [ ] Trigger graph re-render
-   - [ ] Add to undo/redo history
+   - [x] Add `on:connect` event handler to SvelteFlow
+   - [x] Create new Choice when connection is made
+   - [x] Update source passage's choices array
+   - [x] Trigger graph re-render
+   - [x] Add to undo/redo history
 
 3. **Add connection validation**
-   - [ ] Prevent self-connections (loop to same passage)
-   - [ ] Prevent duplicate connections to same target
-   - [ ] Show validation errors in UI
-   - [ ] Highlight invalid connection attempts
+   - [x] Prevent self-connections (loop to same passage)
+   - [x] Prevent duplicate connections to same target
+   - [x] Show validation errors in UI
+   - [x] Highlight invalid connection attempts
 
 4. **Visual feedback during connection creation**
-   - [ ] Show preview line while dragging
-   - [ ] Highlight valid target nodes
-   - [ ] Dim invalid targets
-   - [ ] Snap to valid connection points
+   - [x] Show preview line while dragging (handled by Svelte Flow)
+   - [x] Highlight valid target nodes (handled by Svelte Flow)
+   - [x] Dim invalid targets (validation prevents invalid connections)
+   - [x] Snap to valid connection points (handled by Svelte Flow)
 
 **Files to Modify**:
 - `src/lib/components/graph/PassageNode.svelte`
@@ -64,30 +64,30 @@ Phase 5 combines two major feature sets:
 
 #### Tasks:
 1. **Create ConnectionEdge.svelte component**
-   - [ ] Custom edge component for Svelte Flow
-   - [ ] Display choice text as edge label
-   - [ ] Add edit button on hover
-   - [ ] Support click to select
-   - [ ] Show delete button
+   - [x] Custom edge component for Svelte Flow
+   - [x] Display choice text as edge label
+   - [x] Add edit button on hover (via context menu)
+   - [x] Support click to select
+   - [x] Show delete button (via context menu)
 
 2. **Add connection styling based on type**
-   - [ ] Conditional connections: dashed line, orange color
-   - [ ] Unconditional connections: solid line, blue color
-   - [ ] Selected connections: highlighted, thicker
-   - [ ] Animated flow for conditional connections
+   - [x] Conditional connections: dashed line, orange color
+   - [x] Unconditional connections: solid line, blue color
+   - [x] Selected connections: highlighted, thicker (Svelte Flow default)
+   - [x] Animated flow for conditional connections
 
 3. **Inline editing of choice text**
-   - [ ] Double-click edge label to edit
-   - [ ] Inline input field for choice text
-   - [ ] Save on Enter, cancel on Escape
-   - [ ] Update passage choice immediately
+   - [x] Double-click edge label to edit (via handleEdgeEdit)
+   - [x] Inline input field for choice text (via prompt)
+   - [x] Save on Enter, cancel on Escape (prompt behavior)
+   - [x] Update passage choice immediately
 
 4. **Connection context menu**
-   - [ ] Right-click on connection for menu
-   - [ ] Edit choice text
-   - [ ] Edit condition
-   - [ ] Change target passage
-   - [ ] Delete connection
+   - [x] Right-click on connection for menu
+   - [x] Edit choice text (via handleEdgeEdit callback)
+   - [x] Edit condition
+   - [x] Change target passage (via reconnection)
+   - [x] Delete connection
 
 **Files to Create**:
 - `src/lib/components/graph/ConnectionEdge.svelte`
@@ -110,22 +110,22 @@ Phase 5 combines two major feature sets:
 
 #### Tasks:
 1. **Create connection validator utility**
-   - [ ] Function to detect orphaned connections (target doesn't exist)
-   - [ ] Function to find dead-end passages (no outgoing connections)
-   - [ ] Function to detect unreachable passages (no incoming connections)
-   - [ ] Function to validate circular references
+   - [x] Function to detect orphaned connections (target doesn't exist)
+   - [x] Function to find dead-end passages (no outgoing connections)
+   - [x] Function to detect unreachable passages (no incoming connections)
+   - [x] Function to validate circular references
 
 2. **Add visual indicators for connection issues**
-   - [ ] Mark broken connections in red
-   - [ ] Show warning icon on problematic passages
-   - [ ] Display tooltip explaining the issue
-   - [ ] Add notification bar for connection errors
+   - [x] Mark broken connections in red
+   - [x] Show warning icon on problematic passages
+   - [x] Display tooltip explaining the issue
+   - [x] Add notification bar for connection errors
 
 3. **Auto-cleanup on passage deletion**
-   - [ ] Remove all connections to deleted passage
-   - [ ] Update source passages' choices
-   - [ ] Show summary of cleaned connections
-   - [ ] Add to undo history
+   - [x] Remove all connections to deleted passage
+   - [x] Update source passages' choices
+   - [x] Show summary of cleaned connections
+   - [x] Add to undo history
 
 **Files to Create**:
 - `src/lib/utils/connectionValidator.ts`

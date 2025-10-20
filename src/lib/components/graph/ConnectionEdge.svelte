@@ -20,6 +20,7 @@
   // Extract choice data
   $: choiceText = data?.choiceText || '';
   $: hasCondition = data?.hasCondition || false;
+  $: isBroken = data?.isBroken || false;
 
   // Calculate path
   $: [edgePath, labelX, labelY] = getBezierPath({
@@ -32,7 +33,9 @@
   });
 
   // Determine edge styling
-  $: edgeStyle = hasCondition
+  $: edgeStyle = isBroken
+    ? 'stroke: #ef4444; stroke-width: 3; stroke-dasharray: 3, 3;' // Red, dashed for broken
+    : hasCondition
     ? 'stroke: #f97316; stroke-width: 2; stroke-dasharray: 5, 5;' // Orange, dashed for conditional
     : 'stroke: #3b82f6; stroke-width: 2;'; // Blue, solid for normal
 
@@ -59,19 +62,25 @@
     <div class="flex items-center justify-center h-full">
       <div
         class="px-2 py-1 text-xs rounded shadow-md cursor-pointer transition-all hover:shadow-lg"
-        class:bg-orange-100={hasCondition}
-        class:border-orange-400={hasCondition}
-        class:bg-blue-100={!hasCondition}
-        class:border-blue-400={!hasCondition}
+        class:bg-red-100={isBroken}
+        class:border-red-500={isBroken}
+        class:bg-orange-100={!isBroken && hasCondition}
+        class:border-orange-400={!isBroken && hasCondition}
+        class:bg-blue-100={!isBroken && !hasCondition}
+        class:border-blue-400={!isBroken && !hasCondition}
         style="border: 1px solid; max-width: 180px;"
         role="button"
         tabindex="0"
-        title="Right-click for options"
+        title={isBroken ? 'Broken connection - target does not exist' : 'Right-click for options'}
       >
         <div class="font-medium truncate text-center">
-          {choiceText || 'Untitled choice'}
+          {#if isBroken}
+            <span class="text-red-600">⚠️ {choiceText || 'Untitled choice'}</span>
+          {:else}
+            {choiceText || 'Untitled choice'}
+          {/if}
         </div>
-        {#if hasCondition}
+        {#if !isBroken && hasCondition}
           <div class="text-orange-600 text-xs text-center">⚡</div>
         {/if}
       </div>

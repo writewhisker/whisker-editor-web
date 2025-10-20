@@ -2,12 +2,15 @@
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
 
+  import type { ConnectionIssue } from '../../utils/connectionValidator';
+
   export let data: {
     passage: Passage;
     isStart: boolean;
     isOrphan: boolean;
     isDead: boolean;
     isFiltered?: boolean;
+    validationIssues?: ConnectionIssue[];
   };
 
   $: passage = data.passage;
@@ -15,6 +18,16 @@
   $: isOrphan = data.isOrphan;
   $: isDead = data.isDead;
   $: isFiltered = data.isFiltered ?? true;
+  $: validationIssues = data.validationIssues || [];
+  $: hasErrors = validationIssues.some(i => i.severity === 'error');
+  $: hasWarnings = validationIssues.some(i => i.severity === 'warning');
+  $: errorCount = validationIssues.filter(i => i.severity === 'error').length;
+  $: warningCount = validationIssues.filter(i => i.severity === 'warning').length;
+
+  // Generate tooltip for validation issues
+  $: validationTooltip = validationIssues.length > 0
+    ? validationIssues.map(i => `${i.type}: ${i.message}`).join('\n')
+    : '';
 
   // Truncate content for preview
   function truncateContent(text: string, maxLength: number = 80): string {
@@ -47,7 +60,19 @@
         {/if}
         <h3 class="font-semibold text-sm truncate">{passage.title}</h3>
       </div>
-      <span class="text-xs text-gray-500">{passage.choices.length}</span>
+      <div class="flex items-center gap-1">
+        {#if hasErrors}
+          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip}>
+            {errorCount}❌
+          </span>
+        {/if}
+        {#if hasWarnings}
+          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip}>
+            {warningCount}⚠️
+          </span>
+        {/if}
+        <span class="text-xs text-gray-500">{passage.choices.length}</span>
+      </div>
     </div>
   </div>
 

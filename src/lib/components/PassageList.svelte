@@ -3,6 +3,7 @@
   import { filteredPassages } from '../stores/filterStore';
   import type { Passage } from '../models/Passage';
   import SearchBar from './SearchBar.svelte';
+  import { tagActions } from '../stores/tagStore';
 
   export let onAddPassage: () => void;
   export let onDeletePassage: (id: string) => void;
@@ -131,6 +132,23 @@
               <div class="text-xs text-gray-500 truncate">
                 {passage.content.slice(0, 50)}{passage.content.length > 50 ? '...' : ''}
               </div>
+
+              <!-- Tags -->
+              {#if passage.tags.length > 0}
+                <div class="flex flex-wrap gap-1 mt-1">
+                  {#each passage.tags.slice(0, 3) as tag}
+                    <span
+                      class="inline-block px-1.5 py-0.5 rounded text-xs font-medium text-white"
+                      style="background-color: {tagActions.getTagColor(tag)}"
+                    >
+                      {tag}
+                    </span>
+                  {/each}
+                  {#if passage.tags.length > 3}
+                    <span class="text-xs text-gray-500">+{passage.tags.length - 3}</span>
+                  {/if}
+                </div>
+              {/if}
             </div>
 
             <!-- Choice count -->

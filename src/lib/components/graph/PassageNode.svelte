@@ -3,6 +3,7 @@
   import type { Passage } from '../../models/Passage';
 
   import type { ConnectionIssue } from '../../utils/connectionValidator';
+  import { tagActions } from '../../stores/tagStore';
 
   export let data: {
     passage: Passage;
@@ -85,7 +86,12 @@
     {#if passage.tags.length > 0}
       <div class="flex flex-wrap gap-1 mt-2">
         {#each passage.tags.slice(0, 3) as tag}
-          <span class="text-xs px-1.5 py-0.5 bg-gray-200 rounded">{tag}</span>
+          <span
+            class="text-xs px-1.5 py-0.5 rounded font-medium text-white"
+            style="background-color: {tagActions.getTagColor(tag)}"
+          >
+            {tag}
+          </span>
         {/each}
         {#if passage.tags.length > 3}
           <span class="text-xs text-gray-500">+{passage.tags.length - 3}</span>

@@ -2,17 +2,33 @@
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
 
+  import type { ConnectionIssue } from '../../utils/connectionValidator';
+  import { tagActions } from '../../stores/tagStore';
+
   export let data: {
     passage: Passage;
     isStart: boolean;
     isOrphan: boolean;
     isDead: boolean;
+    isFiltered?: boolean;
+    validationIssues?: ConnectionIssue[];
   };
 
   $: passage = data.passage;
   $: isStart = data.isStart;
   $: isOrphan = data.isOrphan;
   $: isDead = data.isDead;
+  $: isFiltered = data.isFiltered ?? true;
+  $: validationIssues = data.validationIssues || [];
+  $: hasErrors = validationIssues.some(i => i.severity === 'error');
+  $: hasWarnings = validationIssues.some(i => i.severity === 'warning');
+  $: errorCount = validationIssues.filter(i => i.severity === 'error').length;
+  $: warningCount = validationIssues.filter(i => i.severity === 'warning').length;
+
+  // Generate tooltip for validation issues
+  $: validationTooltip = validationIssues.length > 0
+    ? validationIssues.map(i => `${i.type}: ${i.message}`).join('\n')
+    : '';
 
   // Truncate content for preview
   function truncateContent(text: string, maxLength: number = 80): string {
@@ -45,7 +61,19 @@
         {/if}
         <h3 class="font-semibold text-sm truncate">{passage.title}</h3>
       </div>
-      <span class="text-xs text-gray-500">{passage.choices.length}</span>
+      <div class="flex items-center gap-1">
+        {#if hasErrors}
+          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip}>
+            {errorCount}❌
+          </span>
+        {/if}
+        {#if hasWarnings}
+          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip}>
+            {warningCount}⚠️
+          </span>
+        {/if}
+        <span class="text-xs text-gray-500">{passage.choices.length}</span>
+      </div>
     </div>
   </div>
 
@@ -58,7 +86,12 @@
     {#if passage.tags.length > 0}
       <div class="flex flex-wrap gap-1 mt-2">
         {#each passage.tags.slice(0, 3) as tag}
-          <span class="text-xs px-1.5 py-0.5 bg-gray-200 rounded">{tag}</span>
+          <span
+            class="text-xs px-1.5 py-0.5 rounded font-medium text-white"
+            style="background-color: {tagActions.getTagColor(tag)}"
+          >
+            {tag}
+          </span>
         {/each}
         {#if passage.tags.length > 3}
           <span class="text-xs text-gray-500">+{passage.tags.length - 3}</span>
@@ -68,8 +101,29 @@
   </div>
 
   <!-- Handles for connections -->
+  <!-- Target handle (incoming connections) -->
   <Handle type="target" position={Position.Top} class="!bg-blue-500 !w-3 !h-3" />
-  <Handle type="source" position={Position.Bottom} class="!bg-blue-500 !w-3 !h-3" />
+
+  <!-- Source handles (one per choice + one for new connections) -->
+  {#each passage.choices as choice, i (choice.id)}
+    <Handle
+      type="source"
+      position={Position.Bottom}
+      id={`choice-${choice.id}`}
+      style="left: {((i + 1) * 100) / (passage.choices.length + 1)}%"
+      class="!bg-green-500 !w-3 !h-3"
+      title={choice.text || 'Untitled choice'}
+    />
+  {/each}
+
+  <!-- Handle for creating new connections -->
+  <Handle
+    type="source"
+    position={Position.Right}
+    id="new-connection"
+    class="!bg-blue-400 !w-4 !h-4 !border-2 !border-white"
+    title="Drag to create new connection"
+  />
 </div>
 
 <style>

@@ -3,6 +3,7 @@ import { Story } from '../models/Story';
 import { Passage } from '../models/Passage';
 import type { ProjectData } from '../models/types';
 import { historyActions } from './historyStore';
+import { removeConnectionsToPassage } from '../utils/connectionValidator';
 
 // Current project state
 export const currentStory = writable<Story | null>(null);
@@ -119,6 +120,14 @@ export const projectActions = {
 
       // Save current state to history
       historyActions.pushState(story.serialize());
+
+      // Clean up all connections to this passage before deleting
+      const removedConnections = removeConnectionsToPassage(story, passageId);
+
+      // Log cleanup summary if connections were removed
+      if (removedConnections > 0) {
+        console.log(`Auto-cleanup: Removed ${removedConnections} connection(s) to passage "${story.getPassage(passageId)?.title || passageId}"`);
+      }
 
       story.removePassage(passageId);
 

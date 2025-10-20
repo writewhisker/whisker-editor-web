@@ -7,36 +7,67 @@
     MiniMap,
     type Node,
     type Edge,
+    type Connection,
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
   import { filteredPassages, hasActiveFilters } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
+  import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
+  import { Choice } from '../models/Choice';
   import {
     getLayoutedElements,
     getForceLayoutElements,
     getCircularLayoutElements,
     type LayoutOptions,
   } from '../utils/graphLayout';
+  import { validateConnections, type ValidationResult } from '../utils/connectionValidator';
 
   // Node types
   const nodeTypes = {
     passage: PassageNode,
   };
 
+  // Edge types
+  const edgeTypes = {
+    connection: ConnectionEdge,
+  };
+
   // Flow state
   const nodes = writable<Node[]>([]);
   const edges = writable<Edge[]>([]);
   let layoutDirection: 'TB' | 'LR' = 'TB';
+  let validationResult: ValidationResult | null = null;
 
   // Convert story passages to flow nodes and edges
   function updateGraph() {
     if (!$currentStory) {
       nodes.set([]);
       edges.set([]);
+      validationResult = null;
       return;
     }
+
+    // Run validation
+    validationResult = validateConnections($currentStory);
+
+    // Create lookup maps for validation issues
+    const passageIssues = new Map<string, typeof validationResult.issues>();
+    const brokenEdges = new Set<string>();
+
+    validationResult.issues.forEach((issue) => {
+      // Track passage-level issues
+      if (!passageIssues.has(issue.passageId)) {
+        passageIssues.set(issue.passageId, []);
+      }
+      passageIssues.get(issue.passageId)!.push(issue);
+
+      // Track broken connections
+      if (issue.type === 'broken' && issue.choiceId) {
+        brokenEdges.add(`${issue.passageId}-${issue.choiceId}`);
+      }
+    });
 
     // Get filtered passage IDs for quick lookup
     const filteredIds = new Set($filteredPassages.map(p => p.id));
@@ -47,6 +78,7 @@
       const isOrphan = !isStart && !hasIncomingConnections(passage.id);
       const isDead = passage.choices.length === 0;
       const isFiltered = filteredIds.has(passage.id);
+      const issues = passageIssues.get(passage.id) || [];
 
       return {
         id: passage.id,
@@ -57,6 +89,7 @@
           isOrphan,
           isDead,
           isFiltered,
+          validationIssues: issues,
         },
         position: passage.position || { x: 0, y: 0 },
         hidden: $hasActiveFilters && !isFiltered,
@@ -71,16 +104,26 @@
           // Hide edge if either source or target is hidden
           const sourceHidden = $hasActiveFilters && !filteredIds.has(passage.id);
           const targetHidden = $hasActiveFilters && !filteredIds.has(choice.target);
+          const edgeId = `${passage.id}-${choice.id}`;
+          const isBroken = brokenEdges.has(edgeId);
 
           flowEdges.push({
-            id: `${passage.id}-${choice.id}`,
+            id: edgeId,
             source: passage.id,
             target: choice.target,
-            label: choice.text,
-            type: choice.condition ? 'step' : 'smoothstep',
+            sourceHandle: `choice-${choice.id}`,
+            type: 'connection',
             animated: !!choice.condition,
-            style: choice.condition ? 'stroke-dasharray: 5, 5' : undefined,
             hidden: sourceHidden || targetHidden,
+            data: {
+              choiceText: choice.text,
+              hasCondition: !!choice.condition,
+              choiceId: choice.id,
+              passageId: passage.id,
+              isBroken,
+              onEdit: handleEdgeEdit,
+              onContextMenu: handleEdgeContextMenu,
+            },
           });
         }
       });
@@ -166,6 +209,148 @@
     }
   }
 
+  // Handle edge (choice) text editing
+  function handleEdgeEdit(edgeId: string, newText: string) {
+    if (!$currentStory) return;
+
+    // Parse edge ID to get passage and choice IDs
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      const choice = passage.choices.find(c => c.id === choiceId);
+      if (choice) {
+        choice.text = newText;
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    }
+  }
+
+  // Handle edge context menu
+  let edgeContextMenu = {
+    show: false,
+    x: 0,
+    y: 0,
+    edgeId: '',
+  };
+
+  function handleEdgeContextMenu(edgeId: string, x: number, y: number) {
+    edgeContextMenu = {
+      show: true,
+      x,
+      y,
+      edgeId,
+    };
+  }
+
+  function closeEdgeContextMenu() {
+    edgeContextMenu.show = false;
+  }
+
+  function deleteEdge(edgeId: string) {
+    if (!$currentStory) return;
+
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      if (confirm('Delete this connection?')) {
+        passage.removeChoice(choiceId);
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    }
+    closeEdgeContextMenu();
+  }
+
+  function editEdgeCondition(edgeId: string) {
+    if (!$currentStory) return;
+
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      const choice = passage.choices.find(c => c.id === choiceId);
+      if (choice) {
+        const condition = prompt('Enter condition (leave empty for no condition):', choice.condition || '');
+        if (condition !== null) {
+          choice.condition = condition.trim() || undefined;
+          currentStory.update(s => s);
+          projectActions.markChanged();
+          updateGraph();
+        }
+      }
+    }
+    closeEdgeContextMenu();
+  }
+
+  // Handle connection creation
+  function handleConnect(connection: Connection) {
+    if (!$currentStory) return;
+
+    const sourceId = connection.source;
+    const targetId = connection.target;
+    const sourceHandleId = connection.sourceHandle;
+
+    // Validate connection
+    if (!sourceId || !targetId) return;
+    if (sourceId === targetId) {
+      console.warn('Cannot connect passage to itself');
+      return;
+    }
+
+    const sourcePassage = $currentStory.getPassage(sourceId);
+    const targetPassage = $currentStory.getPassage(targetId);
+
+    if (!sourcePassage || !targetPassage) {
+      console.warn('Invalid passage connection');
+      return;
+    }
+
+    // Check if connecting from an existing choice handle or the "new connection" handle
+    if (sourceHandleId && sourceHandleId.startsWith('choice-')) {
+      // Connecting from existing choice - update its target
+      const choiceId = sourceHandleId.replace('choice-', '');
+      const choice = sourcePassage.choices.find(c => c.id === choiceId);
+
+      if (choice) {
+        // Check if this would create a duplicate connection
+        if (choice.target === targetId) {
+          console.warn('Connection already exists');
+          return;
+        }
+
+        // Update existing choice target
+        choice.target = targetId;
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    } else {
+      // Creating new connection from "new-connection" handle
+      // Check for duplicate connections
+      const hasDuplicate = sourcePassage.choices.some(c => c.target === targetId);
+      if (hasDuplicate) {
+        console.warn('Connection to this passage already exists');
+        return;
+      }
+
+      // Create new choice
+      const newChoice = new Choice({
+        text: `Go to ${targetPassage.title}`,
+        target: targetId,
+      });
+
+      sourcePassage.addChoice(newChoice);
+      currentStory.update(s => s);
+      projectActions.markChanged();
+      updateGraph();
+    }
+  }
+
   // React to story changes and filter changes
   $: if ($currentStory) {
     updateGraph();
@@ -193,6 +378,31 @@
 <div class="flex flex-col h-full bg-gray-50">
   <!-- Search and Filter Bar -->
   <SearchBar />
+
+  <!-- Validation Summary Bar -->
+  {#if validationResult && (validationResult.errorCount > 0 || validationResult.warningCount > 0)}
+    <div class="bg-white border-b border-gray-300 px-3 py-2 flex items-center gap-4 text-sm">
+      <span class="font-medium text-gray-700">Connection Issues:</span>
+      {#if validationResult.errorCount > 0}
+        <span class="px-2 py-1 bg-red-100 text-red-700 rounded flex items-center gap-1">
+          <span>❌</span>
+          <span>{validationResult.errorCount} {validationResult.errorCount === 1 ? 'error' : 'errors'}</span>
+        </span>
+      {/if}
+      {#if validationResult.warningCount > 0}
+        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded flex items-center gap-1">
+          <span>⚠️</span>
+          <span>{validationResult.warningCount} {validationResult.warningCount === 1 ? 'warning' : 'warnings'}</span>
+        </span>
+      {/if}
+      {#if validationResult.infoCount > 0}
+        <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+          <span>ℹ️</span>
+          <span>{validationResult.infoCount} circular {validationResult.infoCount === 1 ? 'path' : 'paths'}</span>
+        </span>
+      {/if}
+    </div>
+  {/if}
 
   <!-- Toolbar -->
   <div class="bg-white border-b border-gray-300 p-2 flex items-center gap-2 z-10">
@@ -248,10 +458,12 @@
         {nodes}
         {edges}
         {nodeTypes}
+        {edgeTypes}
         fitView
         on:nodedragstop={handleNodeDragStop}
         on:nodeclick={handleNodeClick}
         on:nodedoubleclick={handleNodeDoubleClick}
+        on:connect={handleConnect}
       >
         <Background />
         <Controls />
@@ -274,4 +486,33 @@
       </div>
     {/if}
   </div>
+
+  <!-- Edge Context Menu -->
+  {#if edgeContextMenu.show}
+    <div
+      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[180px]"
+      style="left: {edgeContextMenu.x}px; top: {edgeContextMenu.y}px;"
+      on:click|stopPropagation
+      role="menu"
+      tabindex="-1"
+    >
+      <button
+        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+        on:click={() => editEdgeCondition(edgeContextMenu.edgeId)}
+      >
+        <span>⚡</span>
+        Edit Condition
+      </button>
+      <div class="border-t border-gray-200 my-1"></div>
+      <button
+        class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+        on:click={() => deleteEdge(edgeContextMenu.edgeId)}
+      >
+        <span>🗑️</span>
+        Delete Connection
+      </button>
+    </div>
+  {/if}
 </div>
+
+<svelte:window on:click={closeEdgeContextMenu} />

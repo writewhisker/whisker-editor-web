@@ -1,6 +1,8 @@
 <script lang="ts">
   import { currentStory, selectedPassage, selectedPassageId } from '../stores/projectStore';
   import { Choice } from '../models/Choice';
+  import { tagActions } from '../stores/tagStore';
+  import TagInput from './TagInput.svelte';
 
   $: passage = $selectedPassage;
 
@@ -68,20 +70,23 @@
     }
   }
 
-  function addTag() {
+  function addTag(event: CustomEvent<string>) {
     if (passage) {
-      const tag = prompt('Enter tag name:');
-      if (tag && tag.trim()) {
-        passage.tags.push(tag.trim());
+      const tagName = event.detail.trim();
+      if (tagName && !passage.tags.includes(tagName)) {
+        passage.tags.push(tagName);
         currentStory.update(s => s);
       }
     }
   }
 
-  function removeTag(index: number) {
+  function removeTag(tagName: string) {
     if (passage) {
-      passage.tags.splice(index, 1);
-      currentStory.update(s => s);
+      const index = passage.tags.indexOf(tagName);
+      if (index !== -1) {
+        passage.tags.splice(index, 1);
+        currentStory.update(s => s);
+      }
     }
   }
 
@@ -134,30 +139,37 @@
 
       <!-- Tags -->
       <div>
-        <div class="flex items-center justify-between mb-1">
-          <label class="block text-sm font-medium text-gray-700">
-            Tags
-          </label>
-          <button
-            class="text-xs text-blue-600 hover:text-blue-800"
-            on:click={addTag}
-          >
-            + Add Tag
-          </button>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Tags
+        </label>
+
+        <!-- Tag Input -->
+        <div class="mb-2">
+          <TagInput
+            existingTags={passage.tags}
+            placeholder="Add tag..."
+            on:add={addTag}
+          />
         </div>
-        <div class="flex flex-wrap gap-1">
-          {#each passage.tags as tag, i}
-            <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-200 rounded text-xs">
+
+        <!-- Existing Tags -->
+        <div class="flex flex-wrap gap-2">
+          {#each passage.tags as tag (tag)}
+            <span
+              class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium text-white"
+              style="background-color: {tagActions.getTagColor(tag)}"
+            >
               {tag}
               <button
-                class="text-gray-600 hover:text-red-600"
-                on:click={() => removeTag(i)}
+                class="hover:bg-white hover:bg-opacity-30 rounded-full p-0.5 transition-colors"
+                on:click={() => removeTag(tag)}
+                title="Remove tag"
               >
                 ×
               </button>
             </span>
           {:else}
-            <span class="text-xs text-gray-400">No tags</span>
+            <span class="text-xs text-gray-400">No tags - add one above</span>
           {/each}
         </div>
       </div>

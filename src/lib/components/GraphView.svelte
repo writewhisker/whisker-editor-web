@@ -13,6 +13,7 @@
   import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
   import { filteredPassages, hasActiveFilters } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
+  import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
   import { Choice } from '../models/Choice';
   import {
@@ -25,6 +26,11 @@
   // Node types
   const nodeTypes = {
     passage: PassageNode,
+  };
+
+  // Edge types
+  const edgeTypes = {
+    connection: ConnectionEdge,
   };
 
   // Flow state
@@ -78,11 +84,18 @@
             id: `${passage.id}-${choice.id}`,
             source: passage.id,
             target: choice.target,
-            label: choice.text,
-            type: choice.condition ? 'step' : 'smoothstep',
+            sourceHandle: `choice-${choice.id}`,
+            type: 'connection',
             animated: !!choice.condition,
-            style: choice.condition ? 'stroke-dasharray: 5, 5' : undefined,
             hidden: sourceHidden || targetHidden,
+            data: {
+              choiceText: choice.text,
+              hasCondition: !!choice.condition,
+              choiceId: choice.id,
+              passageId: passage.id,
+              onEdit: handleEdgeEdit,
+              onContextMenu: handleEdgeContextMenu,
+            },
           });
         }
       });
@@ -166,6 +179,84 @@
       selectedPassageId.set(node.id);
       // Could trigger a modal here or focus on properties panel
     }
+  }
+
+  // Handle edge (choice) text editing
+  function handleEdgeEdit(edgeId: string, newText: string) {
+    if (!$currentStory) return;
+
+    // Parse edge ID to get passage and choice IDs
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      const choice = passage.choices.find(c => c.id === choiceId);
+      if (choice) {
+        choice.text = newText;
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    }
+  }
+
+  // Handle edge context menu
+  let edgeContextMenu = {
+    show: false,
+    x: 0,
+    y: 0,
+    edgeId: '',
+  };
+
+  function handleEdgeContextMenu(edgeId: string, x: number, y: number) {
+    edgeContextMenu = {
+      show: true,
+      x,
+      y,
+      edgeId,
+    };
+  }
+
+  function closeEdgeContextMenu() {
+    edgeContextMenu.show = false;
+  }
+
+  function deleteEdge(edgeId: string) {
+    if (!$currentStory) return;
+
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      if (confirm('Delete this connection?')) {
+        passage.removeChoice(choiceId);
+        currentStory.update(s => s);
+        projectActions.markChanged();
+        updateGraph();
+      }
+    }
+    closeEdgeContextMenu();
+  }
+
+  function editEdgeCondition(edgeId: string) {
+    if (!$currentStory) return;
+
+    const [passageId, choiceId] = edgeId.split('-');
+    const passage = $currentStory.getPassage(passageId);
+
+    if (passage) {
+      const choice = passage.choices.find(c => c.id === choiceId);
+      if (choice) {
+        const condition = prompt('Enter condition (leave empty for no condition):', choice.condition || '');
+        if (condition !== null) {
+          choice.condition = condition.trim() || undefined;
+          currentStory.update(s => s);
+          projectActions.markChanged();
+          updateGraph();
+        }
+      }
+    }
+    closeEdgeContextMenu();
   }
 
   // Handle connection creation
@@ -314,6 +405,7 @@
         {nodes}
         {edges}
         {nodeTypes}
+        {edgeTypes}
         fitView
         on:nodedragstop={handleNodeDragStop}
         on:nodeclick={handleNodeClick}
@@ -341,4 +433,33 @@
       </div>
     {/if}
   </div>
+
+  <!-- Edge Context Menu -->
+  {#if edgeContextMenu.show}
+    <div
+      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[180px]"
+      style="left: {edgeContextMenu.x}px; top: {edgeContextMenu.y}px;"
+      on:click|stopPropagation
+      role="menu"
+      tabindex="-1"
+    >
+      <button
+        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center gap-2"
+        on:click={() => editEdgeCondition(edgeContextMenu.edgeId)}
+      >
+        <span>⚡</span>
+        Edit Condition
+      </button>
+      <div class="border-t border-gray-200 my-1"></div>
+      <button
+        class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+        on:click={() => deleteEdge(edgeContextMenu.edgeId)}
+      >
+        <span>🗑️</span>
+        Delete Connection
+      </button>
+    </div>
+  {/if}
 </div>
+
+<svelte:window on:click={closeEdgeContextMenu} />

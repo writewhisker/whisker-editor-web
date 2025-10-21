@@ -6,6 +6,8 @@
   export let onNew: () => void;
   export let onOpen: () => void;
   export let onSave: () => void;
+  export let onExport: () => void;
+  export let onImport: () => void;
   export let onAddPassage: () => void;
 </script>
 
@@ -33,6 +35,25 @@
     title="Save Project (Ctrl+S)"
   >
     💾 Save{#if $unsavedChanges}*{/if}
+  </button>
+
+  <div class="border-l border-gray-300 h-8 mx-2"></div>
+
+  <button
+    class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    on:click={onExport}
+    disabled={!$currentStory}
+    title="Export Story (Ctrl+E)"
+  >
+    📤 Export
+  </button>
+
+  <button
+    class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+    on:click={onImport}
+    title="Import Story (Ctrl+I)"
+  >
+    📥 Import
   </button>
 
   <div class="border-l border-gray-300 h-8 mx-2"></div>

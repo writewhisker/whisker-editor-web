@@ -4,6 +4,8 @@
   import Toolbar from './lib/components/Toolbar.svelte';
   import StatusBar from './lib/components/StatusBar.svelte';
   import FileDialog from './lib/components/FileDialog.svelte';
+  import ExportPanel from './lib/components/export/ExportPanel.svelte';
+  import ImportDialog from './lib/components/export/ImportDialog.svelte';
   import PassageList from './lib/components/PassageList.svelte';
   import PropertiesPanel from './lib/components/PropertiesPanel.svelte';
   import VariableManager from './lib/components/VariableManager.svelte';
@@ -19,6 +21,8 @@
   let showNewDialog = false;
   let newProjectTitle = ''
 ;
+  let showExportPanel = false;
+  let showImportDialog = false;
   let fileHandle: FileHandle | null = null;
 
   // Handle New Project
@@ -71,6 +75,23 @@
       fileHandle = result;
       currentFilePath.set(result.name);
     }
+  }
+
+  // Handle Export
+  function handleExport() {
+    showExportPanel = true;
+  }
+
+  // Handle Import
+  function handleImport() {
+    showImportDialog = true;
+  }
+
+  // Handle import complete
+  function handleImportComplete(event: CustomEvent<{ story: any }>) {
+    const story = event.detail.story;
+    projectActions.loadProject(story, 'Imported Story');
+    fileHandle = null; // Clear file handle since this is an imported story
   }
 
   // Handle Add Passage
@@ -203,6 +224,8 @@
     onNew={handleNewProject}
     onOpen={handleOpenProject}
     onSave={handleSaveProject}
+    onExport={handleExport}
+    onImport={handleImport}
     onAddPassage={handleAddPassage}
   />
 
@@ -434,4 +457,13 @@
   inputPlaceholder="My Amazing Story"
   bind:inputValue={newProjectTitle}
   on:confirm={confirmNewProject}
+/>
+
+<ExportPanel
+  bind:show={showExportPanel}
+/>
+
+<ImportDialog
+  bind:show={showImportDialog}
+  on:import={handleImportComplete}
 />

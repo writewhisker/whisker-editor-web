@@ -7,6 +7,7 @@ export interface PanelVisibility {
   passageList: boolean;
   properties: boolean;
   variables: boolean;
+  validation: boolean;
 }
 
 export interface PanelSizes {
@@ -34,6 +35,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     passageList: true,
     properties: true,
     variables: true,
+    validation: true,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

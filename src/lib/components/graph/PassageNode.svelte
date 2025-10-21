@@ -2,7 +2,7 @@
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
 
-  import type { ConnectionIssue } from '../../utils/connectionValidator';
+  import type { ValidationIssue } from '../../validation/types';
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
 
@@ -12,7 +12,7 @@
     isOrphan: boolean;
     isDead: boolean;
     isFiltered?: boolean;
-    validationIssues?: ConnectionIssue[];
+    validationIssues?: ValidationIssue[];
   };
 
   $: passage = data.passage;
@@ -38,7 +38,7 @@
 
   // Generate tooltip for validation issues
   $: validationTooltip = validationIssues.length > 0
-    ? validationIssues.map(i => `${i.type}: ${i.message}`).join('\n')
+    ? validationIssues.map(i => `${i.category}: ${i.message}`).join('\n')
     : '';
 
   // Truncate content for preview

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { writable } from 'svelte/store';
+  import { writable, get } from 'svelte/store';
   import {
     SvelteFlow,
     Controls,
     Background,
     MiniMap,
+    useSvelteFlow,
     type Node,
     type Edge,
     type Connection,
@@ -22,7 +23,11 @@
     getCircularLayoutElements,
     type LayoutOptions,
   } from '../utils/graphLayout';
-  import { validateConnections, type ValidationResult } from '../utils/connectionValidator';
+  import { validationResult, validationActions } from '../stores/validationStore';
+  import type { ValidationIssue } from '../validation/types';
+
+  // Get Svelte Flow instance for programmatic control
+  const { fitBounds, zoomTo } = useSvelteFlow();
 
   // Node types
   const nodeTypes = {
@@ -38,36 +43,36 @@
   const nodes = writable<Node[]>([]);
   const edges = writable<Edge[]>([]);
   let layoutDirection: 'TB' | 'LR' = 'TB';
-  let validationResult: ValidationResult | null = null;
 
   // Convert story passages to flow nodes and edges
   function updateGraph() {
     if (!$currentStory) {
       nodes.set([]);
       edges.set([]);
-      validationResult = null;
       return;
     }
 
-    // Run validation
-    validationResult = validateConnections($currentStory);
-
     // Create lookup maps for validation issues
-    const passageIssues = new Map<string, typeof validationResult.issues>();
+    const passageIssues = new Map<string, ValidationIssue[]>();
     const brokenEdges = new Set<string>();
 
-    validationResult.issues.forEach((issue) => {
-      // Track passage-level issues
-      if (!passageIssues.has(issue.passageId)) {
-        passageIssues.set(issue.passageId, []);
-      }
-      passageIssues.get(issue.passageId)!.push(issue);
+    // Use validation results from store if available
+    if ($validationResult) {
+      $validationResult.issues.forEach((issue) => {
+        // Track passage-level issues (only if issue has passageId)
+        if (issue.passageId) {
+          if (!passageIssues.has(issue.passageId)) {
+            passageIssues.set(issue.passageId, []);
+          }
+          passageIssues.get(issue.passageId)!.push(issue);
 
-      // Track broken connections
-      if (issue.type === 'broken' && issue.choiceId) {
-        brokenEdges.add(`${issue.passageId}-${issue.choiceId}`);
-      }
-    });
+          // Track broken connections (dead links)
+          if (issue.category === 'links' && issue.choiceId) {
+            brokenEdges.add(`${issue.passageId}-${issue.choiceId}`);
+          }
+        }
+      });
+    }
 
     // Get filtered passage IDs for quick lookup
     const filteredIds = new Set($filteredPassages.map(p => p.id));
@@ -361,6 +366,32 @@
     updateGraph();
   }
 
+  // Zoom to selected passage
+  function zoomToSelection() {
+    if (!$selectedPassageId) return;
+
+    const selectedNode = $nodes.find(n => n.id === $selectedPassageId);
+    if (!selectedNode) return;
+
+    // Calculate bounds with padding
+    const padding = 100;
+    const nodeWidth = 250;
+    const nodeHeight = 150;
+
+    fitBounds(
+      {
+        x: selectedNode.position.x - padding,
+        y: selectedNode.position.y - padding,
+        width: nodeWidth + (padding * 2),
+        height: nodeHeight + (padding * 2),
+      },
+      {
+        duration: 400,
+        padding: 0.2,
+      }
+    );
+  }
+
   // Highlight selected node
   $: {
     const currentNodes = $nodes;
@@ -449,6 +480,17 @@
       />
       Left-Right
     </label>
+
+    <div class="border-l border-gray-300 h-6 mx-2"></div>
+
+    <button
+      class="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+      on:click={zoomToSelection}
+      disabled={!$selectedPassageId}
+      title="Zoom to selected passage (Z)"
+    >
+      🔍 Zoom to Selection
+    </button>
   </div>
 
   <!-- Graph -->

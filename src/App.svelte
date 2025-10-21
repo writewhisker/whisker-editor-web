@@ -7,6 +7,7 @@
   import PassageList from './lib/components/PassageList.svelte';
   import PropertiesPanel from './lib/components/PropertiesPanel.svelte';
   import VariableManager from './lib/components/VariableManager.svelte';
+  import ValidationPanel from './lib/components/editor/ValidationPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
   import PreviewPanel from './lib/components/PreviewPanel.svelte';
@@ -271,6 +272,13 @@
           >
             🔢 Variables
           </button>
+          <button
+            class="px-2 py-1 text-xs rounded {$panelVisibility.validation ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 hover:bg-gray-100'}"
+            on:click={() => viewPreferencesActions.togglePanel('validation')}
+            title="Toggle Validation Panel"
+          >
+            🔍 Validation
+          </button>
         </div>
       {/if}
 
@@ -317,15 +325,24 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager -->
-          {#if $panelVisibility.variables && !$focusMode}
-            <div class="w-80 flex-shrink-0 border-l border-gray-300">
-              <VariableManager />
+          <!-- Right: Variable Manager & Validation -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation) && !$focusMode}
+            <div class="w-80 flex-shrink-0 flex flex-col border-l border-gray-300">
+              {#if $panelVisibility.variables}
+                <div class="h-72 border-b border-gray-300">
+                  <VariableManager />
+                </div>
+              {/if}
+              {#if $panelVisibility.validation}
+                <div class="flex-1 min-h-0">
+                  <ValidationPanel />
+                </div>
+              {/if}
             </div>
           {/if}
 
           <!-- Show message if all panels hidden -->
-          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables}
+          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation}
             <div class="flex-1 flex items-center justify-center text-gray-400">
               <div class="text-center">
                 <p class="text-lg mb-2">All panels hidden</p>
@@ -347,17 +364,22 @@
             <GraphView />
           </div>
 
-          <!-- Right: Properties + Variables -->
-          {#if ($panelVisibility.properties || $panelVisibility.variables) && !$focusMode}
+          <!-- Right: Properties + Variables + Validation -->
+          {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation) && !$focusMode}
             <div class="w-96 flex-shrink-0 flex flex-col border-l border-gray-300">
               {#if $panelVisibility.properties}
-                <div class="flex-1 overflow-hidden {$panelVisibility.variables ? 'border-b border-gray-300' : ''}">
+                <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation) ? 'border-b border-gray-300' : ''}">
                   <PropertiesPanel />
                 </div>
               {/if}
               {#if $panelVisibility.variables}
-                <div class="h-64">
+                <div class="h-64 {$panelVisibility.validation ? 'border-b border-gray-300' : ''}">
                   <VariableManager />
+                </div>
+              {/if}
+              {#if $panelVisibility.validation}
+                <div class="h-80">
+                  <ValidationPanel />
                 </div>
               {/if}
             </div>

@@ -1,6 +1,23 @@
+/**
+ * @deprecated This module is deprecated in favor of the new validation system in `src/lib/validation/`.
+ *
+ * The new system provides:
+ * - Plugin-based architecture
+ * - More comprehensive validation
+ * - Quality metrics
+ * - Auto-fix capabilities
+ * - Better TypeScript support
+ *
+ * This file is kept for backward compatibility but should not be used in new code.
+ * See `src/lib/validation/StoryValidator.ts` and `src/lib/stores/validationStore.ts` instead.
+ */
+
 import type { Story } from '../models/Story';
 import type { Passage } from '../models/Passage';
 
+/**
+ * @deprecated Use ValidationIssue from `src/lib/validation/types.ts` instead
+ */
 export interface ConnectionIssue {
   type: 'orphaned' | 'broken' | 'dead-end' | 'unreachable' | 'circular';
   passageId: string;
@@ -12,6 +29,9 @@ export interface ConnectionIssue {
   message: string;
 }
 
+/**
+ * @deprecated Use ValidationResult from `src/lib/validation/types.ts` instead
+ */
 export interface ValidationResult {
   isValid: boolean;
   issues: ConnectionIssue[];
@@ -22,6 +42,7 @@ export interface ValidationResult {
 
 /**
  * Validates all connections in a story
+ * @deprecated Use validationStore.validate() or StoryValidator from `src/lib/validation/` instead
  */
 export function validateConnections(story: Story): ValidationResult {
   const issues: ConnectionIssue[] = [];

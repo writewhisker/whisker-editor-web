@@ -1,6 +1,7 @@
 <script lang="ts">
   import { currentStory, unsavedChanges, projectActions } from '../stores/projectStore';
   import { canUndo, canRedo, historyCount } from '../stores/historyStore';
+  import { validationResult, errorCount, warningCount, infoCount, isValid } from '../stores/validationStore';
 
   export let onNew: () => void;
   export let onOpen: () => void;
@@ -72,6 +73,30 @@
   {/if}
 
   <div class="flex-1"></div>
+
+  <!-- Validation Status Indicator -->
+  {#if $currentStory && $validationResult}
+    <div
+      class="flex items-center gap-2 px-3 py-1.5 rounded border {$isValid ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}"
+      title="Validation status"
+    >
+      {#if $isValid}
+        <span class="text-green-700 font-semibold text-sm">✓ Valid</span>
+      {:else}
+        <div class="flex items-center gap-2 text-sm">
+          {#if $errorCount > 0}
+            <span class="text-red-600 font-medium">🔴 {$errorCount}</span>
+          {/if}
+          {#if $warningCount > 0}
+            <span class="text-yellow-600 font-medium">⚠️ {$warningCount}</span>
+          {/if}
+          {#if $infoCount > 0}
+            <span class="text-blue-600 font-medium">ℹ️ {$infoCount}</span>
+          {/if}
+        </div>
+      {/if}
+    </div>
+  {/if}
 
   {#if $currentStory}
     <div class="text-sm text-gray-600">

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { currentStory, selectedPassageId } from '../stores/projectStore';
   import { filteredPassages } from '../stores/filterStore';
+  import { validationResult } from '../stores/validationStore';
   import type { Passage } from '../models/Passage';
   import SearchBar from './SearchBar.svelte';
   import { tagActions } from '../stores/tagStore';
@@ -32,6 +33,23 @@
 
   function hasNoChoices(passage: Passage): boolean {
     return passage.choices.length === 0;
+  }
+
+  function getPassageValidationSeverity(passageId: string): 'error' | 'warning' | 'info' | null {
+    if (!$validationResult) return null;
+
+    const passageIssues = $validationResult.issues.filter(i => i.passageId === passageId);
+    if (passageIssues.length === 0) return null;
+
+    // Return highest severity
+    if (passageIssues.some(i => i.severity === 'error')) return 'error';
+    if (passageIssues.some(i => i.severity === 'warning')) return 'warning';
+    return 'info';
+  }
+
+  function getPassageValidationCount(passageId: string): number {
+    if (!$validationResult) return 0;
+    return $validationResult.issues.filter(i => i.passageId === passageId).length;
   }
 
   function handleContextMenu(event: MouseEvent, passageId: string) {
@@ -123,6 +141,17 @@
               {/if}
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
+              {/if}
+              {@const validationSeverity = getPassageValidationSeverity(passage.id)}
+              {@const validationCount = getPassageValidationCount(passage.id)}
+              {#if validationSeverity}
+                <span
+                  class="text-xs font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
+                  title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
+                >
+                  {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
+                  {validationCount}
+                </span>
               {/if}
             </div>
 

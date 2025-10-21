@@ -1,0 +1,215 @@
+/**
+ * Import System Types
+ *
+ * Type definitions for the story import system.
+ */
+
+import type { Story } from '../models/Story';
+import type { ValidationResult } from '../validation/types';
+
+/**
+ * Supported import formats
+ */
+export type ImportFormat = 'json' | 'twine' | 'ink' | 'yarn';
+
+/**
+ * Import options configuration
+ */
+export interface ImportOptions {
+  /** Import format (auto-detected if not specified) */
+  format?: ImportFormat;
+
+  /** Validate after import */
+  validateAfterImport?: boolean;
+
+  /** Merge strategy for existing stories */
+  mergeStrategy?: 'replace' | 'merge' | 'duplicate';
+
+  /** Convert passage IDs to preserve references */
+  preserveIds?: boolean;
+
+  /** Import metadata */
+  importMetadata?: boolean;
+
+  /** Import tags */
+  importTags?: boolean;
+
+  /** Import variables */
+  importVariables?: boolean;
+
+  /** Strict mode (fail on any errors) */
+  strictMode?: boolean;
+
+  /** Transform passage titles */
+  transformTitles?: (title: string) => string;
+
+  /** Custom import handlers */
+  customHandlers?: Record<string, (data: unknown) => unknown>;
+}
+
+/**
+ * Import result
+ */
+export interface ImportResult {
+  /** Import success status */
+  success: boolean;
+
+  /** Imported story */
+  story?: Story;
+
+  /** Validation result (if validateAfterImport is true) */
+  validation?: ValidationResult;
+
+  /** Import duration in milliseconds */
+  duration?: number;
+
+  /** Number of passages imported */
+  passageCount?: number;
+
+  /** Number of variables imported */
+  variableCount?: number;
+
+  /** Error message if import failed */
+  error?: string;
+
+  /** Warnings encountered during import */
+  warnings?: string[];
+
+  /** Skipped elements */
+  skipped?: {
+    passages?: string[];
+    variables?: string[];
+    metadata?: string[];
+  };
+}
+
+/**
+ * Import context passed to importers
+ */
+export interface ImportContext {
+  /** Raw import data */
+  data: string | object;
+
+  /** Import options */
+  options: ImportOptions;
+
+  /** Source filename (if available) */
+  filename?: string;
+
+  /** Additional context data */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Base importer interface
+ */
+export interface IImporter {
+  /** Importer name */
+  readonly name: string;
+
+  /** Supported format */
+  readonly format: ImportFormat;
+
+  /** Supported file extensions */
+  readonly extensions: string[];
+
+  /**
+   * Import a story
+   */
+  import(context: ImportContext): Promise<ImportResult>;
+
+  /**
+   * Detect if data matches this format
+   */
+  canImport(data: string | object): boolean;
+
+  /**
+   * Validate import data
+   */
+  validate?(data: string | object): string[];
+
+  /**
+   * Get format version
+   */
+  getFormatVersion?(data: string | object): string;
+}
+
+/**
+ * Twine-specific types
+ */
+export namespace Twine {
+  /**
+   * Twine story format
+   */
+  export interface TwineStory {
+    name: string;
+    startPassage?: string;
+    passages: TwinePassage[];
+    metadata?: Record<string, unknown>;
+  }
+
+  /**
+   * Twine passage format
+   */
+  export interface TwinePassage {
+    pid: string | number;
+    name: string;
+    tags?: string[];
+    position?: { x: number; y: number };
+    size?: { width: number; height: number };
+    text: string;
+    metadata?: Record<string, unknown>;
+  }
+
+  /**
+   * Twine link format
+   */
+  export interface TwineLink {
+    text: string;
+    target: string;
+    conditional?: string;
+  }
+}
+
+/**
+ * Import history entry
+ */
+export interface ImportHistoryEntry {
+  /** Import ID */
+  id: string;
+
+  /** Import timestamp */
+  timestamp: number;
+
+  /** Import format */
+  format: ImportFormat;
+
+  /** Story title */
+  storyTitle: string;
+
+  /** Number of passages imported */
+  passageCount: number;
+
+  /** Import success status */
+  success: boolean;
+
+  /** Error message if failed */
+  error?: string;
+
+  /** Source filename */
+  filename?: string;
+}
+
+/**
+ * Format detection result
+ */
+export interface FormatDetectionResult {
+  /** Detected format */
+  format: ImportFormat | null;
+
+  /** Detection confidence (0-1) */
+  confidence: number;
+
+  /** Detection reason */
+  reason?: string;
+}

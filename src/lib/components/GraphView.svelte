@@ -63,7 +63,7 @@
     const brokenEdges = new Set<string>();
 
     // Use validation results from store if available
-    if ($validationResult) {
+    if ($validationResult && Array.isArray($validationResult.issues)) {
       $validationResult.issues.forEach((issue) => {
         // Track passage-level issues (only if issue has passageId)
         if (issue.passageId) {

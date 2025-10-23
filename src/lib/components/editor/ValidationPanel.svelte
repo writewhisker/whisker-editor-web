@@ -28,18 +28,20 @@
   let selectedHistoryIndex: number | null = null;
 
   // Filtered issues
-  $: filteredIssues = $validationResult?.issues.filter((issue) => {
-    if (selectedSeverity !== 'all' && issue.severity !== selectedSeverity) {
-      return false;
-    }
-    if (selectedCategory !== 'all' && issue.category !== selectedCategory) {
-      return false;
-    }
-    if (showOnlyFixable && !issue.fixable) {
-      return false;
-    }
-    return true;
-  }) || [];
+  $: filteredIssues = ($validationResult && Array.isArray($validationResult.issues))
+    ? $validationResult.issues.filter((issue) => {
+        if (selectedSeverity !== 'all' && issue.severity !== selectedSeverity) {
+          return false;
+        }
+        if (selectedCategory !== 'all' && issue.category !== selectedCategory) {
+          return false;
+        }
+        if (showOnlyFixable && !issue.fixable) {
+          return false;
+        }
+        return true;
+      })
+    : [];
 
   // Issue counts by severity
   $: errorIssues = filteredIssues.filter(i => i.severity === 'error');
@@ -332,7 +334,7 @@
       <div class="issues-list">
         {#if filteredIssues.length === 0}
           <div class="p-4 text-center text-gray-500 text-sm">
-            {#if $validationResult}
+            {#if $validationResult && Array.isArray($validationResult.issues)}
               {#if $validationResult.issues.length === 0}
                 ✓ No issues found
               {:else}

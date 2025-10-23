@@ -154,7 +154,7 @@
   }
 
   function getPassageValidationSeverity(passageId: string): 'error' | 'warning' | 'info' | null {
-    if (!$validationResult) return null;
+    if (!$validationResult || !Array.isArray($validationResult.issues)) return null;
 
     const passageIssues = $validationResult.issues.filter(i => i.passageId === passageId);
     if (passageIssues.length === 0) return null;
@@ -166,7 +166,7 @@
   }
 
   function getPassageValidationCount(passageId: string): number {
-    if (!$validationResult) return 0;
+    if (!$validationResult || !Array.isArray($validationResult.issues)) return 0;
     return $validationResult.issues.filter(i => i.passageId === passageId).length;
   }
 

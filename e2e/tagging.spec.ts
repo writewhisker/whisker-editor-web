@@ -10,16 +10,15 @@ async function createNewProject(page: any) {
 
   // Click New Project button
   const newProjectButton = page.locator('button:has-text("New Project")');
-  if (await newProjectButton.isVisible()) {
-    await newProjectButton.click();
+  await newProjectButton.click();
 
-    // Fill in project details
-    await page.fill('input[placeholder*="My Story"], input[value="My Story"]', 'Test Story');
-    await page.fill('input[placeholder*="Author"], textarea[placeholder*="Author"]', 'Test Author');
+  // Wait for dialog to appear and fill in project name
+  const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
+  await projectNameInput.waitFor({ state: 'visible', timeout: 5000 });
+  await projectNameInput.fill('Test Story');
 
-    // Click OK/Create button
-    await page.click('button:has-text("OK"), button:has-text("Create")');
-  }
+  // Click OK button
+  await page.click('button:has-text("OK")');
 
   // Wait for Passages panel to appear
   await page.waitForSelector('text=Passages', { timeout: 10000 });

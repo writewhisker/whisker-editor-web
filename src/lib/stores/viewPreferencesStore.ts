@@ -50,10 +50,28 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
 
 const STORAGE_KEY = 'whisker-view-preferences';
 const GLOBAL_VIEW_MODE_KEY = 'whisker-global-view-mode';
+const STORAGE_VERSION_KEY = 'whisker-preferences-version';
+const CURRENT_VERSION = '2'; // Increment when schema changes
+
+// Check and migrate localStorage if needed
+function checkStorageVersion(): void {
+  try {
+    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
+    if (storedVersion !== CURRENT_VERSION) {
+      console.log(`Migrating localStorage from version ${storedVersion || 'legacy'} to ${CURRENT_VERSION}`);
+      // Clear old preferences when version changes
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
+    }
+  } catch (e) {
+    console.warn('Failed to check storage version:', e);
+  }
+}
 
 // Load preferences from localStorage
 function loadPreferences(): ProjectViewPreferences {
   try {
+    checkStorageVersion(); // Check version before loading
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : {};
   } catch (e) {

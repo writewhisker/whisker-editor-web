@@ -183,4 +183,60 @@ describe('View Preferences Store', () => {
       expect(get(viewMode)).toBe('list');
     });
   });
+
+  describe('localStorage version migration', () => {
+    it('should clear old preferences when version changes', () => {
+      // Set old version
+      localStorage.setItem('whisker-preferences-version', '1');
+      localStorage.setItem('whisker-view-preferences', JSON.stringify({
+        'test-project': {
+          viewMode: 'graph',
+          panelVisibility: { passageList: false },
+        },
+      }));
+
+      // Reset should trigger version check and clear old data
+      viewPreferencesActions.reset();
+
+      // After version migration, preferences should be cleared
+      const stored = localStorage.getItem('whisker-view-preferences');
+      expect(stored).toBeNull();
+
+      // Version should be updated
+      const version = localStorage.getItem('whisker-preferences-version');
+      expect(version).toBe('2');
+    });
+
+    it('should preserve preferences when version matches', () => {
+      // Set current version
+      localStorage.setItem('whisker-preferences-version', '2');
+      const prefs = JSON.stringify({
+        'test-project': {
+          viewMode: 'split',
+          panelVisibility: { passageList: true, properties: true, variables: true, validation: true, statistics: false },
+          panelSizes: { passageListWidth: 256, propertiesWidth: 384, variablesWidth: 320, variablesHeight: 256 },
+          focusMode: false,
+        },
+      });
+      localStorage.setItem('whisker-view-preferences', prefs);
+
+      // Reset should not clear data when version matches
+      viewPreferencesActions.reset();
+
+      // Preferences should still be there
+      const stored = localStorage.getItem('whisker-view-preferences');
+      expect(stored).toBeTruthy();
+    });
+
+    it('should initialize version for first-time users', () => {
+      // No version key exists
+      localStorage.removeItem('whisker-preferences-version');
+
+      // Reset should set version
+      viewPreferencesActions.reset();
+
+      const version = localStorage.getItem('whisker-preferences-version');
+      expect(version).toBe('2');
+    });
+  });
 });

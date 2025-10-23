@@ -280,7 +280,104 @@
       <div class="p-4 text-sm text-gray-400 text-center">
         No passages match your filters
       </div>
+    {:else if $filteredPassages.length < 50}
+      <!-- Regular rendering for small lists (avoids VirtualList mount issues) -->
+      <div class="overflow-y-auto h-full">
+        {#each $filteredPassages as passage}
+          <button
+            class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
+            class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
+            class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
+            class:border-l-blue-500={$selectedPassageId === passage.id}
+            class:border-l-purple-500={selectedPassages.has(passage.id)}
+            on:click={(e) => selectPassage(passage.id, e)}
+            on:contextmenu={(e) => handleContextMenu(e, passage.id)}
+            on:mouseenter={(e) => handleMouseEnter(passage, e)}
+            on:mouseleave={handleMouseLeave}
+          >
+          <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
+            <!-- Color Indicator -->
+            {#if passage.color}
+              <div
+                class="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+                style="background-color: {passage.color};"
+                title="Passage color: {passage.color}"
+              ></div>
+            {/if}
+
+            <!-- Icons -->
+            <div class="flex gap-1 {compactView ? 'text-xs' : ''}">
+              {#if isStart(passage)}
+                <span class="text-green-600" title="Start passage">▶</span>
+              {/if}
+              {#if isOrphan(passage)}
+                <span class="text-orange-500" title="Orphaned passage">⚠</span>
+              {/if}
+              {#if hasNoChoices(passage)}
+                <span class="text-gray-400" title="Dead end">⏹</span>
+              {/if}
+              {#if true}
+                {@const validationSeverity = getPassageValidationSeverity(passage.id)}
+                {@const validationCount = getPassageValidationCount(passage.id)}
+                {#if validationSeverity}
+                  <span
+                    class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
+                    title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
+                  >
+                    {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
+                    {validationCount}
+                  </span>
+                {/if}
+              {/if}
+            </div>
+
+            <!-- Title -->
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate {compactView ? 'text-xs' : 'text-sm'}">{passage.title}</div>
+              {#if !compactView}
+                <div class="text-xs text-gray-500 truncate">
+                  {passage.content.slice(0, 50)}{passage.content.length > 50 ? '...' : ''}
+                </div>
+              {/if}
+
+              <!-- Tags -->
+              {#if passage.tags.length > 0 && !compactView}
+                <div class="flex flex-wrap gap-1 mt-1">
+                  {#each passage.tags.slice(0, 3) as tag}
+                    <span
+                      class="inline-block px-1.5 py-0.5 rounded text-xs font-medium text-white"
+                      style="background-color: {tagActions.getTagColor(tag)}"
+                    >
+                      {tag}
+                    </span>
+                  {/each}
+                  {#if passage.tags.length > 3}
+                    <span class="text-xs text-gray-500">+{passage.tags.length - 3}</span>
+                  {/if}
+                </div>
+              {/if}
+            </div>
+
+            <!-- Statistics -->
+            {#if !compactView}
+              {@const wordCount = passage.content.trim().split(/\s+/).filter(w => w.length > 0).length}
+              {@const incomingLinks = $currentStory ? $currentStory.passages.filter(p => p.choices.some(c => c.targetPassageId === passage.id)).length : 0}
+              <div class="flex flex-col gap-0.5 text-xs text-gray-400 dark:text-gray-500">
+                <div title="Word count">📝 {wordCount}w</div>
+                <div title="Outgoing choices">→ {passage.choices.length}</div>
+                <div title="Incoming links">← {incomingLinks}</div>
+              </div>
+            {:else}
+              <div class="flex items-center gap-1 text-[10px] text-gray-400">
+                <span title="Outgoing choices">→{passage.choices.length}</span>
+              </div>
+            {/if}
+          </div>
+        </button>
+        {/each}
+      </div>
     {:else}
+      <!-- Virtual scrolling for large lists (50+ passages) -->
       <VirtualList items={$filteredPassages} let:item={passage} height="100%">
         <button
           class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"

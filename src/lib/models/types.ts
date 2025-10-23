@@ -22,6 +22,8 @@ export interface PassageData {
   onEnterScript?: string;
   onExitScript?: string;
   tags?: string[];
+  created?: string; // ISO timestamp
+  modified?: string; // ISO timestamp
 }
 
 export interface VariableData {

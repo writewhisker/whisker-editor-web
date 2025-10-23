@@ -10,28 +10,98 @@
   import PropertiesPanel from './lib/components/PropertiesPanel.svelte';
   import VariableManager from './lib/components/VariableManager.svelte';
   import ValidationPanel from './lib/components/editor/ValidationPanel.svelte';
+  import StoryStatisticsPanel from './lib/components/StoryStatisticsPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
   import PreviewPanel from './lib/components/PreviewPanel.svelte';
-  import { projectActions, currentStory, currentFilePath, selectedPassageId } from './lib/stores/projectStore';
+  import KeyboardShortcutsHelp from './lib/components/help/KeyboardShortcutsHelp.svelte';
+  import AutoSaveRecovery from './lib/components/AutoSaveRecovery.svelte';
+  import LoadingSpinner from './lib/components/LoadingSpinner.svelte';
+  import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
+  import CommandPalette from './lib/components/CommandPalette.svelte';
+  import AboutDialog from './lib/components/AboutDialog.svelte';
+  import FindReplaceDialog from './lib/components/FindReplaceDialog.svelte';
+  import StoryMetadataEditor from './lib/components/StoryMetadataEditor.svelte';
+  import SettingsDialog from './lib/components/SettingsDialog.svelte';
+  import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
   import { viewMode, panelVisibility, focusMode, viewPreferencesActions } from './lib/stores/viewPreferencesStore';
+  import { autoSaveManager, saveToLocalStorage, clearLocalStorage, type AutoSaveData } from './lib/utils/autoSave';
+  import { theme, applyTheme } from './lib/stores/themeStore';
+  import { validationActions } from './lib/stores/validationStore';
+  import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
 
   let showNewDialog = false;
-  let newProjectTitle = ''
-;
+  let newProjectTitle = '';
   let showExportPanel = false;
   let showImportDialog = false;
   let fileHandle: FileHandle | null = null;
+  let isLoading = false;
+  let loadingMessage = '';
+
+  // Confirm dialog state
+  let showConfirmDialog = false;
+  let confirmDialogTitle = '';
+  let confirmDialogMessage = '';
+  let confirmDialogVariant: 'danger' | 'warning' | 'info' = 'info';
+  let confirmDialogAction: (() => void) | null = null;
+
+  // Command palette state
+  let showCommandPalette = false;
+
+  // Shortcuts help state
+  let showShortcutsHelp = false;
+
+  // About dialog state
+  let showAboutDialog = false;
+
+  // Find & Replace dialog state
+  let showFindReplaceDialog = false;
+
+  // Story Metadata Editor state
+  let showMetadataEditor = false;
+
+  // Settings dialog state
+  let showSettings = false;
+
+  // Helper to show confirm dialog
+  function showConfirm(
+    title: string,
+    message: string,
+    action: () => void,
+    variant: 'danger' | 'warning' | 'info' = 'info'
+  ) {
+    confirmDialogTitle = title;
+    confirmDialogMessage = message;
+    confirmDialogAction = action;
+    confirmDialogVariant = variant;
+    showConfirmDialog = true;
+  }
+
+  function handleConfirmDialogConfirm() {
+    if (confirmDialogAction) {
+      confirmDialogAction();
+      confirmDialogAction = null;
+    }
+  }
 
   // Handle New Project
   function handleNewProject() {
     if ($currentStory) {
-      // TODO: Add unsaved changes warning
+      showConfirm(
+        'Unsaved Changes',
+        'You have a project open. Any unsaved changes will be lost. Continue?',
+        () => {
+          showNewDialog = true;
+          newProjectTitle = '';
+        },
+        'warning'
+      );
+    } else {
+      showNewDialog = true;
+      newProjectTitle = '';
     }
-    showNewDialog = true;
-    newProjectTitle = '';
   }
 
   function confirmNewProject(event: CustomEvent<{ value: string }>) {
@@ -42,15 +112,47 @@
 
   // Handle Open Project
   async function handleOpenProject() {
-    if ($currentStory) {
-      // TODO: Add unsaved changes warning
-    }
+    const openProject = async () => {
+      try {
+        isLoading = true;
+        loadingMessage = 'Opening project...';
 
-    const result = await openProjectFile();
-    if (result) {
-      projectActions.loadProject(result.data, result.handle.name);
-      fileHandle = result.handle;
+        const result = await openProjectFile();
+        if (result) {
+          projectActions.loadProject(result.data, result.handle.name);
+          fileHandle = result.handle;
+
+          // Add to recent files
+          addRecentFile({
+            name: result.handle.name,
+            storyTitle: result.data.metadata?.title || result.handle.name,
+          });
+        }
+      } finally {
+        isLoading = false;
+        loadingMessage = '';
+      }
+    };
+
+    if ($currentStory) {
+      showConfirm(
+        'Unsaved Changes',
+        'Opening a new project will close the current one. Any unsaved changes will be lost. Continue?',
+        openProject,
+        'warning'
+      );
+    } else {
+      await openProject();
     }
+  }
+
+  // Handle Open Recent File
+  async function handleOpenRecent(file: RecentFile) {
+    // For now, we can't directly open from file system path
+    // So we'll just show the regular open dialog
+    // This is a limitation of the File System Access API
+    alert(`Please use File > Open to open "${file.name}"\n\nRecent files shows what you've opened before, but can't automatically reopen them due to browser security restrictions.`);
+    handleOpenProject();
   }
 
   // Handle Save Project
@@ -58,10 +160,20 @@
     const data = projectActions.saveProject();
     if (!data) return;
 
-    const result = await saveProjectFile(data, fileHandle || undefined);
-    if (result) {
-      fileHandle = result;
-      currentFilePath.set(result.name);
+    try {
+      isLoading = true;
+      loadingMessage = 'Saving project...';
+
+      const result = await saveProjectFile(data, fileHandle || undefined);
+      if (result) {
+        fileHandle = result;
+        currentFilePath.set(result.name);
+        // Clear auto-save after successful manual save
+        clearLocalStorage();
+      }
+    } finally {
+      isLoading = false;
+      loadingMessage = '';
     }
   }
 
@@ -70,10 +182,20 @@
     const data = projectActions.saveProject();
     if (!data) return;
 
-    const result = await saveProjectFileAs(data);
-    if (result) {
-      fileHandle = result;
-      currentFilePath.set(result.name);
+    try {
+      isLoading = true;
+      loadingMessage = 'Saving project as...';
+
+      const result = await saveProjectFileAs(data);
+      if (result) {
+        fileHandle = result;
+        currentFilePath.set(result.name);
+        // Clear auto-save after successful manual save
+        clearLocalStorage();
+      }
+    } finally {
+      isLoading = false;
+      loadingMessage = '';
     }
   }
 
@@ -94,13 +216,227 @@
     fileHandle = null; // Clear file handle since this is an imported story
   }
 
+  // Handle Load Example
+  async function handleLoadExample() {
+    try {
+      isLoading = true;
+      loadingMessage = 'Loading example story...';
+
+      const response = await fetch('/examples/the-cave.json');
+      if (!response.ok) {
+        throw new Error('Failed to load example story');
+      }
+      const data = await response.json();
+      projectActions.loadProject(data, 'The Cave (Example)');
+      fileHandle = null; // Clear file handle since this is an example
+    } catch (error) {
+      console.error('Error loading example:', error);
+      alert('Failed to load example story. Please try again.');
+    } finally {
+      isLoading = false;
+      loadingMessage = '';
+    }
+  }
+
+  // Handle Find & Replace
+  function handleFind(event: CustomEvent) {
+    const { searchTerm, caseSensitive, matchWholeWord, searchIn } = event.detail;
+    const passages = $passageList;
+    const flags = caseSensitive ? '' : 'i';
+    const pattern = matchWholeWord ? `\\b${searchTerm}\\b` : searchTerm;
+    const regex = new RegExp(pattern, flags);
+
+    for (const passage of passages) {
+      let found = false;
+      if (searchIn === 'content' || searchIn === 'both') {
+        if (regex.test(passage.content)) {
+          found = true;
+        }
+      }
+      if (searchIn === 'titles' || searchIn === 'both') {
+        if (regex.test(passage.title)) {
+          found = true;
+        }
+      }
+      if (found) {
+        selectedPassageId.set(passage.id);
+        showFindReplaceDialog = false;
+        return;
+      }
+    }
+    alert('No matches found');
+  }
+
+  function handleReplace(event: CustomEvent) {
+    const { searchTerm, replaceTerm, caseSensitive, matchWholeWord, searchIn } = event.detail;
+    const currentPassage = $passageList.find(p => p.id === $selectedPassageId);
+    if (!currentPassage) {
+      alert('No passage selected');
+      return;
+    }
+
+    const flags = caseSensitive ? '' : 'i';
+    const pattern = matchWholeWord ? `\\b${searchTerm}\\b` : searchTerm;
+    const regex = new RegExp(pattern, flags);
+
+    let replaced = false;
+    if (searchIn === 'content' || searchIn === 'both') {
+      if (regex.test(currentPassage.content)) {
+        projectActions.updatePassage(currentPassage.id, {
+          content: currentPassage.content.replace(regex, replaceTerm)
+        });
+        replaced = true;
+      }
+    }
+    if (searchIn === 'titles' || searchIn === 'both') {
+      if (regex.test(currentPassage.title)) {
+        projectActions.updatePassage(currentPassage.id, {
+          title: currentPassage.title.replace(regex, replaceTerm)
+        });
+        replaced = true;
+      }
+    }
+
+    if (replaced) {
+      showFindReplaceDialog = false;
+    } else {
+      alert('No match found in selected passage');
+    }
+  }
+
+  function handleReplaceAll(event: CustomEvent) {
+    const { searchTerm, replaceTerm, caseSensitive, matchWholeWord, searchIn } = event.detail;
+    const passages = $passageList;
+    const flags = caseSensitive ? 'g' : 'gi';
+    const pattern = matchWholeWord ? `\\b${searchTerm}\\b` : searchTerm;
+    const regex = new RegExp(pattern, flags);
+
+    let count = 0;
+    for (const passage of passages) {
+      let updated = false;
+      const updates: any = {};
+
+      if (searchIn === 'content' || searchIn === 'both') {
+        if (regex.test(passage.content)) {
+          updates.content = passage.content.replace(regex, replaceTerm);
+          updated = true;
+        }
+      }
+      if (searchIn === 'titles' || searchIn === 'both') {
+        if (regex.test(passage.title)) {
+          updates.title = passage.title.replace(regex, replaceTerm);
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        projectActions.updatePassage(passage.id, updates);
+        count++;
+      }
+    }
+
+    showFindReplaceDialog = false;
+    alert(`Replaced in ${count} passage${count !== 1 ? 's' : ''}`);
+  }
+
+  // Handle Validation
+  function handleValidation() {
+    if ($currentStory) {
+      validationActions.validateNow();
+      // Open validation panel if not already visible
+      if (!$panelVisibility.validation) {
+        viewPreferencesActions.togglePanel('validation');
+      }
+    }
+  }
+
+  function handleCheckLinks() {
+    if ($currentStory) {
+      validationActions.validateNow();
+      // Open validation panel to see results
+      if (!$panelVisibility.validation) {
+        viewPreferencesActions.togglePanel('validation');
+      }
+    }
+  }
+
+  // Passage templates
+  const passageTemplates = {
+    blank: { title: 'New Passage', content: '' },
+    choice: {
+      title: 'Choice Passage',
+      content: 'What do you do?\n\n[[Option 1]]\n[[Option 2]]\n[[Option 3]]'
+    },
+    conversation: {
+      title: 'Conversation',
+      content: '"Hello there," says the stranger.\n\n[[Ask who they are]]\n[[Say hello back]]\n[[Walk away]]'
+    },
+    description: {
+      title: 'Description',
+      content: 'You find yourself in a new location. [Describe the setting here]\n\n[[Continue]]'
+    },
+    checkpoint: {
+      title: 'Checkpoint',
+      content: '<<set $chapter = 2>>\n\nChapter 2: [Title]\n\n[Story continues...]\n\n[[Next]]'
+    },
+    ending: {
+      title: 'Ending',
+      content: 'THE END\n\n[Describe how the story concludes]\n\n[[Start Over->Start]]'
+    }
+  };
+
   // Handle Add Passage
   function handleAddPassage() {
     if (!$currentStory) return;
 
-    const title = prompt('Enter passage title:');
-    if (title !== null) {
-      projectActions.addPassage(title.trim() || undefined);
+    // Show template selection
+    const templateChoice = prompt(
+      'Choose a template:\n\n' +
+      '1 - Blank passage\n' +
+      '2 - Choice passage (multiple options)\n' +
+      '3 - Conversation passage\n' +
+      '4 - Description passage\n' +
+      '5 - Checkpoint passage (with variable)\n' +
+      '6 - Ending passage\n\n' +
+      'Enter 1-6 or custom title:'
+    );
+
+    if (templateChoice === null) return;
+
+    let template = passageTemplates.blank;
+    let customTitle = '';
+
+    switch (templateChoice.trim()) {
+      case '1':
+        template = passageTemplates.blank;
+        break;
+      case '2':
+        template = passageTemplates.choice;
+        break;
+      case '3':
+        template = passageTemplates.conversation;
+        break;
+      case '4':
+        template = passageTemplates.description;
+        break;
+      case '5':
+        template = passageTemplates.checkpoint;
+        break;
+      case '6':
+        template = passageTemplates.ending;
+        break;
+      default:
+        // User entered a custom title
+        template = passageTemplates.blank;
+        customTitle = templateChoice;
+    }
+
+    const title = customTitle || template.title;
+    const passage = projectActions.addPassage(title);
+
+    // Set template content if not blank
+    if (template.content && passage) {
+      projectActions.updatePassage(passage.id, { content: template.content });
     }
   }
 
@@ -112,13 +448,17 @@
     if (!passage) return;
 
     const isStart = $currentStory.startPassage === passageId;
-    const confirmMessage = isStart
-      ? `"${passage.title}" is the start passage. Delete anyway?`
-      : `Delete passage "${passage.title}"?`;
+    const title = isStart ? 'Delete Start Passage?' : 'Delete Passage?';
+    const message = isStart
+      ? `"${passage.title}" is the start passage. Deleting it will break story playback unless you set a new start passage. Delete anyway?`
+      : `Are you sure you want to delete "${passage.title}"? This action cannot be undone.`;
 
-    if (confirm(confirmMessage)) {
-      projectActions.deletePassage(passageId);
-    }
+    showConfirm(
+      title,
+      message,
+      () => projectActions.deletePassage(passageId),
+      'danger'
+    );
   }
 
   // Navigate to next/previous passage
@@ -153,7 +493,11 @@
     // Don't intercept arrow keys if user is typing in an input/textarea
     const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
 
-    if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n') {
+    // Command palette (Ctrl+K)
+    if (ctrlKey && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      showCommandPalette = true;
+    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n') {
       e.preventDefault();
       handleAddPassage();
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
@@ -174,6 +518,17 @@
         handleSaveAs();
       } else {
         handleSaveProject();
+      }
+    } else if (ctrlKey && e.key.toLowerCase() === 'e') {
+      e.preventDefault();
+      handleExport();
+    } else if (ctrlKey && e.key.toLowerCase() === 'i') {
+      e.preventDefault();
+      handleImport();
+    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      if ($currentStory) {
+        showFindReplaceDialog = true;
       }
     } else if (ctrlKey && e.key.toLowerCase() === 'f') {
       e.preventDefault();
@@ -205,59 +560,147 @@
     }
   }
 
+  // Command palette event handlers
+  function handleCommandPaletteEvent(event: CustomEvent) {
+    const { type, detail } = event;
+    switch (type) {
+      case 'new': handleNewProject(); break;
+      case 'open': handleOpenProject(); break;
+      case 'save': handleSaveProject(); break;
+      case 'saveas': handleSaveAs(); break;
+      case 'export': handleExport(); break;
+      case 'import': handleImport(); break;
+      case 'undo': projectActions.undo(); break;
+      case 'redo': projectActions.redo(); break;
+      case 'addpassage': handleAddPassage(); break;
+      case 'view': viewPreferencesActions.setViewMode(detail.mode); break;
+      case 'focus': viewPreferencesActions.toggleFocusMode(); break;
+      case 'shortcuts': showShortcutsHelp = true; break;
+      case 'example': handleLoadExample(); break;
+    }
+  }
+
+  // Auto-save: Start/stop based on story existence
+  $: if ($currentStory) {
+    autoSaveManager.start(() => {
+      if ($currentStory) {
+        saveToLocalStorage($currentStory);
+      }
+    });
+  } else {
+    autoSaveManager.stop();
+  }
+
+  // Handle auto-save recovery
+  function handleAutoSaveRecover(data: AutoSaveData) {
+    projectActions.loadProject(data.story, data.storyTitle);
+    fileHandle = null; // Clear file handle since this is recovered data
+    clearLocalStorage(); // Clear auto-save after successful recovery
+  }
+
+  function handleAutoSaveDismiss() {
+    // Just close the modal, localStorage already cleared by component
+  }
+
   onMount(() => {
-    console.log('Whisker Visual Editor - Phase 7: Live Preview & Testing');
+    console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
+
+    // Initialize theme
+    theme.subscribe(t => {
+      applyTheme(t);
+    });
+
+    // Initialize font size
+    const FONT_SIZE_KEY = 'whisker-font-size';
+    const FONT_SIZES = { small: 12, medium: 14, large: 16, 'extra-large': 18 };
+    try {
+      const savedSize = localStorage.getItem(FONT_SIZE_KEY) as keyof typeof FONT_SIZES;
+      if (savedSize && FONT_SIZES[savedSize]) {
+        document.documentElement.style.fontSize = `${FONT_SIZES[savedSize]}px`;
+      } else {
+        document.documentElement.style.fontSize = `${FONT_SIZES.medium}px`;
+      }
+    } catch (error) {
+      console.error('Failed to load font size:', error);
+      document.documentElement.style.fontSize = `${FONT_SIZES.medium}px`;
+    }
+
+    // Browser close warning for unsaved changes
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if ($currentStory && $unsavedChanges) {
+        e.preventDefault();
+        e.returnValue = ''; // Modern browsers require this
+        return ''; // For older browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup auto-save and event listener on unmount
+    return () => {
+      autoSaveManager.stop();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   });
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="flex flex-col h-screen bg-white">
-  <MenuBar
-    onNew={handleNewProject}
-    onOpen={handleOpenProject}
-    onSave={handleSaveProject}
-    onSaveAs={handleSaveAs}
-  />
+<div class="flex flex-col h-screen bg-white dark:bg-gray-900">
+  {#if !$focusMode}
+    <MenuBar
+      onNew={handleNewProject}
+      onOpen={handleOpenProject}
+      onSave={handleSaveProject}
+      onSaveAs={handleSaveAs}
+      onOpenRecent={handleOpenRecent}
+      onStoryInfo={() => showMetadataEditor = true}
+      onSettings={() => showSettings = true}
+      onFind={() => showFindReplaceDialog = true}
+      onValidate={handleValidation}
+      onCheckLinks={handleCheckLinks}
+      onAbout={() => showAboutDialog = true}
+    />
 
-  <Toolbar
-    onNew={handleNewProject}
-    onOpen={handleOpenProject}
-    onSave={handleSaveProject}
-    onExport={handleExport}
-    onImport={handleImport}
-    onAddPassage={handleAddPassage}
-  />
+    <Toolbar
+      onNew={handleNewProject}
+      onOpen={handleOpenProject}
+      onSave={handleSaveProject}
+      onExport={handleExport}
+      onImport={handleImport}
+      onAddPassage={handleAddPassage}
+    />
+  {/if}
 
   <!-- View Mode Switcher & Panel Controls -->
   {#if $currentStory}
-    <div class="bg-gray-100 border-b border-gray-300 px-4 py-2 flex items-center gap-4">
+    <div class="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 px-4 py-2 flex items-center gap-4">
       <!-- View Mode Buttons -->
       <div class="flex items-center gap-2">
-        <span class="text-sm font-medium text-gray-700">View:</span>
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
         <button
-          class="px-3 py-1 text-sm rounded {$viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+          class="px-3 py-1 text-sm rounded {$viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('list')}
           title="List View (Ctrl+1)"
         >
           📋 List
         </button>
         <button
-          class="px-3 py-1 text-sm rounded {$viewMode === 'graph' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+          class="px-3 py-1 text-sm rounded {$viewMode === 'graph' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('graph')}
           title="Graph View (Ctrl+2)"
         >
           🗺️ Graph
         </button>
         <button
-          class="px-3 py-1 text-sm rounded {$viewMode === 'split' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+          class="px-3 py-1 text-sm rounded {$viewMode === 'split' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('split')}
           title="Split View (Ctrl+3)"
         >
           ⚡ Split
         </button>
         <button
-          class="px-3 py-1 text-sm rounded {$viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
+          class="px-3 py-1 text-sm rounded {$viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('preview')}
           title="Preview Mode (Ctrl+4)"
         >
@@ -266,15 +709,15 @@
       </div>
 
       <!-- Divider -->
-      <div class="h-6 w-px bg-gray-300"></div>
+      <div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
 
       <!-- Panel Toggles (only show in list or split view) -->
       {#if $viewMode === 'list' || $viewMode === 'split'}
         <div class="flex items-center gap-2">
-          <span class="text-sm font-medium text-gray-700">Panels:</span>
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Panels:</span>
           {#if $viewMode === 'list'}
             <button
-              class="px-2 py-1 text-xs rounded {$panelVisibility.passageList ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 hover:bg-gray-100'}"
+              class="px-2 py-1 text-xs rounded {$panelVisibility.passageList ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
               on:click={() => viewPreferencesActions.togglePanel('passageList')}
               title="Toggle Passage List"
             >
@@ -282,21 +725,21 @@
             </button>
           {/if}
           <button
-            class="px-2 py-1 text-xs rounded {$panelVisibility.properties ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 hover:bg-gray-100'}"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.properties ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('properties')}
             title="Toggle Properties Panel"
           >
             📝 Properties
           </button>
           <button
-            class="px-2 py-1 text-xs rounded {$panelVisibility.variables ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 hover:bg-gray-100'}"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.variables ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('variables')}
             title="Toggle Variables Panel"
           >
             🔢 Variables
           </button>
           <button
-            class="px-2 py-1 text-xs rounded {$panelVisibility.validation ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'bg-white text-gray-600 hover:bg-gray-100'}"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.validation ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('validation')}
             title="Toggle Validation Panel"
           >
@@ -348,24 +791,29 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager & Validation -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation) && !$focusMode}
-            <div class="w-80 flex-shrink-0 flex flex-col border-l border-gray-300">
+          <!-- Right: Variable Manager, Validation & Statistics -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
+            <div class="w-80 flex-shrink-0 flex flex-col border-l border-gray-300 dark:border-gray-700">
               {#if $panelVisibility.variables}
-                <div class="h-72 border-b border-gray-300">
+                <div class="h-72 border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.statistics}
+                <div class="flex-1 min-h-0">
+                  <StoryStatisticsPanel />
                 </div>
               {/if}
             </div>
           {/if}
 
           <!-- Show message if all panels hidden -->
-          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation}
+          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation && !$panelVisibility.statistics}
             <div class="flex-1 flex items-center justify-center text-gray-400">
               <div class="text-center">
                 <p class="text-lg mb-2">All panels hidden</p>
@@ -387,22 +835,27 @@
             <GraphView />
           </div>
 
-          <!-- Right: Properties + Variables + Validation -->
-          {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation) && !$focusMode}
-            <div class="w-96 flex-shrink-0 flex flex-col border-l border-gray-300">
+          <!-- Right: Properties + Variables + Validation + Statistics -->
+          {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
+            <div class="w-96 flex-shrink-0 flex flex-col border-l border-gray-300 dark:border-gray-700">
               {#if $panelVisibility.properties}
-                <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation) ? 'border-b border-gray-300' : ''}">
+                <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <PropertiesPanel />
                 </div>
               {/if}
               {#if $panelVisibility.variables}
-                <div class="h-64 {$panelVisibility.validation ? 'border-b border-gray-300' : ''}">
+                <div class="h-64 {($panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <VariableManager />
                 </div>
               {/if}
               {#if $panelVisibility.validation}
-                <div class="h-80">
+                <div class="h-80 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.statistics}
+                <div class="flex-1 min-h-0">
+                  <StoryStatisticsPanel />
                 </div>
               {/if}
             </div>
@@ -416,30 +869,111 @@
       {/if}
     {:else}
       <!-- Welcome screen -->
-      <div class="flex-1 flex items-center justify-center">
-        <div class="text-center text-gray-400">
-          <div class="text-6xl mb-4">📝</div>
-          <h2 class="text-2xl font-bold mb-4">Welcome to Whisker Visual Editor</h2>
-          <p class="mb-6">Create a new project or open an existing one to get started</p>
-          <div class="flex gap-4 justify-center">
+      <div class="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-blue-950 p-8">
+        <div class="max-w-4xl w-full">
+          <!-- Hero Section -->
+          <div class="text-center mb-12">
+            <div class="text-7xl mb-6 animate-bounce-slow">✍️</div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+              Welcome to Whisker Visual Editor
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+              Create interactive narrative games with an intuitive visual workflow
+            </p>
+
+            <!-- Primary Actions -->
+            <div class="flex gap-4 justify-center mb-6">
+              <button
+                class="px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-lg"
+                on:click={handleNewProject}
+              >
+                <span class="text-2xl mr-2">✨</span>
+                New Project
+              </button>
+              <button
+                class="px-8 py-4 bg-gray-700 dark:bg-gray-600 text-white rounded-xl hover:bg-gray-800 dark:hover:bg-gray-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold text-lg"
+                on:click={handleOpenProject}
+              >
+                <span class="text-2xl mr-2">📂</span>
+                Open Project
+              </button>
+            </div>
+
+            <!-- Example Story -->
             <button
-              class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-lg"
-              on:click={handleNewProject}
+              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline inline-flex items-center gap-2"
+              on:click={handleLoadExample}
             >
-              📄 New Project
-            </button>
-            <button
-              class="px-6 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-lg"
-              on:click={handleOpenProject}
-            >
-              📁 Open Project
+              <span>📚</span>
+              <span>Try the interactive example: "The Cave"</span>
             </button>
           </div>
-          <div class="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg max-w-md mx-auto">
-            <p class="text-sm text-green-800">
-              <strong>Phase 4 Complete!</strong><br />
-              Advanced search and filtering across passages, tags, and types with unified experience in list and graph views.
-            </p>
+
+          <!-- Features Grid -->
+          <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-700">
+              <div class="text-3xl mb-3">🎨</div>
+              <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">Visual Editor</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                Build your story with graph and list views. See connections at a glance.
+              </p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-700">
+              <div class="text-3xl mb-3">⚡</div>
+              <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">Fast & Accessible</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                23 keyboard shortcuts. WCAG 2.1 compliant. Optimized for 1000+ passages.
+              </p>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-700">
+              <div class="text-3xl mb-3">🔍</div>
+              <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">Built-in Testing</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-300">
+                Real-time validation, quality metrics, and test scenarios.
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Tips -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-md border border-blue-200 dark:border-blue-800 mb-6">
+            <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <span>💡</span>
+              <span>Quick Tips</span>
+            </h3>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 dark:text-blue-400">•</span>
+                <span class="text-gray-700 dark:text-gray-300">
+                  Press <kbd class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">Ctrl+K</kbd> for command palette
+                </span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 dark:text-blue-400">•</span>
+                <span class="text-gray-700 dark:text-gray-300">
+                  Your work auto-saves every 30 seconds
+                </span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 dark:text-blue-400">•</span>
+                <span class="text-gray-700 dark:text-gray-300">
+                  Press <kbd class="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded">?</kbd> to see all keyboard shortcuts
+                </span>
+              </div>
+              <div class="flex items-start gap-2">
+                <span class="text-blue-500 dark:text-blue-400">•</span>
+                <span class="text-gray-700 dark:text-gray-300">
+                  Export to HTML, JSON, or Markdown
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Documentation Links -->
+          <div class="text-center text-sm text-gray-600 dark:text-gray-400">
+            <span>Need help? Check out the </span>
+            <a href="docs/GETTING_STARTED.md" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">Getting Started Guide</a>
+            <span> or </span>
+            <a href="docs/USER_GUIDE.md" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">User Guide</a>
           </div>
         </div>
       </div>
@@ -467,3 +1001,56 @@
   bind:show={showImportDialog}
   on:import={handleImportComplete}
 />
+
+<KeyboardShortcutsHelp />
+
+<AutoSaveRecovery
+  onRecover={handleAutoSaveRecover}
+  onDismiss={handleAutoSaveDismiss}
+/>
+
+<ConfirmDialog
+  bind:show={showConfirmDialog}
+  title={confirmDialogTitle}
+  message={confirmDialogMessage}
+  variant={confirmDialogVariant}
+  on:confirm={handleConfirmDialogConfirm}
+/>
+
+<CommandPalette
+  bind:show={showCommandPalette}
+  on:new={() => handleCommandPaletteEvent(new CustomEvent('new'))}
+  on:open={() => handleCommandPaletteEvent(new CustomEvent('open'))}
+  on:save={() => handleCommandPaletteEvent(new CustomEvent('save'))}
+  on:saveas={() => handleCommandPaletteEvent(new CustomEvent('saveas'))}
+  on:export={() => handleCommandPaletteEvent(new CustomEvent('export'))}
+  on:import={() => handleCommandPaletteEvent(new CustomEvent('import'))}
+  on:undo={() => handleCommandPaletteEvent(new CustomEvent('undo'))}
+  on:redo={() => handleCommandPaletteEvent(new CustomEvent('redo'))}
+  on:addpassage={() => handleCommandPaletteEvent(new CustomEvent('addpassage'))}
+  on:view={(e) => handleCommandPaletteEvent(new CustomEvent('view', { detail: e.detail }))}
+  on:focus={() => handleCommandPaletteEvent(new CustomEvent('focus'))}
+  on:shortcuts={() => { showShortcutsHelp = true; }}
+  on:example={() => handleCommandPaletteEvent(new CustomEvent('example'))}
+/>
+
+<AboutDialog bind:show={showAboutDialog} />
+
+<FindReplaceDialog
+  bind:show={showFindReplaceDialog}
+  on:find={handleFind}
+  on:replace={handleReplace}
+  on:replaceAll={handleReplaceAll}
+/>
+
+<StoryMetadataEditor bind:show={showMetadataEditor} />
+
+<SettingsDialog bind:show={showSettings} />
+
+{#if isLoading}
+  <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8">
+      <LoadingSpinner message={loadingMessage} size="large" />
+    </div>
+  </div>
+{/if}

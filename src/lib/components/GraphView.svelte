@@ -12,7 +12,7 @@
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
   import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
-  import { filteredPassages, hasActiveFilters } from '../stores/filterStore';
+  import { filteredPassages, hasActiveFilters, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
   import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
@@ -25,6 +25,7 @@
   } from '../utils/graphLayout';
   import { validationResult, validationActions } from '../stores/validationStore';
   import type { ValidationIssue } from '../validation/types';
+  import { prefersReducedMotion } from '../utils/motion';
 
   // Get Svelte Flow instance for programmatic control
   const { fitBounds, zoomTo } = useSvelteFlow();
@@ -43,6 +44,11 @@
   const nodes = writable<Node[]>([]);
   const edges = writable<Edge[]>([]);
   let layoutDirection: 'TB' | 'LR' = 'TB';
+  let currentZoom = 1; // Track current zoom level
+
+  // Debounce timer for updateGraph
+  let updateGraphTimer: ReturnType<typeof setTimeout> | null = null;
+  const UPDATE_GRAPH_DEBOUNCE_MS = 50; // 50ms debounce for graph updates
 
   // Convert story passages to flow nodes and edges
   function updateGraph() {
@@ -77,11 +83,11 @@
     // Get filtered passage IDs for quick lookup
     const filteredIds = new Set($filteredPassages.map(p => p.id));
 
-    // Create nodes from passages
+    // Create nodes from passages (using cached metadata)
     const flowNodes: Node[] = Array.from($currentStory.passages.values()).map((passage) => {
       const isStart = $currentStory.startPassage === passage.id;
-      const isOrphan = !isStart && !hasIncomingConnections(passage.id);
-      const isDead = passage.choices.length === 0;
+      const isOrphan = isOrphanPassage(passage, $currentStory);
+      const isDead = isDeadEndPassage(passage, $currentStory);
       const isFiltered = filteredIds.has(passage.id);
       const issues = passageIssues.get(passage.id) || [];
 
@@ -118,7 +124,7 @@
             target: choice.target,
             sourceHandle: `choice-${choice.id}`,
             type: 'connection',
-            animated: !!choice.condition,
+            animated: !!choice.condition && !$prefersReducedMotion, // Respect motion preferences
             hidden: sourceHidden || targetHidden,
             data: {
               choiceText: choice.text,
@@ -136,18 +142,6 @@
 
     nodes.set(flowNodes);
     edges.set(flowEdges);
-  }
-
-  // Check if a passage has incoming connections
-  function hasIncomingConnections(passageId: string): boolean {
-    if (!$currentStory) return false;
-
-    for (const passage of $currentStory.passages.values()) {
-      if (passage.choices.some((choice) => choice.target === passageId)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // Apply auto-layout
@@ -356,14 +350,24 @@
     }
   }
 
-  // React to story changes and filter changes
-  $: if ($currentStory) {
-    updateGraph();
+  // Debounced graph update for better performance
+  function debouncedUpdateGraph() {
+    if (updateGraphTimer) {
+      clearTimeout(updateGraphTimer);
+    }
+    updateGraphTimer = setTimeout(() => {
+      updateGraph();
+    }, UPDATE_GRAPH_DEBOUNCE_MS);
   }
 
-  // Update graph when filters change
+  // React to story changes (debounced for better performance with rapid changes)
+  $: if ($currentStory) {
+    debouncedUpdateGraph();
+  }
+
+  // Update graph when filters change (debounced)
   $: if ($filteredPassages || $hasActiveFilters !== undefined) {
-    updateGraph();
+    debouncedUpdateGraph();
   }
 
   // Zoom to selected passage
@@ -386,23 +390,32 @@
         height: nodeHeight + (padding * 2),
       },
       {
-        duration: 400,
+        duration: $prefersReducedMotion ? 0 : 400, // Respect motion preferences
         padding: 0.2,
       }
     );
   }
 
-  // Highlight selected node
+  // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
     const selectedId = $selectedPassageId;
 
-    nodes.set(
-      currentNodes.map((node) => ({
-        ...node,
-        selected: node.id === selectedId,
-      }))
-    );
+    // Only update if selection actually changed
+    const currentlySelected = currentNodes.find(n => n.selected)?.id;
+    if (currentlySelected !== selectedId) {
+      nodes.update(nodes =>
+        nodes.map((node) => {
+          // Only create new object if selection state changes
+          if (node.id === selectedId && !node.selected) {
+            return { ...node, selected: true };
+          } else if (node.id === currentlySelected && node.selected) {
+            return { ...node, selected: false };
+          }
+          return node;
+        })
+      );
+    }
   }
 </script>
 
@@ -506,6 +519,11 @@
         on:nodeclick={handleNodeClick}
         on:nodedoubleclick={handleNodeDoubleClick}
         on:connect={handleConnect}
+        on:move={(e) => {
+          if (e.detail.viewport) {
+            currentZoom = e.detail.viewport.zoom;
+          }
+        }}
       >
         <Background />
         <Controls />
@@ -518,6 +536,12 @@
           }}
         />
       </SvelteFlow>
+
+      <!-- Zoom Level Indicator -->
+      <div class="absolute bottom-4 left-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-1 shadow-md text-sm font-mono">
+        <span class="text-gray-600 dark:text-gray-400">Zoom:</span>
+        <span class="ml-1 font-semibold text-gray-900 dark:text-gray-100">{Math.round(currentZoom * 100)}%</span>
+      </div>
     {:else}
       <div class="flex items-center justify-center h-full text-gray-400">
         <div class="text-center">

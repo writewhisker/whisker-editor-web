@@ -1,25 +1,77 @@
 <script lang="ts">
-  import { currentStory, selectedPassage, selectedPassageId } from '../stores/projectStore';
+  import { currentStory, selectedPassage, selectedPassageId, projectActions } from '../stores/projectStore';
   import { Choice } from '../models/Choice';
   import { tagActions } from '../stores/tagStore';
   import TagInput from './TagInput.svelte';
 
   $: passage = $selectedPassage;
 
+  let titleWarning = '';
+  let originalTitle = '';
+
+  // Track original title when passage changes
+  $: if (passage) {
+    originalTitle = passage.title;
+    titleWarning = '';
+  }
+
   function updatePassageTitle(event: Event) {
     const target = event.target as HTMLInputElement;
     if (passage) {
-      passage.title = target.value;
-      currentStory.update(s => s);
+      const newTitle = target.value;
+
+      // Check for duplicates (case-insensitive)
+      if (newTitle !== originalTitle) {
+        const duplicate = $currentStory && Array.from($currentStory.passages.values()).find(
+          p => p.id !== passage.id && p.title.toLowerCase() === newTitle.toLowerCase()
+        );
+
+        if (duplicate) {
+          titleWarning = `A passage named "${duplicate.title}" already exists`;
+          // Don't update, keep showing the typed value but with warning
+          passage.title = newTitle;
+          currentStory.update(s => s);
+        } else {
+          titleWarning = '';
+          projectActions.updatePassage(passage.id, { title: newTitle });
+          originalTitle = newTitle;
+        }
+      } else {
+        titleWarning = '';
+        passage.title = newTitle;
+        currentStory.update(s => s);
+      }
     }
   }
+
+  let contentTextarea: HTMLTextAreaElement;
 
   function updatePassageContent(event: Event) {
     const target = event.target as HTMLTextAreaElement;
     if (passage) {
-      passage.content = target.value;
-      currentStory.update(s => s);
+      projectActions.updatePassage(passage.id, { content: target.value });
     }
+  }
+
+  function insertSnippet(snippet: string) {
+    if (!snippet || !passage || !contentTextarea) return;
+
+    const start = contentTextarea.selectionStart;
+    const end = contentTextarea.selectionEnd;
+    const content = passage.content;
+
+    // Insert snippet at cursor position
+    const newContent = content.substring(0, start) + snippet + content.substring(end);
+    projectActions.updatePassage(passage.id, { content: newContent });
+
+    // Reset select to trigger UI update
+    setTimeout(() => {
+      if (contentTextarea) {
+        contentTextarea.focus();
+        contentTextarea.selectionStart = start + snippet.length;
+        contentTextarea.selectionEnd = start + snippet.length;
+      }
+    }, 0);
   }
 
   function addChoice() {
@@ -120,8 +172,14 @@
           type="text"
           value={passage.title}
           on:input={updatePassageTitle}
-          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 {titleWarning ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'}"
         />
+        {#if titleWarning}
+          <div class="mt-1 text-sm text-red-600 flex items-center gap-1">
+            <span>⚠️</span>
+            <span>{titleWarning}</span>
+          </div>
+        {/if}
       </div>
 
       <!-- ID (read-only) -->
@@ -135,6 +193,34 @@
           readonly
           class="w-full px-3 py-2 border border-gray-300 rounded bg-gray-50 text-gray-600 text-sm"
         />
+      </div>
+
+      <!-- Timestamps (read-only) -->
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Created
+          </label>
+          <input
+            type="text"
+            value={new Date(passage.created).toLocaleString()}
+            readonly
+            class="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-gray-600 text-xs"
+            title={passage.created}
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Modified
+          </label>
+          <input
+            type="text"
+            value={new Date(passage.modified).toLocaleString()}
+            readonly
+            class="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-gray-600 text-xs"
+            title={passage.modified}
+          />
+        </div>
       </div>
 
       <!-- Tags -->
@@ -176,15 +262,32 @@
 
       <!-- Content -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
-          Content
-        </label>
+        <div class="flex justify-between items-center mb-1">
+          <label class="block text-sm font-medium text-gray-700">
+            Content
+          </label>
+          <select
+            class="text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200"
+            on:change={(e) => insertSnippet(e.currentTarget.value)}
+          >
+            <option value="">Insert Snippet...</option>
+            <option value="[[Choice Text]]">Link [[Choice Text]]</option>
+            <option value="[[Choice Text->Target]]">Link with target [[Text->Target]]</option>
+            <option value='<<set $variable = "value">>'>Set variable</option>
+            <option value="<<if $variable>>...<<endif>>">If condition</option>
+            <option value="<<if $var>>...<<else>>...<<endif>>">If-else condition</option>
+            <option value='<<print $variable>>'>Print variable</option>
+            <option value="/* Comment */">Comment</option>
+          </select>
+        </div>
         <textarea
+          bind:this={contentTextarea}
           value={passage.content}
           on:input={updatePassageContent}
           rows="10"
-          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           placeholder="Write your passage content here..."
+          spellcheck="true"
         ></textarea>
       </div>
 

@@ -93,9 +93,28 @@ export const projectActions = {
   },
 
   // Passage operations
-  addPassage(title?: string) {
+  addPassage(title?: string): Passage | null {
+    let addedPassage: Passage | null = null;
     currentStory.update(story => {
       if (!story) return story;
+
+      // Check for duplicate titles
+      const requestedTitle = title || 'New Passage';
+      const existingPassage = Array.from(story.passages.values()).find(
+        p => p.title.toLowerCase() === requestedTitle.toLowerCase()
+      );
+
+      if (existingPassage) {
+        console.warn(`Warning: A passage with the title "${requestedTitle}" already exists. Creating with modified title.`);
+        // Auto-append number to make it unique
+        let counter = 2;
+        let uniqueTitle = `${requestedTitle} ${counter}`;
+        while (Array.from(story.passages.values()).some(p => p.title.toLowerCase() === uniqueTitle.toLowerCase())) {
+          counter++;
+          uniqueTitle = `${requestedTitle} ${counter}`;
+        }
+        title = uniqueTitle;
+      }
 
       // Save current state to history
       historyActions.pushState(story.serialize());
@@ -109,6 +128,52 @@ export const projectActions = {
       story.addPassage(passage);
       selectedPassageId.set(passage.id);
       unsavedChanges.set(true);
+      addedPassage = passage;
+
+      return story;
+    });
+    return addedPassage;
+  },
+
+  updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number } }>) {
+    currentStory.update(story => {
+      if (!story) return story;
+
+      const passage = story.getPassage(passageId);
+      if (!passage) return story;
+
+      // Check for duplicate title if title is being updated
+      if (updates.title !== undefined && updates.title !== passage.title) {
+        const existingPassage = Array.from(story.passages.values()).find(
+          p => p.id !== passageId && p.title.toLowerCase() === updates.title!.toLowerCase()
+        );
+
+        if (existingPassage) {
+          console.warn(`Warning: Cannot rename to "${updates.title}" - a passage with that title already exists.`);
+          // Don't apply the title update
+          delete updates.title;
+          // Still apply other updates
+          if (Object.keys(updates).length === 0) {
+            return story;
+          }
+        }
+      }
+
+      // Save current state to history only if there are updates to apply
+      if (Object.keys(updates).length > 0) {
+        historyActions.pushState(story.serialize());
+
+        // Apply updates
+        if (updates.title !== undefined) passage.title = updates.title;
+        if (updates.content !== undefined) passage.content = updates.content;
+        if (updates.tags !== undefined) passage.tags = updates.tags;
+        if (updates.position !== undefined) passage.position = updates.position;
+
+        // Update modified timestamp
+        passage.modified = new Date().toISOString();
+
+        unsavedChanges.set(true);
+      }
 
       return story;
     });

@@ -11,8 +11,11 @@ export class Passage {
   onEnterScript?: string;
   onExitScript?: string;
   tags: string[];
+  created: string;
+  modified: string;
 
   constructor(data?: Partial<PassageData>) {
+    const now = new Date().toISOString();
     this.id = data?.id || nanoid();
     this.title = data?.title || 'Untitled Passage';
     this.content = data?.content || '';
@@ -21,6 +24,8 @@ export class Passage {
     this.onEnterScript = data?.onEnterScript;
     this.onExitScript = data?.onExitScript;
     this.tags = data?.tags || [];
+    this.created = data?.created || now;
+    this.modified = data?.modified || now;
   }
 
   addChoice(choice?: Choice): Choice {
@@ -45,6 +50,8 @@ export class Passage {
       content: this.content,
       position: { ...this.position },
       choices: this.choices.map(c => c.serialize()),
+      created: this.created,
+      modified: this.modified,
     };
 
     if (this.onEnterScript) data.onEnterScript = this.onEnterScript;

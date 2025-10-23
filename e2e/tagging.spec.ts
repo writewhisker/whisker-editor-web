@@ -1,10 +1,34 @@
 import { test, expect } from '@playwright/test';
 
+// Helper to create a new project
+async function createNewProject(page: any) {
+  await page.goto('/');
+
+  // Wait for app to load
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+
+  // Click New Project button
+  const newProjectButton = page.locator('button:has-text("New Project")');
+  if (await newProjectButton.isVisible()) {
+    await newProjectButton.click();
+
+    // Fill in project details
+    await page.fill('input[placeholder*="My Story"], input[value="My Story"]', 'Test Story');
+    await page.fill('input[placeholder*="Author"], textarea[placeholder*="Author"]', 'Test Author');
+
+    // Click OK/Create button
+    await page.click('button:has-text("OK"), button:has-text("Create")');
+  }
+
+  // Wait for Passages panel to appear
+  await page.waitForSelector('text=Passages', { timeout: 10000 });
+  await page.waitForTimeout(500);
+}
+
 test.describe('Tag Management', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    // Wait for app to load
-    await page.waitForSelector('text=Passages', { timeout: 5000 });
+    await createNewProject(page);
   });
 
   test('should add tag to passage using TagInput', async ({ page }) => {

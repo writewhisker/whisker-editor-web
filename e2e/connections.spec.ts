@@ -1,9 +1,34 @@
 import { test, expect } from '@playwright/test';
 
+// Helper to create a new project
+async function createNewProject(page: any) {
+  await page.goto('/');
+
+  // Wait for app to load
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(500);
+
+  // Click New Project button
+  const newProjectButton = page.locator('button:has-text("New Project")');
+  if (await newProjectButton.isVisible()) {
+    await newProjectButton.click();
+
+    // Fill in project details
+    await page.fill('input[placeholder*="My Story"], input[value="My Story"]', 'Test Story');
+    await page.fill('input[placeholder*="Author"], textarea[placeholder*="Author"]', 'Test Author');
+
+    // Click OK/Create button
+    await page.click('button:has-text("OK"), button:has-text("Create")');
+  }
+
+  // Wait for Passages panel to appear
+  await page.waitForSelector('text=Passages', { timeout: 10000 });
+  await page.waitForTimeout(500);
+}
+
 test.describe('Visual Connection Editing', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('text=Passages', { timeout: 5000 });
+    await createNewProject(page);
   });
 
   test('should create new passage and show it in list', async ({ page }) => {
@@ -79,10 +104,11 @@ test.describe('Visual Connection Editing', () => {
 });
 
 test.describe('Graph View', () => {
-  test('should switch to graph view', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForSelector('text=Passages');
+  test.beforeEach(async ({ page }) => {
+    await createNewProject(page);
+  });
 
+  test('should switch to graph view', async ({ page }) => {
     // Click graph tab/button if it exists
     const graphButton = page.locator('text=Graph').first();
     if (await graphButton.isVisible()) {
@@ -96,8 +122,6 @@ test.describe('Graph View', () => {
   });
 
   test('should show layout buttons in graph view', async ({ page }) => {
-    await page.goto('/');
-
     // Try to access graph view
     await page.click('text=Graph', { timeout: 1000 }).catch(() => {});
 

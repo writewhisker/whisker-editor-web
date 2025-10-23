@@ -107,6 +107,7 @@
 
   function confirmNewProject(event: CustomEvent<{ value: string }>) {
     const title = event.detail.value.trim();
+    showNewDialog = false; // Explicitly close dialog
     projectActions.newProject(title || undefined);
     fileHandle = null;
   }

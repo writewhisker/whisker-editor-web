@@ -134,11 +134,8 @@
 
   function removeTag(tagName: string) {
     if (passage) {
-      const index = passage.tags.indexOf(tagName);
-      if (index !== -1) {
-        passage.tags.splice(index, 1);
-        currentStory.update(s => s);
-      }
+      const newTags = passage.tags.filter(t => t !== tagName);
+      projectActions.updatePassage(passage.id, { tags: newTags });
     }
   }
 

@@ -11,13 +11,15 @@
   const dispatch = createEventDispatcher();
 
   function handleConfirm() {
-    dispatch('confirm', { value: inputValue });
+    const value = inputValue;
     close();
+    // Dispatch after closing to avoid race condition with parent re-renders
+    dispatch('confirm', { value });
   }
 
   function handleCancel() {
-    dispatch('cancel');
     close();
+    dispatch('cancel');
   }
 
   function close() {

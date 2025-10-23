@@ -4,6 +4,9 @@ import { test, expect } from '@playwright/test';
 async function createNewProject(page: any) {
   await page.goto('/');
 
+  // Clear localStorage to prevent AutoSaveRecovery dialog from appearing
+  await page.evaluate(() => localStorage.clear());
+
   // Wait for app to load
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500);
@@ -100,9 +103,11 @@ test.describe('Visual Connection Editing', () => {
 
   test('should update passage title in properties panel', async ({ page }) => {
     // The Start passage should already be selected after project creation
-    // Find title input in properties panel with value "Start"
-    const titleInput = page.locator('input[type="text"]').filter({ hasValue: 'Start' });
+    // Find title input in properties panel - it's the first non-readonly, non-placeholder text input after search
+    // Simpler: just get the 2nd text input (1st is search, 2nd is title)
+    const titleInput = page.locator('input[type="text"]').nth(1);
     await titleInput.waitFor({ state: 'visible', timeout: 5000 });
+    await titleInput.click({ force: true }); // Force click through any overlays
     await titleInput.fill('New Title');
     await titleInput.press('Tab'); // Blur by moving focus
     await page.waitForTimeout(500);

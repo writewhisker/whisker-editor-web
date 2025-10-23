@@ -4,6 +4,9 @@ import { test, expect } from '@playwright/test';
 async function createNewProject(page: any) {
   await page.goto('/');
 
+  // Clear localStorage to prevent AutoSaveRecovery dialog from appearing
+  await page.evaluate(() => localStorage.clear());
+
   // Wait for app to load
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(500);
@@ -58,16 +61,18 @@ test.describe('Tag Management', () => {
     // Start passage is already selected after project creation
     // Add a tag using TagInput in properties panel
     const tagInput = page.locator('input[placeholder="Add tag..."]');
+    await tagInput.click({ force: true }); // Force click through overlays
     await tagInput.fill('action');
     await tagInput.press('Enter');
     await page.waitForTimeout(500);
 
     // Create another passage using any + Add button
-    await page.click('button:has-text("+ Add")');
+    await page.click('button:has-text("+ Add")', { force: true });
     await page.waitForTimeout(800);
 
     // The new passage should be automatically selected
     // Start typing to see autocomplete
+    await tagInput.click({ force: true });
     await tagInput.fill('act');
     await page.waitForTimeout(500);
 
@@ -99,20 +104,29 @@ test.describe('Tag Management', () => {
     // Start passage is already selected
     // Add a tag using TagInput in properties panel
     const tagInput = page.locator('input[placeholder="Add tag..."]');
+    await tagInput.click({ force: true }); // Force click through overlays
     await tagInput.fill('removeme');
     await tagInput.press('Enter');
     await page.waitForTimeout(500);
 
-    // Verify tag exists in properties panel
-    await expect(page.locator('span:has-text("removeme")').first()).toBeVisible();
+    // Verify tag exists - count should be 2 (properties panel + passage list)
+    const initialCount = await page.locator('text=removeme').count();
+    expect(initialCount).toBe(2);
 
-    // Click the X button on the tag chip in properties panel
-    const removeButton = page.locator('span:has-text("removeme")').locator('button[title="Remove tag"]').first();
-    await removeButton.click();
-    await page.waitForTimeout(500);
+    // Click the × button in the Properties panel
+    const removeButton = page.locator('button[title="Remove tag"]');
+    await expect(removeButton).toBeVisible();
+    await expect(removeButton).toBeEnabled();
 
-    // Verify tag is removed from properties panel
-    await expect(page.locator('span:has-text("removeme")')).toHaveCount(0);
+    // Try clicking with JavaScript to bypass any potential overlay issues
+    await removeButton.evaluate(node => (node as HTMLElement).click());
+
+    // Wait for tag to be removed from DOM
+    await page.waitForTimeout(1500);
+
+    // Verify tag is completely removed from both properties panel and passage list
+    const finalCount = await page.locator('text=removeme').count();
+    expect(finalCount).toBe(0); // Should be completely gone from both panels
   });
 });
 

@@ -115,4 +115,60 @@ describe('Passage', () => {
       expect(deserialized.choices[0].text).toBe('Choice 1');
     });
   });
+
+  describe('color property', () => {
+    it('should accept color in constructor', () => {
+      const coloredPassage = new Passage({
+        title: 'Colored',
+        color: '#FF0000',
+      });
+      expect(coloredPassage.color).toBe('#FF0000');
+    });
+
+    it('should serialize color when set', () => {
+      passage.color = '#3B82F6';
+      const data = passage.serialize();
+      expect(data.color).toBe('#3B82F6');
+    });
+
+    it('should not include color in serialized data when undefined', () => {
+      const data = passage.serialize();
+      expect(data.color).toBeUndefined();
+    });
+
+    it('should deserialize color from PassageData', () => {
+      const data = {
+        id: 'test-id',
+        title: 'Test',
+        content: 'Content',
+        position: { x: 0, y: 0 },
+        choices: [],
+        color: '#10B981',
+      };
+
+      const deserialized = Passage.deserialize(data);
+      expect(deserialized.color).toBe('#10B981');
+    });
+
+    it('should handle missing color in deserialization', () => {
+      const data = {
+        id: 'test-id',
+        title: 'Test',
+        content: 'Content',
+        position: { x: 0, y: 0 },
+        choices: [],
+      };
+
+      const deserialized = Passage.deserialize(data);
+      expect(deserialized.color).toBeUndefined();
+    });
+
+    it('should preserve color through clone (but with new ID)', () => {
+      passage.color = '#EC4899';
+      const cloned = passage.clone();
+      expect(cloned.color).toBe('#EC4899');
+      expect(cloned.id).not.toBe(passage.id);
+      expect(cloned.title).toBe('Test Passage (copy)');
+    });
+  });
 });

@@ -11,6 +11,7 @@ export class Passage {
   onEnterScript?: string;
   onExitScript?: string;
   tags: string[];
+  color?: string;
   created: string;
   modified: string;
 
@@ -24,6 +25,7 @@ export class Passage {
     this.onEnterScript = data?.onEnterScript;
     this.onExitScript = data?.onExitScript;
     this.tags = data?.tags || [];
+    this.color = data?.color;
     this.created = data?.created || now;
     this.modified = data?.modified || now;
   }
@@ -57,6 +59,7 @@ export class Passage {
     if (this.onEnterScript) data.onEnterScript = this.onEnterScript;
     if (this.onExitScript) data.onExitScript = this.onExitScript;
     if (this.tags.length > 0) data.tags = [...this.tags];
+    if (this.color) data.color = this.color;
 
     return data;
   }

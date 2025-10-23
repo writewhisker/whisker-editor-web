@@ -13,6 +13,7 @@
     isDead: boolean;
     isFiltered?: boolean;
     validationIssues?: ValidationIssue[];
+    color?: string;
   };
 
   $: passage = data.passage;
@@ -21,6 +22,7 @@
   $: isDead = data.isDead;
   $: isFiltered = data.isFiltered ?? true;
   $: validationIssues = data.validationIssues || [];
+  $: customColor = data.color;
   $: hasErrors = validationIssues.some(i => i.severity === 'error');
   $: hasWarnings = validationIssues.some(i => i.severity === 'warning');
   $: errorCount = validationIssues.filter(i => i.severity === 'error').length;
@@ -49,6 +51,8 @@
 
   // Get node color based on status
   function getNodeColor(): string {
+    // Custom color takes precedence if set
+    if (customColor) return '';
     if (isCurrentPreview) return 'border-purple-500 bg-purple-100 shadow-purple-400';
     if (isStart) return 'border-green-500 bg-green-50';
     if (isDead) return 'border-red-300 bg-red-50';
@@ -60,9 +64,19 @@
     if (wasVisitedInPreview && !isCurrentPreview) return 'opacity-70';
     return 'opacity-100';
   }
+
+  // Generate inline style for custom color
+  function getCustomStyle(): string {
+    if (!customColor) return '';
+    // Lighter background version of the color
+    return `border-color: ${customColor}; background-color: ${customColor}15;`;
+  }
 </script>
 
-<div class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all min-w-[200px] max-w-[300px] relative">
+<div
+  class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all min-w-[200px] max-w-[300px] relative"
+  style={getCustomStyle()}
+>
   <!-- Breakpoint Indicator -->
   {#if $debugMode}
     <button

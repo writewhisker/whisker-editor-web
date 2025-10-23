@@ -40,11 +40,54 @@
   // Font size settings
   let fontSize: FontSizeOption = getFontSize();
 
+  // Grid snap settings
+  const GRID_SNAP_KEY = 'whisker-grid-snap-enabled';
+  const GRID_SIZE_KEY = 'whisker-grid-size';
+
+  function getGridSnapEnabled(): boolean {
+    try {
+      const saved = localStorage.getItem(GRID_SNAP_KEY);
+      return saved === 'true';
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function getGridSize(): number {
+    try {
+      const saved = localStorage.getItem(GRID_SIZE_KEY);
+      return saved ? parseInt(saved, 10) : 20;
+    } catch (error) {
+      return 20;
+    }
+  }
+
+  function setGridSnapEnabled(enabled: boolean) {
+    try {
+      localStorage.setItem(GRID_SNAP_KEY, String(enabled));
+    } catch (error) {
+      console.error('Failed to save grid snap setting:', error);
+    }
+  }
+
+  function setGridSize(size: number) {
+    try {
+      localStorage.setItem(GRID_SIZE_KEY, String(size));
+    } catch (error) {
+      console.error('Failed to save grid size:', error);
+    }
+  }
+
+  let gridSnapEnabled = getGridSnapEnabled();
+  let gridSize = getGridSize();
+
   // Update display when dialog is opened
   $: if (show) {
     autoSaveInterval = getAutoSaveInterval();
     autoSaveIntervalSeconds = Math.floor(autoSaveInterval / 1000);
     fontSize = getFontSize();
+    gridSnapEnabled = getGridSnapEnabled();
+    gridSize = getGridSize();
   }
 
   function close() {
@@ -62,11 +105,21 @@
         return;
       }
 
+      // Validate grid size
+      if (gridSize < 5 || gridSize > 100) {
+        alert('Grid size must be between 5 and 100 pixels');
+        return;
+      }
+
       // Update the auto-save interval
       autoSaveManager.updateInterval(intervalMs);
 
       // Update font size
       setFontSize(fontSize);
+
+      // Update grid settings
+      setGridSnapEnabled(gridSnapEnabled);
+      setGridSize(gridSize);
 
       close();
     } catch (error) {
@@ -228,6 +281,59 @@
                 Changes the base font size for the entire interface. Save to apply.
               </div>
             </div>
+          </div>
+        </section>
+
+        <!-- Grid Snap Settings -->
+        <section>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Graph Editor
+          </h3>
+
+          <div class="space-y-4">
+            <!-- Grid Snap Toggle -->
+            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded">
+              <div>
+                <div class="font-medium text-gray-900 dark:text-gray-100">Grid Snap</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Snap passages to grid when dragging</div>
+              </div>
+              <button
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {gridSnapEnabled ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}"
+                on:click={() => gridSnapEnabled = !gridSnapEnabled}
+                role="switch"
+                aria-checked={gridSnapEnabled}
+              >
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {gridSnapEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+              </button>
+            </div>
+
+            <!-- Grid Size -->
+            {#if gridSnapEnabled}
+              <div>
+                <label for="grid-size" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Grid Size (pixels)
+                </label>
+                <input
+                  id="grid-size"
+                  type="number"
+                  bind:value={gridSize}
+                  min="5"
+                  max="100"
+                  step="5"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <button class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" on:click={() => gridSize = 10}>10px</button>
+                  <button class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" on:click={() => gridSize = 15}>15px</button>
+                  <button class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" on:click={() => gridSize = 20}>20px (Default)</button>
+                  <button class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" on:click={() => gridSize = 25}>25px</button>
+                  <button class="px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700" on:click={() => gridSize = 50}>50px</button>
+                </div>
+                <div class="mt-2 text-xs text-gray-600 dark:text-gray-400">
+                  Smaller grids provide finer control, larger grids make alignment easier.
+                </div>
+              </div>
+            {/if}
           </div>
         </section>
       </div>

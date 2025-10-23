@@ -101,6 +101,7 @@
           isDead,
           isFiltered,
           validationIssues: issues,
+          color: passage.color,
         },
         position: passage.position || { x: 0, y: 0 },
         hidden: $hasActiveFilters && !isFiltered,
@@ -179,13 +180,41 @@
   }
 
   // Handle node drag end - save position
+  // Helper function to snap position to grid
+  function snapToGrid(position: { x: number; y: number }): { x: number; y: number } {
+    try {
+      const gridSnapEnabled = localStorage.getItem('whisker-grid-snap-enabled') === 'true';
+      if (!gridSnapEnabled) return position;
+
+      const gridSize = parseInt(localStorage.getItem('whisker-grid-size') || '20', 10);
+      return {
+        x: Math.round(position.x / gridSize) * gridSize,
+        y: Math.round(position.y / gridSize) * gridSize,
+      };
+    } catch (error) {
+      return position; // Fallback to original position if error
+    }
+  }
+
   function handleNodeDragStop(event: CustomEvent) {
     const { targetNode } = event.detail;
     if (!$currentStory || !targetNode) return;
 
     const passage = $currentStory.getPassage(targetNode.id);
     if (passage) {
-      passage.position = targetNode.position;
+      // Apply grid snap if enabled
+      const snappedPosition = snapToGrid(targetNode.position);
+      passage.position = snappedPosition;
+
+      // Update the node position in the flow to reflect the snap
+      nodes.update(ns => {
+        const node = ns.find(n => n.id === targetNode.id);
+        if (node) {
+          node.position = snappedPosition;
+        }
+        return ns;
+      });
+
       currentStory.update(s => s);
       projectActions.markChanged();
     }
@@ -529,6 +558,9 @@
         <Controls />
         <MiniMap
           nodeColor={(node) => {
+            // Use custom color if set
+            if (node.data.color) return node.data.color;
+            // Otherwise use status-based colors
             if (node.data.isStart) return '#10b981';
             if (node.data.isDead) return '#ef4444';
             if (node.data.isOrphan) return '#f59e0b';

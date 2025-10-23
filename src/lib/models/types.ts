@@ -22,6 +22,7 @@ export interface PassageData {
   onEnterScript?: string;
   onExitScript?: string;
   tags?: string[];
+  color?: string; // Hex color code for organizational purposes
   created?: string; // ISO timestamp
   modified?: string; // ISO timestamp
 }

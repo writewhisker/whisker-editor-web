@@ -294,6 +294,15 @@
           on:mouseleave={handleMouseLeave}
         >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
+            <!-- Color Indicator -->
+            {#if passage.color}
+              <div
+                class="w-3 h-3 rounded-full border border-gray-300 flex-shrink-0"
+                style="background-color: {passage.color};"
+                title="Passage color: {passage.color}"
+              ></div>
+            {/if}
+
             <!-- Icons -->
             <div class="flex gap-1 {compactView ? 'text-xs' : ''}">
               {#if isStart(passage)}

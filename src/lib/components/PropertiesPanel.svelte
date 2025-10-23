@@ -142,6 +142,39 @@
     }
   }
 
+  function updatePassageColor(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (passage) {
+      projectActions.updatePassage(passage.id, { color: target.value || undefined });
+    }
+  }
+
+  function clearPassageColor() {
+    if (passage) {
+      projectActions.updatePassage(passage.id, { color: undefined });
+    }
+  }
+
+  // Predefined color palette
+  const colorPalette = [
+    '#EF4444', // red
+    '#F97316', // orange
+    '#F59E0B', // amber
+    '#EAB308', // yellow
+    '#84CC16', // lime
+    '#22C55E', // green
+    '#10B981', // emerald
+    '#14B8A6', // teal
+    '#06B6D4', // cyan
+    '#0EA5E9', // sky
+    '#3B82F6', // blue
+    '#6366F1', // indigo
+    '#8B5CF6', // violet
+    '#A855F7', // purple
+    '#D946EF', // fuchsia
+    '#EC4899', // pink
+  ];
+
   $: availablePassages = $currentStory
     ? Array.from($currentStory.passages.values()).filter(p => p.id !== passage?.id)
     : [];
@@ -220,6 +253,52 @@
             class="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-50 text-gray-600 text-xs"
             title={passage.modified}
           />
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-sm font-medium text-gray-700">
+            Color
+          </label>
+          {#if passage.color}
+            <button
+              class="text-xs text-gray-500 hover:text-gray-700 underline"
+              on:click={clearPassageColor}
+              title="Clear color"
+            >
+              Clear
+            </button>
+          {/if}
+        </div>
+
+        <!-- Color Palette -->
+        <div class="grid grid-cols-8 gap-1.5 mb-2">
+          {#each colorPalette as color}
+            <button
+              class="w-8 h-8 rounded border-2 transition-all hover:scale-110"
+              class:border-gray-800={passage.color === color}
+              class:border-gray-300={passage.color !== color}
+              style="background-color: {color};"
+              on:click={() => passage && projectActions.updatePassage(passage.id, { color })}
+              title={color}
+            ></button>
+          {/each}
+        </div>
+
+        <!-- Custom Color Picker -->
+        <div class="flex gap-2 items-center">
+          <input
+            type="color"
+            value={passage.color || '#6366F1'}
+            on:input={updatePassageColor}
+            class="w-12 h-8 rounded border border-gray-300 cursor-pointer"
+            title="Choose custom color"
+          />
+          <span class="text-xs text-gray-500">
+            {passage.color || 'No color set'}
+          </span>
         </div>
       </div>
 

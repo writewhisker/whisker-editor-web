@@ -23,10 +23,11 @@
   import FindReplaceDialog from './lib/components/FindReplaceDialog.svelte';
   import StoryMetadataEditor from './lib/components/StoryMetadataEditor.svelte';
   import SettingsDialog from './lib/components/SettingsDialog.svelte';
+  import ResizeHandle from './lib/components/ResizeHandle.svelte';
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
-  import { viewMode, panelVisibility, focusMode, viewPreferencesActions } from './lib/stores/viewPreferencesStore';
+  import { viewMode, panelVisibility, panelSizes, focusMode, viewPreferencesActions } from './lib/stores/viewPreferencesStore';
   import { autoSaveManager, saveToLocalStorage, clearLocalStorage, type AutoSaveData } from './lib/utils/autoSave';
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
@@ -580,6 +581,27 @@
     }
   }
 
+  // Panel resize handlers
+  function handlePassageListResize(event: CustomEvent<{ delta: number }>) {
+    const newWidth = Math.max(200, Math.min(600, $panelSizes.passageListWidth + event.detail.delta));
+    viewPreferencesActions.setPanelSize('passageListWidth', newWidth);
+  }
+
+  function handlePropertiesResize(event: CustomEvent<{ delta: number }>) {
+    const newWidth = Math.max(300, Math.min(800, $panelSizes.propertiesWidth + event.detail.delta));
+    viewPreferencesActions.setPanelSize('propertiesWidth', newWidth);
+  }
+
+  function handleVariablesResize(event: CustomEvent<{ delta: number }>) {
+    const newWidth = Math.max(250, Math.min(600, $panelSizes.variablesWidth + event.detail.delta));
+    viewPreferencesActions.setPanelSize('variablesWidth', newWidth);
+  }
+
+  function handleVariablesHeightResize(event: CustomEvent<{ delta: number }>) {
+    const newHeight = Math.max(150, Math.min(500, $panelSizes.variablesHeight + event.detail.delta));
+    viewPreferencesActions.setPanelSize('variablesHeight', newHeight);
+  }
+
   // Auto-save: Start/stop based on story existence
   $: if ($currentStory) {
     autoSaveManager.start(() => {
@@ -776,12 +798,13 @@
         <div class="flex w-full h-full">
           <!-- Left: Passage List -->
           {#if $panelVisibility.passageList && !$focusMode}
-            <div class="w-64 flex-shrink-0 border-r border-gray-300">
+            <div class="flex-shrink-0" style="width: {$panelSizes.passageListWidth}px;">
               <PassageList
                 onAddPassage={handleAddPassage}
                 onDeletePassage={handleDeletePassage}
               />
             </div>
+            <ResizeHandle on:resize={handlePassageListResize} />
           {/if}
 
           <!-- Center: Properties Panel -->
@@ -793,11 +816,15 @@
 
           <!-- Right: Variable Manager, Validation & Statistics -->
           {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
-            <div class="w-80 flex-shrink-0 flex flex-col border-l border-gray-300 dark:border-gray-700">
+            <ResizeHandle on:resize={handleVariablesResize} />
+            <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
-                <div class="h-72 border-b border-gray-300 dark:border-gray-700">
+                <div style="height: {$panelSizes.variablesHeight}px;" class="border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
+                {#if $panelVisibility.validation || $panelVisibility.statistics}
+                  <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
+                {/if}
               {/if}
               {#if $panelVisibility.validation}
                 <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
@@ -837,19 +864,23 @@
 
           <!-- Right: Properties + Variables + Validation + Statistics -->
           {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
-            <div class="w-96 flex-shrink-0 flex flex-col border-l border-gray-300 dark:border-gray-700">
+            <ResizeHandle on:resize={handlePropertiesResize} />
+            <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.propertiesWidth}px;">
               {#if $panelVisibility.properties}
                 <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <PropertiesPanel />
                 </div>
               {/if}
               {#if $panelVisibility.variables}
-                <div class="h-64 {($panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div style="height: {$panelSizes.variablesHeight}px;" class="{($panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <VariableManager />
                 </div>
+                {#if $panelVisibility.validation || $panelVisibility.statistics}
+                  <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
+                {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="h-80 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
                 </div>
               {/if}

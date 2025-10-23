@@ -11,6 +11,7 @@
   import VariableManager from './lib/components/VariableManager.svelte';
   import ValidationPanel from './lib/components/editor/ValidationPanel.svelte';
   import StoryStatisticsPanel from './lib/components/StoryStatisticsPanel.svelte';
+  import TagManager from './lib/components/TagManager.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
   import PreviewPanel from './lib/components/PreviewPanel.svelte';
@@ -768,6 +769,13 @@
           >
             🔍 Validation
           </button>
+          <button
+            class="px-2 py-1 text-xs rounded {$panelVisibility.tagManager ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => viewPreferencesActions.togglePanel('tagManager')}
+            title="Toggle Tag Manager Panel"
+          >
+            🏷️ Tags
+          </button>
         </div>
       {/if}
 
@@ -815,21 +823,26 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager, Validation & Statistics -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
+          <!-- Right: Variable Manager, Validation, Tag Manager & Statistics -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
                 <div style="height: {$panelSizes.variablesHeight}px;" class="border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
-                {#if $panelVisibility.validation || $panelVisibility.statistics}
+                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics}
                   <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.tagManager}
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                  <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}
@@ -841,7 +854,7 @@
           {/if}
 
           <!-- Show message if all panels hidden -->
-          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation && !$panelVisibility.statistics}
+          {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation && !$panelVisibility.tagManager && !$panelVisibility.statistics}
             <div class="flex-1 flex items-center justify-center text-gray-400">
               <div class="text-center">
                 <p class="text-lg mb-2">All panels hidden</p>
@@ -863,26 +876,31 @@
             <GraphView />
           </div>
 
-          <!-- Right: Properties + Variables + Validation + Statistics -->
-          {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) && !$focusMode}
+          <!-- Right: Properties + Variables + Validation + Tag Manager + Statistics -->
+          {#if ($panelVisibility.properties || $panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics) && !$focusMode}
             <ResizeHandle on:resize={handlePropertiesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.propertiesWidth}px;">
               {#if $panelVisibility.properties}
-                <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 overflow-hidden {($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <PropertiesPanel />
                 </div>
               {/if}
               {#if $panelVisibility.variables}
-                <div style="height: {$panelSizes.variablesHeight}px;" class="{($panelVisibility.validation || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div style="height: {$panelSizes.variablesHeight}px;" class="{($panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <VariableManager />
                 </div>
-                {#if $panelVisibility.validation || $panelVisibility.statistics}
+                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics}
                   <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.tagManager}
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                  <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}

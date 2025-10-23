@@ -285,6 +285,8 @@
       <!-- Regular rendering for small lists (avoids VirtualList mount issues) -->
       <div class="overflow-y-auto h-full">
         {#each $filteredPassages as passage}
+          {@const validationSeverity = getPassageValidationSeverity(passage.id)}
+          {@const validationCount = getPassageValidationCount(passage.id)}
           <button
             class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
             class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
@@ -317,18 +319,14 @@
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
               {/if}
-              {#if true}
-                {@const validationSeverity = getPassageValidationSeverity(passage.id)}
-                {@const validationCount = getPassageValidationCount(passage.id)}
-                {#if validationSeverity}
-                  <span
-                    class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
-                    title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
-                  >
-                    {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
-                    {validationCount}
-                  </span>
-                {/if}
+              {#if validationSeverity}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
+                  title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
+                >
+                  {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
+                  {validationCount}
+                </span>
               {/if}
             </div>
 
@@ -380,6 +378,8 @@
     {:else}
       <!-- Virtual scrolling for large lists (50+ passages) -->
       <VirtualList items={$filteredPassages} let:item={passage} height="100%">
+        {@const validationSeverity = getPassageValidationSeverity(passage.id)}
+        {@const validationCount = getPassageValidationCount(passage.id)}
         <button
           class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
           class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
@@ -412,18 +412,14 @@
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
               {/if}
-              {#if true}
-                {@const validationSeverity = getPassageValidationSeverity(passage.id)}
-                {@const validationCount = getPassageValidationCount(passage.id)}
-                {#if validationSeverity}
-                  <span
-                    class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
-                    title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
-                  >
-                    {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
-                    {validationCount}
-                  </span>
-                {/if}
+              {#if validationSeverity}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
+                  title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
+                >
+                  {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
+                  {validationCount}
+                </span>
               {/if}
             </div>
 

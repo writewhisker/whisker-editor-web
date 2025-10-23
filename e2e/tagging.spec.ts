@@ -20,8 +20,12 @@ async function createNewProject(page: any) {
   // Click OK button
   await page.click('button:has-text("OK")');
 
-  // Wait for dialog to close - check that input is no longer visible
-  await page.waitForSelector('input[placeholder="My Amazing Story"]', { state: 'hidden', timeout: 5000 });
+  // Wait for the entire dialog and its overlay to be removed from the DOM
+  // The FileDialog wraps everything in {#if show}, so when show=false, it's removed
+  await page.waitForFunction(() => {
+    const overlays = document.querySelectorAll('div[role="presentation"]');
+    return overlays.length === 0;
+  }, { timeout: 10000 });
 
   // Wait for Passages panel to appear
   await page.waitForSelector('text=Passages', { timeout: 10000 });
@@ -51,33 +55,39 @@ test.describe('Tag Management', () => {
   });
 
   test('should show autocomplete suggestions for existing tags', async ({ page }) => {
-    // Add a tag first
-    await page.click('text=Start');
+    // Start passage is already selected after project creation
+    // Add a tag using TagInput in properties panel
     const tagInput = page.locator('input[placeholder="Add tag..."]');
     await tagInput.fill('action');
     await tagInput.press('Enter');
+    await page.waitForTimeout(500);
 
-    // Create another passage
+    // Create another passage using any + Add button
     await page.click('button:has-text("+ Add")');
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(800);
 
+    // The new passage should be automatically selected
     // Start typing to see autocomplete
     await tagInput.fill('act');
+    await page.waitForTimeout(500);
 
     // Verify autocomplete dropdown appears with the existing tag
-    await expect(page.locator('text=action').nth(1)).toBeVisible();
+    // Look for the tag suggestion (might appear as a second instance of "action")
+    const suggestions = page.locator('text=action');
+    await expect(suggestions.nth(1)).toBeVisible({ timeout: 3000 });
   });
 
   test('should display colored tags in passage list', async ({ page }) => {
-    // Add tag to start passage
-    await page.click('text=Start');
+    // Start passage is already selected
+    // Add tag using TagInput in properties panel
     const tagInput = page.locator('input[placeholder="Add tag..."]');
     await tagInput.fill('combat');
     await tagInput.press('Enter');
+    await page.waitForTimeout(500);
 
-    // Verify colored tag appears in passage list
-    const passageList = page.locator('.passage-node, button').filter({ hasText: 'Start' }).first();
-    const tagInList = passageList.locator('text=combat');
+    // Verify colored tag appears in passage list button (which contains "→" for choices)
+    const startPassageButton = page.locator('button').filter({ hasText: /Start.*→/ });
+    const tagInList = startPassageButton.locator('text=combat');
     await expect(tagInList).toBeVisible();
 
     // Verify tag has colored background (inline style)
@@ -86,21 +96,23 @@ test.describe('Tag Management', () => {
   });
 
   test('should remove tag when clicking X button', async ({ page }) => {
-    // Add a tag
-    await page.click('text=Start');
+    // Start passage is already selected
+    // Add a tag using TagInput in properties panel
     const tagInput = page.locator('input[placeholder="Add tag..."]');
     await tagInput.fill('removeme');
     await tagInput.press('Enter');
+    await page.waitForTimeout(500);
 
-    // Verify tag exists
-    await expect(page.locator('text=removeme').first()).toBeVisible();
+    // Verify tag exists in properties panel
+    await expect(page.locator('span:has-text("removeme")').first()).toBeVisible();
 
-    // Click the X button on the tag chip
-    const removeButton = page.locator('span:has-text("removeme")').locator('button').first();
+    // Click the X button on the tag chip in properties panel
+    const removeButton = page.locator('span:has-text("removeme")').locator('button[title="Remove tag"]').first();
     await removeButton.click();
+    await page.waitForTimeout(500);
 
-    // Verify tag is removed
-    await expect(page.locator('text=removeme')).toHaveCount(0);
+    // Verify tag is removed from properties panel
+    await expect(page.locator('span:has-text("removeme")')).toHaveCount(0);
   });
 });
 

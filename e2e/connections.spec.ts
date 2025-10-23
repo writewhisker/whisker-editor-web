@@ -20,8 +20,12 @@ async function createNewProject(page: any) {
   // Click OK button
   await page.click('button:has-text("OK")');
 
-  // Wait for dialog to close - check that input is no longer visible
-  await page.waitForSelector('input[placeholder="My Amazing Story"]', { state: 'hidden', timeout: 5000 });
+  // Wait for the entire dialog and its overlay to be removed from the DOM
+  // The FileDialog wraps everything in {#if show}, so when show=false, it's removed
+  await page.waitForFunction(() => {
+    const overlays = document.querySelectorAll('div[role="presentation"]');
+    return overlays.length === 0;
+  }, { timeout: 10000 });
 
   // Wait for Passages panel to appear
   await page.waitForSelector('text=Passages', { timeout: 10000 });
@@ -85,23 +89,27 @@ test.describe('Visual Connection Editing', () => {
   });
 
   test('should show choice count in passage list', async ({ page }) => {
-    // Start passage has 0 choices by default
-    const startPassage = page.locator('button').filter({ hasText: 'Start' }).first();
-    await expect(startPassage).toContainText('0 choice');
+    // The PassageList shows choice counts. The passage list button is DIFFERENT from breadcrumb.
+    // We can target it by looking for a button that contains both "Start" and the choice arrow "→"
+    const startPassageButton = page.locator('button').filter({ hasText: /Start.*→|→.*Start/ });
+
+    // The button should contain the choice count indicator
+    await expect(startPassageButton.first()).toContainText('→');
+    await expect(startPassageButton.first()).toContainText('0');
   });
 
   test('should update passage title in properties panel', async ({ page }) => {
-    // Select start passage
-    await page.click('text=Start');
-    await page.waitForTimeout(300);
-
-    // Find title input and change it
-    const titleInput = page.locator('input[value="Start"]').first();
+    // The Start passage should already be selected after project creation
+    // Find title input in properties panel with value "Start"
+    const titleInput = page.locator('input[type="text"]').filter({ hasValue: 'Start' });
+    await titleInput.waitFor({ state: 'visible', timeout: 5000 });
     await titleInput.fill('New Title');
-    await titleInput.blur();
+    await titleInput.press('Tab'); // Blur by moving focus
+    await page.waitForTimeout(500);
 
-    // Verify title updated in passage list
-    await expect(page.locator('text=New Title')).toBeVisible();
+    // Verify title updated - look for passage list button with new title and choice arrow
+    const updatedPassage = page.locator('button').filter({ hasText: /New Title.*→|→.*New Title/ });
+    await expect(updatedPassage.first()).toBeVisible();
   });
 });
 

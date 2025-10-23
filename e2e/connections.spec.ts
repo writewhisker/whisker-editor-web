@@ -20,8 +20,8 @@ async function createNewProject(page: any) {
   // Click OK button
   await page.click('button:has-text("OK")');
 
-  // Wait for dialog to close (overlay should disappear)
-  await page.waitForSelector('div[role="presentation"].fixed.inset-0', { state: 'hidden', timeout: 5000 });
+  // Wait for dialog to close - check that input is no longer visible
+  await page.waitForSelector('input[placeholder="My Amazing Story"]', { state: 'hidden', timeout: 5000 });
 
   // Wait for Passages panel to appear
   await page.waitForSelector('text=Passages', { timeout: 10000 });

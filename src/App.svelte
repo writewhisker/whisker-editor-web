@@ -649,7 +649,7 @@
 
     // Browser close warning for unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if ($currentStory && $unsavedChanges) {
+      if ($currentStory) {
         e.preventDefault();
         e.returnValue = ''; // Modern browsers require this
         return ''; // For older browsers

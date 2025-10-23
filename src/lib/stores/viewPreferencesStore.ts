@@ -122,18 +122,29 @@ export const currentPreferences = derived(
   ([$key, $all]) => {
     if (!$key) return DEFAULT_PREFERENCES;
 
-    const savedPrefs = $all[$key];
-    if (!savedPrefs) {
-      return { ...DEFAULT_PREFERENCES, viewMode: loadGlobalViewMode() };
-    }
+    try {
+      const savedPrefs = $all[$key];
+      if (!savedPrefs) {
+        return { ...DEFAULT_PREFERENCES, viewMode: loadGlobalViewMode() };
+      }
 
-    // Merge saved preferences with defaults to ensure all fields are present
-    return {
-      viewMode: savedPrefs.viewMode || DEFAULT_PREFERENCES.viewMode,
-      panelVisibility: { ...DEFAULT_PREFERENCES.panelVisibility, ...savedPrefs.panelVisibility },
-      panelSizes: { ...DEFAULT_PREFERENCES.panelSizes, ...savedPrefs.panelSizes },
-      focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
-    };
+      // Merge saved preferences with defaults to ensure all fields are present
+      return {
+        viewMode: savedPrefs.viewMode || DEFAULT_PREFERENCES.viewMode,
+        panelVisibility: {
+          ...DEFAULT_PREFERENCES.panelVisibility,
+          ...(savedPrefs.panelVisibility && typeof savedPrefs.panelVisibility === 'object' ? savedPrefs.panelVisibility : {})
+        },
+        panelSizes: {
+          ...DEFAULT_PREFERENCES.panelSizes,
+          ...(savedPrefs.panelSizes && typeof savedPrefs.panelSizes === 'object' ? savedPrefs.panelSizes : {})
+        },
+        focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
+      };
+    } catch (error) {
+      console.error('Failed to derive current preferences, using defaults:', error);
+      return DEFAULT_PREFERENCES;
+    }
   }
 );
 
@@ -146,21 +157,37 @@ export const focusMode = writable<boolean>(false);
 // Update current preferences when project changes
 currentProjectKey.subscribe($key => {
   if ($key) {
-    const prefs = loadPreferences();
-    const savedPrefs = prefs[$key] || { ...DEFAULT_PREFERENCES, viewMode: loadGlobalViewMode() };
+    try {
+      const prefs = loadPreferences();
+      const savedPrefs = prefs[$key] || { ...DEFAULT_PREFERENCES, viewMode: loadGlobalViewMode() };
 
-    // Merge saved preferences with defaults to ensure all fields are present
-    const projectPrefs = {
-      viewMode: savedPrefs.viewMode || DEFAULT_PREFERENCES.viewMode,
-      panelVisibility: { ...DEFAULT_PREFERENCES.panelVisibility, ...savedPrefs.panelVisibility },
-      panelSizes: { ...DEFAULT_PREFERENCES.panelSizes, ...savedPrefs.panelSizes },
-      focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
-    };
+      // Safely merge saved preferences with defaults, handling corrupted data
+      const projectPrefs = {
+        viewMode: savedPrefs.viewMode || DEFAULT_PREFERENCES.viewMode,
+        panelVisibility: {
+          ...DEFAULT_PREFERENCES.panelVisibility,
+          ...(savedPrefs.panelVisibility && typeof savedPrefs.panelVisibility === 'object' ? savedPrefs.panelVisibility : {})
+        },
+        panelSizes: {
+          ...DEFAULT_PREFERENCES.panelSizes,
+          ...(savedPrefs.panelSizes && typeof savedPrefs.panelSizes === 'object' ? savedPrefs.panelSizes : {})
+        },
+        focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
+      };
 
-    viewMode.set(projectPrefs.viewMode);
-    panelVisibility.set(projectPrefs.panelVisibility);
-    panelSizes.set(projectPrefs.panelSizes);
-    focusMode.set(projectPrefs.focusMode);
+      viewMode.set(projectPrefs.viewMode);
+      panelVisibility.set(projectPrefs.panelVisibility);
+      panelSizes.set(projectPrefs.panelSizes);
+      focusMode.set(projectPrefs.focusMode);
+    } catch (error) {
+      console.error('Failed to load view preferences, using defaults:', error);
+      // Clear corrupted data and use defaults
+      localStorage.removeItem(STORAGE_KEY);
+      viewMode.set(loadGlobalViewMode());
+      panelVisibility.set(DEFAULT_PREFERENCES.panelVisibility);
+      panelSizes.set(DEFAULT_PREFERENCES.panelSizes);
+      focusMode.set(false);
+    }
   } else {
     // No project loaded, use defaults
     viewMode.set(loadGlobalViewMode());

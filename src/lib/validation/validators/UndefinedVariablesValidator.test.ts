@@ -7,7 +7,7 @@ import { Variable } from '../../models/Variable';
 
 // Helper to create story without default passage
 const createStory = () => {
-  const story = new Story({ metadata: { title: 'Test Story' }, passages: {} });
+  const story = new Story({ metadata: { title: 'Test Story', author: 'Test Author', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() }, passages: {} });
   // Remove auto-created default passage
   story.passages.clear();
   story.startPassage = '';
@@ -24,7 +24,7 @@ describe('UndefinedVariablesValidator', () => {
 
   it('should pass when all referenced variables are defined', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'health', type: 'number', value: 100 }));
+    story.addVariable(new Variable({ name: 'health', type: 'number', initial: 100 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'health = 50' });
     story.addPassage(passage);
@@ -96,7 +96,7 @@ describe('UndefinedVariablesValidator', () => {
 
   it('should not flag Lua keywords as variables', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'x', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'x', type: 'number', initial: 0 }));
 
     const passage = new Passage({
       title: 'Start',
@@ -139,7 +139,7 @@ describe('UndefinedVariablesValidator', () => {
 
   it('should handle complex variable expressions', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'a', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'a', type: 'number', initial: 0 }));
 
     const passage = new Passage({
       title: 'Start',
@@ -193,7 +193,7 @@ describe('UndefinedVariablesValidator', () => {
 
   it('should handle underscores in variable names', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'player_health', type: 'number', value: 100 }));
+    story.addVariable(new Variable({ name: 'player_health', type: 'number', initial: 100 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'player_health = 50' });
     story.addPassage(passage);

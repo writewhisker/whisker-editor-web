@@ -62,7 +62,7 @@ export interface AutoSaveData {
 export function saveToLocalStorage(story: Story): void {
   try {
     const data: AutoSaveData = {
-      story: story.toJSON(),
+      story: story.serialize(),
       timestamp: Date.now(),
       storyTitle: story.metadata.title || 'Untitled Story',
     };

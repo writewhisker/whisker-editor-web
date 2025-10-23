@@ -125,7 +125,7 @@ describe('ExportPanel', () => {
       const { getByText } = render(ExportPanel, { props: { show: true } });
 
       // When exporting, button text changes to "Exporting..."
-      const exportButton = getByText('Exporting...').closest('button') as HTMLElement;
+      const exportButton = getByText('Exporting...').closest('button') as HTMLButtonElement;
       expect(exportButton.disabled).toBe(true);
     });
 
@@ -134,7 +134,7 @@ describe('ExportPanel', () => {
 
       const { getByText } = render(ExportPanel, { props: { show: true } });
 
-      const exportButton = getByText('Export').closest('button') as HTMLElement;
+      const exportButton = getByText('Export').closest('button') as HTMLButtonElement;
       expect(exportButton.disabled).toBe(true);
     });
 
@@ -149,7 +149,7 @@ describe('ExportPanel', () => {
     it('should have Export button enabled when story is loaded', async () => {
       const { getByText } = render(ExportPanel, { props: { show: true } });
 
-      const exportButton = getByText('Export').closest('button') as HTMLElement;
+      const exportButton = getByText('Export').closest('button') as HTMLButtonElement;
       expect(exportButton.disabled).toBe(false);
     });
 

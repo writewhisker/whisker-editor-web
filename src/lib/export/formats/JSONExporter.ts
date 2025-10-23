@@ -65,7 +65,7 @@ export class JSONExporter implements IExporter {
 
       // Include metrics if requested
       if (context.options.includeMetrics && context.metrics) {
-        exportData.metrics = context.metrics;
+        exportData.metrics = this.transformMetrics(context.metrics);
       }
 
       // Include test scenarios if requested
@@ -126,11 +126,47 @@ export class JSONExporter implements IExporter {
       exportDate: new Date().toISOString(),
       editorVersion: '1.0.0', // TODO: Get from package.json
       formatVersion: '1.0.0',
-      storyId: story.id,
+      storyId: story.metadata.title, // Use title as ID since Story doesn't have an id property
       storyTitle: story.metadata.title,
       storyAuthor: story.metadata.author,
       validationStatus,
       exportOptions: context.options,
+    };
+  }
+
+  /**
+   * Transform flat metrics to nested structure for export
+   */
+  private transformMetrics(metrics: any): any {
+    // If already nested, return as-is
+    if (metrics.structure || metrics.content || metrics.complexity || metrics.estimates) {
+      return metrics;
+    }
+
+    // Transform flat structure to nested
+    return {
+      structure: {
+        depth: metrics.depth ?? 0,
+        branchingFactor: metrics.branchingFactor ?? 0,
+        density: metrics.density ?? 0,
+      },
+      content: {
+        totalPassages: metrics.totalPassages ?? 0,
+        totalChoices: metrics.totalChoices ?? 0,
+        totalVariables: metrics.totalVariables ?? 0,
+        totalWords: metrics.totalWords ?? 0,
+        avgWordsPerPassage: metrics.avgWordsPerPassage ?? 0,
+      },
+      complexity: {
+        uniqueEndings: metrics.uniqueEndings ?? 0,
+        reachabilityScore: metrics.reachabilityScore ?? 0,
+        conditionalComplexity: metrics.conditionalComplexity ?? 0,
+        variableComplexity: metrics.variableComplexity ?? 0,
+      },
+      estimates: {
+        estimatedPlayTime: metrics.estimatedPlayTime ?? 0,
+        estimatedPaths: metrics.estimatedPaths ?? 0,
+      },
     };
   }
 

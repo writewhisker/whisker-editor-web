@@ -130,27 +130,41 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate metrics section
    */
   private generateMetricsSection(metrics: any): string {
+    // Support both flat and nested metrics structures
+    const depth = metrics.structure?.depth ?? metrics.depth ?? 0;
+    const branchingFactor = metrics.structure?.branchingFactor ?? metrics.branchingFactor ?? 0;
+    const density = metrics.structure?.density ?? metrics.density ?? 0;
+    const totalPassages = metrics.content?.totalPassages ?? metrics.totalPassages ?? 0;
+    const totalChoices = metrics.content?.totalChoices ?? metrics.totalChoices ?? 0;
+    const totalVariables = metrics.content?.totalVariables ?? metrics.totalVariables ?? 0;
+    const totalWords = metrics.content?.totalWords ?? metrics.totalWords ?? 0;
+    const uniqueEndings = metrics.complexity?.uniqueEndings ?? metrics.uniqueEndings ?? 0;
+    const reachabilityScore = metrics.complexity?.reachabilityScore ?? metrics.reachabilityScore ?? 0;
+    const conditionalComplexity = metrics.complexity?.conditionalComplexity ?? metrics.conditionalComplexity ?? 0;
+    const estimatedPlayTime = metrics.estimates?.estimatedPlayTime ?? metrics.estimatedPlayTime ?? 0;
+    const estimatedPaths = metrics.estimates?.estimatedPaths ?? metrics.estimatedPaths ?? 0;
+
     return `## Quality Metrics
 
 ### Structure
-- **Depth:** ${metrics.structure?.depth || 0}
-- **Branching Factor:** ${metrics.structure?.branchingFactor?.toFixed(2) || 0}
-- **Density:** ${metrics.structure?.density?.toFixed(2) || 0}
+- **Depth:** ${depth}
+- **Branching Factor:** ${branchingFactor.toFixed(2)}
+- **Density:** ${density.toFixed(2)}
 
 ### Content
-- **Total Passages:** ${metrics.content?.totalPassages || 0}
-- **Total Choices:** ${metrics.content?.totalChoices || 0}
-- **Total Variables:** ${metrics.content?.totalVariables || 0}
-- **Total Words:** ${metrics.content?.totalWords || 0}
+- **Total Passages:** ${totalPassages}
+- **Total Choices:** ${totalChoices}
+- **Total Variables:** ${totalVariables}
+- **Total Words:** ${totalWords}
 
 ### Complexity
-- **Unique Endings:** ${metrics.complexity?.uniqueEndings || 0}
-- **Reachability Score:** ${(metrics.complexity?.reachabilityScore * 100).toFixed(1) || 0}%
-- **Conditional Complexity:** ${metrics.complexity?.conditionalComplexity || 0}
+- **Unique Endings:** ${uniqueEndings}
+- **Reachability Score:** ${(reachabilityScore * 100).toFixed(1)}%
+- **Conditional Complexity:** ${conditionalComplexity}
 
 ### Estimates
-- **Estimated Play Time:** ${metrics.estimates?.estimatedPlayTime || 0} minutes
-- **Estimated Unique Paths:** ${metrics.estimates?.estimatedUniquePaths || 0}`;
+- **Estimated Play Time:** ${estimatedPlayTime} minutes
+- **Estimated Unique Paths:** ${estimatedPaths}`;
   }
 
   /**
@@ -252,7 +266,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
     const variables = Array.from(story.variables.values());
 
     const varList = variables.map(v => {
-      const value = typeof v.value === 'string' ? `"${v.value}"` : v.value;
+      const value = typeof v.initial === 'string' ? `"${v.initial}"` : v.initial;
       return `- **${v.name}** = \`${value}\` (${v.type})`;
     }).join('\n');
 

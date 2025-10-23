@@ -36,7 +36,7 @@ export class TestScenarioRunner {
     try {
       // Start from specified passage or beginning
       const startPassage = scenario.startPassageId || this.player.getStartPassageId();
-      this.player.start(startPassage);
+      this.player.start(startPassage ?? undefined);
 
       // Set up initial state AFTER starting (to override initialized values)
       if (scenario.initialVariables) {

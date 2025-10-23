@@ -40,7 +40,7 @@ describe('VariableInspector', () => {
       initial: 'Hero',
     }));
 
-    projectActions.loadProject(story.serialize(), 'test.json');
+    projectActions.loadProject({ ...story.serialize(), version: '1.0.0' }, 'test.json');
     playerActions.loadStory(story);
     playerActions.start();
 
@@ -62,7 +62,7 @@ describe('VariableInspector', () => {
       },
     });
 
-    projectActions.loadProject(emptyStory.serialize(), 'empty.json');
+    projectActions.loadProject({ ...emptyStory.serialize(), version: '1.0.0' }, 'empty.json');
     playerActions.loadStory(emptyStory);
 
     const { getByText } = render(VariableInspector);

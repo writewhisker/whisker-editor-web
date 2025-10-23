@@ -343,7 +343,7 @@
   // Handle Validation
   function handleValidation() {
     if ($currentStory) {
-      validationActions.validateNow();
+      validationActions.validate($currentStory);
       // Open validation panel if not already visible
       if (!$panelVisibility.validation) {
         viewPreferencesActions.togglePanel('validation');
@@ -353,7 +353,7 @@
 
   function handleCheckLinks() {
     if ($currentStory) {
-      validationActions.validateNow();
+      validationActions.validate($currentStory);
       // Open validation panel to see results
       if (!$panelVisibility.validation) {
         viewPreferencesActions.togglePanel('validation');

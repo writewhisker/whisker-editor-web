@@ -207,7 +207,7 @@ export class StoryPlayer {
     if (!this.story || !this.currentPassageId) {
       return null;
     }
-    return this.story.getPassage(this.currentPassageId);
+    return this.story.getPassage(this.currentPassageId) || null;
   }
 
   /**

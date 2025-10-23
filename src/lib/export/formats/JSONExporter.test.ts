@@ -128,10 +128,20 @@ describe('JSONExporter', () => {
 
     it('should include metrics when requested', async () => {
       const metrics = {
-        structure: { depth: 2, branchingFactor: 1, density: 0.5 },
-        content: { totalPassages: 2, totalChoices: 1, totalVariables: 0, totalWords: 10 },
-        complexity: { uniqueEndings: 1, reachabilityScore: 1, conditionalComplexity: 0 },
-        estimates: { estimatedPlayTime: 2, estimatedUniquePaths: 1 },
+        depth: 2,
+        branchingFactor: 1,
+        density: 0.5,
+        totalPassages: 2,
+        totalChoices: 1,
+        totalVariables: 0,
+        totalWords: 10,
+        avgWordsPerPassage: 5,
+        uniqueEndings: 1,
+        reachabilityScore: 1,
+        conditionalComplexity: 0,
+        variableComplexity: 0,
+        estimatedPlayTime: 2,
+        estimatedPaths: 1,
       };
 
       const context: ExportContext = {
@@ -182,7 +192,7 @@ describe('JSONExporter', () => {
       expect(parsed.metadata.exportDate).toBeDefined();
       expect(parsed.metadata.editorVersion).toBeDefined();
       expect(parsed.metadata.formatVersion).toBeDefined();
-      expect(parsed.metadata.storyId).toBe(story.id);
+      expect(parsed.metadata.storyId).toBe(story.metadata.title);
       expect(parsed.metadata.storyTitle).toBe('Test Story');
       expect(parsed.metadata.storyAuthor).toBe('Test Author');
     });

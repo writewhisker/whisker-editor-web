@@ -45,7 +45,6 @@ describe('JSONImporter', () => {
         exportDate: new Date().toISOString(),
         editorVersion: '1.0.0',
         formatVersion: '1.0.0',
-        storyId: testStory.id,
         storyTitle: testStory.metadata.title,
         validationStatus: 'valid',
       },

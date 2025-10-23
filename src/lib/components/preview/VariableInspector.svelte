@@ -119,8 +119,8 @@
             />
           {/if}
 
-          {#if variable.description}
-            <p class="text-xs text-gray-500 mt-1">{variable.description}</p>
+          {#if (variable as any).description}
+            <p class="text-xs text-gray-500 mt-1">{(variable as any).description}</p>
           {/if}
         </div>
       {/each}

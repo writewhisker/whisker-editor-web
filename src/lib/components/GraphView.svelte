@@ -28,7 +28,7 @@
   import { prefersReducedMotion } from '../utils/motion';
 
   // Get Svelte Flow instance for programmatic control
-  const { fitBounds, zoomTo } = useSvelteFlow();
+  const { fitBounds } = useSvelteFlow();
 
   // Node types
   const nodeTypes = {
@@ -453,25 +453,25 @@
   <SearchBar />
 
   <!-- Validation Summary Bar -->
-  {#if validationResult && (validationResult.errorCount > 0 || validationResult.warningCount > 0)}
+  {#if $validationResult && ($validationResult.errorCount > 0 || $validationResult.warningCount > 0)}
     <div class="bg-white border-b border-gray-300 px-3 py-2 flex items-center gap-4 text-sm">
       <span class="font-medium text-gray-700">Connection Issues:</span>
-      {#if validationResult.errorCount > 0}
+      {#if $validationResult.errorCount > 0}
         <span class="px-2 py-1 bg-red-100 text-red-700 rounded flex items-center gap-1">
           <span>❌</span>
-          <span>{validationResult.errorCount} {validationResult.errorCount === 1 ? 'error' : 'errors'}</span>
+          <span>{$validationResult.errorCount} {$validationResult.errorCount === 1 ? 'error' : 'errors'}</span>
         </span>
       {/if}
-      {#if validationResult.warningCount > 0}
+      {#if $validationResult.warningCount > 0}
         <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded flex items-center gap-1">
           <span>⚠️</span>
-          <span>{validationResult.warningCount} {validationResult.warningCount === 1 ? 'warning' : 'warnings'}</span>
+          <span>{$validationResult.warningCount} {$validationResult.warningCount === 1 ? 'warning' : 'warnings'}</span>
         </span>
       {/if}
-      {#if validationResult.infoCount > 0}
+      {#if $validationResult.infoCount > 0}
         <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
           <span>ℹ️</span>
-          <span>{validationResult.infoCount} circular {validationResult.infoCount === 1 ? 'path' : 'paths'}</span>
+          <span>{$validationResult.infoCount} circular {$validationResult.infoCount === 1 ? 'path' : 'paths'}</span>
         </span>
       {/if}
     </div>
@@ -539,17 +539,16 @@
   <div class="flex-1 relative">
     {#if $currentStory}
       <SvelteFlow
-        {nodes}
-        {edges}
+        nodes={$nodes}
+        edges={$edges}
         {nodeTypes}
         {edgeTypes}
         fitView
-        on:nodedragstop={handleNodeDragStop}
-        on:nodeclick={handleNodeClick}
-        on:nodedoubleclick={handleNodeDoubleClick}
-        on:connect={handleConnect}
-        on:move={(e) => {
-          if (e.detail.viewport) {
+        onnodedragstop={(e: any) => handleNodeDragStop(e as CustomEvent)}
+        onnodeclick={(e: any) => handleNodeClick(e as CustomEvent)}
+        onconnect={(e: any) => handleConnect(e.detail)}
+        onmove={(e: any) => {
+          if (e.detail?.viewport) {
             currentZoom = e.detail.viewport.zoom;
           }
         }}
@@ -557,13 +556,13 @@
         <Background />
         <Controls />
         <MiniMap
-          nodeColor={(node) => {
+          nodeColor={(node: Node) => {
             // Use custom color if set
-            if (node.data.color) return node.data.color;
+            if (node.data?.color) return node.data.color as string;
             // Otherwise use status-based colors
-            if (node.data.isStart) return '#10b981';
-            if (node.data.isDead) return '#ef4444';
-            if (node.data.isOrphan) return '#f59e0b';
+            if (node.data?.isStart) return '#10b981';
+            if (node.data?.isDead) return '#ef4444';
+            if (node.data?.isOrphan) return '#f59e0b';
             return '#3b82f6';
           }}
         />

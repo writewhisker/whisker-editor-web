@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { MissingStartPassageValidator } from './MissingStartPassageValidator';
 import { Story } from '../../models/Story';
 import { Passage } from '../../models/Passage';
+import type { StoryData } from '../../models/types';
 
 describe('MissingStartPassageValidator', () => {
   it('should have correct metadata', () => {
@@ -12,7 +13,7 @@ describe('MissingStartPassageValidator', () => {
   });
 
   it('should pass when story has valid start passage', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const start = new Passage({ title: 'Start' });
     story.addPassage(start);
     story.startPassage = start.id;
@@ -24,7 +25,7 @@ describe('MissingStartPassageValidator', () => {
   });
 
   it('should fail when story has no start passage defined', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const passage = new Passage({ title: 'Some Passage' });
     story.addPassage(passage);
     story.startPassage = '';
@@ -40,7 +41,7 @@ describe('MissingStartPassageValidator', () => {
   });
 
   it('should fail when start passage ID does not exist', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const passage = new Passage({ title: 'Some Passage' });
     story.addPassage(passage);
     story.startPassage = 'non-existent-id';
@@ -56,7 +57,7 @@ describe('MissingStartPassageValidator', () => {
   });
 
   it('should return early when start passage is not defined', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     story.startPassage = '';
 
     const validator = new MissingStartPassageValidator();
@@ -69,7 +70,7 @@ describe('MissingStartPassageValidator', () => {
   });
 
   it('should handle empty story', () => {
-    const story = new Story({ title: 'Empty Story' });
+    const story = new Story({ metadata: { title: 'Empty Story' } } as Partial<StoryData>);
     story.startPassage = '';
 
     const validator = new MissingStartPassageValidator();

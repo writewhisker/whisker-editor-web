@@ -32,7 +32,7 @@ describe('BreakpointPanel', () => {
     passage2.tags = ['quest', 'battle', 'boss'];
     story.addPassage(passage2);
 
-    projectActions.loadProject(story.serialize(), 'test.json');
+    projectActions.loadProject({ ...story.serialize(), version: '1.0.0' }, 'test.json');
     playerActions.loadStory(story);
   });
 

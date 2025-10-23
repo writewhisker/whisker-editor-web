@@ -1,7 +1,20 @@
 <script lang="ts">
-  import { BaseEdge, getBezierPath, type EdgeProps } from '@xyflow/svelte';
+  import { BaseEdge, getBezierPath, type EdgeProps, Position } from '@xyflow/svelte';
 
-  type $$Props = EdgeProps;
+  type $$Props = {
+    id: string;
+    sourceX: number;
+    sourceY: number;
+    targetX: number;
+    targetY: number;
+    sourcePosition: Position;
+    targetPosition: Position;
+    data?: Record<string, any>;
+    markerEnd?: string;
+    style?: string;
+    label?: string;
+    labelStyle?: string;
+  };
 
   export let id: $$Props['id'];
   export let sourceX: $$Props['sourceX'];
@@ -11,11 +24,10 @@
   export let sourcePosition: $$Props['sourcePosition'];
   export let targetPosition: $$Props['targetPosition'];
   export let data: $$Props['data'] = {};
-  export let markerEnd: $$Props['markerEnd'];
-  export let style: $$Props['style'];
-  export let label: $$Props['label'];
-  export let labelStyle: $$Props['labelStyle'];
-  export let labelBgStyle: $$Props['labelBgStyle'];
+  export let markerEnd: $$Props['markerEnd'] = undefined;
+  export let style: $$Props['style'] = undefined;
+  export let label: $$Props['label'] = undefined;
+  export let labelStyle: $$Props['labelStyle'] = undefined;
 
   // Extract choice data
   $: choiceText = data?.choiceText || '';

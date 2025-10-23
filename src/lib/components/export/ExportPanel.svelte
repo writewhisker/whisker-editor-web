@@ -27,7 +27,7 @@
   // Update default filename when story or format changes
   $: if ($currentStory) {
     const storyTitle = $currentStory.metadata.title.replace(/[^a-zA-Z0-9-_]/g, '_');
-    const extensions = { json: '.json', html: '.html', markdown: '.md' };
+    const extensions: Record<ExportFormat, string> = { json: '.json', html: '.html', markdown: '.md', package: '.zip' };
     customFilename = `${storyTitle}${extensions[selectedFormat]}`;
   }
 

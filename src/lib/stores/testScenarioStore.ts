@@ -125,7 +125,7 @@ export const testScenarioActions = {
    */
   duplicate(id: string): TestScenario | null {
     const scenarios = new Map<string, TestScenario>();
-    testScenarios.subscribe((s) => (scenarios.size = 0, s.forEach((v, k) => scenarios.set(k, v))))();
+    testScenarios.subscribe((s) => (scenarios.clear(), s.forEach((v, k) => scenarios.set(k, v))))();
 
     const original = scenarios.get(id);
     if (!original) return null;
@@ -141,7 +141,7 @@ export const testScenarioActions = {
    */
   async run(id: string): Promise<TestScenarioResult> {
     const scenarios = new Map<string, TestScenario>();
-    testScenarios.subscribe((s) => (scenarios.size = 0, s.forEach((v, k) => scenarios.set(k, v))))();
+    testScenarios.subscribe((s) => (scenarios.clear(), s.forEach((v, k) => scenarios.set(k, v))))();
 
     const scenario = scenarios.get(id);
     if (!scenario) {
@@ -170,7 +170,7 @@ export const testScenarioActions = {
    */
   async runAll(): Promise<TestScenarioResult[]> {
     const scenarios = new Map<string, TestScenario>();
-    testScenarios.subscribe((s) => (scenarios.size = 0, s.forEach((v, k) => scenarios.set(k, v))))();
+    testScenarios.subscribe((s) => (scenarios.clear(), s.forEach((v, k) => scenarios.set(k, v))))();
 
     const results: TestScenarioResult[] = [];
 
@@ -201,7 +201,7 @@ export const testScenarioActions = {
    */
   exportScenarios(): string {
     const scenarios = new Map<string, TestScenario>();
-    testScenarios.subscribe((s) => (scenarios.size = 0, s.forEach((v, k) => scenarios.set(k, v))))();
+    testScenarios.subscribe((s) => (scenarios.clear(), s.forEach((v, k) => scenarios.set(k, v))))();
 
     return JSON.stringify(Array.from(scenarios.values()), null, 2);
   },

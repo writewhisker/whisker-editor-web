@@ -30,7 +30,6 @@ jobs:
 
     - name: Run type checking
       run: npm run check
-      continue-on-error: true
 
     - name: Run tests
       run: npm run test:run
@@ -93,11 +92,9 @@ jobs:
 
     - name: Run Svelte check
       run: npm run check
-      continue-on-error: true
 
     - name: Check TypeScript types
       run: npx tsc --noEmit
-      continue-on-error: true
 
   e2e:
     name: E2E Tests
@@ -121,7 +118,6 @@ jobs:
 
     - name: Run E2E tests
       run: npm run test:e2e
-      continue-on-error: true
 
     - name: Upload Playwright report
       if: always()

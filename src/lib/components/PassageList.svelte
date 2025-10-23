@@ -3,6 +3,7 @@
   import { filteredPassages, isStartPassage, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { validationResult } from '../stores/validationStore';
   import type { Passage } from '../models/Passage';
+  import type { Choice } from '../models/Choice';
   import SearchBar from './SearchBar.svelte';
   import { tagActions } from '../stores/tagStore';
   import VirtualList from 'svelte-virtual-list';
@@ -360,8 +361,8 @@
 
             <!-- Statistics -->
             {#if !compactView}
-              {@const wordCount = passage.content.trim().split(/\s+/).filter(w => w.length > 0).length}
-              {@const incomingLinks = $currentStory ? $currentStory.passages.filter(p => p.choices.some(c => c.targetPassageId === passage.id)).length : 0}
+              {@const wordCount = passage.content.trim().split(/\s+/).filter((w: string) => w.length > 0).length}
+              {@const incomingLinks = $currentStory ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.choices.some((c: Choice) => c.target === passage.id)).length : 0}
               <div class="flex flex-col gap-0.5 text-xs text-gray-400 dark:text-gray-500">
                 <div title="Word count">📝 {wordCount}w</div>
                 <div title="Outgoing choices">→ {passage.choices.length}</div>
@@ -455,8 +456,8 @@
 
             <!-- Statistics -->
             {#if !compactView}
-              {@const wordCount = passage.content.trim().split(/\s+/).filter(w => w.length > 0).length}
-              {@const incomingLinks = $currentStory ? $currentStory.passages.filter(p => p.choices.some(c => c.targetPassageId === passage.id)).length : 0}
+              {@const wordCount = passage.content.trim().split(/\s+/).filter((w: string) => w.length > 0).length}
+              {@const incomingLinks = $currentStory ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.choices.some((c: Choice) => c.target === passage.id)).length : 0}
               <div class="flex flex-col gap-0.5 text-xs text-gray-400 dark:text-gray-500">
                 <div title="Word count">📝 {wordCount}w</div>
                 <div title="Outgoing choices">→ {passage.choices.length}</div>

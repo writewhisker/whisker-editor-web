@@ -7,7 +7,7 @@ import { Variable } from '../../models/Variable';
 
 // Helper to create story without default passage
 const createStory = () => {
-  const story = new Story({ metadata: { title: 'Test Story' }, passages: {} });
+  const story = new Story({ metadata: { title: 'Test Story', author: 'Test Author', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() }, passages: {} });
   // Remove auto-created default passage
   story.passages.clear();
   story.startPassage = '';
@@ -24,7 +24,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should pass when all variables are used', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'health', type: 'number', value: 100 }));
+    story.addVariable(new Variable({ name: 'health', type: 'number', initial: 100 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'health = 50' });
     story.addPassage(passage);
@@ -37,7 +37,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should detect unused variable', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'unused', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'unused', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', content: 'Hello' });
     story.addPassage(passage);
@@ -54,9 +54,9 @@ describe('UnusedVariablesValidator', () => {
 
   it('should detect multiple unused variables', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'var1', type: 'number', value: 0 }));
-    story.addVariable(new Variable({ name: 'var2', type: 'string', value: '' }));
-    story.addVariable(new Variable({ name: 'var3', type: 'boolean', value: false }));
+    story.addVariable(new Variable({ name: 'var1', type: 'number', initial: 0 }));
+    story.addVariable(new Variable({ name: 'var2', type: 'string', initial: '' }));
+    story.addVariable(new Variable({ name: 'var3', type: 'boolean', initial: false }));
 
     const passage = new Passage({ title: 'Start', content: 'Hello' });
     story.addPassage(passage);
@@ -73,7 +73,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should not flag variable used in passage script', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'score', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'score', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'score = score + 10' });
     story.addPassage(passage);
@@ -86,7 +86,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should not flag variable used in choice condition', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'hasKey', type: 'boolean', value: false }));
+    story.addVariable(new Variable({ name: 'hasKey', type: 'boolean', initial: false }));
 
     const passage = new Passage({ title: 'Start' });
     passage.addChoice(new Choice({ text: 'Open door', condition: 'hasKey == true' }));
@@ -100,7 +100,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should not flag variable used in choice on_select', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'karma', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'karma', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start' });
     passage.addChoice(new Choice({ text: 'Be kind', action: 'karma = karma + 1' }));
@@ -114,8 +114,8 @@ describe('UnusedVariablesValidator', () => {
 
   it('should handle mixed used and unused variables', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'used', type: 'number', value: 0 }));
-    story.addVariable(new Variable({ name: 'unused', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'used', type: 'number', initial: 0 }));
+    story.addVariable(new Variable({ name: 'unused', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'used = 10' });
     story.addPassage(passage);
@@ -129,7 +129,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should provide fix description', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'old_var', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'old_var', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', content: 'Hello' });
     story.addPassage(passage);
@@ -153,7 +153,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should handle variable used in multiple places', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'x', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'x', type: 'number', initial: 0 }));
 
     const p1 = new Passage({ title: 'P1', onEnterScript: 'x = 10' });
     const p2 = new Passage({ title: 'P2' });
@@ -170,8 +170,8 @@ describe('UnusedVariablesValidator', () => {
 
   it('should not confuse similar variable names', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'health', type: 'number', value: 100 }));
-    story.addVariable(new Variable({ name: 'healthMax', type: 'number', value: 100 }));
+    story.addVariable(new Variable({ name: 'health', type: 'number', initial: 100 }));
+    story.addVariable(new Variable({ name: 'healthMax', type: 'number', initial: 100 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'health = 50' });
     story.addPassage(passage);
@@ -185,7 +185,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should handle variables with underscores', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'player_gold', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'player_gold', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: 'player_gold = 100' });
     story.addPassage(passage);
@@ -198,7 +198,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should not flag Lua keywords', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'x', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'x', type: 'number', initial: 0 }));
 
     // Use Lua keywords in script
     const passage = new Passage({
@@ -216,7 +216,7 @@ describe('UnusedVariablesValidator', () => {
 
   it('should handle empty scripts', () => {
     const story = createStory();
-    story.addVariable(new Variable({ name: 'unused', type: 'number', value: 0 }));
+    story.addVariable(new Variable({ name: 'unused', type: 'number', initial: 0 }));
 
     const passage = new Passage({ title: 'Start', onEnterScript: '' });
     story.addPassage(passage);

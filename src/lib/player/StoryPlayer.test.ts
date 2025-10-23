@@ -90,7 +90,7 @@ describe('StoryPlayer', () => {
     });
 
     it('should throw error if no start passage defined', () => {
-      story.startPassage = null;
+      story.startPassage = null as any;
       player.loadStory(story);
 
       expect(() => player.start()).toThrow('No start passage defined');

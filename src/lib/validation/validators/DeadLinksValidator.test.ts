@@ -3,6 +3,7 @@ import { DeadLinksValidator } from './DeadLinksValidator';
 import { Story } from '../../models/Story';
 import { Passage } from '../../models/Passage';
 import { Choice } from '../../models/Choice';
+import type { StoryData } from '../../models/types';
 
 describe('DeadLinksValidator', () => {
   it('should have correct metadata', () => {
@@ -13,7 +14,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should pass when all links point to existing passages', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     const p2 = new Passage({ id: 'p2', title: 'Passage 2' });
 
@@ -29,7 +30,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should detect choice pointing to non-existent passage', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     p1.addChoice(new Choice({ text: 'Go nowhere', target: 'non-existent' }));
 
@@ -48,7 +49,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should ignore choices with no target', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     p1.addChoice(new Choice({ text: 'End story', target: '' }));
 
@@ -61,7 +62,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should detect multiple dead links in same passage', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     p1.addChoice(new Choice({ text: 'Link 1', target: 'nowhere1' }));
     p1.addChoice(new Choice({ text: 'Link 2', target: 'nowhere2' }));
@@ -76,7 +77,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should detect dead links across multiple passages', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     const p2 = new Passage({ title: 'Passage 2' });
 
@@ -94,7 +95,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should include passage and choice information in issue', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const passage = new Passage({ title: 'Start' });
     const choice = new Choice({ text: 'Go somewhere', target: 'missing' });
     passage.addChoice(choice);
@@ -112,7 +113,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should handle story with no passages', () => {
-    const story = new Story({ title: 'Empty Story' });
+    const story = new Story({ metadata: { title: 'Empty Story' } } as Partial<StoryData>);
 
     const validator = new DeadLinksValidator();
     const issues = validator.validate(story);
@@ -121,7 +122,7 @@ describe('DeadLinksValidator', () => {
   });
 
   it('should provide fix description', () => {
-    const story = new Story({ title: 'Test Story' });
+    const story = new Story({ metadata: { title: 'Test Story' } } as Partial<StoryData>);
     const p1 = new Passage({ title: 'Passage 1' });
     p1.addChoice(new Choice({ text: 'Bad link', target: 'nowhere' }));
 

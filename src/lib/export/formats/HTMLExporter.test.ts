@@ -207,7 +207,7 @@ describe('HTMLExporter', () => {
     });
 
     it('should warn if no start passage', async () => {
-      story.startPassage = undefined;
+      story.startPassage = undefined as any;
 
       const context: ExportContext = {
         story,

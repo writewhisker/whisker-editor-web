@@ -8,6 +8,8 @@ import type { Story } from '../models/Story';
 import type { Passage } from '../models/Passage';
 import type { QualityMetrics } from './types';
 
+export type { QualityMetrics } from './types';
+
 export class QualityAnalyzer {
   /**
    * Analyze story and generate quality metrics

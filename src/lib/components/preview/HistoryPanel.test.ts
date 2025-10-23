@@ -34,7 +34,7 @@ describe('HistoryPanel', () => {
       target: secondPassage.id,
     }));
 
-    projectActions.loadProject(story.serialize(), 'test.json');
+    projectActions.loadProject({ ...story.serialize(), version: '1.0.0' }, 'test.json');
     playerActions.loadStory(story);
   });
 

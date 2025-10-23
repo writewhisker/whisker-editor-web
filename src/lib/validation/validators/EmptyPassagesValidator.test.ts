@@ -6,7 +6,16 @@ import { Choice } from '../../models/Choice';
 
 // Helper to create story without default passage
 const createStory = () => {
-  const story = new Story({ metadata: { title: 'Test Story' }, passages: {} });
+  const story = new Story({
+    metadata: {
+      title: 'Test Story',
+      author: 'Test Author',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString()
+    },
+    passages: {}
+  });
   // Remove auto-created default passage
   story.passages.clear();
   story.startPassage = '';

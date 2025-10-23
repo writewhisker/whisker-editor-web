@@ -164,8 +164,8 @@ describe('Story', () => {
           modified: '2024-06-01T00:00:00.000Z',
         },
         startPassage: 'start-id',
-        passages: [
-          {
+        passages: {
+          'start-id': {
             id: 'start-id',
             title: 'Beginning',
             content: 'Start here',
@@ -173,14 +173,14 @@ describe('Story', () => {
             tags: [],
             choices: [],
           },
-        ],
-        variables: [
-          {
+        },
+        variables: {
+          'lives': {
             name: 'lives',
             type: 'number' as const,
             initial: 3,
           },
-        ],
+        },
       };
 
       const loaded = Story.deserialize(data);

@@ -115,7 +115,7 @@ describe('ImportDialog', () => {
     it('should disable Import button when no file is selected', () => {
       const { getByText } = render(ImportDialog, { props: { show: true } });
 
-      const importButton = getByText('Import').closest('button') as HTMLElement;
+      const importButton = getByText('Import').closest('button') as HTMLButtonElement;
       expect(importButton.disabled).toBe(true);
     });
 
@@ -131,7 +131,7 @@ describe('ImportDialog', () => {
       });
       await fireEvent.change(fileInput);
 
-      const importButton = getByText('Import').closest('button') as HTMLElement;
+      const importButton = getByText('Import').closest('button') as HTMLButtonElement;
       expect(importButton.disabled).toBe(false);
     });
 
@@ -140,7 +140,7 @@ describe('ImportDialog', () => {
 
       const { getByText } = render(ImportDialog, { props: { show: true } });
 
-      const importButton = getByText('Importing...').closest('button') as HTMLElement;
+      const importButton = getByText('Importing...').closest('button') as HTMLButtonElement;
       expect(importButton.disabled).toBe(true);
     });
 
@@ -278,7 +278,7 @@ describe('ImportDialog', () => {
     it('should disable Clear History button when history is empty', () => {
       const { getByText } = render(ImportDialog, { props: { show: true } });
 
-      const clearButton = getByText('Clear History').closest('button') as HTMLElement;
+      const clearButton = getByText('Clear History').closest('button') as HTMLButtonElement;
       expect(clearButton.disabled).toBe(true);
     });
   });

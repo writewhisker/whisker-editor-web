@@ -57,7 +57,7 @@ describe('MarkdownExporter', () => {
     story.startPassage = passage1.id;
 
     // Add a variable
-    story.addVariable(new Variable({ name: 'score', value: 0, type: 'number' }));
+    story.addVariable(new Variable({ name: 'score', initial: 0, type: 'number' }));
   });
 
   describe('metadata', () => {
@@ -231,8 +231,8 @@ describe('MarkdownExporter', () => {
         warningCount: 1,
         infoCount: 0,
         issues: [
-          { severity: 'error', message: 'Dead link found', passageId: 'p1' },
-          { severity: 'warning', message: 'Unused variable', passageId: 'p2' },
+          { id: 'v1', severity: 'error' as const, category: 'links' as const, message: 'Dead link found', passageId: 'p1', fixable: false },
+          { id: 'v2', severity: 'warning' as const, category: 'variables' as const, message: 'Unused variable', passageId: 'p2', fixable: false },
         ],
         stats: {
           totalPassages: 3,
@@ -264,10 +264,20 @@ describe('MarkdownExporter', () => {
 
     it('should include metrics section when requested', async () => {
       const metrics = {
-        structure: { depth: 3, branchingFactor: 1.5, density: 0.75 },
-        content: { totalPassages: 3, totalChoices: 3, totalVariables: 1, totalWords: 20 },
-        complexity: { uniqueEndings: 1, reachabilityScore: 1.0, conditionalComplexity: 1 },
-        estimates: { estimatedPlayTime: 5, estimatedUniquePaths: 2 },
+        depth: 3,
+        branchingFactor: 1.5,
+        density: 0.75,
+        totalPassages: 3,
+        totalChoices: 3,
+        totalVariables: 1,
+        totalWords: 20,
+        avgWordsPerPassage: 6.67,
+        uniqueEndings: 1,
+        reachabilityScore: 1.0,
+        conditionalComplexity: 1,
+        variableComplexity: 0.33,
+        estimatedPlayTime: 5,
+        estimatedPaths: 2,
       };
 
       const context: ExportContext = {
@@ -344,10 +354,10 @@ describe('MarkdownExporter', () => {
     });
 
     it('should scale with number of passages', () => {
-      const smallStory = new Story({ metadata: { title: 'Small' } });
+      const smallStory = new Story({ metadata: { title: 'Small', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
       smallStory.addPassage(new Passage({ title: 'P1' }));
 
-      const largeStory = new Story({ metadata: { title: 'Large' } });
+      const largeStory = new Story({ metadata: { title: 'Large', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
       for (let i = 0; i < 10; i++) {
         largeStory.addPassage(new Passage({ title: `P${i}` }));
       }

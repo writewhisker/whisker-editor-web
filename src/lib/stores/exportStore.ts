@@ -208,7 +208,8 @@ export const exportActions = {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = result.filename || 'story.export';
+      // Use custom filename from options if provided, otherwise use result.filename or fallback
+      a.download = options.filename || result.filename || 'story.export';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

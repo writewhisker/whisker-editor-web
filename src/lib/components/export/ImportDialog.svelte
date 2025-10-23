@@ -66,9 +66,22 @@
 <svelte:window on:keydown={handleKeydown} />
 
 {#if show}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={close}>
-    <div class="bg-white rounded-lg shadow-xl p-6 w-[600px] max-h-[80vh] overflow-y-auto" on:click|stopPropagation>
-      <h2 class="text-2xl font-bold mb-6">Import Story</h2>
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    on:click={close}
+    on:keydown={handleKeydown}
+    role="presentation"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl p-6 w-[600px] max-h-[80vh] overflow-y-auto"
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="import-title"
+      tabindex="-1"
+    >
+      <h2 id="import-title" class="text-2xl font-bold mb-6">Import Story</h2>
 
       {#if $importError}
         <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -79,15 +92,17 @@
 
       <!-- File Upload Area -->
       <div class="mb-6">
-        <label class="block text-sm font-semibold mb-2">Select File</label>
+        <div class="block text-sm font-semibold mb-2">Select File</div>
 
         <div
           class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer"
           on:drop={handleDrop}
           on:dragover={handleDragOver}
           on:click={() => fileInput.click()}
+          on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } }}
           role="button"
           tabindex="0"
+          aria-label="Drop file here or click to browse"
         >
           {#if selectedFile}
             <div class="text-blue-600 font-medium mb-2">
@@ -126,7 +141,7 @@
       <!-- Recent Imports -->
       {#if $recentImports.length > 0}
         <div class="mb-6">
-          <label class="block text-sm font-semibold mb-2">Recent Imports</label>
+          <div class="block text-sm font-semibold mb-2">Recent Imports</div>
           <div class="bg-gray-50 rounded border border-gray-200 max-h-[150px] overflow-y-auto">
             {#each $recentImports.slice(0, 5) as entry}
               <div class="px-3 py-2 border-b border-gray-200 last:border-b-0">

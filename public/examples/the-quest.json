@@ -1,0 +1,152 @@
+{
+  "metadata": {
+    "title": "The Quest",
+    "description": "A medium-complexity adventure demonstrating variables, conditionals, and branching paths",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "village",
+  "passages": [
+    {
+      "id": "village",
+      "title": "The Village",
+      "content": "You wake in a small village. The elder approaches you with urgency.\n\n\"A dragon threatens our land! We need a hero. But first, you must prepare.\"\n\nThe elder gestures to two paths:\n\n[[Visit the blacksmith -> blacksmith]]\n[[Visit the wizard -> wizard]]",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "Visit the blacksmith",
+          "target": "blacksmith",
+          "conditions": []
+        },
+        {
+          "id": "choice-2",
+          "text": "Visit the wizard",
+          "target": "wizard",
+          "conditions": []
+        }
+      ],
+      "tags": ["start", "village"],
+      "position": { "x": 100, "y": 200 }
+    },
+    {
+      "id": "blacksmith",
+      "title": "The Blacksmith",
+      "content": "The blacksmith offers you a gleaming sword.\n\n\"Take this blade. It has served me well.\"\n\n{hasSword = true}\n{strength = strength + 2}\n\nYou feel stronger with the sword in hand.\n\n[[Continue your quest -> mountain]]",
+      "choices": [
+        {
+          "id": "choice-3",
+          "text": "Continue your quest",
+          "target": "mountain",
+          "conditions": []
+        }
+      ],
+      "tags": ["blacksmith"],
+      "position": { "x": 300, "y": 100 }
+    },
+    {
+      "id": "wizard",
+      "title": "The Wizard's Tower",
+      "content": "The wizard gives you a glowing amulet.\n\n\"This amulet grants magical protection. May it shield you from harm.\"\n\n{hasAmulet = true}\n{magic = magic + 2}\n\nYou feel arcane energy coursing through you.\n\n[[Continue your quest -> mountain]]",
+      "choices": [
+        {
+          "id": "choice-4",
+          "text": "Continue your quest",
+          "target": "mountain",
+          "conditions": []
+        }
+      ],
+      "tags": ["wizard"],
+      "position": { "x": 300, "y": 300 }
+    },
+    {
+      "id": "mountain",
+      "title": "Dragon's Mountain",
+      "content": "You arrive at the dragon's lair. Smoke rises from the peak.\n\nAs you climb, the dragon appears!\n\n\"Foolish mortal! You dare challenge me?\"\n\nYour preparation determines your fate...\n\n[[Face the dragon -> battle]]",
+      "choices": [
+        {
+          "id": "choice-5",
+          "text": "Face the dragon",
+          "target": "battle",
+          "conditions": []
+        }
+      ],
+      "tags": ["mountain", "dragon"],
+      "position": { "x": 500, "y": 200 }
+    },
+    {
+      "id": "battle",
+      "title": "The Battle",
+      "content": "{if hasSword && hasAmulet}\nWith both sword and magic at your command, you're unstoppable!\n\nYour blade strikes true while the amulet protects you from the dragon's fire. After an epic battle, the dragon yields.\n\n\"You have bested me, champion. I will trouble this land no more.\"\n\n{victory = 'perfect'}\n\n[[Return victorious -> victory]]\n{elseif hasSword}\nYour sword proves mighty!\n\nThough the dragon's fire scorches you, your blade finds its mark. The dragon retreats, wounded.\n\n\"You are strong, warrior. I will leave... for now.\"\n\n{victory = 'warrior'}\n\n[[Return victorious -> victory]]\n{elseif hasAmulet}\nYour magic saves you!\n\nThe amulet's power shields you from the dragon's flames. Frustrated, the dragon flies away.\n\n\"Magic-user! We shall meet again!\"\n\n{victory = 'mage'}\n\n[[Return victorious -> victory]]\n{else}\nYou're unprepared!\n\nWithout weapon or protection, the dragon's first attack overwhelms you. You barely escape with your life.\n\n{victory = 'retreat'}\n\n[[Flee back to the village -> defeat]]\n{endif}",
+      "choices": [
+        {
+          "id": "choice-6",
+          "text": "Return victorious",
+          "target": "victory",
+          "conditions": [
+            { "variable": "victory", "operator": "!=", "value": "retreat" }
+          ]
+        },
+        {
+          "id": "choice-7",
+          "text": "Flee back to the village",
+          "target": "defeat",
+          "conditions": [
+            { "variable": "victory", "operator": "==", "value": "retreat" }
+          ]
+        }
+      ],
+      "tags": ["battle", "climax"],
+      "position": { "x": 700, "y": 200 }
+    },
+    {
+      "id": "victory",
+      "title": "Victory!",
+      "content": "{if victory == 'perfect'}\n**Perfect Victory!**\n\nThe village celebrates your flawless triumph. You're hailed as the greatest hero in history.\n\nStrength: {strength}, Magic: {magic}\n\n*You achieved the best ending by visiting both the blacksmith AND the wizard.*\n{elseif victory == 'warrior'}\n**Warrior's Victory!**\n\nThe village celebrates, though they tend to your burns. Your strength saved the day.\n\nStrength: {strength}, Magic: {magic}\n\n*You could have had an easier battle by also visiting the wizard.*\n{else}\n**Mage's Victory!**\n\nThe village celebrates your clever use of magic. A strategic win!\n\nStrength: {strength}, Magic: {magic}\n\n*You could have finished the dragon by also visiting the blacksmith.*\n{endif}\n\n---\n\n**THE END**\n\n*Try replaying with different choices!*",
+      "choices": [],
+      "tags": ["ending", "victory"],
+      "position": { "x": 900, "y": 150 }
+    },
+    {
+      "id": "defeat",
+      "title": "Defeat",
+      "content": "You return to the village, wounded and ashamed.\n\nThe elder shakes his head. \"You weren't prepared, young one. A hero must train before facing such danger.\"\n\nThe dragon still threatens the land...\n\n---\n\n**GAME OVER**\n\nStrength: {strength}, Magic: {magic}\n\n*Try again! Visit the blacksmith or wizard (or both!) before facing the dragon.*",
+      "choices": [],
+      "tags": ["ending", "defeat"],
+      "position": { "x": 900, "y": 300 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "hasSword",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether the player has the sword from the blacksmith"
+    },
+    {
+      "name": "hasAmulet",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether the player has the amulet from the wizard"
+    },
+    {
+      "name": "strength",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Player's strength level"
+    },
+    {
+      "name": "magic",
+      "type": "number",
+      "defaultValue": 1,
+      "description": "Player's magic level"
+    },
+    {
+      "name": "victory",
+      "type": "string",
+      "defaultValue": "",
+      "description": "Type of victory: perfect, warrior, mage, or retreat"
+    }
+  ]
+}

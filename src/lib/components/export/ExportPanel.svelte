@@ -22,6 +22,14 @@
   let prettyPrint = $exportPreferences.prettyPrint;
   let htmlTheme: 'light' | 'dark' | 'auto' = $exportPreferences.htmlTheme;
   let minifyHTML = $exportPreferences.minifyHTML;
+  let customFilename = '';
+
+  // Update default filename when story or format changes
+  $: if ($currentStory) {
+    const storyTitle = $currentStory.metadata.title.replace(/[^a-zA-Z0-9-_]/g, '_');
+    const extensions = { json: '.json', html: '.html', markdown: '.md' };
+    customFilename = `${storyTitle}${extensions[selectedFormat]}`;
+  }
 
   function close() {
     show = false;
@@ -39,6 +47,7 @@
       prettyPrint,
       theme: htmlTheme,
       minifyHTML,
+      filename: customFilename.trim() || undefined,
     };
 
     const success = await exportActions.exportStory($currentStory, selectedFormat, options);
@@ -70,9 +79,22 @@
 <svelte:window on:keydown={handleKeydown} />
 
 {#if show}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={close}>
-    <div class="bg-white rounded-lg shadow-xl p-6 w-[600px] max-h-[80vh] overflow-y-auto" on:click|stopPropagation>
-      <h2 class="text-2xl font-bold mb-6">Export Story</h2>
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    on:click={close}
+    on:keydown={handleKeydown}
+    role="presentation"
+  >
+    <div
+      class="bg-white rounded-lg shadow-xl p-6 w-[600px] max-h-[80vh] overflow-y-auto"
+      on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="export-title"
+      tabindex="-1"
+    >
+      <h2 id="export-title" class="text-2xl font-bold mb-6">Export Story</h2>
 
       {#if $exportError}
         <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -83,7 +105,7 @@
 
       <!-- Format Selection -->
       <div class="mb-6">
-        <label class="block text-sm font-semibold mb-2">Export Format</label>
+        <div class="block text-sm font-semibold mb-2">Export Format</div>
         <div class="grid grid-cols-3 gap-2">
           <button
             class="px-4 py-3 rounded border-2 transition-colors {selectedFormat === 'json' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}"
@@ -109,9 +131,26 @@
         </div>
       </div>
 
+      <!-- Filename -->
+      <div class="mb-6">
+        <label for="export-filename" class="block text-sm font-semibold mb-2">
+          Filename
+        </label>
+        <input
+          id="export-filename"
+          type="text"
+          bind:value={customFilename}
+          class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Enter filename..."
+        />
+        <div class="mt-1 text-xs text-gray-600">
+          File will be saved as: <span class="font-mono">{customFilename || 'story.export'}</span>
+        </div>
+      </div>
+
       <!-- Export Options -->
       <div class="mb-6">
-        <label class="block text-sm font-semibold mb-3">Export Options</label>
+        <div class="block text-sm font-semibold mb-3">Export Options</div>
 
         {#if selectedFormat === 'json'}
           <div class="space-y-2">
@@ -135,8 +174,8 @@
         {:else if selectedFormat === 'html'}
           <div class="space-y-2">
             <div>
-              <label class="block mb-1">Theme</label>
-              <select bind:value={htmlTheme} class="w-full px-3 py-2 border border-gray-300 rounded">
+              <label for="html-theme" class="block mb-1">Theme</label>
+              <select id="html-theme" bind:value={htmlTheme} class="w-full px-3 py-2 border border-gray-300 rounded">
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
                 <option value="auto">Auto (system preference)</option>
@@ -164,7 +203,7 @@
       <!-- Recent Exports -->
       {#if $recentExports.length > 0}
         <div class="mb-6">
-          <label class="block text-sm font-semibold mb-2">Recent Exports</label>
+          <div class="block text-sm font-semibold mb-2">Recent Exports</div>
           <div class="bg-gray-50 rounded border border-gray-200 max-h-[150px] overflow-y-auto">
             {#each $recentExports.slice(0, 5) as entry}
               <div class="px-3 py-2 border-b border-gray-200 last:border-b-0">

@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { currentStory, passageList } from './projectStore';
 import type { Passage } from '../models/Passage';
-import { get } from 'svelte/store';
+import type { Story } from '../models/Story';
 
 export type PassageTypeFilter = 'start' | 'orphan' | 'dead' | 'normal';
 
@@ -29,44 +29,111 @@ export const availableTags = derived(passageList, ($passages) => {
   return Array.from(tagSet).sort();
 });
 
-// Helper functions for passage classification
-function isStartPassage(passage: Passage): boolean {
-  const story = get(currentStory);
-  return story?.startPassage === passage.id;
+// ===== PERFORMANCE OPTIMIZATION: Memoized Passage Metadata =====
+// Pre-compute expensive passage classifications (start, orphan, dead-end)
+// Only recalculate when the story structure changes, not on every filter update
+
+interface PassageMetadata {
+  isStart: boolean;
+  isOrphan: boolean;
+  isDeadEnd: boolean;
+  isNormal: boolean;
 }
 
-function isOrphanPassage(passage: Passage): boolean {
-  const story = get(currentStory);
-  if (!story || isStartPassage(passage)) return false;
+// Cache for passage metadata - maps passage ID to metadata
+let metadataCache = new Map<string, PassageMetadata>();
+let lastStoryVersion: Story | null = null;
 
-  // Check if any other passage has a choice pointing to this one
-  return !Array.from(story.passages.values()).some((p) =>
-    p.choices.some((c) => c.target === passage.id)
-  );
+/**
+ * Build reverse index of which passages are targeted by choices
+ * This allows O(1) orphan detection instead of O(n²)
+ */
+function buildTargetedPassagesIndex(story: Story): Set<string> {
+  const targeted = new Set<string>();
+  for (const passage of story.passages.values()) {
+    for (const choice of passage.choices) {
+      targeted.add(choice.target);
+    }
+  }
+  return targeted;
 }
 
-function isDeadEndPassage(passage: Passage): boolean {
-  return passage.choices.length === 0;
+/**
+ * Pre-compute all passage metadata when story changes
+ * This converts O(n²) operations into O(n) with caching
+ */
+function computePassageMetadata(story: Story): Map<string, PassageMetadata> {
+  const cache = new Map<string, PassageMetadata>();
+  const targeted = buildTargetedPassagesIndex(story);
+
+  for (const passage of story.passages.values()) {
+    const isStart = story.startPassage === passage.id;
+    const isDeadEnd = passage.choices.length === 0;
+    const isOrphan = !isStart && !targeted.has(passage.id);
+    const isNormal = !isStart && !isOrphan && !isDeadEnd;
+
+    cache.set(passage.id, { isStart, isOrphan, isDeadEnd, isNormal });
+  }
+
+  return cache;
 }
 
-function isNormalPassage(passage: Passage): boolean {
-  return !isStartPassage(passage) && !isOrphanPassage(passage) && !isDeadEndPassage(passage);
+/**
+ * Get cached metadata for a passage, recomputing if story changed
+ */
+function getPassageMetadata(passage: Passage, story: Story | null): PassageMetadata {
+  // Invalidate cache if story reference changed
+  if (story !== lastStoryVersion) {
+    if (story) {
+      metadataCache = computePassageMetadata(story);
+      lastStoryVersion = story;
+    } else {
+      metadataCache.clear();
+      lastStoryVersion = null;
+    }
+  }
+
+  // Return cached metadata or default
+  return metadataCache.get(passage.id) || {
+    isStart: false,
+    isOrphan: false,
+    isDeadEnd: false,
+    isNormal: true
+  };
+}
+
+// Helper functions for passage classification (now using cached metadata)
+// Exported for use in other components (e.g., PassageList)
+export function isStartPassage(passage: Passage, story: Story | null): boolean {
+  return getPassageMetadata(passage, story).isStart;
+}
+
+export function isOrphanPassage(passage: Passage, story: Story | null): boolean {
+  return getPassageMetadata(passage, story).isOrphan;
+}
+
+export function isDeadEndPassage(passage: Passage, story: Story | null): boolean {
+  return getPassageMetadata(passage, story).isDeadEnd;
+}
+
+export function isNormalPassage(passage: Passage, story: Story | null): boolean {
+  return getPassageMetadata(passage, story).isNormal;
 }
 
 // Check if passage matches passage type filters
-function matchesPassageTypeFilter(passage: Passage, types: PassageTypeFilter[]): boolean {
+function matchesPassageTypeFilter(passage: Passage, types: PassageTypeFilter[], story: Story | null): boolean {
   if (types.length === 0) return true;
 
   return types.some((type) => {
     switch (type) {
       case 'start':
-        return isStartPassage(passage);
+        return isStartPassage(passage, story);
       case 'orphan':
-        return isOrphanPassage(passage);
+        return isOrphanPassage(passage, story);
       case 'dead':
-        return isDeadEndPassage(passage);
+        return isDeadEndPassage(passage, story);
       case 'normal':
-        return isNormalPassage(passage);
+        return isNormalPassage(passage, story);
       default:
         return false;
     }
@@ -107,9 +174,10 @@ function matchesSearchQuery(passage: Passage, query: string, includeChoices: boo
 }
 
 // Filtered passages (main derived store)
+// Now depends on currentStory to enable metadata caching
 export const filteredPassages = derived(
-  [passageList, filterState],
-  ([$passages, $filter]) => {
+  [passageList, filterState, currentStory],
+  ([$passages, $filter, $story]) => {
     return $passages.filter((passage) => {
       // Must match search query
       if (!matchesSearchQuery(passage, $filter.searchQuery, $filter.includeChoiceText)) {
@@ -121,8 +189,8 @@ export const filteredPassages = derived(
         return false;
       }
 
-      // Must match passage type filter
-      if (!matchesPassageTypeFilter(passage, $filter.passageTypes)) {
+      // Must match passage type filter (now with cached metadata)
+      if (!matchesPassageTypeFilter(passage, $filter.passageTypes, $story)) {
         return false;
       }
 

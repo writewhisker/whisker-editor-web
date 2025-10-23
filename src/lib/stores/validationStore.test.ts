@@ -520,5 +520,50 @@ describe('validationStore', () => {
         expect(md).toBe('');
       });
     });
+
+    describe('exportHTML', () => {
+      it('should export validation results as HTML', () => {
+        validationActions.validate(story);
+
+        const html = validationActions.exportHTML();
+
+        expect(html).toBeTruthy();
+        expect(typeof html).toBe('string');
+        expect(html).toContain('<!DOCTYPE html>');
+        expect(html).toContain('Validation Report');
+        expect(html).toContain('Summary');
+      });
+
+      it('should return empty string when no results', () => {
+        validationActions.clear();
+
+        const html = validationActions.exportHTML();
+
+        expect(html).toBe('');
+      });
+
+      it('should include quality metrics when available', () => {
+        validationActions.validate(story);
+
+        const html = validationActions.exportHTML();
+
+        expect(html).toContain('Quality Metrics');
+        expect(html).toContain('Depth');
+        expect(html).toContain('Branching Factor');
+      });
+
+      it('should have valid HTML structure', () => {
+        validationActions.validate(story);
+
+        const html = validationActions.exportHTML();
+
+        expect(html).toContain('<html');
+        expect(html).toContain('</html>');
+        expect(html).toContain('<head>');
+        expect(html).toContain('</head>');
+        expect(html).toContain('<body>');
+        expect(html).toContain('</body>');
+      });
+    });
   });
 });

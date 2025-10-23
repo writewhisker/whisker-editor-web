@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "title": "The Cave - Example Story",
+    "author": "Whisker Tutorial",
+    "version": "1.0.0",
+    "created": "2025-10-22",
+    "description": "A simple interactive story teaching the basics of Whisker. From the Getting Started guide."
+  },
+  "startPassage": "start",
+  "passages": [
+    {
+      "id": "start",
+      "title": "Start",
+      "tags": ["beginning", "tutorial"],
+      "content": "You stand at the entrance of a dark cave. A faint glow emanates from deep within.\n\nWhat do you do?\n\n[[Enter the cave -> Inside]]\n[[Walk away -> Leave]]",
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "inside",
+      "title": "Inside",
+      "tags": ["cave", "discovery"],
+      "content": "You step into the cave. It's cold and damp. The glow is coming from a pile of gold coins!\n\n[[Take the gold -> TakeGold]]\n[[Leave it alone -> LeaveGold]]",
+      "position": { "x": 400, "y": 100 }
+    },
+    {
+      "id": "leave",
+      "title": "Leave",
+      "tags": ["ending", "safe"],
+      "content": "You decide it's not worth the risk. As you walk away, you wonder what might have been inside...\n\n**THE END**\n\n*(This is a safe ending. You survived, but missed the adventure!)*",
+      "position": { "x": 100, "y": 400 }
+    },
+    {
+      "id": "takegold",
+      "title": "TakeGold",
+      "tags": ["cave", "danger", "choice"],
+      "content": "{$hasGold = true}\n{$courage += 10}\n\nYou fill your pockets with gold coins. Suddenly, you hear a roar from deeper in the cave...\n\nA dragon appears! What do you do?\n\n[[Fight the dragon -> FightDragon]]\n[[Run away -> RunAway]]",
+      "position": { "x": 700, "y": 50 }
+    },
+    {
+      "id": "leavegold",
+      "title": "LeaveGold",
+      "tags": ["cave", "wise", "secret"],
+      "content": "{$hasGold = false}\n{$wisdom += 10}\n\nYou resist the temptation. As you turn to leave, you notice a hidden passage behind the gold.\n\n[[Explore the passage -> SecretExit]]",
+      "position": { "x": 700, "y": 250 }
+    },
+    {
+      "id": "fightdragon",
+      "title": "FightDragon",
+      "tags": ["combat", "ending", "brave"],
+      "content": "{@courage >= 10}\nYour courage gives you strength! You grab a nearby sword and charge at the dragon.\n\nAfter an epic battle, you emerge victorious! The dragon's treasure is yours.\n{:else}\nYou try to fight, but fear overwhelms you. The dragon's flames are too much.\n{/@}\n\n{@courage >= 10}\n**THE END - HERO'S VICTORY**\n\n*(You defeated the dragon and claimed the treasure! Your courage paid off.)*\n{:else}\n**THE END - BRAVE BUT FOOLISH**\n\n*(You fought bravely, but sometimes retreat is the better option.)*\n{/@}",
+      "position": { "x": 1000, "y": 0 }
+    },
+    {
+      "id": "runaway",
+      "title": "RunAway",
+      "tags": ["escape", "ending", "smart"],
+      "content": "{$escapedDragon = true}\n\nYou sprint out of the cave as fast as you can. The dragon's roar echoes behind you, but you make it to safety!\n\n{@hasGold}\nYou still have some of the gold you grabbed. Not a bad haul for a close call!\n{:else}\nYou escaped with your life, though you left empty-handed.\n{/@}\n\n**THE END - LIVE TO ADVENTURE ANOTHER DAY**\n\n*(Sometimes the smart choice is to run. You survived with {@hasGold}your treasure{:else}your life{/@}!)*",
+      "position": { "x": 1000, "y": 150 }
+    },
+    {
+      "id": "secretexit",
+      "title": "SecretExit",
+      "tags": ["secret", "ending", "wise"],
+      "content": "{$foundSecret = true}\n{$wisdom += 20}\n\nThe hidden passage leads to a secret exit. As you emerge into sunlight, you find a small chest.\n\nInside is an ancient map and a magical amulet!\n\n**THE END - THE WISE PATH**\n\n*(Your wisdom led you to discover the cave's true treasure. Sometimes the best rewards come from patience and observation.)*",
+      "position": { "x": 1000, "y": 300 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "hasGold",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether the player took the gold"
+    },
+    {
+      "name": "courage",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Player's courage level"
+    },
+    {
+      "name": "wisdom",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Player's wisdom level"
+    },
+    {
+      "name": "escapedDragon",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether the player escaped from the dragon"
+    },
+    {
+      "name": "foundSecret",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether the player found the secret exit"
+    }
+  ]
+}

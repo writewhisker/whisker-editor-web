@@ -1,8 +1,8 @@
 import { mount } from 'svelte'
 import './app.css'
-import App from './App.svelte'
+import AppWrapper from './AppWrapper.svelte'
 
-const app = mount(App, {
+const app = mount(AppWrapper, {
   target: document.getElementById('app')!,
 })
 

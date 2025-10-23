@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "title": "Hello World",
+    "description": "Your first interactive story - learn the basics in under 1 minute",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "start",
+  "passages": [
+    {
+      "id": "start",
+      "title": "Start",
+      "content": "Welcome to your first interactive story!\n\nThis is a **passage** - a single scene or moment in your story.\n\nChoices appear as links. Try clicking one:\n\n[[Continue to the next passage -> next]]\n\n---\n\n**Tip:** You can format text with Markdown:\n- **Bold** with `**text**`\n- *Italic* with `*text*`\n- Links with `[[Link Text -> TargetPassage]]`",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "Continue to the next passage",
+          "target": "next",
+          "conditions": []
+        }
+      ],
+      "tags": ["tutorial"],
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "next",
+      "title": "The End",
+      "content": "Congratulations! 🎉\n\nYou've just experienced an interactive story.\n\n**You've learned:**\n- Stories are made of **passages** (scenes)\n- **Choices** let readers navigate\n- The **start passage** is where stories begin\n- **Markdown** formats your text\n\n**Next steps:**\n1. Close the preview (top-left button)\n2. Try editing the passages in the editor\n3. Add your own choice to create a third passage\n4. Explore the other example stories\n\nHappy writing! ✍️",
+      "choices": [],
+      "tags": ["ending"],
+      "position": { "x": 400, "y": 100 }
+    }
+  ],
+  "variables": []
+}

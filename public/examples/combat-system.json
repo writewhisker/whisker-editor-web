@@ -1,0 +1,355 @@
+{
+  "metadata": {
+    "title": "Combat System Demo",
+    "description": "Advanced example showcasing combat mechanics, inventory, health tracking, and complex conditionals",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "start",
+  "passages": [
+    {
+      "id": "start",
+      "title": "Character Creation",
+      "content": "**COMBAT SYSTEM DEMO**\n\nThis example demonstrates:\n- Health tracking\n- Inventory management\n- Combat mechanics\n- Complex conditionals\n- Multiple item interactions\n\nChoose your starting class:\n\n[[Knight (High HP, Low Damage) -> knight]]\n[[Rogue (Low HP, High Damage) -> rogue]]\n[[Cleric (Medium HP, Healing) -> cleric]]",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "Knight (High HP, Low Damage)",
+          "target": "knight",
+          "conditions": []
+        },
+        {
+          "id": "choice-2",
+          "text": "Rogue (Low HP, High Damage)",
+          "target": "rogue",
+          "conditions": []
+        },
+        {
+          "id": "choice-3",
+          "text": "Cleric (Medium HP, Healing)",
+          "target": "cleric",
+          "conditions": []
+        }
+      ],
+      "tags": ["start"],
+      "position": { "x": 100, "y": 200 }
+    },
+    {
+      "id": "knight",
+      "title": "Knight",
+      "content": "You are a **Knight**!\n\n{playerClass = 'Knight'}\n{maxHP = 100}\n{currentHP = 100}\n{attack = 15}\n{hasShield = true}\n\n**Stats:**\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n- Special: Shield (blocks 1 attack)\n\n[[Begin your adventure -> dungeon]]",
+      "choices": [
+        {
+          "id": "choice-4",
+          "text": "Begin your adventure",
+          "target": "dungeon",
+          "conditions": []
+        }
+      ],
+      "tags": ["class-select"],
+      "position": { "x": 300, "y": 100 }
+    },
+    {
+      "id": "rogue",
+      "title": "Rogue",
+      "content": "You are a **Rogue**!\n\n{playerClass = 'Rogue'}\n{maxHP = 60}\n{currentHP = 60}\n{attack = 30}\n{hasDagger = true}\n\n**Stats:**\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n- Special: Dagger (critical hits)\n\n[[Begin your adventure -> dungeon]]",
+      "choices": [
+        {
+          "id": "choice-5",
+          "text": "Begin your adventure",
+          "target": "dungeon",
+          "conditions": []
+        }
+      ],
+      "tags": ["class-select"],
+      "position": { "x": 300, "y": 200 }
+    },
+    {
+      "id": "cleric",
+      "title": "Cleric",
+      "content": "You are a **Cleric**!\n\n{playerClass = 'Cleric'}\n{maxHP = 80}\n{currentHP = 80}\n{attack = 20}\n{healingPotions = 2}\n\n**Stats:**\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n- Special: 2 Healing Potions (+30 HP each)\n\n[[Begin your adventure -> dungeon]]",
+      "choices": [
+        {
+          "id": "choice-6",
+          "text": "Begin your adventure",
+          "target": "dungeon",
+          "conditions": []
+        }
+      ],
+      "tags": ["class-select"],
+      "position": { "x": 300, "y": 300 }
+    },
+    {
+      "id": "dungeon",
+      "title": "The Dungeon Entrance",
+      "content": "You enter a dark dungeon. Torchlight flickers on damp stone walls.\n\n**Current Status:**\n- Class: {playerClass}\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n\nYou find a chest!\n\n[[Open the chest -> treasure]]\n[[Proceed deeper -> goblin-encounter]]",
+      "choices": [
+        {
+          "id": "choice-7",
+          "text": "Open the chest",
+          "target": "treasure",
+          "conditions": []
+        },
+        {
+          "id": "choice-8",
+          "text": "Proceed deeper",
+          "target": "goblin-encounter",
+          "conditions": []
+        }
+      ],
+      "tags": ["dungeon"],
+      "position": { "x": 500, "y": 200 }
+    },
+    {
+      "id": "treasure",
+      "title": "Treasure Found!",
+      "content": "The chest contains a glowing sword!\n\n{attack = attack + 10}\n{hasMagicSword = true}\n\n**Attack increased! New attack: {attack}**\n\n[[Continue into the dungeon -> goblin-encounter]]",
+      "choices": [
+        {
+          "id": "choice-9",
+          "text": "Continue into the dungeon",
+          "target": "goblin-encounter",
+          "conditions": []
+        }
+      ],
+      "tags": ["treasure"],
+      "position": { "x": 700, "y": 100 }
+    },
+    {
+      "id": "goblin-encounter",
+      "title": "Goblin Ambush!",
+      "content": "A goblin leaps from the shadows!\n\n**Goblin:** HP 40, Attack 15\n\n**Your stats:**\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n{if healingPotions > 0}- Potions: {healingPotions}{endif}\n\nWhat do you do?\n\n[[Attack the goblin -> goblin-fight]]\n{if healingPotions > 0}[[Drink a potion first -> goblin-heal]]{endif}\n{if hasShield}[[Use your shield -> goblin-defend]]{endif}",
+      "choices": [
+        {
+          "id": "choice-10",
+          "text": "Attack the goblin",
+          "target": "goblin-fight",
+          "conditions": []
+        },
+        {
+          "id": "choice-11",
+          "text": "Drink a potion first",
+          "target": "goblin-heal",
+          "conditions": [
+            { "variable": "healingPotions", "operator": ">", "value": 0 }
+          ]
+        },
+        {
+          "id": "choice-12",
+          "text": "Use your shield",
+          "target": "goblin-defend",
+          "conditions": [
+            { "variable": "hasShield", "operator": "==", "value": true }
+          ]
+        }
+      ],
+      "tags": ["combat"],
+      "position": { "x": 900, "y": 150 }
+    },
+    {
+      "id": "goblin-heal",
+      "title": "Healing",
+      "content": "You drink a healing potion!\n\n{healingPotions = healingPotions - 1}\n{currentHP = currentHP + 30}\n{if currentHP > maxHP}{currentHP = maxHP}{endif}\n\n**HP restored! Current HP: {currentHP}/{maxHP}**\n\nThe goblin attacks! (15 damage)\n\n{currentHP = currentHP - 15}\n\n{if currentHP <= 0}\n[[You've been defeated! -> death]]\n{else}\n**HP: {currentHP}/{maxHP}**\n\n[[Fight back! -> goblin-fight]]\n{endif}",
+      "choices": [
+        {
+          "id": "choice-13",
+          "text": "You've been defeated!",
+          "target": "death",
+          "conditions": [
+            { "variable": "currentHP", "operator": "<=", "value": 0 }
+          ]
+        },
+        {
+          "id": "choice-14",
+          "text": "Fight back!",
+          "target": "goblin-fight",
+          "conditions": [
+            { "variable": "currentHP", "operator": ">", "value": 0 }
+          ]
+        }
+      ],
+      "tags": ["combat", "healing"],
+      "position": { "x": 1100, "y": 50 }
+    },
+    {
+      "id": "goblin-defend",
+      "title": "Shield Block!",
+      "content": "You raise your shield!\n\n{hasShield = false}\n\nThe goblin's attack bounces off harmlessly!\n\n**Your shield is broken, but you took no damage!**\n\n**HP: {currentHP}/{maxHP}**\n\n[[Counter-attack! -> goblin-fight]]",
+      "choices": [
+        {
+          "id": "choice-15",
+          "text": "Counter-attack!",
+          "target": "goblin-fight",
+          "conditions": []
+        }
+      ],
+      "tags": ["combat", "defense"],
+      "position": { "x": 1100, "y": 150 }
+    },
+    {
+      "id": "goblin-fight",
+      "title": "Combat!",
+      "content": "{if playerClass == 'Rogue' && hasDagger}\n**CRITICAL HIT!**\n\nYour dagger finds a weak spot! (Double damage!)\n\n{damageDealt = attack * 2}\n{else}\nYou strike the goblin!\n\n{damageDealt = attack}\n{endif}\n\nDamage dealt: {damageDealt}\n\nThe goblin falls!\n\nBut it got one last attack in... (15 damage)\n\n{currentHP = currentHP - 15}\n\n{if currentHP <= 0}\n**You've been defeated!**\n\n[[Game Over -> death]]\n{else}\n**Victory!**\n\n**HP: {currentHP}/{maxHP}**\n\n[[Proceed to the boss -> boss-room]]\n{endif}",
+      "choices": [
+        {
+          "id": "choice-16",
+          "text": "Game Over",
+          "target": "death",
+          "conditions": [
+            { "variable": "currentHP", "operator": "<=", "value": 0 }
+          ]
+        },
+        {
+          "id": "choice-17",
+          "text": "Proceed to the boss",
+          "target": "boss-room",
+          "conditions": [
+            { "variable": "currentHP", "operator": ">", "value": 0 }
+          ]
+        }
+      ],
+      "tags": ["combat"],
+      "position": { "x": 1300, "y": 200 }
+    },
+    {
+      "id": "boss-room",
+      "title": "The Demon Lord",
+      "content": "You enter a vast chamber. A demon lord awaits!\n\n**Demon Lord:** HP 60, Attack 25\n\n**Your stats:**\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n{if healingPotions > 0}- Potions: {healingPotions}{endif}\n{if hasMagicSword}- Magic Sword: BONUS vs Demons!{endif}\n\n{if hasMagicSword}\nYour magic sword glows brightly! (+15 damage vs demons)\n\n{bossAttack = attack + 15}\n{else}\n{bossAttack = attack}\n{endif}\n\nYou attack with all your might!\n\nDamage: {bossAttack}\n\n{if bossAttack >= 40}\n**VICTORY!**\n\nYour powerful attack slays the demon lord in one blow!\n\n[[You are victorious! -> victory]]\n{else}\nThe demon survives and retaliates! (25 damage)\n\n{currentHP = currentHP - 25}\n\n{if currentHP <= 0}\n[[Defeated... -> death]]\n{else}\nYou strike again!\n\n{currentHP = currentHP - 10}\n\n{if currentHP <= 0}\n[[Mutual destruction... -> sacrifice]]\n{else}\nThe demon falls, but you're badly wounded!\n\n[[Hard-fought victory -> victory-wounded]]\n{endif}\n{endif}\n{endif}",
+      "choices": [
+        {
+          "id": "choice-18",
+          "text": "You are victorious!",
+          "target": "victory",
+          "conditions": [
+            { "variable": "bossAttack", "operator": ">=", "value": 40 }
+          ]
+        },
+        {
+          "id": "choice-19",
+          "text": "Defeated...",
+          "target": "death",
+          "conditions": [
+            { "variable": "bossAttack", "operator": "<", "value": 40 },
+            { "variable": "currentHP", "operator": "<=", "value": 0 }
+          ]
+        },
+        {
+          "id": "choice-20",
+          "text": "Mutual destruction...",
+          "target": "sacrifice",
+          "conditions": [
+            { "variable": "bossAttack", "operator": "<", "value": 40 },
+            { "variable": "currentHP", "operator": ">", "value": 0 }
+          ]
+        },
+        {
+          "id": "choice-21",
+          "text": "Hard-fought victory",
+          "target": "victory-wounded",
+          "conditions": [
+            { "variable": "bossAttack", "operator": "<", "value": 40 },
+            { "variable": "currentHP", "operator": ">", "value": 0 }
+          ]
+        }
+      ],
+      "tags": ["boss", "climax"],
+      "position": { "x": 1500, "y": 200 }
+    },
+    {
+      "id": "victory",
+      "title": "Perfect Victory!",
+      "content": "**FLAWLESS VICTORY!**\n\nYou defeated the demon lord with a single, devastating blow!\n\n**Final Stats:**\n- Class: {playerClass}\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n\n*You achieved the best ending by finding the magic sword!*\n\n---\n\n**THE END**\n\nTry different classes and paths!",
+      "choices": [],
+      "tags": ["ending", "victory"],
+      "position": { "x": 1700, "y": 100 }
+    },
+    {
+      "id": "victory-wounded",
+      "title": "Hard-Fought Victory",
+      "content": "**VICTORY!**\n\nYou defeated the demon lord, but barely survived.\n\n**Final Stats:**\n- Class: {playerClass}\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n\n*You could have had an easier battle by finding the magic sword in the chest!*\n\n---\n\n**THE END**\n\nTry exploring more next time!",
+      "choices": [],
+      "tags": ["ending", "victory"],
+      "position": { "x": 1700, "y": 200 }
+    },
+    {
+      "id": "sacrifice",
+      "title": "Heroic Sacrifice",
+      "content": "**HEROIC SACRIFICE**\n\nWith your last ounce of strength, you strike down the demon lord.\n\nYou fall together, but the dungeon is cleansed.\n\n**Final Stats:**\n- Class: {playerClass}\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n\n*A bittersweet ending. Could you have survived with better preparation?*\n\n---\n\n**THE END**",
+      "choices": [],
+      "tags": ["ending", "sacrifice"],
+      "position": { "x": 1700, "y": 300 }
+    },
+    {
+      "id": "death",
+      "title": "Game Over",
+      "content": "**DEFEATED**\n\nYou have fallen in the dungeon...\n\n**Final Stats:**\n- Class: {playerClass}\n- HP: {currentHP}/{maxHP}\n- Attack: {attack}\n\n*Try a different strategy! Consider:*\n- Choosing a class with more HP\n- Finding the magic sword\n- Using healing potions strategically\n- Blocking attacks with the shield\n\n---\n\n**GAME OVER**",
+      "choices": [],
+      "tags": ["ending", "death"],
+      "position": { "x": 1700, "y": 400 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "playerClass",
+      "type": "string",
+      "defaultValue": "",
+      "description": "Player's chosen class: Knight, Rogue, or Cleric"
+    },
+    {
+      "name": "maxHP",
+      "type": "number",
+      "defaultValue": 100,
+      "description": "Maximum health points"
+    },
+    {
+      "name": "currentHP",
+      "type": "number",
+      "defaultValue": 100,
+      "description": "Current health points"
+    },
+    {
+      "name": "attack",
+      "type": "number",
+      "defaultValue": 10,
+      "description": "Attack damage"
+    },
+    {
+      "name": "hasShield",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether player has a shield (Knight only)"
+    },
+    {
+      "name": "hasDagger",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether player has a dagger (Rogue only)"
+    },
+    {
+      "name": "healingPotions",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Number of healing potions (Cleric only)"
+    },
+    {
+      "name": "hasMagicSword",
+      "type": "boolean",
+      "defaultValue": false,
+      "description": "Whether player found the magic sword"
+    },
+    {
+      "name": "damageDealt",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Temporary: damage dealt in last attack"
+    },
+    {
+      "name": "bossAttack",
+      "type": "number",
+      "defaultValue": 0,
+      "description": "Temporary: attack power against boss"
+    }
+  ]
+}

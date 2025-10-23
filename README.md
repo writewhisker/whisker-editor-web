@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Svelte](https://img.shields.io/badge/svelte-5-ff3e00.svg)](https://svelte.dev/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-137%20passing-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
+[![Tests](https://img.shields.io/badge/tests-621%20passing-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
 
 **Modern visual story editor for whisker interactive fiction.** Create and edit interactive stories with an intuitive web-based interface featuring visual node graphs, real-time editing, and powerful story management tools.
 
@@ -22,7 +22,9 @@
 - **Advanced Search & Filtering** - Find passages by title, content, tags, or type with powerful filtering
 - **Visual Connection Editing** - Create connections by dragging between nodes, edit inline, and see conditional connections visually
 - **Tag Management** - Organize passages with colored tags, autocomplete, and centralized tag management
-- **Comprehensive Testing** - 137 passing tests ensuring reliability (unit + E2E)
+- **Performance Optimized** - Handles 1000+ passage stories with virtual scrolling and metadata caching
+- **Fully Accessible** - WCAG 2.1 Level AA compliant with 23 keyboard shortcuts and screen reader support
+- **Comprehensive Testing** - 621 passing tests ensuring reliability (unit + E2E)
 
 **Key Capabilities:**
 
@@ -34,13 +36,12 @@
 ✅ **Visual Graph** - Interactive node-based view with drag-and-drop, zoom, pan, and minimap
 ✅ **Connection Validation** - Detect orphaned connections, dead-end passages, and unreachable content
 ✅ **Tag Organization** - Color-coded tags with autocomplete and global management
-
-**In Development:**
-
-- Enhanced view modes & navigation
-- Live preview & testing
-- Validation & quality tools
-- Export & publishing
+✅ **Story Validation** - Real-time error checking with auto-fix suggestions and quality analysis
+✅ **Story Player** - Test your story with live preview, breakpoints, and variable inspection
+✅ **Export & Publishing** - Export to JSON, HTML (standalone player), or Markdown formats
+✅ **Performance** - Virtual scrolling, metadata caching, and optimizations for large stories (1000+ passages)
+✅ **Accessibility** - WCAG 2.1 AA compliant with keyboard shortcuts, screen reader support, and motion preferences
+✅ **Documentation** - Comprehensive user guides, tutorials, and keyboard shortcuts reference
 
 See the [full roadmap](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/ROADMAP.md) and [feature catalog](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/FEATURES.md) for details.
 
@@ -92,9 +93,9 @@ npm run preview
 
 ### For Users
 
-- **[Getting Started Guide](docs/GETTING_STARTED.md)** - First steps with the editor *(coming soon)*
-- **[User Guide](docs/USER_GUIDE.md)** - Complete feature documentation *(coming soon)*
-- **[Tutorials](docs/tutorials/)** - Step-by-step tutorials *(coming soon)*
+- **[Getting Started Guide](docs/GETTING_STARTED.md)** - 10-minute tutorial to create your first interactive story
+- **[User Guide](docs/USER_GUIDE.md)** - Complete feature documentation (15 sections, 11,000 words)
+- **[Keyboard Shortcuts](docs/KEYBOARD_SHORTCUTS.md)** - Quick reference for all 23 keyboard shortcuts
 
 ### For Developers
 
@@ -129,13 +130,17 @@ npm run test:e2e
 npm run test:coverage
 ```
 
-**Current Coverage:** 137 tests passing (100%)
+**Current Coverage:** 621 tests passing (100%)
 - 40 model tests (Story, Passage, Choice, Variable, History)
+- 44 story player tests (playback, breakpoints, history)
+- 57 player store tests (state management, error handling)
+- 80 export/import tests (JSON, HTML, Markdown formats)
+- 42 validation tests (dead links, unreachable passages, variables)
+- 34 tag management tests
 - 27 connection validation tests
 - 20 graph layout tests
-- 34 tag management tests
 - 16 filter and search tests
-- E2E tests for critical workflows
+- And more (full coverage of all features)
 
 See [TESTING.md](TESTING.md) for detailed testing documentation.
 

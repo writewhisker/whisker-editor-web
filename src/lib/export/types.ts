@@ -20,6 +20,9 @@ export interface ExportOptions {
   /** Export format */
   format: ExportFormat;
 
+  /** Custom filename (without extension) */
+  filename?: string;
+
   /** Include story metadata */
   includeMetadata?: boolean;
 

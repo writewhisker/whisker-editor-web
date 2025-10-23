@@ -155,8 +155,8 @@ export class StoryPlayer {
     }
 
     // Execute choice script if present
-    if (choice.on_select) {
-      this.executeScript(choice.on_select, 'choice.on_select');
+    if (choice.action) {
+      this.executeScript(choice.action, 'choice.action');
     }
 
     // Emit choice selected event
@@ -421,8 +421,8 @@ export class StoryPlayer {
     const variablesBefore = Object.fromEntries(this.variables);
 
     // Execute on_enter script
-    if (passage.on_enter) {
-      this.executeScript(passage.on_enter, 'passage.on_enter');
+    if (passage.onEnterScript) {
+      this.executeScript(passage.onEnterScript, 'passage.onEnterScript');
     }
 
     // Update visit count

@@ -212,7 +212,7 @@ describe('QualityAnalyzer', () => {
 
     it('should calculate variable complexity', () => {
       const startPassage = story.getPassage(story.startPassage!)!;
-      startPassage.on_enter = 'x = 10; y = 20';
+      startPassage.onEnterScript = 'x = 10; y = 20';
 
       const p1 = new Passage({ title: 'P1' });
       p1.addChoice(new Choice({ text: 'C', condition: 'x > 5' }));

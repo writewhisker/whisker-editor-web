@@ -210,8 +210,8 @@ export class QualityAnalyzer {
 
     for (const passage of passages) {
       // Count variable refs in passage scripts
-      if (passage.on_enter) {
-        totalReferences += this.countVariableReferences(passage.on_enter);
+      if (passage.onEnterScript) {
+        totalReferences += this.countVariableReferences(passage.onEnterScript);
       }
 
       // Count in choice conditions and scripts
@@ -219,8 +219,8 @@ export class QualityAnalyzer {
         if (choice.condition) {
           totalReferences += this.countVariableReferences(choice.condition);
         }
-        if (choice.on_select) {
-          totalReferences += this.countVariableReferences(choice.on_select);
+        if (choice.action) {
+          totalReferences += this.countVariableReferences(choice.action);
         }
       }
     }

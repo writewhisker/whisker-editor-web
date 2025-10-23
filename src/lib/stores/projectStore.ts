@@ -135,7 +135,7 @@ export const projectActions = {
     return addedPassage;
   },
 
-  updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number } }>) {
+  updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number }; color?: string }>) {
     currentStory.update(story => {
       if (!story) return story;
 

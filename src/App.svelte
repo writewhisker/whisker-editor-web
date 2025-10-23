@@ -24,7 +24,7 @@
   import StoryMetadataEditor from './lib/components/StoryMetadataEditor.svelte';
   import SettingsDialog from './lib/components/SettingsDialog.svelte';
   import ResizeHandle from './lib/components/ResizeHandle.svelte';
-  import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
+  import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList, unsavedChanges } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
   import { viewMode, panelVisibility, panelSizes, focusMode, viewPreferencesActions } from './lib/stores/viewPreferencesStore';

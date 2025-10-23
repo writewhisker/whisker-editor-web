@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { shortcutCategories, showShortcutsHelp } from '$lib/stores/keyboardShortcutsStore';
-  import { trapFocus } from '$lib/utils/accessibility';
+  import { shortcutCategories, showShortcutsHelp } from '../../stores/keyboardShortcutsStore';
+  import { trapFocus } from '../../utils/accessibility';
   import { onMount } from 'svelte';
 
   let dialogElement: HTMLDivElement;

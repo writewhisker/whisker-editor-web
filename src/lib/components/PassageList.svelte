@@ -314,16 +314,18 @@
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
               {/if}
-              {@const validationSeverity = getPassageValidationSeverity(passage.id)}
-              {@const validationCount = getPassageValidationCount(passage.id)}
-              {#if validationSeverity}
-                <span
-                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
-                  title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
-                >
-                  {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
-                  {validationCount}
-                </span>
+              {#if true}
+                {@const validationSeverity = getPassageValidationSeverity(passage.id)}
+                {@const validationCount = getPassageValidationCount(passage.id)}
+                {#if validationSeverity}
+                  <span
+                    class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded {validationSeverity === 'error' ? 'bg-red-100 text-red-700' : validationSeverity === 'warning' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}"
+                    title="{validationCount} validation issue{validationCount !== 1 ? 's' : ''}"
+                  >
+                    {validationSeverity === 'error' ? '🔴' : validationSeverity === 'warning' ? '⚠️' : 'ℹ️'}
+                    {validationCount}
+                  </span>
+                {/if}
               {/if}
             </div>
 

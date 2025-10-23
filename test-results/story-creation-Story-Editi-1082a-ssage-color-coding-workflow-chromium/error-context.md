@@ -2,17 +2,16 @@
 
 ```yaml
 - generic [ref=e3]:
-  - generic [ref=e4]: "[plugin:vite:import-analysis] Failed to resolve import \"$lib/utils/accessibility\" from \"src/lib/components/AutoSaveRecovery.svelte\". Does the file exist?"
-  - generic [ref=e5]: AutoSaveRecovery.svelte:3:28
-  - generic [ref=e6]: "6 | import * as $ from 'svelte/internal/client'; 7 | import { onMount } from 'svelte'; 8 | import { trapFocus } from '$lib/utils/accessibility'; | ^ 9 | import { loadFromLocalStorage, clearLocalStorage, formatAutoSaveTime } from '$lib/utils/autoSave'; 10 |"
-  - generic [ref=e7]: at TransformPluginContext._formatLog (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:31105:43) at TransformPluginContext.error (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:31102:14) at normalizeUrl (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:29589:18) at async file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:29647:32 at async Promise.all (index 4) at async TransformPluginContext.transform (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:29615:4) at async EnvironmentPluginContainer.transform (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:30904:14) at async loadAndTransform (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:26042:26) at async viteTransformMiddleware (file:///Users/jims/code/github.com/writewhisker/whisker-editor-web/node_modules/vite/dist/node/chunks/dep-B0GuR2De.js:27117:20)
-  - generic [ref=e8]:
+  - generic [ref=e4]: "[plugin:vite-plugin-svelte:compile] src/lib/components/PassageList.svelte:317:14 `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>` https://svelte.dev/e/const_tag_invalid_placement"
+  - generic [ref=e5]: PassageList.svelte:317:14
+  - generic [ref=e6]: "315 | <span class=\"text-gray-400\" title=\"Dead end\">⏹</span> 316 | {/if} 317 | {@const validationSeverity = getPassageValidationSeverity(passage.id)} ^ 318 | {@const validationCount = getPassageValidationCount(passage.id)} 319 | {#if validationSeverity}"
+  - generic [ref=e7]:
     - text: Click outside, press Esc key, or fix the code to dismiss.
     - text: You can also disable this overlay by setting
-    - code [ref=e9]: server.hmr.overlay
+    - code [ref=e8]: server.hmr.overlay
     - text: to
-    - code [ref=e10]: "false"
+    - code [ref=e9]: "false"
     - text: in
-    - code [ref=e11]: vite.config.ts
+    - code [ref=e10]: vite.config.ts
     - text: .
 ```

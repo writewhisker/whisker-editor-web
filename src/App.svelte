@@ -68,6 +68,10 @@
   // Settings dialog state
   let showSettings = false;
 
+  // Auto-save status
+  let autoSaveStatus: 'idle' | 'saving' | 'saved' = 'idle';
+  let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
   // Helper to show confirm dialog
   function showConfirm(
     title: string,
@@ -627,11 +631,29 @@
   $: if ($currentStory) {
     autoSaveManager.start(() => {
       if ($currentStory) {
+        // Show saving status
+        autoSaveStatus = 'saving';
+
+        // Save to localStorage
         saveToLocalStorage($currentStory);
+
+        // Show saved status
+        autoSaveStatus = 'saved';
+
+        // Clear any existing timeout
+        if (autoSaveTimeout) {
+          clearTimeout(autoSaveTimeout);
+        }
+
+        // Reset to idle after 3 seconds
+        autoSaveTimeout = setTimeout(() => {
+          autoSaveStatus = 'idle';
+        }, 3000);
       }
     });
   } else {
     autoSaveManager.stop();
+    autoSaveStatus = 'idle';
   }
 
   // Handle auto-save recovery
@@ -1054,6 +1076,30 @@
   </main>
 
   <StatusBar />
+
+  <!-- Auto-save indicator -->
+  {#if autoSaveStatus !== 'idle' && $currentStory}
+    <div
+      class="fixed bottom-4 right-4 px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-lg text-sm flex items-center gap-2 transition-opacity duration-300"
+      class:opacity-100={autoSaveStatus === 'saving' || autoSaveStatus === 'saved'}
+      class:opacity-0={autoSaveStatus === 'idle'}
+      role="status"
+      aria-live="polite"
+    >
+      {#if autoSaveStatus === 'saving'}
+        <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-700">Saving...</span>
+      {:else if autoSaveStatus === 'saved'}
+        <svg class="h-4 w-4 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span class="text-gray-700">Saved</span>
+      {/if}
+    </div>
+  {/if}
 </div>
 
 <FileDialog

@@ -26,9 +26,7 @@
   import { validationResult, validationActions } from '../stores/validationStore';
   import type { ValidationIssue } from '../validation/types';
   import { prefersReducedMotion } from '../utils/motion';
-
-  // Get Svelte Flow instance for programmatic control
-  const { fitBounds } = useSvelteFlow();
+  import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
 
   // Node types
   const nodeTypes = {
@@ -45,6 +43,7 @@
   const edges = writable<Edge[]>([]);
   let layoutDirection: 'TB' | 'LR' = 'TB';
   let currentZoom = 1; // Track current zoom level
+  let zoomControl: GraphViewZoomControl; // Reference to zoom control component
 
   // Debounce timer for updateGraph
   let updateGraphTimer: ReturnType<typeof setTimeout> | null = null;
@@ -401,28 +400,9 @@
 
   // Zoom to selected passage
   function zoomToSelection() {
-    if (!$selectedPassageId) return;
-
-    const selectedNode = $nodes.find(n => n.id === $selectedPassageId);
-    if (!selectedNode) return;
-
-    // Calculate bounds with padding
-    const padding = 100;
-    const nodeWidth = 250;
-    const nodeHeight = 150;
-
-    fitBounds(
-      {
-        x: selectedNode.position.x - padding,
-        y: selectedNode.position.y - padding,
-        width: nodeWidth + (padding * 2),
-        height: nodeHeight + (padding * 2),
-      },
-      {
-        duration: $prefersReducedMotion ? 0 : 400, // Respect motion preferences
-        padding: 0.2,
-      }
-    );
+    if (zoomControl) {
+      zoomControl.zoomToSelection();
+    }
   }
 
   // Highlight selected node (optimized to avoid full array recreation)
@@ -565,6 +545,11 @@
             if (node.data?.isOrphan) return '#f59e0b';
             return '#3b82f6';
           }}
+        />
+        <GraphViewZoomControl
+          bind:this={zoomControl}
+          nodes={$nodes}
+          selectedPassageId={$selectedPassageId}
         />
       </SvelteFlow>
 

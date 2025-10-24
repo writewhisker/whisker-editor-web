@@ -1,39 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-// Helper to create a new project
-async function createNewProject(page: any) {
-  await page.goto('/');
-
-  // Clear localStorage to prevent AutoSaveRecovery dialog from appearing
-  await page.evaluate(() => localStorage.clear());
-
-  // Wait for app to load
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-
-  // Click New Project button
-  const newProjectButton = page.locator('button:has-text("New Project")');
-  await newProjectButton.click();
-
-  // Wait for dialog to appear and fill in project name
-  const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
-  await projectNameInput.waitFor({ state: 'visible', timeout: 5000 });
-  await projectNameInput.fill('Test Story');
-
-  // Click OK button
-  await page.click('button:has-text("OK")');
-
-  // Wait for the entire dialog and its overlay to be removed from the DOM
-  // The FileDialog wraps everything in {#if show}, so when show=false, it's removed
-  await page.waitForFunction(() => {
-    const overlays = document.querySelectorAll('div[role="presentation"]');
-    return overlays.length === 0;
-  }, { timeout: 10000 });
-
-  // Wait for Passages panel to appear
-  await page.waitForSelector('text=Passages', { timeout: 10000 });
-  await page.waitForTimeout(500);
-}
+import { createNewProject } from './helpers';
 
 test.describe('Tag Management', () => {
   test.beforeEach(async ({ page }) => {

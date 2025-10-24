@@ -1,29 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-/**
- * Helper function to create a new project
- */
-async function createNewProject(page: any, projectName = 'Test Story') {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-
-  const newProjectButton = page.locator('button:has-text("New Project")');
-  await newProjectButton.click();
-
-  const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
-  await projectNameInput.waitFor({ state: 'visible', timeout: 5000 });
-  await projectNameInput.fill(projectName);
-  await page.click('button:has-text("OK")');
-
-  await page.waitForFunction(() => {
-    const overlays = document.querySelectorAll('div[role="presentation"]');
-    return overlays.length === 0;
-  }, { timeout: 10000 });
-
-  await page.waitForSelector('text=Passages', { timeout: 10000 });
-}
+import { createNewProject } from './helpers';
 
 test.describe('Search and Replace', () => {
   test('should open find/replace dialog with keyboard shortcut', async ({ page }) => {

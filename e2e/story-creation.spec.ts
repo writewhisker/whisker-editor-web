@@ -1,39 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-/**
- * Helper function to create a new project
- * Clears localStorage and creates a fresh project with the given name
- */
-async function createNewProject(page: any, projectName = 'Test Story') {
-  await page.goto('/');
-
-  // Clear localStorage to prevent AutoSaveRecovery dialog
-  await page.evaluate(() => localStorage.clear());
-
-  await page.waitForLoadState('networkidle');
-  await page.waitForTimeout(500);
-
-  // Click "New Project" button
-  const newProjectButton = page.locator('button:has-text("New Project")');
-  await newProjectButton.click();
-
-  // Fill in project name
-  const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
-  await projectNameInput.waitFor({ state: 'visible', timeout: 5000 });
-  await projectNameInput.fill(projectName);
-
-  // Click OK to create project
-  await page.click('button:has-text("OK")');
-
-  // Wait for dialog to close
-  await page.waitForFunction(() => {
-    const overlays = document.querySelectorAll('div[role="presentation"]');
-    return overlays.length === 0;
-  }, { timeout: 10000 });
-
-  // Wait for editor to load
-  await page.waitForSelector('text=Passages', { timeout: 10000 });
-}
+import { createNewProject } from './helpers';
 
 test.describe('Story Creation Workflow', () => {
   test('should create a new project from home page', async ({ page }) => {

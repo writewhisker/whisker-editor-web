@@ -467,12 +467,67 @@ export class StoryPlayer {
    * This is a placeholder for script execution
    */
   private executeScript(script: string, context: string): void {
-    // For now, we'll just log scripts
-    // In a future enhancement, we can add Lua execution via Fengari
     console.log(`[Script - ${context}]:`, script);
 
-    // TODO: Implement simple variable assignment parsing
-    // e.g., "health = health - 10" or "has_key = true"
+    // Parse and execute simple variable assignments
+    // Supports: var = value, var += value, var -= value, var *= value, var /= value
+    const trimmed = script.trim();
+
+    // Match assignment patterns: varName operator value
+    const assignmentMatch = trimmed.match(/^(\w+)\s*(=|\+=|-=|\*=|\/=)\s*(.+)$/);
+
+    if (assignmentMatch) {
+      const [, varName, operator, expression] = assignmentMatch;
+
+      try {
+        // Evaluate the right-hand side expression
+        let evaluated = expression.trim();
+
+        // Replace variable names with their values
+        for (const [name, value] of this.variables.entries()) {
+          const regex = new RegExp(`\\b${name}\\b`, 'g');
+          const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
+          evaluated = evaluated.replace(regex, valueStr);
+        }
+
+        // Evaluate the expression safely
+        const result = new Function(`return ${evaluated}`)();
+
+        // Apply the operator
+        let finalValue = result;
+        const currentValue = this.variables.get(varName) || 0;
+
+        switch (operator) {
+          case '=':
+            finalValue = result;
+            break;
+          case '+=':
+            finalValue = (typeof currentValue === 'number' ? currentValue : 0) + (typeof result === 'number' ? result : 0);
+            break;
+          case '-=':
+            finalValue = (typeof currentValue === 'number' ? currentValue : 0) - (typeof result === 'number' ? result : 0);
+            break;
+          case '*=':
+            finalValue = (typeof currentValue === 'number' ? currentValue : 0) * (typeof result === 'number' ? result : 0);
+            break;
+          case '/=':
+            const divisor = typeof result === 'number' ? result : 1;
+            finalValue = divisor !== 0 ? (typeof currentValue === 'number' ? currentValue : 0) / divisor : 0;
+            break;
+        }
+
+        // Set the variable
+        this.variables.set(varName, finalValue);
+        console.log(`  → Set ${varName} = ${finalValue}`);
+
+        // Emit state changed event
+        this.emit('stateChanged', this.getState());
+      } catch (error) {
+        console.warn('Script execution error:', script, error);
+      }
+    } else {
+      console.warn('Unrecognized script format:', script);
+    }
   }
 
   /**

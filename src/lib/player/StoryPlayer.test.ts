@@ -588,4 +588,198 @@ describe('StoryPlayer', () => {
       expect(player.canMakeChoice(choice!.id)).toBe(true);
     });
   });
+
+  describe('Script Execution and Variable Assignment', () => {
+    beforeEach(() => {
+      player.loadStory(story);
+    });
+
+    it('should execute simple variable assignment', () => {
+      // Add a passage with a script that assigns a variable
+      const scriptPassage = new Passage({
+        title: 'Script Test',
+        content: 'Testing scripts.',
+        onEnterScript: 'score = 100',
+      });
+      story.addPassage(scriptPassage);
+
+      // Start at the passage to trigger onEnter script
+      player.start(scriptPassage.id);
+
+      // Check that the variable was set
+      expect(player.getVariable('score')).toBe(100);
+    });
+
+    it('should execute compound assignment with +=', () => {
+      story.addVariable(new Variable({
+        name: 'score',
+        type: 'number',
+        initial: 50,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Add Score',
+        content: 'You gained points!',
+        onEnterScript: 'score += 25',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('score')).toBe(75);
+    });
+
+    it('should execute compound assignment with -=', () => {
+      story.addVariable(new Variable({
+        name: 'health',
+        type: 'number',
+        initial: 100,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Take Damage',
+        content: 'You were hit!',
+        onEnterScript: 'health -= 30',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('health')).toBe(70);
+    });
+
+    it('should execute compound assignment with *=', () => {
+      story.addVariable(new Variable({
+        name: 'multiplier',
+        type: 'number',
+        initial: 5,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Multiply',
+        content: 'Double effect!',
+        onEnterScript: 'multiplier *= 2',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('multiplier')).toBe(10);
+    });
+
+    it('should execute compound assignment with /=', () => {
+      story.addVariable(new Variable({
+        name: 'resource',
+        type: 'number',
+        initial: 100,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Split Resource',
+        content: 'Dividing resources.',
+        onEnterScript: 'resource /= 4',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('resource')).toBe(25);
+    });
+
+    it('should handle division by zero safely', () => {
+      story.addVariable(new Variable({
+        name: 'value',
+        type: 'number',
+        initial: 100,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Divide By Zero',
+        content: 'Testing edge case.',
+        onEnterScript: 'value /= 0',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('value')).toBe(0); // Should safely return 0
+    });
+
+    it('should evaluate expressions with existing variables', () => {
+      story.addVariable(new Variable({
+        name: 'health',
+        type: 'number',
+        initial: 50,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Complex Expression',
+        content: 'Calculating...',
+        onEnterScript: 'health = health - 10',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('health')).toBe(40);
+    });
+
+    it('should handle boolean assignment', () => {
+      const scriptPassage = new Passage({
+        title: 'Boolean Test',
+        content: 'Setting flag.',
+        onEnterScript: 'has_key = true',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('has_key')).toBe(true);
+    });
+
+    it('should handle string assignment', () => {
+      const scriptPassage = new Passage({
+        title: 'String Test',
+        content: 'Setting name.',
+        onEnterScript: 'player_name = "Hero"',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('player_name')).toBe('Hero');
+    });
+
+    it('should emit stateChanged event after script execution', () => {
+      const stateChangedHandler = vi.fn();
+      player.on('stateChanged', stateChangedHandler);
+
+      const scriptPassage = new Passage({
+        title: 'Event Test',
+        content: 'Testing events.',
+        onEnterScript: 'test_var = 42',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+
+      // Should have emitted stateChanged at least once (for navigation + script)
+      expect(stateChangedHandler).toHaveBeenCalled();
+    });
+
+    it('should handle multiple variable references in expression', () => {
+      story.addVariable(new Variable({
+        name: 'base',
+        type: 'number',
+        initial: 10,
+      }));
+      story.addVariable(new Variable({
+        name: 'bonus',
+        type: 'number',
+        initial: 5,
+      }));
+
+      const scriptPassage = new Passage({
+        title: 'Multi-Variable',
+        content: 'Combining variables.',
+        onEnterScript: 'total = base + bonus',
+      });
+      story.addPassage(scriptPassage);
+
+      player.start(scriptPassage.id);
+      expect(player.getVariable('total')).toBe(15);
+    });
+  });
 });

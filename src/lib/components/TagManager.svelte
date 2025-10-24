@@ -278,6 +278,7 @@
                         class="w-6 h-6 rounded border border-gray-300 hover:scale-110"
                         style="background-color: {color}"
                         on:click={() => setTagColor(tag.name, color)}
+                        aria-label="Set tag color to {color}"
                       ></button>
                     {/each}
                   </div>
@@ -302,7 +303,6 @@
                     if (e.key === 'Enter') confirmRename();
                     if (e.key === 'Escape') cancelRename();
                   }}
-                  autofocus
                 />
               {:else}
                 <div class="flex items-center gap-2">

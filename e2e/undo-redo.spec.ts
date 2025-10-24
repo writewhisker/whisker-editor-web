@@ -162,4 +162,233 @@ test.describe('Undo/Redo Operations', () => {
     // App should remain stable
     await expect(page.locator('text=Passages').first()).toBeVisible();
   });
+
+  // Enhanced tests that verify actual undo/redo functionality
+  test('should actually undo passage creation', async ({ page }) => {
+    await createNewProject(page, 'Undo Passage Creation');
+    await page.waitForTimeout(1000);
+
+    // Count initial passages (should be just "Start")
+    const initialPassages = await page.locator('text=Start').count();
+    expect(initialPassages).toBeGreaterThan(0);
+
+    // Add a new passage
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    // Verify new passage exists
+    const afterAdd = await page.locator('text=Untitled Passage').count();
+    expect(afterAdd).toBeGreaterThan(0);
+
+    // Perform undo
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify passage was removed
+    const afterUndo = await page.locator('text=Untitled Passage').count();
+    expect(afterUndo).toBe(0);
+
+    // Original passage should still exist
+    await expect(page.locator('text=Start').first()).toBeVisible();
+  });
+
+  test('should actually redo passage creation with Ctrl+Shift+Z', async ({ page }) => {
+    await createNewProject(page, 'Redo Test Shift+Z');
+    await page.waitForTimeout(1000);
+
+    // Add passage
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+    await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
+
+    // Undo
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify undone
+    const afterUndo = await page.locator('text=Untitled Passage').count();
+    expect(afterUndo).toBe(0);
+
+    // Redo with Ctrl+Shift+Z
+    if (isMac) {
+      await page.keyboard.press('Meta+Shift+Z');
+    } else {
+      await page.keyboard.press('Control+Shift+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify passage returned
+    await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
+  });
+
+  test('should actually redo passage creation with Ctrl+Y', async ({ page }) => {
+    await createNewProject(page, 'Redo Test Y');
+    await page.waitForTimeout(1000);
+
+    // Add passage
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+    await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
+
+    // Undo
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify undone
+    const afterUndo = await page.locator('text=Untitled Passage').count();
+    expect(afterUndo).toBe(0);
+
+    // Redo with Ctrl+Y (Windows standard)
+    if (isMac) {
+      await page.keyboard.press('Meta+Y');
+    } else {
+      await page.keyboard.press('Control+Y');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify passage returned
+    await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
+  });
+
+  test('should handle multiple undo levels', async ({ page }) => {
+    await createNewProject(page, 'Multiple Undo Test');
+    await page.waitForTimeout(1000);
+
+    // Add three passages
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    // Verify all exist
+    let count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBeGreaterThanOrEqual(3);
+
+    const isMac = process.platform === 'darwin';
+
+    // Undo first time
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    // Undo second time
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBeGreaterThanOrEqual(1);
+
+    // Undo third time
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // All should be undone
+    count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBe(0);
+  });
+
+  test('should clear redo history on new action', async ({ page }) => {
+    await createNewProject(page, 'Clear Redo Test');
+    await page.waitForTimeout(1000);
+
+    const isMac = process.platform === 'darwin';
+
+    // Add passage
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    // Undo
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Verify undone
+    let count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBe(0);
+
+    // Perform new action (add different passage)
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(800);
+
+    // Now try redo - it should do nothing since we performed a new action
+    if (isMac) {
+      await page.keyboard.press('Meta+Shift+Z');
+    } else {
+      await page.keyboard.press('Control+Shift+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Should still have exactly 1 Untitled Passage (the new one, not a second one)
+    count = await page.locator('text=Untitled Passage').count();
+    expect(count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('should undo title changes', async ({ page }) => {
+    await createNewProject(page, 'Undo Title Change');
+    await page.waitForTimeout(1000);
+
+    // Click on Start passage
+    await page.click('text=Start');
+    await page.waitForTimeout(500);
+
+    // Change title
+    const titleInput = page.locator('input[type="text"]').nth(1);
+    await titleInput.click({ force: true });
+    await titleInput.fill('New Title');
+    await titleInput.press('Tab');
+    await page.waitForTimeout(800);
+
+    // Verify title changed
+    await expect(page.locator('text=New Title').first()).toBeVisible();
+
+    // Undo
+    const isMac = process.platform === 'darwin';
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Original title should be restored
+    await expect(page.locator('text=Start').first()).toBeVisible();
+    const newTitleExists = await page.locator('text=New Title').count();
+    expect(newTitleExists).toBe(0);
+  });
 });

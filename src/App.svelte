@@ -534,6 +534,24 @@
       if ($currentStory) {
         showFindReplaceDialog = true;
       }
+    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
+      // Redo: Ctrl+Shift+Z
+      e.preventDefault();
+      if ($currentStory) {
+        projectActions.redo();
+      }
+    } else if (ctrlKey && e.key.toLowerCase() === 'y') {
+      // Redo: Ctrl+Y (Windows standard)
+      e.preventDefault();
+      if ($currentStory) {
+        projectActions.redo();
+      }
+    } else if (ctrlKey && e.key.toLowerCase() === 'z') {
+      // Undo: Ctrl+Z
+      e.preventDefault();
+      if ($currentStory) {
+        projectActions.undo();
+      }
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();
       viewPreferencesActions.toggleFocusMode();

@@ -12,6 +12,7 @@ import type {
   ExportOptions,
   IExporter,
 } from '../types';
+import packageJson from '../../../../package.json';
 
 /**
  * JSON export data structure
@@ -124,7 +125,7 @@ export class JSONExporter implements IExporter {
 
     return {
       exportDate: new Date().toISOString(),
-      editorVersion: '1.0.0', // TODO: Get from package.json
+      editorVersion: packageJson.version,
       formatVersion: '1.0.0',
       storyId: story.metadata.title, // Use title as ID since Story doesn't have an id property
       storyTitle: story.metadata.title,

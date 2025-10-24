@@ -195,10 +195,11 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
       <!-- Title -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="passage-title" class="block text-sm font-medium text-gray-700 mb-1">
           Title
         </label>
         <input
+          id="passage-title"
           type="text"
           value={passage.title}
           on:input={updatePassageTitle}
@@ -214,10 +215,11 @@
 
       <!-- ID (read-only) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="passage-id" class="block text-sm font-medium text-gray-700 mb-1">
           ID
         </label>
         <input
+          id="passage-id"
           type="text"
           value={passage.id}
           readonly
@@ -228,10 +230,11 @@
       <!-- Timestamps (read-only) -->
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="passage-created" class="block text-sm font-medium text-gray-700 mb-1">
             Created
           </label>
           <input
+            id="passage-created"
             type="text"
             value={new Date(passage.created).toLocaleString()}
             readonly
@@ -240,10 +243,11 @@
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="passage-modified" class="block text-sm font-medium text-gray-700 mb-1">
             Modified
           </label>
           <input
+            id="passage-modified"
             type="text"
             value={new Date(passage.modified).toLocaleString()}
             readonly
@@ -256,7 +260,7 @@
       <!-- Color -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <label for="passage-color" class="block text-sm font-medium text-gray-700">
             Color
           </label>
           {#if passage.color}
@@ -287,6 +291,7 @@
         <!-- Custom Color Picker -->
         <div class="flex gap-2 items-center">
           <input
+            id="passage-color"
             type="color"
             value={passage.color || '#6366F1'}
             on:input={updatePassageColor}
@@ -301,9 +306,9 @@
 
       <!-- Tags -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">
+        <div class="block text-sm font-medium text-gray-700 mb-2">
           Tags
-        </label>
+        </div>
 
         <!-- Tag Input -->
         <div class="mb-2">
@@ -339,7 +344,7 @@
       <!-- Content -->
       <div>
         <div class="flex justify-between items-center mb-1">
-          <label class="block text-sm font-medium text-gray-700">
+          <label for="passage-content" class="block text-sm font-medium text-gray-700">
             Content
           </label>
           <select
@@ -357,6 +362,7 @@
           </select>
         </div>
         <textarea
+          id="passage-content"
           bind:this={contentTextarea}
           value={passage.content}
           on:input={updatePassageContent}
@@ -370,9 +376,9 @@
       <!-- Choices -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700">
+          <div class="block text-sm font-medium text-gray-700">
             Choices
-          </label>
+          </div>
           <button
             class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             on:click={addChoice}
@@ -386,10 +392,11 @@
             <div class="border border-gray-300 rounded p-3 space-y-2">
               <!-- Choice Text -->
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">
+                <label for="choice-text-{choice.id}" class="block text-xs font-medium text-gray-600 mb-1">
                   Choice Text
                 </label>
                 <input
+                  id="choice-text-{choice.id}"
                   type="text"
                   value={choice.text}
                   on:input={(e) => updateChoiceText(choice.id, (e.target as HTMLInputElement).value)}
@@ -400,10 +407,11 @@
 
               <!-- Target Passage -->
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">
+                <label for="choice-target-{choice.id}" class="block text-xs font-medium text-gray-600 mb-1">
                   Target Passage
                 </label>
                 <select
+                  id="choice-target-{choice.id}"
                   value={choice.target}
                   on:change={(e) => updateChoiceTarget(choice.id, (e.target as HTMLSelectElement).value)}
                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -417,10 +425,11 @@
 
               <!-- Condition (optional) -->
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">
+                <label for="choice-condition-{choice.id}" class="block text-xs font-medium text-gray-600 mb-1">
                   Condition (optional)
                 </label>
                 <input
+                  id="choice-condition-{choice.id}"
                   type="text"
                   value={choice.condition || ''}
                   on:input={(e) => updateChoiceCondition(choice.id, (e.target as HTMLInputElement).value)}

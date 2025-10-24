@@ -11,7 +11,7 @@ describe('ErrorBoundary', () => {
     originalLocation = window.location;
     // Mock window.location.reload
     delete (window as any).location;
-    window.location = {
+    (window as any).location = {
       ...originalLocation,
       reload: vi.fn(),
     };
@@ -19,7 +19,7 @@ describe('ErrorBoundary', () => {
 
   afterEach(() => {
     // Restore original location
-    window.location = originalLocation;
+    (window as any).location = originalLocation;
   });
 
   describe('rendering without error', () => {

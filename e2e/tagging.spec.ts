@@ -130,10 +130,98 @@ test.describe('Tag Management', () => {
   });
 });
 
-test.describe('Tag Manager (if accessible)', () => {
-  test.skip('should show tag statistics', async ({ page }) => {
-    // This test would require accessing TagManager component
-    // Skip for now as TagManager may need to be added to main UI
-    await page.goto('/');
+test.describe('Tag Manager', () => {
+  test('should show tag statistics', async ({ page }) => {
+    // Create a new project
+    await createNewProject(page);
+
+    // Add a tag to the Start passage
+    const tagInput = page.locator('input[placeholder="Add tag..."]');
+    await tagInput.fill('adventure');
+    await tagInput.press('Enter');
+    await page.waitForTimeout(500);
+
+    // Press Escape to close any dropdowns
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Open the Tag Manager panel by clicking the Tags toggle button using JavaScript
+    await page.evaluate(() => {
+      const button = document.querySelector('button[title="Toggle Tag Manager Panel"]') as HTMLButtonElement;
+      if (button) button.click();
+    });
+    await page.waitForTimeout(1000);
+
+    // Verify Tag Manager heading is visible
+    await expect(page.locator('h2:has-text("Tag Manager")').first()).toBeVisible({ timeout: 10000 });
+
+    // Verify statistics are shown
+    await expect(page.locator('text=Total Tags').first()).toBeVisible();
+    await expect(page.locator('text=Total Usages').first()).toBeVisible();
+
+    // Verify the tag appears in the tag list
+    await expect(page.locator('text=adventure').first()).toBeVisible();
+  });
+
+  test('should allow searching tags', async ({ page }) => {
+    await createNewProject(page);
+
+    // Add multiple tags
+    const tagInput = page.locator('input[placeholder="Add tag..."]');
+    await tagInput.fill('combat');
+    await tagInput.press('Enter');
+    await page.waitForTimeout(300);
+
+    await tagInput.fill('dialogue');
+    await tagInput.press('Enter');
+    await page.waitForTimeout(300);
+
+    // Press Escape to close any dropdowns
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Open Tag Manager using JavaScript
+    await page.evaluate(() => {
+      const button = document.querySelector('button[title="Toggle Tag Manager Panel"]') as HTMLButtonElement;
+      if (button) button.click();
+    });
+    await page.waitForTimeout(1000);
+
+    // Find the search input in Tag Manager
+    const searchInput = page.locator('input[placeholder="Search tags..."]');
+    await searchInput.fill('combat');
+    await page.waitForTimeout(300);
+
+    // Verify combat tag is still visible
+    await expect(page.locator('text=combat').first()).toBeVisible();
+  });
+
+  test('should show tag usage count', async ({ page }) => {
+    await createNewProject(page);
+
+    // Add a tag to the Start passage
+    const tagInput = page.locator('input[placeholder="Add tag..."]');
+    await tagInput.fill('story-tag');
+    await tagInput.press('Enter');
+    await page.waitForTimeout(500);
+
+    // Press Escape to close any dropdowns
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Open Tag Manager using JavaScript
+    await page.evaluate(() => {
+      const button = document.querySelector('button[title="Toggle Tag Manager Panel"]') as HTMLButtonElement;
+      if (button) button.click();
+    });
+    await page.waitForTimeout(1000);
+
+    // Verify usage count is shown (should be "1 use" or "(1)")
+    const tagRow = page.locator('text=story-tag').first();
+    await expect(tagRow).toBeVisible();
+
+    // Look for usage count pattern like "(1 use)" or "(1)"
+    const usageText = page.locator('text=/\\(1 use\\)|\\(1\\)/');
+    await expect(usageText.first()).toBeVisible();
   });
 });

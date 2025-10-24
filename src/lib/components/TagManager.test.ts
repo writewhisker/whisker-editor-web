@@ -41,7 +41,8 @@ describe('TagManager', () => {
     filterState.set({
       searchQuery: '',
       selectedTags: [],
-      hasUnresolvedIssues: false,
+      passageTypes: [],
+      includeChoiceText: true,
     });
   });
 

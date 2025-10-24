@@ -7,6 +7,7 @@ import { filterState } from '../stores/filterStore';
 import { validationResult } from '../stores/validationStore';
 import { Story } from '../models/Story';
 import { Passage } from '../models/Passage';
+import { Choice } from '../models/Choice';
 
 describe('PassageList', () => {
   let story: Story;
@@ -31,7 +32,24 @@ describe('PassageList', () => {
     onDeletePassage = vi.fn();
 
     currentStory.set(story);
-    validationResult.set({ issues: [], isValid: true });
+    validationResult.set({
+      issues: [],
+      valid: true,
+      timestamp: Date.now(),
+      duration: 0,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
+    });
   });
 
   afterEach(() => {
@@ -219,11 +237,11 @@ describe('PassageList', () => {
         content: '',
         position: { x: 0, y: 0 },
       });
-      startPassage.choices.push({
+      startPassage.choices.push(new Choice({
         id: 'c1',
         text: 'Go',
         target: passage.id,
-      });
+      }));
       story.addPassage(startPassage);
       story.startPassage = startPassage.id;
       currentStory.set(story);
@@ -292,15 +310,29 @@ describe('PassageList', () => {
       currentStory.set(story);
 
       validationResult.set({
-        isValid: false,
+        valid: false,
+        timestamp: Date.now(),
+        duration: 0,
+        errorCount: 1,
+        warningCount: 0,
+        infoCount: 0,
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0
+        },
         issues: [
           {
             id: 'issue-1',
             severity: 'error',
             message: 'Test error',
             passageId: passage.id,
-            validator: 'test',
-            autoFix: undefined,
+            category: 'links',
+            fixable: false,
           },
         ],
       });
@@ -320,15 +352,29 @@ describe('PassageList', () => {
       currentStory.set(story);
 
       validationResult.set({
-        isValid: true,
+        valid: true,
+        timestamp: Date.now(),
+        duration: 0,
+        errorCount: 0,
+        warningCount: 1,
+        infoCount: 0,
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0
+        },
         issues: [
           {
             id: 'issue-1',
             severity: 'warning',
             message: 'Test warning',
             passageId: passage.id,
-            validator: 'test',
-            autoFix: undefined,
+            category: 'links',
+            fixable: false,
           },
         ],
       });
@@ -348,23 +394,37 @@ describe('PassageList', () => {
       currentStory.set(story);
 
       validationResult.set({
-        isValid: false,
+        valid: false,
+        timestamp: Date.now(),
+        duration: 0,
+        errorCount: 2,
+        warningCount: 0,
+        infoCount: 0,
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0
+        },
         issues: [
           {
             id: 'issue-1',
             severity: 'error',
             message: 'Error 1',
             passageId: passage.id,
-            validator: 'test',
-            autoFix: undefined,
+            category: 'links',
+            fixable: false,
           },
           {
             id: 'issue-2',
             severity: 'error',
             message: 'Error 2',
             passageId: passage.id,
-            validator: 'test',
-            autoFix: undefined,
+            category: 'links',
+            fixable: false,
           },
         ],
       });
@@ -455,8 +515,8 @@ describe('PassageList', () => {
         position: { x: 0, y: 0 },
       });
       passage.choices = [
-        { id: '1', text: 'Choice 1', target: 'p1' },
-        { id: '2', text: 'Choice 2', target: 'p2' },
+        new Choice({ id: '1', text: 'Choice 1', target: 'p1' }),
+        new Choice({ id: '2', text: 'Choice 2', target: 'p2' }),
       ];
       story.addPassage(passage);
       currentStory.set(story);
@@ -478,7 +538,7 @@ describe('PassageList', () => {
         content: '',
         position: { x: 0, y: 0 },
       });
-      passage2.choices = [{ id: '1', text: 'Go', target: passage1.id }];
+      passage2.choices = [new Choice({ id: '1', text: 'Go', target: passage1.id })];
 
       story.addPassage(passage1);
       story.addPassage(passage2);

@@ -6,6 +6,7 @@ import { currentStory, variableList } from '../stores/projectStore';
 import { Story } from '../models/Story';
 import { Variable } from '../models/Variable';
 import { Passage } from '../models/Passage';
+import { Choice } from '../models/Choice';
 
 describe('VariableManager', () => {
   let story: Story;
@@ -470,12 +471,12 @@ describe('VariableManager', () => {
         content: 'Some content',
         position: { x: 0, y: 0 },
       });
-      passage.choices.push({
+      passage.choices.push(new Choice({
         id: 'choice-1',
         text: 'Fight',
         target: 'passage-2',
         condition: 'health > 50',
-      });
+      }));
       story.addPassage(passage);
       currentStory.set(story);
 

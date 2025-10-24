@@ -62,7 +62,24 @@ describe('GraphView', () => {
       passageTypes: [],
       includeChoiceText: true,
     });
-    validationResult.set({ issues: [], isValid: true });
+    validationResult.set({
+      timestamp: Date.now(),
+      duration: 0,
+      valid: true,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      issues: [],
+      stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0,
+      },
+    });
   });
 
   afterEach(() => {
@@ -74,7 +91,24 @@ describe('GraphView', () => {
       passageTypes: [],
       includeChoiceText: true,
     });
-    validationResult.set({ issues: [], isValid: true });
+    validationResult.set({
+      timestamp: Date.now(),
+      duration: 0,
+      valid: true,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      issues: [],
+      stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0,
+      },
+    });
     localStorage.clear();
   });
 
@@ -151,11 +185,22 @@ describe('GraphView', () => {
       currentStory.set(story);
 
       validationResult.set({
-        issues: [],
-        isValid: true,
+        timestamp: Date.now(),
+        duration: 0,
+        valid: true,
         errorCount: 0,
         warningCount: 0,
         infoCount: 0,
+        issues: [],
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0,
+        },
       });
 
       const { queryByText } = render(GraphView);
@@ -176,11 +221,22 @@ describe('GraphView', () => {
       currentStory.set(story);
 
       validationResult.set({
-        issues: [],
-        isValid: false,
+        timestamp: Date.now(),
+        duration: 0,
+        valid: false,
         errorCount: 2,
         warningCount: 0,
         infoCount: 0,
+        issues: [],
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0,
+        },
       });
 
       const { getByText } = render(GraphView);
@@ -202,11 +258,22 @@ describe('GraphView', () => {
       currentStory.set(story);
 
       validationResult.set({
-        issues: [],
-        isValid: true,
+        timestamp: Date.now(),
+        duration: 0,
+        valid: true,
         errorCount: 0,
         warningCount: 3,
         infoCount: 0,
+        issues: [],
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0,
+        },
       });
 
       const { getByText } = render(GraphView);
@@ -228,11 +295,22 @@ describe('GraphView', () => {
       currentStory.set(story);
 
       validationResult.set({
-        issues: [],
-        isValid: true,
+        timestamp: Date.now(),
+        duration: 0,
+        valid: true,
         errorCount: 0,
         warningCount: 0,
         infoCount: 1,
+        issues: [],
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0,
+        },
       });
 
       const { queryByText } = render(GraphView);
@@ -254,11 +332,22 @@ describe('GraphView', () => {
       currentStory.set(story);
 
       validationResult.set({
-        issues: [],
-        isValid: false,
+        timestamp: Date.now(),
+        duration: 0,
+        valid: false,
         errorCount: 2,
         warningCount: 3,
         infoCount: 1,
+        issues: [],
+        stats: {
+          totalPassages: 0,
+          reachablePassages: 0,
+          unreachablePassages: 0,
+          orphanedPassages: 0,
+          deadLinks: 0,
+          undefinedVariables: 0,
+          unusedVariables: 0,
+        },
       });
 
       const { getByText } = render(GraphView);

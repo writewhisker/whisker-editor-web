@@ -31,14 +31,48 @@ describe('Toolbar', () => {
     currentStory.set(null);
     unsavedChanges.set(false);
     historyActions.clear();
-    validationResult.set({ issues: [], valid: true });
+    validationResult.set({
+      issues: [],
+      valid: true,
+      timestamp: Date.now(),
+      duration: 0,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
+    });
   });
 
   afterEach(() => {
     currentStory.set(null);
     unsavedChanges.set(false);
     historyActions.clear();
-    validationResult.set({ issues: [], valid: true });
+    validationResult.set({
+      issues: [],
+      valid: true,
+      timestamp: Date.now(),
+      duration: 0,
+      errorCount: 0,
+      warningCount: 0,
+      infoCount: 0,
+      stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
+    });
     localStorage.clear();
   });
 
@@ -163,7 +197,24 @@ describe('Toolbar', () => {
         },
       });
       currentStory.set(story);
-      validationResult.set({ issues: [], valid: true });
+      validationResult.set({
+        issues: [],
+        valid: true,
+        timestamp: Date.now(),
+        duration: 0,
+        errorCount: 0,
+        warningCount: 0,
+        infoCount: 0,
+        stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
+      });
     });
 
     it('should show story title', () => {
@@ -304,9 +355,20 @@ describe('Toolbar', () => {
       validationResult.set({
         issues: [],
         valid: false,
+        timestamp: Date.now(),
+        duration: 0,
         errorCount: 2,
         warningCount: 0,
         infoCount: 0,
+        stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
       });
 
       const { getByText } = render(Toolbar, {
@@ -325,9 +387,20 @@ describe('Toolbar', () => {
       validationResult.set({
         issues: [],
         valid: false,
+        timestamp: Date.now(),
+        duration: 0,
         errorCount: 0,
         warningCount: 3,
         infoCount: 0,
+        stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
       });
 
       const { getByText } = render(Toolbar, {
@@ -346,9 +419,20 @@ describe('Toolbar', () => {
       validationResult.set({
         issues: [],
         valid: true,
+        timestamp: Date.now(),
+        duration: 0,
         errorCount: 0,
         warningCount: 0,
         infoCount: 1,
+        stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
       });
 
       const { getByText } = render(Toolbar, {
@@ -368,9 +452,20 @@ describe('Toolbar', () => {
       validationResult.set({
         issues: [],
         valid: false,
+        timestamp: Date.now(),
+        duration: 0,
         errorCount: 2,
         warningCount: 3,
         infoCount: 1,
+        stats: {
+        totalPassages: 0,
+        reachablePassages: 0,
+        unreachablePassages: 0,
+        orphanedPassages: 0,
+        deadLinks: 0,
+        undefinedVariables: 0,
+        unusedVariables: 0
+      }
       });
 
       const { getByText } = render(Toolbar, {

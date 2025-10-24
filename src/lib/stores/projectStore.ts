@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { Story } from '../models/Story';
 import { Passage } from '../models/Passage';
 import type { ProjectData } from '../models/types';
@@ -48,6 +48,9 @@ export const projectActions = {
     currentFilePath.set(null);
     unsavedChanges.set(false);
 
+    // Initialize history with the new story state
+    historyActions.setPresent(story.serialize());
+
     // Select the start passage
     const startPassage = Array.from(story.passages.values())[0];
     if (startPassage) {
@@ -60,6 +63,9 @@ export const projectActions = {
     currentStory.set(story);
     currentFilePath.set(filePath || null);
     unsavedChanges.set(false);
+
+    // Initialize history with the loaded story state
+    historyActions.setPresent(story.serialize());
 
     // Select start passage
     if (story.startPassage) {
@@ -116,9 +122,6 @@ export const projectActions = {
         title = uniqueTitle;
       }
 
-      // Save current state to history
-      historyActions.pushState(story.serialize());
-
       const passage = new Passage({
         title: title || 'New Passage',
         content: '',
@@ -132,6 +135,13 @@ export const projectActions = {
 
       return story;
     });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
+
     return addedPassage;
   },
 
@@ -159,10 +169,8 @@ export const projectActions = {
         }
       }
 
-      // Save current state to history only if there are updates to apply
+      // Apply updates only if there are updates to apply
       if (Object.keys(updates).length > 0) {
-        historyActions.pushState(story.serialize());
-
         // Apply updates
         if (updates.title !== undefined) passage.title = updates.title;
         if (updates.content !== undefined) passage.content = updates.content;
@@ -177,14 +185,17 @@ export const projectActions = {
 
       return story;
     });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
   },
 
   deletePassage(passageId: string) {
     currentStory.update(story => {
       if (!story) return story;
-
-      // Save current state to history
-      historyActions.pushState(story.serialize());
 
       // Clean up all connections to this passage before deleting
       const removedConnections = removeConnectionsToPassage(story, passageId);
@@ -202,6 +213,12 @@ export const projectActions = {
 
       return story;
     });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
   },
 
   // Undo/Redo

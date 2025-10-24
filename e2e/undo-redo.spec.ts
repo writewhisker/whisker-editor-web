@@ -140,9 +140,7 @@ test.describe('Undo/Redo Operations', () => {
   });
 
   // Enhanced tests that verify actual undo/redo functionality
-  // TODO: Implement keyboard shortcuts for undo/redo in App.svelte
-  // The historyStore and projectStore methods exist, but need to be wired to keyboard handlers
-  test.skip('should actually undo passage creation', async ({ page }) => {
+  test('should actually undo passage creation', async ({ page }) => {
     await createNewProject(page, 'Undo Passage Creation');
     await page.waitForTimeout(1000);
 
@@ -175,7 +173,7 @@ test.describe('Undo/Redo Operations', () => {
     await expect(page.locator('text=Start').first()).toBeVisible();
   });
 
-  test.skip('should actually redo passage creation with Ctrl+Shift+Z', async ({ page }) => {
+  test('should actually redo passage creation with Ctrl+Shift+Z', async ({ page }) => {
     await createNewProject(page, 'Redo Test Shift+Z');
     await page.waitForTimeout(1000);
 
@@ -209,7 +207,7 @@ test.describe('Undo/Redo Operations', () => {
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
   });
 
-  test.skip('should actually redo passage creation with Ctrl+Y', async ({ page }) => {
+  test('should actually redo passage creation with Ctrl+Y', async ({ page }) => {
     await createNewProject(page, 'Redo Test Y');
     await page.waitForTimeout(1000);
 
@@ -243,7 +241,7 @@ test.describe('Undo/Redo Operations', () => {
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
   });
 
-  test.skip('should handle multiple undo levels', async ({ page }) => {
+  test('should handle multiple undo levels', async ({ page }) => {
     await createNewProject(page, 'Multiple Undo Test');
     await page.waitForTimeout(1000);
 
@@ -298,7 +296,7 @@ test.describe('Undo/Redo Operations', () => {
     expect(count).toBe(0);
   });
 
-  test.skip('should clear redo history on new action', async ({ page }) => {
+  test('should clear redo history on new action', async ({ page }) => {
     await createNewProject(page, 'Clear Redo Test');
     await page.waitForTimeout(1000);
 
@@ -337,7 +335,7 @@ test.describe('Undo/Redo Operations', () => {
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test.skip('should undo title changes', async ({ page }) => {
+  test('should undo title changes', async ({ page }) => {
     await createNewProject(page, 'Undo Title Change');
     await page.waitForTimeout(1000);
 

@@ -13,6 +13,7 @@
   import StoryStatisticsPanel from './lib/components/StoryStatisticsPanel.svelte';
   import TagManager from './lib/components/TagManager.svelte';
   import GraphView from './lib/components/GraphView.svelte';
+  import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
   import PreviewPanel from './lib/components/PreviewPanel.svelte';
   import KeyboardShortcutsHelp from './lib/components/help/KeyboardShortcutsHelp.svelte';
@@ -528,12 +529,12 @@
     } else if (ctrlKey && e.key.toLowerCase() === 'i') {
       e.preventDefault();
       handleImport();
-    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+    } else if (ctrlKey && e.key.toLowerCase() === 'f') {
       e.preventDefault();
       if ($currentStory) {
         showFindReplaceDialog = true;
       }
-    } else if (ctrlKey && e.key.toLowerCase() === 'f') {
+    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();
       viewPreferencesActions.toggleFocusMode();
     } else if (e.key === '1' && ctrlKey) {
@@ -866,14 +867,18 @@
       {:else if $viewMode === 'graph'}
         <!-- Graph View: Full screen graph -->
         <div class="flex-1 h-full">
-          <GraphView />
+          <SvelteFlowProvider>
+            <GraphView />
+          </SvelteFlowProvider>
         </div>
       {:else if $viewMode === 'split'}
         <!-- Split View: Graph + Properties -->
         <div class="flex w-full h-full">
           <!-- Left: Graph View -->
           <div class="flex-1 min-w-0">
-            <GraphView />
+            <SvelteFlowProvider>
+              <GraphView />
+            </SvelteFlowProvider>
           </div>
 
           <!-- Right: Properties + Variables + Validation + Tag Manager + Statistics -->

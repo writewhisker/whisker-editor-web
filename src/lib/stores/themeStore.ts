@@ -28,17 +28,23 @@ function getSystemPreference(): 'light' | 'dark' {
 }
 
 // Create theme store
-export const theme = writable<Theme>(getInitialTheme());
+export const theme = writable<Theme>('auto');
 export const effectiveTheme = writable<'light' | 'dark'>('light');
+
+// Track cleanup functions
+let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null;
+let mediaQueryList: MediaQueryList | null = null;
 
 // Apply theme to document
 export function applyTheme(t: Theme) {
   const actualTheme = t === 'auto' ? getSystemPreference() : t;
 
-  if (actualTheme === 'dark') {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
+  if (typeof window !== 'undefined' && document.documentElement) {
+    if (actualTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   }
 
   effectiveTheme.set(actualTheme);
@@ -47,23 +53,47 @@ export function applyTheme(t: Theme) {
 // Set theme and persist
 export function setTheme(t: Theme) {
   theme.set(t);
-  localStorage.setItem(THEME_KEY, t);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(THEME_KEY, t);
+  }
   applyTheme(t);
 }
 
-// Initialize theme on load
-if (typeof window !== 'undefined') {
-  applyTheme(getInitialTheme());
+// Initialize theme (call this once from your app root)
+export function initTheme(): void {
+  if (typeof window === 'undefined') return;
+
+  // Load and apply initial theme
+  const initialTheme = getInitialTheme();
+  theme.set(initialTheme);
+  applyTheme(initialTheme);
 
   // Listen for system theme changes
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-  mediaQuery.addEventListener('change', () => {
-    theme.subscribe(t => {
-      if (t === 'auto') {
+  if (window.matchMedia) {
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQueryListener = () => {
+      const currentTheme = theme;
+      let themeValue: Theme = 'auto';
+      const unsubscribe = currentTheme.subscribe(t => {
+        themeValue = t;
+      });
+      unsubscribe();
+
+      if (themeValue === 'auto') {
         applyTheme('auto');
       }
-    })();
-  });
+    };
+    mediaQueryList.addEventListener('change', mediaQueryListener);
+  }
+}
+
+// Clean up listeners (useful for tests)
+export function disposeTheme(): void {
+  if (mediaQueryList && mediaQueryListener) {
+    mediaQueryList.removeEventListener('change', mediaQueryListener);
+    mediaQueryList = null;
+    mediaQueryListener = null;
+  }
 }
 
 // Export actions
@@ -72,13 +102,22 @@ export const themeActions = {
   setDark: () => setTheme('dark'),
   setAuto: () => setTheme('auto'),
   toggle: () => {
-    theme.subscribe(t => {
-      if (t === 'auto') {
-        const system = getSystemPreference();
-        setTheme(system === 'dark' ? 'light' : 'dark');
-      } else {
-        setTheme(t === 'dark' ? 'light' : 'dark');
-      }
-    })();
+    let currentTheme: Theme = 'auto';
+    const unsubscribe = theme.subscribe(t => {
+      currentTheme = t;
+    });
+    unsubscribe();
+
+    if (currentTheme === 'auto') {
+      const system = getSystemPreference();
+      setTheme(system === 'dark' ? 'light' : 'dark');
+    } else {
+      setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    }
   }
 };
+
+// Auto-initialize in browser (but not in tests)
+if (typeof window !== 'undefined' && typeof process === 'undefined') {
+  initTheme();
+}

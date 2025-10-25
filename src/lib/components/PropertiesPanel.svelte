@@ -380,8 +380,10 @@
             Choices
           </div>
           <button
+            type="button"
             class="text-xs px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             on:click={addChoice}
+            aria-label="Add new choice"
           >
             + Add Choice
           </button>
@@ -440,8 +442,10 @@
 
               <!-- Remove Button -->
               <button
+                type="button"
                 class="w-full text-xs text-red-600 hover:text-red-800 py-1"
                 on:click={() => removeChoice(choice.id)}
+                aria-label="Remove this choice"
               >
                 Remove Choice
               </button>

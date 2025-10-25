@@ -80,9 +80,12 @@
   <!-- Breakpoint Indicator -->
   {#if $debugMode}
     <button
+      type="button"
       class="absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all {hasBreakpoint ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600 hover:bg-red-400 hover:text-white'}"
       on:click={toggleBreakpoint}
       title={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
+      aria-label={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
+      aria-pressed={hasBreakpoint}
     >
       {hasBreakpoint ? '🔴' : '⚪'}
     </button>
@@ -117,12 +120,12 @@
       </div>
       <div class="flex items-center gap-1">
         {#if hasErrors}
-          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip}>
+          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip} aria-label="{errorCount} validation error{errorCount !== 1 ? 's' : ''}">
             {errorCount}❌
           </span>
         {/if}
         {#if hasWarnings}
-          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip}>
+          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip} aria-label="{warningCount} validation warning{warningCount !== 1 ? 's' : ''}">
             {warningCount}⚠️
           </span>
         {/if}

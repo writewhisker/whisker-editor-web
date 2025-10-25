@@ -26,6 +26,7 @@
   import StoryMetadataEditor from './lib/components/StoryMetadataEditor.svelte';
   import SettingsDialog from './lib/components/SettingsDialog.svelte';
   import ResizeHandle from './lib/components/ResizeHandle.svelte';
+  import NotificationToast from './lib/components/NotificationToast.svelte';
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
@@ -34,6 +35,7 @@
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
+  import { notificationStore } from './lib/stores/notificationStore';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -583,20 +585,41 @@
         autoSaveStatus = 'saving';
 
         // Save to localStorage
-        saveToLocalStorage($currentStory);
+        const result = saveToLocalStorage($currentStory);
 
-        // Show saved status
-        autoSaveStatus = 'saved';
+        if (result.success) {
+          // Show saved status
+          autoSaveStatus = 'saved';
 
-        // Clear any existing timeout
-        if (autoSaveTimeout) {
-          clearTimeout(autoSaveTimeout);
-        }
+          // Clear any existing timeout
+          if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+          }
 
-        // Reset to idle after 3 seconds
-        autoSaveTimeout = setTimeout(() => {
+          // Reset to idle after 3 seconds
+          autoSaveTimeout = setTimeout(() => {
+            autoSaveStatus = 'idle';
+          }, 3000);
+        } else {
+          // Save failed - show error notification
           autoSaveStatus = 'idle';
-        }, 3000);
+
+          if (result.error) {
+            if (result.error.type === 'quota_exceeded') {
+              // Show persistent error for quota exceeded
+              notificationStore.error(
+                result.error.message || 'Storage quota exceeded. Please save your project manually.',
+                10000 // Show for 10 seconds
+              );
+            } else {
+              // Show error for other types
+              notificationStore.error(
+                result.error.message || 'Auto-save failed. Please save your project manually.',
+                5000
+              );
+            }
+          }
+        }
       }
     });
   } else {
@@ -1113,6 +1136,8 @@
 <StoryMetadataEditor bind:show={showMetadataEditor} />
 
 <SettingsDialog bind:show={showSettings} />
+
+<NotificationToast />
 
 {#if isLoading}
   <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

@@ -22,12 +22,14 @@
   let prettyPrint = $exportPreferences.prettyPrint;
   let htmlTheme: 'light' | 'dark' | 'auto' = $exportPreferences.htmlTheme;
   let minifyHTML = $exportPreferences.minifyHTML;
+  let customTheme = '';
+  let language = 'en';
   let customFilename = '';
 
   // Update default filename when story or format changes
   $: if ($currentStory) {
     const storyTitle = $currentStory.metadata.title.replace(/[^a-zA-Z0-9-_]/g, '_');
-    const extensions: Record<ExportFormat, string> = { json: '.json', html: '.html', markdown: '.md', package: '.zip' };
+    const extensions: Record<ExportFormat, string> = { json: '.json', html: '.html', markdown: '.md', package: '.zip', epub: '.epub' };
     customFilename = `${storyTitle}${extensions[selectedFormat]}`;
   }
 
@@ -46,6 +48,8 @@
       includeTestScenarios,
       prettyPrint,
       theme: htmlTheme,
+      customTheme: customTheme || undefined,
+      language: language || 'en',
       minifyHTML,
       filename: customFilename.trim() || undefined,
     };
@@ -106,7 +110,7 @@
       <!-- Format Selection -->
       <div class="mb-6">
         <div class="block text-sm font-semibold mb-2">Export Format</div>
-        <div class="grid grid-cols-3 gap-2">
+        <div class="grid grid-cols-4 gap-2">
           <button
             class="px-4 py-3 rounded border-2 transition-colors {selectedFormat === 'json' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}"
             on:click={() => selectedFormat = 'json'}
@@ -120,6 +124,13 @@
           >
             <div class="font-semibold">HTML</div>
             <div class="text-xs text-gray-600">Playable file</div>
+          </button>
+          <button
+            class="px-4 py-3 rounded border-2 transition-colors {selectedFormat === 'epub' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}"
+            on:click={() => selectedFormat = 'epub'}
+          >
+            <div class="font-semibold">EPUB</div>
+            <div class="text-xs text-gray-600">E-reader</div>
           </button>
           <button
             class="px-4 py-3 rounded border-2 transition-colors {selectedFormat === 'markdown' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}"
@@ -174,17 +185,61 @@
         {:else if selectedFormat === 'html'}
           <div class="space-y-2">
             <div>
-              <label for="html-theme" class="block mb-1">Theme</label>
+              <label for="custom-theme" class="block mb-1">Custom Theme</label>
+              <select id="custom-theme" bind:value={customTheme} class="w-full px-3 py-2 border border-gray-300 rounded">
+                <option value="">Default</option>
+                <option value="dark">Dark</option>
+                <option value="sepia">Sepia</option>
+                <option value="forest">Forest</option>
+                <option value="ocean">Ocean</option>
+                <option value="midnight">Midnight</option>
+                <option value="sunset">Sunset</option>
+                <option value="highContrast">High Contrast</option>
+                <option value="paper">Paper</option>
+                <option value="cyberpunk">Cyberpunk</option>
+              </select>
+            </div>
+            <div>
+              <label for="html-theme" class="block mb-1">Base Theme (if no custom theme)</label>
               <select id="html-theme" bind:value={htmlTheme} class="w-full px-3 py-2 border border-gray-300 rounded">
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
                 <option value="auto">Auto (system preference)</option>
               </select>
             </div>
+            <div>
+              <label for="language" class="block mb-1">Language</label>
+              <select id="language" bind:value={language} class="w-full px-3 py-2 border border-gray-300 rounded">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+              </select>
+            </div>
             <label class="flex items-center">
               <input type="checkbox" bind:checked={minifyHTML} class="mr-2" />
               <span>Minify HTML output</span>
             </label>
+          </div>
+        {:else if selectedFormat === 'epub'}
+          <div class="space-y-2">
+            <div>
+              <label for="epub-language" class="block mb-1">Language</label>
+              <select id="epub-language" bind:value={language} class="w-full px-3 py-2 border border-gray-300 rounded">
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="it">Italian</option>
+                <option value="pt">Portuguese</option>
+                <option value="ja">Japanese</option>
+                <option value="zh">Chinese</option>
+              </select>
+            </div>
           </div>
         {:else if selectedFormat === 'markdown'}
           <div class="space-y-2">

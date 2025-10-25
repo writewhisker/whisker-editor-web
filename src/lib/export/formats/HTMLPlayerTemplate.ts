@@ -4,6 +4,8 @@
  * Self-contained HTML template for playing Whisker stories in a browser.
  */
 
+import { getTheme, generateThemeCSS, BUILTIN_THEMES, type HTMLTheme } from '../themes/themes';
+
 /**
  * Generate HTML player template
  */
@@ -12,14 +14,26 @@ export function generateHTMLPlayer(
   title: string,
   options: {
     theme?: 'light' | 'dark' | 'auto';
+    customTheme?: string;
     customCSS?: string;
     customJS?: string;
+    language?: string;
   } = {}
 ): string {
-  const { theme = 'auto', customCSS = '', customJS = '' } = options;
+  const { theme = 'auto', customTheme, customCSS = '', customJS = '', language = 'en' } = options;
+
+  // Get custom theme if specified
+  let themeStyles = '';
+  if (customTheme && BUILTIN_THEMES[customTheme]) {
+    const selectedTheme = getTheme(customTheme);
+    themeStyles = generateThemeCSS(selectedTheme);
+    if (selectedTheme.customStyles) {
+      themeStyles += '\n' + selectedTheme.customStyles;
+    }
+  }
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,6 +46,7 @@ export function generateHTMLPlayer(
       box-sizing: border-box;
     }
 
+    ${themeStyles || `
     :root {
       --bg-primary: #ffffff;
       --bg-secondary: #f3f4f6;
@@ -55,6 +70,7 @@ export function generateHTMLPlayer(
     }
 
     ${theme === 'dark' ? ':root { --bg-primary: #1f2937; --bg-secondary: #111827; --text-primary: #f9fafb; --text-secondary: #9ca3af; --accent: #60a5fa; --accent-hover: #3b82f6; --border: #374151; }' : ''}
+    `}
 
     body {
       font-family: system-ui, -apple-system, sans-serif;

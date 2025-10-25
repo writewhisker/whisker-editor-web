@@ -11,7 +11,7 @@ import type { QualityMetrics } from '../validation/QualityAnalyzer';
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'html' | 'markdown' | 'package';
+export type ExportFormat = 'json' | 'html' | 'markdown' | 'package' | 'epub';
 
 /**
  * Export options configuration
@@ -49,6 +49,12 @@ export interface ExportOptions {
 
   /** Theme for HTML export */
   theme?: 'light' | 'dark' | 'auto';
+
+  /** Custom theme name for HTML export */
+  customTheme?: string;
+
+  /** Language code for HTML export */
+  language?: string;
 
   /** Include source map for debugging */
   includeSourceMap?: boolean;

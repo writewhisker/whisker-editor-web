@@ -38,8 +38,8 @@ export class MockLocalStorage implements Storage {
 
 	setItem(key: string, value: string): void {
 		if (this.throwQuotaError) {
-			const error = new Error('QuotaExceededError');
-			error.name = 'QuotaExceededError';
+			// Create a DOMException-like error for testing
+			const error = new DOMException('QuotaExceededError', 'QuotaExceededError');
 			throw error;
 		}
 
@@ -47,8 +47,8 @@ export class MockLocalStorage implements Storage {
 		const currentSize = this.getSize();
 		const newItemSize = key.length + value.length;
 		if (currentSize + newItemSize > this.quotaLimit) {
-			const error = new Error('QuotaExceededError');
-			error.name = 'QuotaExceededError';
+			// Create a DOMException-like error for testing
+			const error = new DOMException('QuotaExceededError', 'QuotaExceededError');
 			throw error;
 		}
 

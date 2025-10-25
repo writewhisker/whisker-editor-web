@@ -466,19 +466,19 @@
       // Redo: Ctrl+Shift+Z (must be checked before Ctrl+Z)
       e.preventDefault();
       if ($currentStory) {
-        projectActions.redo();
+        void projectActions.redo(); // async call, don't await in event handler
       }
     } else if (ctrlKey && e.key.toLowerCase() === 'y') {
       // Redo: Ctrl+Y (Windows standard)
       e.preventDefault();
       if ($currentStory) {
-        projectActions.redo();
+        void projectActions.redo(); // async call, don't await in event handler
       }
     } else if (ctrlKey && e.key.toLowerCase() === 'z') {
       // Undo: Ctrl+Z
       e.preventDefault();
       if ($currentStory) {
-        projectActions.undo();
+        void projectActions.undo(); // async call, don't await in event handler
       }
     } else if (ctrlKey && e.key.toLowerCase() === 'n') {
       e.preventDefault();

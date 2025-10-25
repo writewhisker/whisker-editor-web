@@ -194,7 +194,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed from DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     const afterUndo = await page.locator('text=Untitled Passage').count();
@@ -206,7 +208,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Shift+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be added back to DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'visible', timeout: 2000 });
 
     // Verify passage returned
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
@@ -228,7 +232,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed from DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     const afterUndo = await page.locator('text=Untitled Passage').count();
@@ -240,7 +246,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Y');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be added back to DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'visible', timeout: 2000 });
 
     // Verify passage returned
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
@@ -260,8 +268,9 @@ test.describe('Undo/Redo Operations', () => {
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(800);
 
-    // Verify all exist
-    let count = await page.locator('text=Untitled Passage').count();
+    // Verify all exist - use button selector to find passage list items specifically
+    // This avoids matching "Untitled" in the project title in the status bar
+    let count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(3);
 
     const isMac = process.platform === 'darwin';
@@ -272,9 +281,10 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+    // Wait longer to ensure async undo completes (75ms internal + buffer)
+    await page.waitForTimeout(200);
 
-    count = await page.locator('text=Untitled Passage').count();
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(2);
 
     // Undo second time
@@ -283,9 +293,10 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+    // Wait longer to ensure async undo completes
+    await page.waitForTimeout(200);
 
-    count = await page.locator('text=Untitled Passage').count();
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(1);
 
     // Undo third time
@@ -294,10 +305,19 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
 
-    // All should be undone
-    count = await page.locator('text=Untitled Passage').count();
+    // Wait for the last passage to be removed - the most reliable approach
+    // Use the same pattern as the working test
+    await page.waitForTimeout(200); // Initial wait for operation to start
+
+    // Now wait for the passage to actually disappear from DOM
+    const lastPassage = page.locator('button:has-text("Untitled Passage")').first();
+    await lastPassage.waitFor({ state: 'detached', timeout: 2000 }).catch(() => {
+      // If it doesn't disappear, that's the failure we're testing for
+    });
+
+    // All should be undone - verify using button selector
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBe(0);
   });
 
@@ -317,7 +337,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     let count = await page.locator('text=Untitled Passage').count();
@@ -333,7 +355,7 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Shift+Z');
     }
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(500); // Wait for potential async operation
 
     // Should still have exactly 1 Untitled Passage (the new one, not a second one)
     count = await page.locator('text=Untitled Passage').count();

@@ -195,8 +195,9 @@
     }
   }
 
-  function handleNodeDragStop(event: CustomEvent) {
-    const { targetNode } = event.detail;
+  function handleNodeDragStop(event: any) {
+    // Handle different event structures from @xyflow/svelte
+    const targetNode = event?.detail?.targetNode || event?.detail?.node || event?.node;
     if (!$currentStory || !targetNode) return;
 
     const passage = $currentStory.getPassage(targetNode.id);
@@ -220,16 +221,16 @@
   }
 
   // Handle node click - select passage
-  function handleNodeClick(event: CustomEvent) {
-    const { node } = event.detail;
+  function handleNodeClick(event: any) {
+    const node = event?.detail?.node || event?.node;
     if (node) {
       selectedPassageId.set(node.id);
     }
   }
 
   // Handle node double-click - edit passage (could open modal)
-  function handleNodeDoubleClick(event: CustomEvent) {
-    const { node } = event.detail;
+  function handleNodeDoubleClick(event: any) {
+    const node = event?.detail?.node || event?.node;
     if (node) {
       selectedPassageId.set(node.id);
       // Could trigger a modal here or focus on properties panel
@@ -315,8 +316,11 @@
   }
 
   // Handle connection creation
-  function handleConnect(connection: Connection) {
+  function handleConnect(event: any) {
     if (!$currentStory) return;
+
+    // Extract connection from event (handle different event structures)
+    const connection = event?.detail || event;
 
     const sourceId = connection.source;
     const targetId = connection.target;
@@ -524,9 +528,9 @@
         {nodeTypes}
         {edgeTypes}
         fitView
-        onnodedragstop={(e: any) => handleNodeDragStop(e as CustomEvent)}
-        onnodeclick={(e: any) => handleNodeClick(e as CustomEvent)}
-        onconnect={(e: any) => handleConnect(e.detail)}
+        onnodedragstop={(e: any) => handleNodeDragStop(e)}
+        onnodeclick={(e: any) => handleNodeClick(e)}
+        onconnect={(e: any) => handleConnect(e)}
         onmove={(e: any) => {
           if (e?.detail?.viewport) {
             currentZoom = e.detail.viewport.zoom;

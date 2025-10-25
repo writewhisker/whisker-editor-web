@@ -139,6 +139,7 @@ export const projectActions = {
     // Save new state to history AFTER making changes
     const newState = get(currentStory);
     if (newState) {
+      console.log('[ADD_PASSAGE] Pushing state with', newState.passages.size, 'passages');
       historyActions.pushState(newState.serialize());
     }
 
@@ -223,14 +224,22 @@ export const projectActions = {
 
   // Undo/Redo
   undo() {
+    console.log('[UNDO] Called');
     const previousState = historyActions.undo();
+    console.log('[UNDO] Previous state has', previousState ? Object.keys(previousState.passages).length : 0, 'passages');
     if (previousState) {
       const story = Story.deserialize(previousState);
+      console.log('[UNDO] Deserialized story has', story.passages.size, 'passages');
+      const passageTitles = Array.from(story.passages.values()).map(p => p.title).join(', ');
+      console.log('[UNDO] Passage titles:', passageTitles);
+
       currentStory.set(story);
+      console.log('[UNDO] Set currentStory to new story object');
 
       // Update selection if the currently selected passage no longer exists
       const currentSelection = get(selectedPassageId);
       if (currentSelection && !story.getPassage(currentSelection)) {
+        console.log('[UNDO] Current selection no longer exists, updating selection');
         // If currently selected passage doesn't exist in restored state, select first passage
         const firstPassage = Array.from(story.passages.values())[0];
         if (firstPassage) {
@@ -241,6 +250,8 @@ export const projectActions = {
       }
 
       unsavedChanges.set(true);
+    } else {
+      console.log('[UNDO] No previous state available');
     }
   },
 

@@ -163,7 +163,12 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for the passage to be removed from the UI
+    // Using waitFor with state: 'detached' is more reliable than arbitrary timeout
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {
+      // If it doesn't disappear, that's the failure we're testing for
+    });
 
     // Verify passage was removed
     const afterUndo = await page.locator('text=Untitled Passage').count();

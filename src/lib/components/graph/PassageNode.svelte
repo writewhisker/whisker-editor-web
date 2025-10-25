@@ -111,6 +111,7 @@
       on:click={toggleBreakpoint}
       title={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
       aria-label={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
+      aria-pressed={hasBreakpoint}
     >
       {hasBreakpoint ? '🔴' : '⚪'}
     </button>
@@ -145,12 +146,12 @@
       </div>
       <div class="flex items-center gap-1">
         {#if hasErrors}
-          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip}>
+          <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip} aria-label="{errorCount} validation error{errorCount !== 1 ? 's' : ''}">
             {errorCount}❌
           </span>
         {/if}
         {#if hasWarnings}
-          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip}>
+          <span class="text-xs px-1 py-0.5 bg-yellow-200 text-yellow-700 rounded" title={validationTooltip} aria-label="{warningCount} validation warning{warningCount !== 1 ? 's' : ''}">
             {warningCount}⚠️
           </span>
         {/if}

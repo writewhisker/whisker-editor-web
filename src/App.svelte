@@ -715,29 +715,37 @@
       <div class="flex items-center gap-2">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
         <button
+          type="button"
           class="px-3 py-1 text-sm rounded {$viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('list')}
+          aria-label="Switch to list view (Ctrl+1)"
           title="List View (Ctrl+1)"
         >
           📋 List
         </button>
         <button
+          type="button"
           class="px-3 py-1 text-sm rounded {$viewMode === 'graph' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('graph')}
+          aria-label="Switch to graph view (Ctrl+2)"
           title="Graph View (Ctrl+2)"
         >
           🗺️ Graph
         </button>
         <button
+          type="button"
           class="px-3 py-1 text-sm rounded {$viewMode === 'split' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('split')}
+          aria-label="Switch to split view (Ctrl+3)"
           title="Split View (Ctrl+3)"
         >
           ⚡ Split
         </button>
         <button
+          type="button"
           class="px-3 py-1 text-sm rounded {$viewMode === 'preview' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('preview')}
+          aria-label="Switch to preview mode (Ctrl+4)"
           title="Preview Mode (Ctrl+4)"
         >
           🎮 Preview
@@ -753,37 +761,52 @@
           <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Panels:</span>
           {#if $viewMode === 'list'}
             <button
+              type="button"
               class="px-2 py-1 text-xs rounded {$panelVisibility.passageList ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
               on:click={() => viewPreferencesActions.togglePanel('passageList')}
+              aria-label="Toggle passage list panel"
+              aria-pressed={$panelVisibility.passageList}
               title="Toggle Passage List"
             >
               📋 List
             </button>
           {/if}
           <button
+            type="button"
             class="px-2 py-1 text-xs rounded {$panelVisibility.properties ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('properties')}
+            aria-label="Toggle properties panel"
+            aria-pressed={$panelVisibility.properties}
             title="Toggle Properties Panel"
           >
             📝 Properties
           </button>
           <button
+            type="button"
             class="px-2 py-1 text-xs rounded {$panelVisibility.variables ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('variables')}
+            aria-label="Toggle variables panel"
+            aria-pressed={$panelVisibility.variables}
             title="Toggle Variables Panel"
           >
             🔢 Variables
           </button>
           <button
+            type="button"
             class="px-2 py-1 text-xs rounded {$panelVisibility.validation ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('validation')}
+            aria-label="Toggle validation panel"
+            aria-pressed={$panelVisibility.validation}
             title="Toggle Validation Panel"
           >
             🔍 Validation
           </button>
           <button
+            type="button"
             class="px-2 py-1 text-xs rounded {$panelVisibility.tagManager ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
             on:click={() => viewPreferencesActions.togglePanel('tagManager')}
+            aria-label="Toggle tag manager panel"
+            aria-pressed={$panelVisibility.tagManager}
             title="Toggle Tag Manager Panel"
           >
             🏷️ Tags
@@ -798,8 +821,11 @@
 
       <!-- Focus Mode Toggle -->
       <button
+        type="button"
         class="px-3 py-1 text-xs rounded {$focusMode ? 'bg-purple-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-200'}"
         on:click={() => viewPreferencesActions.toggleFocusMode()}
+        aria-label="Toggle focus mode (Ctrl+F)"
+        aria-pressed={$focusMode}
         title="Focus Mode (Ctrl+F)"
       >
         {$focusMode ? '🎯 Focus On' : '🎯 Focus'}

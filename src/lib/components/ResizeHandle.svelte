@@ -45,13 +45,43 @@
     window.removeEventListener('mousemove', handleMouseMove);
     window.removeEventListener('mouseup', handleMouseUp);
   }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    // Use larger step when Shift is held, smaller otherwise
+    const step = e.shiftKey ? 50 : 10;
+
+    if (orientation === 'vertical') {
+      // Vertical orientation: Left/Right arrow keys
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        dispatch('resize', { delta: -step });
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        dispatch('resize', { delta: step });
+      }
+    } else {
+      // Horizontal orientation: Up/Down arrow keys
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        dispatch('resize', { delta: -step });
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        dispatch('resize', { delta: step });
+      }
+    }
+  }
 </script>
 
 <div
   class="resize-handle {orientation === 'vertical' ? 'resize-handle-vertical' : 'resize-handle-horizontal'}"
   on:mousedown={handleMouseDown}
+  on:keydown={handleKeyDown}
   role="separator"
   aria-orientation={orientation}
+  aria-label="Resize {orientation === 'vertical' ? 'panel width' : 'panel height'}. Use arrow keys to resize, hold Shift for larger increments."
+  aria-valuenow={0}
+  aria-valuemin={minSize}
+  aria-valuemax={maxSize}
   tabindex="0"
 >
   <div class="resize-handle-indicator"></div>

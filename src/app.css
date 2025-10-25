@@ -112,10 +112,43 @@ body {
 }
 
 /* Focus visible styles (better than default outline) */
-*:focus-visible {
+/* Target all interactive elements for consistent focus indicators */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="option"]:focus-visible,
+[role="tab"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+/* Dark mode focus indicators */
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark textarea:focus-visible,
+.dark select:focus-visible,
+.dark [role="button"]:focus-visible,
+.dark [role="menuitem"]:focus-visible,
+.dark [role="option"]:focus-visible,
+.dark [role="tab"]:focus-visible,
+.dark [tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline on mouse users */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+  outline: none;
 }
 
 /* High contrast mode support */
@@ -124,8 +157,11 @@ body {
     border-color: currentColor;
   }
 
-  button, a {
-    outline: 2px solid currentColor;
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid currentColor;
     outline-offset: 2px;
   }
 }

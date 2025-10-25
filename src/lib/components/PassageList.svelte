@@ -16,6 +16,9 @@
   let contextMenuX = 0;
   let contextMenuY = 0;
   let contextMenuPassageId: string | null = null;
+  let contextMenuElement: HTMLElement | null = null;
+  let selectedMenuItemIndex = 0;
+  const menuItems = ['Set as Start', 'Duplicate', 'Delete'];
 
   // Multi-select state
   let selectedPassages = new Set<string>();
@@ -177,11 +180,80 @@
     contextMenuY = event.clientY;
     contextMenuPassageId = passageId;
     showContextMenu = true;
+    selectedMenuItemIndex = 0;
+  }
+
+  function handlePassageKeydown(event: KeyboardEvent, passageId: string) {
+    // Context Menu key or Shift+F10 to open context menu
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault();
+      const target = event.target as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      contextMenuX = rect.left + rect.width / 2;
+      contextMenuY = rect.top + rect.height / 2;
+      contextMenuPassageId = passageId;
+      showContextMenu = true;
+      selectedMenuItemIndex = 0;
+
+      // Focus the menu after opening
+      setTimeout(() => {
+        if (contextMenuElement) {
+          const firstButton = contextMenuElement.querySelector('button');
+          firstButton?.focus();
+        }
+      }, 0);
+    }
+  }
+
+  function handleMenuKeydown(event: KeyboardEvent) {
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        selectedMenuItemIndex = Math.min(selectedMenuItemIndex + 1, menuItems.length - 1);
+        focusMenuItem(selectedMenuItemIndex);
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        selectedMenuItemIndex = Math.max(selectedMenuItemIndex - 1, 0);
+        focusMenuItem(selectedMenuItemIndex);
+        break;
+      case 'Enter':
+      case ' ':
+        event.preventDefault();
+        executeMenuItem(selectedMenuItemIndex);
+        break;
+      case 'Escape':
+        event.preventDefault();
+        closeContextMenu();
+        break;
+    }
+  }
+
+  function focusMenuItem(index: number) {
+    if (contextMenuElement) {
+      const buttons = contextMenuElement.querySelectorAll('button[role="menuitem"]');
+      (buttons[index] as HTMLElement)?.focus();
+    }
+  }
+
+  function executeMenuItem(index: number) {
+    switch (index) {
+      case 0:
+        handleSetAsStart();
+        break;
+      case 1:
+        handleDuplicate();
+        break;
+      case 2:
+        handleDelete();
+        break;
+    }
   }
 
   function closeContextMenu() {
     showContextMenu = false;
     contextMenuPassageId = null;
+    selectedMenuItemIndex = 0;
   }
 
   function handleDelete() {
@@ -288,6 +360,7 @@
           {@const validationSeverity = getPassageValidationSeverity(passage.id)}
           {@const validationCount = getPassageValidationCount(passage.id)}
           <button
+            type="button"
             class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
             class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
             class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
@@ -295,8 +368,10 @@
             class:border-l-purple-500={selectedPassages.has(passage.id)}
             on:click={(e) => selectPassage(passage.id, e)}
             on:contextmenu={(e) => handleContextMenu(e, passage.id)}
+            on:keydown={(e) => handlePassageKeydown(e, passage.id)}
             on:mouseenter={(e) => handleMouseEnter(passage, e)}
             on:mouseleave={handleMouseLeave}
+            aria-label="Passage: {passage.title}"
           >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
             <!-- Color Indicator -->
@@ -382,6 +457,7 @@
         {@const validationSeverity = getPassageValidationSeverity(passage.id)}
         {@const validationCount = getPassageValidationCount(passage.id)}
         <button
+          type="button"
           class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
           class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
           class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
@@ -389,6 +465,8 @@
           class:border-l-purple-500={selectedPassages.has(passage.id)}
           on:click={(e) => selectPassage(passage.id, e)}
           on:contextmenu={(e) => handleContextMenu(e, passage.id)}
+          on:keydown={(e) => handlePassageKeydown(e, passage.id)}
+          aria-label="Passage: {passage.title}"
           on:mouseenter={(e) => handleMouseEnter(passage, e)}
           on:mouseleave={handleMouseLeave}
         >
@@ -476,29 +554,39 @@
 <!-- Context Menu -->
 {#if showContextMenu}
   <div
-    class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[150px]"
+    bind:this={contextMenuElement}
+    role="menu"
+    aria-label="Passage options"
+    class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
     on:click|stopPropagation
+    on:keydown={handleMenuKeydown}
   >
     <button
-      class="w-full text-left px-3 py-1 text-sm hover:bg-gray-100"
+      type="button"
+      role="menuitem"
+      class="w-full text-left px-3 py-1 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
       on:click={handleSetAsStart}
-      title="Make this the starting passage"
+      aria-label="Make this the starting passage"
     >
       Set as Start
     </button>
     <button
-      class="w-full text-left px-3 py-1 text-sm hover:bg-gray-100"
+      type="button"
+      role="menuitem"
+      class="w-full text-left px-3 py-1 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
       on:click={handleDuplicate}
-      title="Create a copy of this passage"
+      aria-label="Create a copy of this passage"
     >
       Duplicate
     </button>
-    <div class="border-t border-gray-200 my-1"></div>
+    <div class="border-t border-gray-200 dark:border-gray-600 my-1" role="separator"></div>
     <button
-      class="w-full text-left px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+      type="button"
+      role="menuitem"
+      class="w-full text-left px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900"
       on:click={handleDelete}
-      title="Delete this passage"
+      aria-label="Delete this passage"
     >
       Delete
     </button>

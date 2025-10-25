@@ -129,40 +129,68 @@
     on:focus={handleInput}
     type="text"
     {placeholder}
+    role="combobox"
+    aria-autocomplete="list"
+    aria-expanded={showSuggestions && suggestions.length > 0}
+    aria-controls="tag-suggestions"
+    aria-activedescendant={selectedIndex >= 0 ? `tag-suggestion-${selectedIndex}` : undefined}
     class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
   />
 
   {#if showSuggestions && suggestions.length > 0}
-    <div class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-64 overflow-y-auto">
+    <div
+      id="tag-suggestions"
+      role="listbox"
+      aria-label="Tag suggestions"
+      class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-64 overflow-y-auto"
+    >
       {#each suggestions as tag, i (tag.name)}
-        <button
-          type="button"
-          class="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors"
+        <div
+          id="tag-suggestion-{i}"
+          role="option"
+          aria-selected={i === selectedIndex}
+          class="w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors cursor-pointer"
           class:bg-blue-100={i === selectedIndex}
           on:click={() => selectSuggestion(tag.name)}
+          on:keydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              selectSuggestion(tag.name);
+            }
+          }}
+          tabindex="-1"
         >
           <div class="flex items-center gap-2">
             <span
               class="inline-block w-3 h-3 rounded flex-shrink-0"
               style="background-color: {tag.color}"
+              aria-hidden="true"
             ></span>
             <span class="font-medium">{tag.name}</span>
             <span class="text-xs text-gray-500 ml-auto">{tag.usageCount} {tag.usageCount === 1 ? 'use' : 'uses'}</span>
           </div>
-        </button>
+        </div>
       {/each}
 
       {#if inputValue.trim() && !suggestions.some(s => s.name.toLowerCase() === inputValue.toLowerCase())}
-        <button
-          type="button"
-          class="w-full text-left px-3 py-2 border-t border-gray-200 bg-green-50 hover:bg-green-100 transition-colors"
+        <div
+          role="option"
+          aria-selected="false"
+          class="w-full text-left px-3 py-2 border-t border-gray-200 bg-green-50 hover:bg-green-100 transition-colors cursor-pointer"
           on:click={addTag}
+          on:keydown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              addTag();
+            }
+          }}
+          tabindex="-1"
         >
           <div class="flex items-center gap-2">
-            <span class="text-green-600">+</span>
+            <span class="text-green-600" aria-hidden="true">+</span>
             <span class="font-medium">Create new tag: "{inputValue.trim()}"</span>
           </div>
-        </button>
+        </div>
       {/if}
     </div>
   {/if}

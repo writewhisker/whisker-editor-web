@@ -1,17 +1,141 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e3]:
-  - generic [ref=e4]: "[plugin:vite-plugin-svelte:compile] src/lib/components/PassageList.svelte:317:14 `{@const}` must be the immediate child of `{#snippet}`, `{#if}`, `{:else if}`, `{:else}`, `{#each}`, `{:then}`, `{:catch}`, `<svelte:fragment>`, `<svelte:boundary` or `<Component>` https://svelte.dev/e/const_tag_invalid_placement"
-  - generic [ref=e5]: PassageList.svelte:317:14
-  - generic [ref=e6]: "315 | <span class=\"text-gray-400\" title=\"Dead end\">⏹</span> 316 | {/if} 317 | {@const validationSeverity = getPassageValidationSeverity(passage.id)} ^ 318 | {@const validationCount = getPassageValidationCount(passage.id)} 319 | {#if validationSeverity}"
-  - generic [ref=e7]:
-    - text: Click outside, press Esc key, or fix the code to dismiss.
-    - text: You can also disable this overlay by setting
-    - code [ref=e8]: server.hmr.overlay
-    - text: to
-    - code [ref=e9]: "false"
-    - text: in
-    - code [ref=e10]: vite.config.ts
-    - text: .
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - navigation [ref=e4]:
+      - generic [ref=e5]:
+        - button "File" [ref=e7]
+        - button "Edit" [ref=e9]
+        - button "View" [ref=e11]
+        - button "Test" [ref=e13]
+        - button "Help" [ref=e15]
+    - generic [ref=e16]:
+      - button "📄 New" [ref=e17]
+      - button "📁 Open" [ref=e18]
+      - button "💾 Save*" [ref=e19]
+      - button "📤 Export" [ref=e21]
+      - button "📥 Import" [ref=e22]
+      - button "➕ Add Passage" [ref=e24]
+      - button "↶" [ref=e26]
+      - button "↷" [disabled] [ref=e27]
+      - generic "History depth" [ref=e28]: "1"
+      - generic "Validation status" [ref=e29]:
+        - generic [ref=e30]: ✓ Valid
+      - generic [ref=e31]: Test Story
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]: "View:"
+        - button "📋 List" [ref=e35]
+        - button "🗺️ Graph" [active] [ref=e36]
+        - button "⚡ Split" [ref=e37]
+        - button "🎮 Preview" [ref=e38]
+      - button "🎯 Focus" [ref=e41]
+    - generic [ref=e42]:
+      - generic [ref=e43]: "📍 Path:"
+      - button "🏠 Untitled Passage" [ref=e44]
+    - main [ref=e45]:
+      - generic [ref=e47]:
+        - generic [ref=e48]:
+          - generic [ref=e50]:
+            - textbox "Search passages..." [ref=e51]
+            - generic [ref=e52]: 🔍
+          - generic [ref=e53]:
+            - button "📊 Type" [ref=e55]
+            - generic [ref=e56] [cursor=pointer]:
+              - checkbox "Search choices" [checked] [ref=e57]
+              - generic [ref=e58]: Search choices
+            - generic [ref=e59]: 2 passages
+        - generic [ref=e60]:
+          - generic [ref=e61]: "Connection Issues:"
+          - generic [ref=e62]:
+            - generic [ref=e63]: ⚠️
+            - generic [ref=e64]: 2 warnings
+          - generic [ref=e65]:
+            - generic [ref=e66]: ℹ️
+            - generic [ref=e67]: 2 circular paths
+        - generic [ref=e68]:
+          - generic [ref=e69]: "Layout:"
+          - button "Hierarchical" [ref=e70]
+          - button "Circular" [ref=e71]
+          - button "Grid" [ref=e72]
+          - generic [ref=e74]:
+            - radio "Top-Bottom" [checked] [ref=e75]
+            - text: Top-Bottom
+          - generic [ref=e76]:
+            - radio "Left-Right" [ref=e77]
+            - text: Left-Right
+          - button "🔍 Zoom to Selection" [ref=e79]
+        - generic [ref=e80]:
+          - application [ref=e81]:
+            - generic [ref=e83]:
+              - generic:
+                - generic:
+                  - img
+                - generic:
+                  - group [ref=e84]:
+                    - generic [ref=e85] [cursor=pointer]:
+                      - generic [ref=e87]:
+                        - generic [ref=e88]:
+                          - generic "Start passage" [ref=e89]: ⭐
+                          - generic "Dead end" [ref=e90]: 🔚
+                          - heading "Start" [level=3] [ref=e91]
+                        - generic [ref=e93]: "0"
+                      - paragraph [ref=e95]: Your story begins here...
+                      - button "Handle" [ref=e96]
+                      - button "Handle" [ref=e97]
+                  - group [ref=e98]:
+                    - generic [ref=e99] [cursor=pointer]:
+                      - generic [ref=e101]:
+                        - heading "Untitled Passage" [level=3] [ref=e103]
+                        - generic [ref=e104]:
+                          - 'generic "structure: Unreachable passage: \"Untitled Passage\" content: Empty passage: \"Untitled Passage\" content: Terminal passage: \"Untitled Passage\"" [ref=e105]': 2⚠️
+                          - generic [ref=e106]: "0"
+                      - paragraph [ref=e108]: Empty passage
+                      - button "Handle" [ref=e109]
+                      - button "Handle" [ref=e110]
+            - link "Svelte Flow attribution" [ref=e112] [cursor=pointer]:
+              - /url: https://svelteflow.dev
+              - text: Svelte Flow
+            - img
+            - generic "Control Panel" [ref=e114]:
+              - button "Zoom In" [ref=e115] [cursor=pointer]:
+                - img [ref=e116]
+              - button "Zoom Out" [ref=e118] [cursor=pointer]:
+                - img [ref=e119]
+              - button "Fit View" [ref=e121] [cursor=pointer]:
+                - img [ref=e122]
+              - button "Toggle Interactivity" [ref=e124] [cursor=pointer]:
+                - img [ref=e125]
+            - img "Mini Map" [ref=e129]
+          - generic [ref=e132]: "Zoom: 100%"
+    - generic [ref=e133]:
+      - generic [ref=e134]:
+        - generic [ref=e135]: 📄
+        - generic [ref=e136]: Untitled
+      - generic [ref=e138]:
+        - generic [ref=e139]: "Passages:"
+        - generic [ref=e140]: "2"
+      - generic [ref=e141]:
+        - generic [ref=e142]: "Words:"
+        - generic [ref=e143]: "4"
+      - generic [ref=e144]:
+        - generic [ref=e145]: "Choices:"
+        - generic [ref=e146]: "0"
+      - generic [ref=e147]:
+        - generic [ref=e148]: "Variables:"
+        - generic [ref=e149]: "0"
+      - generic [ref=e151]:
+        - generic [ref=e152]: ⚠️
+        - generic [ref=e153]: "2"
+      - generic [ref=e154]:
+        - generic [ref=e155]: "Selected:"
+        - generic [ref=e156]: Untitled Passage
+      - generic "Undo/Redo history (Ctrl+Z / Ctrl+Shift+Z)" [ref=e158]:
+        - generic [ref=e159]:
+          - generic [ref=e160]: ↶
+          - generic [ref=e161]: "1"
+        - generic [ref=e163]: ↷
+      - generic [ref=e165]: "Modified: 11:15:25 PM"
+  - region "Notifications"
 ```

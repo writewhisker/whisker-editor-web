@@ -397,55 +397,9 @@
   function handleAddPassage() {
     if (!$currentStory) return;
 
-    // Show template selection
-    const templateChoice = prompt(
-      'Choose a template:\n\n' +
-      '1 - Blank passage\n' +
-      '2 - Choice passage (multiple options)\n' +
-      '3 - Conversation passage\n' +
-      '4 - Description passage\n' +
-      '5 - Checkpoint passage (with variable)\n' +
-      '6 - Ending passage\n\n' +
-      'Enter 1-6 or custom title:'
-    );
-
-    if (templateChoice === null) return;
-
-    let template = passageTemplates.blank;
-    let customTitle = '';
-
-    switch (templateChoice.trim()) {
-      case '1':
-        template = passageTemplates.blank;
-        break;
-      case '2':
-        template = passageTemplates.choice;
-        break;
-      case '3':
-        template = passageTemplates.conversation;
-        break;
-      case '4':
-        template = passageTemplates.description;
-        break;
-      case '5':
-        template = passageTemplates.checkpoint;
-        break;
-      case '6':
-        template = passageTemplates.ending;
-        break;
-      default:
-        // User entered a custom title
-        template = passageTemplates.blank;
-        customTitle = templateChoice;
-    }
-
-    const title = customTitle || template.title;
-    const passage = projectActions.addPassage(title);
-
-    // Set template content if not blank
-    if (template.content && passage) {
-      projectActions.updatePassage(passage.id, { content: template.content });
-    }
+    // Create a new passage with default title
+    // TODO: Add a proper modal UI for template selection instead of prompt()
+    projectActions.addPassage();
   }
 
   // Handle Delete Passage
@@ -509,11 +463,23 @@
       e.preventDefault();
       handleAddPassage();
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
+      // Redo: Ctrl+Shift+Z (must be checked before Ctrl+Z)
       e.preventDefault();
-      projectActions.redo();
+      if ($currentStory) {
+        projectActions.redo();
+      }
+    } else if (ctrlKey && e.key.toLowerCase() === 'y') {
+      // Redo: Ctrl+Y (Windows standard)
+      e.preventDefault();
+      if ($currentStory) {
+        projectActions.redo();
+      }
     } else if (ctrlKey && e.key.toLowerCase() === 'z') {
+      // Undo: Ctrl+Z
       e.preventDefault();
-      projectActions.undo();
+      if ($currentStory) {
+        projectActions.undo();
+      }
     } else if (ctrlKey && e.key.toLowerCase() === 'n') {
       e.preventDefault();
       handleNewProject();
@@ -537,24 +503,6 @@
       e.preventDefault();
       if ($currentStory) {
         showFindReplaceDialog = true;
-      }
-    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
-      // Redo: Ctrl+Shift+Z
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.redo();
-      }
-    } else if (ctrlKey && e.key.toLowerCase() === 'y') {
-      // Redo: Ctrl+Y (Windows standard)
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.redo();
-      }
-    } else if (ctrlKey && e.key.toLowerCase() === 'z') {
-      // Undo: Ctrl+Z
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.undo();
       }
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();

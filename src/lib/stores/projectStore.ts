@@ -105,7 +105,7 @@ export const projectActions = {
       if (!story) return story;
 
       // Check for duplicate titles
-      const requestedTitle = title || 'New Passage';
+      const requestedTitle = title || 'Untitled Passage';
       const existingPassage = Array.from(story.passages.values()).find(
         p => p.title.toLowerCase() === requestedTitle.toLowerCase()
       );
@@ -123,7 +123,7 @@ export const projectActions = {
       }
 
       const passage = new Passage({
-        title: title || 'New Passage',
+        title: title || 'Untitled Passage',
         content: '',
         position: { x: 0, y: 0 },
       });
@@ -227,6 +227,19 @@ export const projectActions = {
     if (previousState) {
       const story = Story.deserialize(previousState);
       currentStory.set(story);
+
+      // Update selection if the currently selected passage no longer exists
+      const currentSelection = get(selectedPassageId);
+      if (currentSelection && !story.getPassage(currentSelection)) {
+        // If currently selected passage doesn't exist in restored state, select first passage
+        const firstPassage = Array.from(story.passages.values())[0];
+        if (firstPassage) {
+          selectedPassageId.set(firstPassage.id);
+        } else {
+          selectedPassageId.set(null);
+        }
+      }
+
       unsavedChanges.set(true);
     }
   },

@@ -44,8 +44,10 @@ export class HTMLExporter implements IExporter {
       // Generate HTML
       const html = generateHTMLPlayer(storyJSON, context.story.metadata.title, {
         theme: context.options.theme,
+        customTheme: context.options.customTheme,
         customCSS: context.options.customCSS,
         customJS: context.options.customJS,
+        language: context.options.language || 'en',
       });
 
       // Minify if requested

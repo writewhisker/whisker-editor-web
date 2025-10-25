@@ -10,6 +10,7 @@ import type { ImportFormat, ImportHistoryEntry } from '../import/types';
 import { JSONExporter } from '../export/formats/JSONExporter';
 import { HTMLExporter } from '../export/formats/HTMLExporter';
 import { MarkdownExporter } from '../export/formats/MarkdownExporter';
+import { EPUBExporter } from '../export/formats/EPUBExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
 import type { Story } from '../models/Story';
 
@@ -188,6 +189,9 @@ export const exportActions = {
         case 'markdown':
           exporter = new MarkdownExporter();
           break;
+        case 'epub':
+          exporter = new EPUBExporter();
+          break;
         default:
           throw new Error(`Unknown export format: ${format}`);
       }
@@ -203,8 +207,15 @@ export const exportActions = {
       }
 
       // Download file
-      const content = result.content as string;
-      const blob = new Blob([content], { type: result.mimeType });
+      const content = result.content;
+      let blob: Blob;
+
+      if (content instanceof Blob) {
+        blob = content;
+      } else {
+        blob = new Blob([content as string], { type: result.mimeType });
+      }
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

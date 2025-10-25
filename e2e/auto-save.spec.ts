@@ -73,22 +73,27 @@ test.describe('Auto-Save Functionality', () => {
     expect(hasPassages || hasNewProject).toBe(true);
   });
 
-  // TODO: Fix localStorage auto-save functionality
-  // The localStorage is not being populated with 'whisker-currentStory'
-  test.skip('should save passage connections', async ({ page }) => {
+  test('should save passage connections', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Save Connections');
-    await page.waitForTimeout(2000);
 
     // Add a passage
     await page.click('button:has-text("+ Add")');
-    await page.waitForTimeout(3000); // Wait for autosave
+
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Check that data includes multiple passages
     const hasMultiplePassages = await page.evaluate(() => {
-      const data = localStorage.getItem('whisker-currentStory');
+      const data = localStorage.getItem('whisker-autosave');
       if (!data) return false;
       try {
-        const story = JSON.parse(data);
+        const autoSaveData = JSON.parse(data);
+        const story = autoSaveData.story;
         return story.passages && Object.keys(story.passages).length > 1;
       } catch {
         return false;
@@ -97,13 +102,18 @@ test.describe('Auto-Save Functionality', () => {
 
     // At minimum, the story should be saved
     const hasStory = await page.evaluate(() => {
-      return localStorage.getItem('whisker-currentStory') !== null;
+      return localStorage.getItem('whisker-autosave') !== null;
     });
 
     expect(hasStory).toBe(true);
   });
 
-  test.skip('should handle rapid changes gracefully', async ({ page }) => {
+  test('should handle rapid changes gracefully', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Rapid Changes Test');
     await page.waitForTimeout(1000);
 
@@ -113,26 +123,35 @@ test.describe('Auto-Save Functionality', () => {
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(200);
 
-    await page.waitForTimeout(2500); // Wait for autosave to settle
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Data should be saved
     const hasSavedData = await page.evaluate(() => {
-      return localStorage.getItem('whisker-currentStory') !== null;
+      return localStorage.getItem('whisker-autosave') !== null;
     });
 
     expect(hasSavedData).toBe(true);
   });
 
-  test.skip('should save metadata changes', async ({ page }) => {
+  test('should save metadata changes', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Metadata Save Test');
-    await page.waitForTimeout(2000); // Wait for autosave
+
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Verify metadata is saved
     const hasMetadata = await page.evaluate(() => {
-      const data = localStorage.getItem('whisker-currentStory');
+      const data = localStorage.getItem('whisker-autosave');
       if (!data) return false;
       try {
-        const story = JSON.parse(data);
+        const autoSaveData = JSON.parse(data);
+        const story = autoSaveData.story;
         return story.metadata && story.metadata.title !== undefined;
       } catch {
         return false;
@@ -142,7 +161,12 @@ test.describe('Auto-Save Functionality', () => {
     expect(hasMetadata).toBe(true);
   });
 
-  test.skip('should maintain save integrity across operations', async ({ page }) => {
+  test('should maintain save integrity across operations', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Save Integrity Test');
     await page.waitForTimeout(1000);
 
@@ -151,11 +175,13 @@ test.describe('Auto-Save Functionality', () => {
     await page.waitForTimeout(500);
 
     await page.click('button:has-text("+ Add")');
-    await page.waitForTimeout(2000); // Wait for autosave
+
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Data should be valid
     const isValid = await page.evaluate(() => {
-      const data = localStorage.getItem('whisker-currentStory');
+      const data = localStorage.getItem('whisker-autosave');
       if (!data) return false;
       try {
         JSON.parse(data);
@@ -168,36 +194,49 @@ test.describe('Auto-Save Functionality', () => {
     expect(isValid).toBe(true);
   });
 
-  test.skip('should not lose data during navigation', async ({ page }) => {
+  test('should not lose data during navigation', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Navigation Save Test');
-    await page.waitForTimeout(2000); // Wait for autosave
 
     // Switch between passages
     await page.click('text=Start');
     await page.waitForTimeout(500);
 
     await page.click('button:has-text("+ Add")');
-    await page.waitForTimeout(1000);
+
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Data should persist
     const hasData = await page.evaluate(() => {
-      return localStorage.getItem('whisker-currentStory') !== null;
+      return localStorage.getItem('whisker-autosave') !== null;
     });
 
     expect(hasData).toBe(true);
   });
 
-  test.skip('should save variable definitions', async ({ page }) => {
+  test('should save variable definitions', async ({ page }) => {
+    // Set auto-save interval to 2 seconds for faster testing
+    await page.evaluate(() => {
+      localStorage.setItem('whisker-autosave-interval', '2000');
+    });
+
     await createNewProject(page, 'Variable Save Test');
-    await page.waitForTimeout(2000); // Wait for autosave
+
+    // Wait for auto-save (2s interval + 1s buffer = 3s)
+    await page.waitForTimeout(3000);
 
     // Check for saved data structure
     const hasStoryData = await page.evaluate(() => {
-      const data = localStorage.getItem('whisker-currentStory');
+      const data = localStorage.getItem('whisker-autosave');
       if (!data) return false;
       try {
-        const story = JSON.parse(data);
-        return story && typeof story === 'object';
+        const autoSaveData = JSON.parse(data);
+        return autoSaveData && autoSaveData.story && typeof autoSaveData.story === 'object';
       } catch {
         return false;
       }

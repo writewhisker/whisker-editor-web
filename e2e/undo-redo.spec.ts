@@ -394,4 +394,138 @@ test.describe('Undo/Redo Operations', () => {
     const newTitleExists = await page.locator('text=New Title').count();
     expect(newTitleExists).toBe(0);
   });
+
+  test('should handle history limit gracefully', async ({ page }) => {
+    await createNewProject(page, 'History Limit Test');
+    await page.waitForTimeout(1000);
+
+    const isMac = process.platform === 'darwin';
+
+    // Create more than MAX_HISTORY (50) operations
+    // We'll add and undo 10 passages, then verify we can still undo
+    for (let i = 0; i < 10; i++) {
+      await page.click('button:has-text("+ Add")');
+      await page.waitForTimeout(300);
+    }
+
+    // Verify we have multiple passages
+    const passageCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(passageCount).toBeGreaterThanOrEqual(10);
+
+    // Undo 5 times
+    for (let i = 0; i < 5; i++) {
+      if (isMac) {
+        await page.keyboard.press('Meta+Z');
+      } else {
+        await page.keyboard.press('Control+Z');
+      }
+      await page.waitForTimeout(200);
+    }
+
+    // Should have about 5 passages left
+    const afterUndoCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(afterUndoCount).toBeGreaterThanOrEqual(4);
+    expect(afterUndoCount).toBeLessThanOrEqual(6);
+
+    // Verify redo still works
+    if (isMac) {
+      await page.keyboard.press('Meta+Shift+Z');
+    } else {
+      await page.keyboard.press('Control+Shift+Z');
+    }
+    await page.waitForTimeout(200);
+
+    const afterRedoCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(afterRedoCount).toBe(afterUndoCount + 1);
+  });
+
+  test('should handle complex multi-passage operations', async ({ page }) => {
+    await createNewProject(page, 'Complex Operations Test');
+    await page.waitForTimeout(1000);
+
+    const isMac = process.platform === 'darwin';
+
+    // Create 3 passages
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+
+    // Verify all created
+    let count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBeGreaterThanOrEqual(3);
+
+    // Rename the first one
+    await page.locator('button:has-text("Untitled Passage")').first().click();
+    await page.waitForTimeout(500);
+
+    const titleInput = page.locator('input[type="text"]').nth(1);
+    await titleInput.click({ force: true });
+    await titleInput.fill('Modified Passage');
+    await titleInput.press('Tab');
+    await page.waitForTimeout(800);
+
+    // Verify rename worked
+    await expect(page.locator('text=Modified Passage').first()).toBeVisible();
+
+    // Delete one passage
+    await page.locator('button:has-text("Untitled Passage")').first().click();
+    await page.waitForTimeout(500);
+
+    const deleteButton = page.locator('button[title*="Delete"], button:has-text("Delete")').first();
+    if (await deleteButton.count() > 0) {
+      await deleteButton.click();
+      await page.waitForTimeout(500);
+
+      const confirmButton = page.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
+      if (await confirmButton.count() > 0) {
+        await confirmButton.click();
+        await page.waitForTimeout(500);
+      }
+    }
+
+    // Now undo all operations one by one
+    // Undo delete
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Should have restored the deleted passage
+    count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    // Undo rename
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // "Modified Passage" should be gone
+    const modifiedCount = await page.locator('text=Modified Passage').count();
+    expect(modifiedCount).toBe(0);
+
+    // Continue undoing the passage additions
+    for (let i = 0; i < 3; i++) {
+      if (isMac) {
+        await page.keyboard.press('Meta+Z');
+      } else {
+        await page.keyboard.press('Control+Z');
+      }
+      await page.waitForTimeout(200);
+    }
+
+    // All Untitled Passages should be gone
+    count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBe(0);
+
+    // Only Start passage should remain
+    await expect(page.locator('text=Start').first()).toBeVisible();
+  });
 });

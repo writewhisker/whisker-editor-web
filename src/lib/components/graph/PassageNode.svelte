@@ -71,18 +71,46 @@
     // Lighter background version of the color
     return `border-color: ${customColor}; background-color: ${customColor}15;`;
   }
+
+  // Handle keyboard interaction
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      // Trigger click event on the node (this will select it in the graph view)
+      (event.target as HTMLElement).click();
+    }
+  }
+
+  // Generate accessible label for the node
+  function getAccessibleLabel(): string {
+    const parts = [passage.title];
+    if (isStart) parts.push('start passage');
+    if (isOrphan) parts.push('orphaned');
+    if (isDead) parts.push('dead end');
+    if (isCurrentPreview) parts.push('currently previewing');
+    if (hasErrors) parts.push(`${errorCount} error${errorCount !== 1 ? 's' : ''}`);
+    if (hasWarnings) parts.push(`${warningCount} warning${warningCount !== 1 ? 's' : ''}`);
+    parts.push(`${passage.choices.length} choice${passage.choices.length !== 1 ? 's' : ''}`);
+    return parts.join(', ');
+  }
 </script>
 
 <div
   class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all min-w-[200px] max-w-[300px] relative"
   style={getCustomStyle()}
+  role="button"
+  tabindex="0"
+  aria-label={getAccessibleLabel()}
+  on:keydown={handleKeydown}
 >
   <!-- Breakpoint Indicator -->
   {#if $debugMode}
     <button
+      type="button"
       class="absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all {hasBreakpoint ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600 hover:bg-red-400 hover:text-white'}"
       on:click={toggleBreakpoint}
       title={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
+      aria-label={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
     >
       {hasBreakpoint ? '🔴' : '⚪'}
     </button>

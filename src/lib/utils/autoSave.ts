@@ -8,6 +8,7 @@
  */
 
 import type { Story } from '../models/Story';
+import { safeSetJSON, safeGetJSON, safeSetItem, type StorageResult } from './storageUtils';
 
 const AUTO_SAVE_KEY = 'whisker-autosave';
 const AUTO_SAVE_TIMESTAMP_KEY = 'whisker-autosave-timestamp';
@@ -59,44 +60,46 @@ export interface AutoSaveData {
 /**
  * Save story to localStorage
  */
-export function saveToLocalStorage(story: Story): void {
-  try {
-    const data: AutoSaveData = {
-      story: story.serialize(),
-      timestamp: Date.now(),
-      storyTitle: story.metadata.title || 'Untitled Story',
-    };
+export function saveToLocalStorage(story: Story): StorageResult {
+  const data: AutoSaveData = {
+    story: story.serialize(),
+    timestamp: Date.now(),
+    storyTitle: story.metadata.title || 'Untitled Story',
+  };
 
-    localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(data));
-    localStorage.setItem(AUTO_SAVE_TIMESTAMP_KEY, data.timestamp.toString());
-  } catch (error) {
-    console.error('Failed to auto-save to localStorage:', error);
-    // Silently fail - don't interrupt user workflow
+  const result = safeSetJSON(AUTO_SAVE_KEY, data);
+
+  if (result.success) {
+    // Also save timestamp separately for quick access
+    safeSetItem(AUTO_SAVE_TIMESTAMP_KEY, data.timestamp.toString());
   }
+
+  return result;
 }
 
 /**
  * Load auto-saved story from localStorage
  */
 export function loadFromLocalStorage(): AutoSaveData | null {
-  try {
-    const dataStr = localStorage.getItem(AUTO_SAVE_KEY);
-    if (!dataStr) return null;
+  const result = safeGetJSON<AutoSaveData>(AUTO_SAVE_KEY);
 
-    const data = JSON.parse(dataStr) as AutoSaveData;
-
-    // Validate data structure
-    if (!data.story || !data.timestamp) {
+  if (!result.success || !result.data) {
+    if (result.error?.type === 'parse_error') {
+      // Data is corrupted, clear it
       clearLocalStorage();
-      return null;
     }
+    return null;
+  }
 
-    return data;
-  } catch (error) {
-    console.error('Failed to load from localStorage:', error);
+  const data = result.data;
+
+  // Validate data structure
+  if (!data.story || !data.timestamp) {
     clearLocalStorage();
     return null;
   }
+
+  return data;
 }
 
 /**

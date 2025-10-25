@@ -1,4 +1,5 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
+import { tick } from 'svelte';
 import { Story } from '../models/Story';
 import { Passage } from '../models/Passage';
 import type { ProjectData } from '../models/types';
@@ -12,6 +13,9 @@ export const unsavedChanges = writable<boolean>(false);
 
 // Selected passage for editing
 export const selectedPassageId = writable<string | null>(null);
+
+// Track if an undo/redo operation is in progress to prevent race conditions
+let undoInProgress = false;
 
 // Derived stores
 export const passageList = derived(currentStory, $story => {
@@ -48,6 +52,9 @@ export const projectActions = {
     currentFilePath.set(null);
     unsavedChanges.set(false);
 
+    // Initialize history with the new story state
+    historyActions.setPresent(story.serialize());
+
     // Select the start passage
     const startPassage = Array.from(story.passages.values())[0];
     if (startPassage) {
@@ -60,6 +67,9 @@ export const projectActions = {
     currentStory.set(story);
     currentFilePath.set(filePath || null);
     unsavedChanges.set(false);
+
+    // Initialize history with the loaded story state
+    historyActions.setPresent(story.serialize());
 
     // Select start passage
     if (story.startPassage) {
@@ -99,7 +109,7 @@ export const projectActions = {
       if (!story) return story;
 
       // Check for duplicate titles
-      const requestedTitle = title || 'New Passage';
+      const requestedTitle = title || 'Untitled Passage';
       const existingPassage = Array.from(story.passages.values()).find(
         p => p.title.toLowerCase() === requestedTitle.toLowerCase()
       );
@@ -116,11 +126,8 @@ export const projectActions = {
         title = uniqueTitle;
       }
 
-      // Save current state to history
-      historyActions.pushState(story.serialize());
-
       const passage = new Passage({
-        title: title || 'New Passage',
+        title: title || 'Untitled Passage',
         content: '',
         position: { x: 0, y: 0 },
       });
@@ -132,6 +139,13 @@ export const projectActions = {
 
       return story;
     });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
+
     return addedPassage;
   },
 
@@ -159,10 +173,8 @@ export const projectActions = {
         }
       }
 
-      // Save current state to history only if there are updates to apply
+      // Apply updates only if there are updates to apply
       if (Object.keys(updates).length > 0) {
-        historyActions.pushState(story.serialize());
-
         // Apply updates
         if (updates.title !== undefined) passage.title = updates.title;
         if (updates.content !== undefined) passage.content = updates.content;
@@ -177,14 +189,17 @@ export const projectActions = {
 
       return story;
     });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
   },
 
   deletePassage(passageId: string) {
     currentStory.update(story => {
       if (!story) return story;
-
-      // Save current state to history
-      historyActions.pushState(story.serialize());
 
       // Clean up all connections to this passage before deleting
       const removedConnections = removeConnectionsToPassage(story, passageId);
@@ -202,23 +217,68 @@ export const projectActions = {
 
       return story;
     });
-  },
 
-  // Undo/Redo
-  undo() {
-    const previousState = historyActions.undo();
-    if (previousState) {
-      const story = Story.deserialize(previousState);
-      currentStory.set(story);
-      unsavedChanges.set(true);
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
     }
   },
 
-  redo() {
+  // Undo/Redo
+  async undo() {
+    // Prevent concurrent undo operations
+    if (undoInProgress) return;
+
+    undoInProgress = true;
+    try {
+      const previousState = historyActions.undo();
+      if (previousState) {
+        const story = Story.deserialize(previousState);
+
+        // Force complete UI refresh by setting to null, waiting for DOM update, then setting new story
+        currentStory.set(null);
+
+        // Wait for Svelte component updates + DOM rendering
+        await tick();
+        await new Promise(resolve => setTimeout(resolve, 75));
+
+        currentStory.set(story);
+
+        // Wait for final UI update
+        await tick();
+
+        // Update selection if the currently selected passage no longer exists
+        const currentSelection = get(selectedPassageId);
+        if (currentSelection && !story.getPassage(currentSelection)) {
+          const firstPassage = Array.from(story.passages.values())[0];
+          if (firstPassage) {
+            selectedPassageId.set(firstPassage.id);
+          } else {
+            selectedPassageId.set(null);
+          }
+        }
+
+        unsavedChanges.set(true);
+      }
+    } finally {
+      undoInProgress = false;
+    }
+  },
+
+  async redo() {
     const nextState = historyActions.redo();
     if (nextState) {
       const story = Story.deserialize(nextState);
+
+      // Use same pattern as undo for consistency
+      currentStory.set(null);
+      await tick();
+      await new Promise(resolve => setTimeout(resolve, 75));
+
       currentStory.set(story);
+      await tick();
+
       unsavedChanges.set(true);
     }
   },

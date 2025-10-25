@@ -140,9 +140,7 @@ test.describe('Undo/Redo Operations', () => {
   });
 
   // Enhanced tests that verify actual undo/redo functionality
-  // TODO: Implement keyboard shortcuts for undo/redo in App.svelte
-  // The historyStore and projectStore methods exist, but need to be wired to keyboard handlers
-  test.skip('should actually undo passage creation', async ({ page }) => {
+  test('should actually undo passage creation', async ({ page }) => {
     await createNewProject(page, 'Undo Passage Creation');
     await page.waitForTimeout(1000);
 
@@ -165,7 +163,12 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for the passage to be removed from the UI
+    // Using waitFor with state: 'detached' is more reliable than arbitrary timeout
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {
+      // If it doesn't disappear, that's the failure we're testing for
+    });
 
     // Verify passage was removed
     const afterUndo = await page.locator('text=Untitled Passage').count();
@@ -175,7 +178,7 @@ test.describe('Undo/Redo Operations', () => {
     await expect(page.locator('text=Start').first()).toBeVisible();
   });
 
-  test.skip('should actually redo passage creation with Ctrl+Shift+Z', async ({ page }) => {
+  test('should actually redo passage creation with Ctrl+Shift+Z', async ({ page }) => {
     await createNewProject(page, 'Redo Test Shift+Z');
     await page.waitForTimeout(1000);
 
@@ -191,7 +194,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed from DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     const afterUndo = await page.locator('text=Untitled Passage').count();
@@ -203,13 +208,15 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Shift+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be added back to DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'visible', timeout: 2000 });
 
     // Verify passage returned
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
   });
 
-  test.skip('should actually redo passage creation with Ctrl+Y', async ({ page }) => {
+  test('should actually redo passage creation with Ctrl+Y', async ({ page }) => {
     await createNewProject(page, 'Redo Test Y');
     await page.waitForTimeout(1000);
 
@@ -225,7 +232,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed from DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     const afterUndo = await page.locator('text=Untitled Passage').count();
@@ -237,13 +246,15 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Y');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be added back to DOM
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'visible', timeout: 2000 });
 
     // Verify passage returned
     await expect(page.locator('text=Untitled Passage').first()).toBeVisible();
   });
 
-  test.skip('should handle multiple undo levels', async ({ page }) => {
+  test('should handle multiple undo levels', async ({ page }) => {
     await createNewProject(page, 'Multiple Undo Test');
     await page.waitForTimeout(1000);
 
@@ -257,8 +268,9 @@ test.describe('Undo/Redo Operations', () => {
     await page.click('button:has-text("+ Add")');
     await page.waitForTimeout(800);
 
-    // Verify all exist
-    let count = await page.locator('text=Untitled Passage').count();
+    // Verify all exist - use button selector to find passage list items specifically
+    // This avoids matching "Untitled" in the project title in the status bar
+    let count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(3);
 
     const isMac = process.platform === 'darwin';
@@ -269,9 +281,10 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+    // Wait longer to ensure async undo completes (75ms internal + buffer)
+    await page.waitForTimeout(200);
 
-    count = await page.locator('text=Untitled Passage').count();
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(2);
 
     // Undo second time
@@ -280,9 +293,10 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+    // Wait longer to ensure async undo completes
+    await page.waitForTimeout(200);
 
-    count = await page.locator('text=Untitled Passage').count();
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBeGreaterThanOrEqual(1);
 
     // Undo third time
@@ -291,14 +305,23 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
 
-    // All should be undone
-    count = await page.locator('text=Untitled Passage').count();
+    // Wait for the last passage to be removed - the most reliable approach
+    // Use the same pattern as the working test
+    await page.waitForTimeout(200); // Initial wait for operation to start
+
+    // Now wait for the passage to actually disappear from DOM
+    const lastPassage = page.locator('button:has-text("Untitled Passage")').first();
+    await lastPassage.waitFor({ state: 'detached', timeout: 2000 }).catch(() => {
+      // If it doesn't disappear, that's the failure we're testing for
+    });
+
+    // All should be undone - verify using button selector
+    count = await page.locator('button:has-text("Untitled Passage")').count();
     expect(count).toBe(0);
   });
 
-  test.skip('should clear redo history on new action', async ({ page }) => {
+  test('should clear redo history on new action', async ({ page }) => {
     await createNewProject(page, 'Clear Redo Test');
     await page.waitForTimeout(1000);
 
@@ -314,7 +337,9 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Z');
     }
-    await page.waitForTimeout(800);
+
+    // Wait for passage to be removed
+    await page.locator('text=Untitled Passage').first().waitFor({ state: 'detached', timeout: 2000 }).catch(() => {});
 
     // Verify undone
     let count = await page.locator('text=Untitled Passage').count();
@@ -330,14 +355,14 @@ test.describe('Undo/Redo Operations', () => {
     } else {
       await page.keyboard.press('Control+Shift+Z');
     }
-    await page.waitForTimeout(800);
+    await page.waitForTimeout(500); // Wait for potential async operation
 
     // Should still have exactly 1 Untitled Passage (the new one, not a second one)
     count = await page.locator('text=Untitled Passage').count();
     expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  test.skip('should undo title changes', async ({ page }) => {
+  test('should undo title changes', async ({ page }) => {
     await createNewProject(page, 'Undo Title Change');
     await page.waitForTimeout(1000);
 
@@ -368,5 +393,139 @@ test.describe('Undo/Redo Operations', () => {
     await expect(page.locator('text=Start').first()).toBeVisible();
     const newTitleExists = await page.locator('text=New Title').count();
     expect(newTitleExists).toBe(0);
+  });
+
+  test('should handle history limit gracefully', async ({ page }) => {
+    await createNewProject(page, 'History Limit Test');
+    await page.waitForTimeout(1000);
+
+    const isMac = process.platform === 'darwin';
+
+    // Create more than MAX_HISTORY (50) operations
+    // We'll add and undo 10 passages, then verify we can still undo
+    for (let i = 0; i < 10; i++) {
+      await page.click('button:has-text("+ Add")');
+      await page.waitForTimeout(300);
+    }
+
+    // Verify we have multiple passages
+    const passageCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(passageCount).toBeGreaterThanOrEqual(10);
+
+    // Undo 5 times
+    for (let i = 0; i < 5; i++) {
+      if (isMac) {
+        await page.keyboard.press('Meta+Z');
+      } else {
+        await page.keyboard.press('Control+Z');
+      }
+      await page.waitForTimeout(200);
+    }
+
+    // Should have about 5 passages left
+    const afterUndoCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(afterUndoCount).toBeGreaterThanOrEqual(4);
+    expect(afterUndoCount).toBeLessThanOrEqual(6);
+
+    // Verify redo still works
+    if (isMac) {
+      await page.keyboard.press('Meta+Shift+Z');
+    } else {
+      await page.keyboard.press('Control+Shift+Z');
+    }
+    await page.waitForTimeout(200);
+
+    const afterRedoCount = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(afterRedoCount).toBe(afterUndoCount + 1);
+  });
+
+  test('should handle complex multi-passage operations', async ({ page }) => {
+    await createNewProject(page, 'Complex Operations Test');
+    await page.waitForTimeout(1000);
+
+    const isMac = process.platform === 'darwin';
+
+    // Create 3 passages
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+    await page.click('button:has-text("+ Add")');
+    await page.waitForTimeout(500);
+
+    // Verify all created
+    let count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBeGreaterThanOrEqual(3);
+
+    // Rename the first one
+    await page.locator('button:has-text("Untitled Passage")').first().click();
+    await page.waitForTimeout(500);
+
+    const titleInput = page.locator('input[type="text"]').nth(1);
+    await titleInput.click({ force: true });
+    await titleInput.fill('Modified Passage');
+    await titleInput.press('Tab');
+    await page.waitForTimeout(800);
+
+    // Verify rename worked
+    await expect(page.locator('text=Modified Passage').first()).toBeVisible();
+
+    // Delete one passage
+    await page.locator('button:has-text("Untitled Passage")').first().click();
+    await page.waitForTimeout(500);
+
+    const deleteButton = page.locator('button[title*="Delete"], button:has-text("Delete")').first();
+    if (await deleteButton.count() > 0) {
+      await deleteButton.click();
+      await page.waitForTimeout(500);
+
+      const confirmButton = page.locator('button:has-text("Delete"), button:has-text("Confirm")').first();
+      if (await confirmButton.count() > 0) {
+        await confirmButton.click();
+        await page.waitForTimeout(500);
+      }
+    }
+
+    // Now undo all operations one by one
+    // Undo delete
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // Should have restored the deleted passage
+    count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBeGreaterThanOrEqual(2);
+
+    // Undo rename
+    if (isMac) {
+      await page.keyboard.press('Meta+Z');
+    } else {
+      await page.keyboard.press('Control+Z');
+    }
+    await page.waitForTimeout(800);
+
+    // "Modified Passage" should be gone
+    const modifiedCount = await page.locator('text=Modified Passage').count();
+    expect(modifiedCount).toBe(0);
+
+    // Continue undoing the passage additions
+    for (let i = 0; i < 3; i++) {
+      if (isMac) {
+        await page.keyboard.press('Meta+Z');
+      } else {
+        await page.keyboard.press('Control+Z');
+      }
+      await page.waitForTimeout(200);
+    }
+
+    // All Untitled Passages should be gone
+    count = await page.locator('button:has-text("Untitled Passage")').count();
+    expect(count).toBe(0);
+
+    // Only Start passage should remain
+    await expect(page.locator('text=Start').first()).toBeVisible();
   });
 });

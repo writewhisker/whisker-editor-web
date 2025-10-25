@@ -528,7 +528,7 @@
         onnodeclick={(e: any) => handleNodeClick(e as CustomEvent)}
         onconnect={(e: any) => handleConnect(e.detail)}
         onmove={(e: any) => {
-          if (e.detail?.viewport) {
+          if (e?.detail?.viewport) {
             currentZoom = e.detail.viewport.zoom;
           }
         }}

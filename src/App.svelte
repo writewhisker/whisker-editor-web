@@ -26,6 +26,7 @@
   import StoryMetadataEditor from './lib/components/StoryMetadataEditor.svelte';
   import SettingsDialog from './lib/components/SettingsDialog.svelte';
   import ResizeHandle from './lib/components/ResizeHandle.svelte';
+  import NotificationToast from './lib/components/NotificationToast.svelte';
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
@@ -34,6 +35,7 @@
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
+  import { notificationStore } from './lib/stores/notificationStore';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -397,55 +399,9 @@
   function handleAddPassage() {
     if (!$currentStory) return;
 
-    // Show template selection
-    const templateChoice = prompt(
-      'Choose a template:\n\n' +
-      '1 - Blank passage\n' +
-      '2 - Choice passage (multiple options)\n' +
-      '3 - Conversation passage\n' +
-      '4 - Description passage\n' +
-      '5 - Checkpoint passage (with variable)\n' +
-      '6 - Ending passage\n\n' +
-      'Enter 1-6 or custom title:'
-    );
-
-    if (templateChoice === null) return;
-
-    let template = passageTemplates.blank;
-    let customTitle = '';
-
-    switch (templateChoice.trim()) {
-      case '1':
-        template = passageTemplates.blank;
-        break;
-      case '2':
-        template = passageTemplates.choice;
-        break;
-      case '3':
-        template = passageTemplates.conversation;
-        break;
-      case '4':
-        template = passageTemplates.description;
-        break;
-      case '5':
-        template = passageTemplates.checkpoint;
-        break;
-      case '6':
-        template = passageTemplates.ending;
-        break;
-      default:
-        // User entered a custom title
-        template = passageTemplates.blank;
-        customTitle = templateChoice;
-    }
-
-    const title = customTitle || template.title;
-    const passage = projectActions.addPassage(title);
-
-    // Set template content if not blank
-    if (template.content && passage) {
-      projectActions.updatePassage(passage.id, { content: template.content });
-    }
+    // Create a new passage with default title
+    // TODO: Add a proper modal UI for template selection instead of prompt()
+    projectActions.addPassage();
   }
 
   // Handle Delete Passage
@@ -509,11 +465,23 @@
       e.preventDefault();
       handleAddPassage();
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
+      // Redo: Ctrl+Shift+Z (must be checked before Ctrl+Z)
       e.preventDefault();
-      projectActions.redo();
+      if ($currentStory) {
+        void projectActions.redo(); // async call, don't await in event handler
+      }
+    } else if (ctrlKey && e.key.toLowerCase() === 'y') {
+      // Redo: Ctrl+Y (Windows standard)
+      e.preventDefault();
+      if ($currentStory) {
+        void projectActions.redo(); // async call, don't await in event handler
+      }
     } else if (ctrlKey && e.key.toLowerCase() === 'z') {
+      // Undo: Ctrl+Z
       e.preventDefault();
-      projectActions.undo();
+      if ($currentStory) {
+        void projectActions.undo(); // async call, don't await in event handler
+      }
     } else if (ctrlKey && e.key.toLowerCase() === 'n') {
       e.preventDefault();
       handleNewProject();
@@ -537,24 +505,6 @@
       e.preventDefault();
       if ($currentStory) {
         showFindReplaceDialog = true;
-      }
-    } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
-      // Redo: Ctrl+Shift+Z
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.redo();
-      }
-    } else if (ctrlKey && e.key.toLowerCase() === 'y') {
-      // Redo: Ctrl+Y (Windows standard)
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.redo();
-      }
-    } else if (ctrlKey && e.key.toLowerCase() === 'z') {
-      // Undo: Ctrl+Z
-      e.preventDefault();
-      if ($currentStory) {
-        projectActions.undo();
       }
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();
@@ -635,20 +585,41 @@
         autoSaveStatus = 'saving';
 
         // Save to localStorage
-        saveToLocalStorage($currentStory);
+        const result = saveToLocalStorage($currentStory);
 
-        // Show saved status
-        autoSaveStatus = 'saved';
+        if (result.success) {
+          // Show saved status
+          autoSaveStatus = 'saved';
 
-        // Clear any existing timeout
-        if (autoSaveTimeout) {
-          clearTimeout(autoSaveTimeout);
-        }
+          // Clear any existing timeout
+          if (autoSaveTimeout) {
+            clearTimeout(autoSaveTimeout);
+          }
 
-        // Reset to idle after 3 seconds
-        autoSaveTimeout = setTimeout(() => {
+          // Reset to idle after 3 seconds
+          autoSaveTimeout = setTimeout(() => {
+            autoSaveStatus = 'idle';
+          }, 3000);
+        } else {
+          // Save failed - show error notification
           autoSaveStatus = 'idle';
-        }, 3000);
+
+          if (result.error) {
+            if (result.error.type === 'quota_exceeded') {
+              // Show persistent error for quota exceeded
+              notificationStore.error(
+                result.error.message || 'Storage quota exceeded. Please save your project manually.',
+                10000 // Show for 10 seconds
+              );
+            } else {
+              // Show error for other types
+              notificationStore.error(
+                result.error.message || 'Auto-save failed. Please save your project manually.',
+                5000
+              );
+            }
+          }
+        }
       }
     });
   } else {
@@ -1165,6 +1136,8 @@
 <StoryMetadataEditor bind:show={showMetadataEditor} />
 
 <SettingsDialog bind:show={showSettings} />
+
+<NotificationToast />
 
 {#if isLoading}
   <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

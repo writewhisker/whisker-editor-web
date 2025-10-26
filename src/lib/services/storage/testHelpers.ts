@@ -5,7 +5,7 @@
  * mock localStorage, test data generators, and assertion helpers.
  */
 
-import type { ProjectData, ProjectMetadata, AutoSaveData, SerializedStory } from './types';
+import type { StoredProject, ProjectMetadata, AutoSaveData, SerializedStory } from './types';
 
 /**
  * Mock localStorage implementation for testing
@@ -120,9 +120,9 @@ export function createMockStory(overrides?: Partial<SerializedStory>): Serialize
 }
 
 /**
- * Create a mock ProjectData for testing
+ * Create a mock StoredProject for testing
  */
-export function createMockProject(overrides?: Partial<ProjectData>): ProjectData {
+export function createMockProject(overrides?: Partial<StoredProject>): StoredProject {
 	const now = new Date();
 	const story = createMockStory();
 
@@ -207,8 +207,8 @@ export function assertDatesClose(
 /**
  * Create multiple mock projects for list testing
  */
-export function createMockProjects(count: number): ProjectData[] {
-	const projects: ProjectData[] = [];
+export function createMockProjects(count: number): StoredProject[] {
+	const projects: StoredProject[] = [];
 	const baseTime = new Date('2024-01-01').getTime();
 
 	for (let i = 0; i < count; i++) {

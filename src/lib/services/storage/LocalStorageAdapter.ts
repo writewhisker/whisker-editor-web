@@ -8,7 +8,7 @@
 import { nanoid } from 'nanoid';
 import type {
 	IStorageAdapter,
-	ProjectData,
+	StoredProject,
 	ProjectMetadata,
 	AutoSaveData,
 	SaveResult,
@@ -114,7 +114,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 	/**
 	 * Save a project
 	 */
-	async saveProject(project: ProjectData): Promise<SaveResult> {
+	async saveProject(project: StoredProject): Promise<SaveResult> {
 		this.ensureReady();
 
 		try {
@@ -132,7 +132,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 			const newVersion = (project.version || 0) + 1;
 
 			// Create updated project data
-			const updatedProject: ProjectData = {
+			const updatedProject: StoredProject = {
 				...project,
 				id: projectId,
 				version: newVersion,
@@ -179,7 +179,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 	/**
 	 * Load a project
 	 */
-	async loadProject(projectId: string): Promise<ProjectData | null> {
+	async loadProject(projectId: string): Promise<StoredProject | null> {
 		this.ensureReady();
 
 		try {
@@ -190,7 +190,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 				return null;
 			}
 
-			const project = JSON.parse(serialized) as ProjectData;
+			const project = JSON.parse(serialized) as StoredProject;
 
 			// Convert date strings back to Date objects
 			project.createdAt = new Date(project.createdAt);
@@ -318,7 +318,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 	/**
 	 * Duplicate a project
 	 */
-	async duplicateProject(projectId: string, newName: string): Promise<ProjectData> {
+	async duplicateProject(projectId: string, newName: string): Promise<StoredProject> {
 		this.ensureReady();
 
 		try {
@@ -330,7 +330,7 @@ export class LocalStorageAdapter implements IStorageAdapter {
 			const now = new Date();
 			const newId = nanoid();
 
-			const duplicate: ProjectData = {
+			const duplicate: StoredProject = {
 				...original,
 				id: newId,
 				name: newName,

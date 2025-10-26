@@ -9,14 +9,14 @@
 
 import type { ProjectData as ModelProjectData, StoryData } from '../../models/types';
 import type {
-	ProjectData as StorageProjectData,
+	StoredProject,
 	SerializedStory
 } from './types';
 
 /**
  * Convert from editor model format to storage format
  */
-export function modelToStorage(modelData: ModelProjectData): StorageProjectData {
+export function modelToStorage(modelData: ModelProjectData): StoredProject {
 	// Extract story data by removing the version field
 	const { version: _editorVersion, ...storyData } = modelData;
 
@@ -48,7 +48,7 @@ export function modelToStorage(modelData: ModelProjectData): StorageProjectData 
 	};
 
 	// Build storage ProjectData
-	const storageProject: StorageProjectData = {
+	const storageProject: StoredProject = {
 		id: serializedStory.id,
 		name: storyData.metadata.title,
 		story: serializedStory,
@@ -74,7 +74,7 @@ export function modelToStorage(modelData: ModelProjectData): StorageProjectData 
 /**
  * Convert from storage format to editor model format
  */
-export function storageToModel(storageData: StorageProjectData): ModelProjectData {
+export function storageToModel(storageData: StoredProject): ModelProjectData {
 	const story = storageData.story;
 
 	// Convert passages from array to Record

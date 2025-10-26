@@ -35,9 +35,10 @@ export interface SerializedStory {
 }
 
 /**
- * Project data structure
+ * Stored project data structure
+ * Note: Renamed from ProjectData to avoid conflicts with editor model types
  */
-export interface ProjectData {
+export interface StoredProject {
 	id: string;
 	name: string;
 	story: SerializedStory;
@@ -97,7 +98,7 @@ export interface SaveResult {
 	version?: number;
 	timestamp?: number;
 	error?: string;
-	conflictData?: ProjectData;
+	conflictData?: StoredProject;
 }
 
 /**
@@ -149,11 +150,11 @@ export interface IStorageAdapter {
 	/**
 	 * Project Operations
 	 */
-	saveProject(project: ProjectData): Promise<SaveResult>;
-	loadProject(projectId: string): Promise<ProjectData | null>;
+	saveProject(project: StoredProject): Promise<SaveResult>;
+	loadProject(projectId: string): Promise<StoredProject | null>;
 	listProjects(filter?: ProjectFilter): Promise<ProjectMetadata[]>;
 	deleteProject(projectId: string): Promise<void>;
-	duplicateProject(projectId: string, newName: string): Promise<ProjectData>;
+	duplicateProject(projectId: string, newName: string): Promise<StoredProject>;
 
 	/**
 	 * Auto-save Operations
@@ -206,7 +207,7 @@ export class StorageError extends Error {
 export class StorageConflictError extends StorageError {
 	constructor(
 		message: string,
-		public conflictData?: ProjectData
+		public conflictData?: StoredProject
 	) {
 		super(message, 'CONFLICT', conflictData);
 		this.name = 'StorageConflictError';

@@ -2,6 +2,8 @@
  * Export Store
  *
  * State management for story export and import functionality.
+ *
+ * Phase 4 refactoring: Uses PreferenceService for storage adapter integration
  */
 
 import { writable, derived, get } from 'svelte/store';
@@ -13,6 +15,7 @@ import { MarkdownExporter } from '../export/formats/MarkdownExporter';
 import { EPUBExporter } from '../export/formats/EPUBExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
 import type { Story } from '../models/Story';
+import { getPreferenceService } from '../services/storage/PreferenceService';
 
 /**
  * Export preferences
@@ -42,86 +45,67 @@ const DEFAULT_PREFERENCES: ExportPreferences = {
   minifyHTML: false,
 };
 
+// Get preference service instance
+const prefService = getPreferenceService();
+
 /**
- * Load preferences from localStorage
+ * Load preferences (synchronously for initialization)
  */
 function loadPreferences(): ExportPreferences {
-  try {
-    const stored = localStorage.getItem('whisker_export_preferences');
-    if (stored) {
-      return { ...DEFAULT_PREFERENCES, ...JSON.parse(stored) };
-    }
-  } catch (error) {
-    console.error('Failed to load export preferences:', error);
-  }
-  return DEFAULT_PREFERENCES;
+  // Use sync method for initial load (with localStorage fallback)
+  const prefs = prefService.getPreferenceSync<ExportPreferences>(
+    'whisker_export_preferences',
+    DEFAULT_PREFERENCES
+  );
+  return { ...DEFAULT_PREFERENCES, ...prefs };
 }
 
 /**
- * Save preferences to localStorage
+ * Save preferences
  */
 function savePreferences(prefs: ExportPreferences): void {
-  try {
-    localStorage.setItem('whisker_export_preferences', JSON.stringify(prefs));
-  } catch (error) {
-    console.error('Failed to save export preferences:', error);
-  }
+  // Use sync method for backward compatibility
+  prefService.setPreferenceSync('whisker_export_preferences', prefs);
 }
 
 /**
- * Load export history from localStorage
+ * Load export history
  */
 function loadExportHistory(): ExportHistoryEntry[] {
-  try {
-    const stored = localStorage.getItem('whisker_export_history');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Failed to load export history:', error);
-  }
-  return [];
+  const history = prefService.getPreferenceSync<ExportHistoryEntry[]>(
+    'whisker_export_history',
+    []
+  );
+  return history;
 }
 
 /**
- * Save export history to localStorage
+ * Save export history
  */
 function saveExportHistory(history: ExportHistoryEntry[]): void {
-  try {
-    // Keep only last 50 entries
-    const trimmed = history.slice(0, 50);
-    localStorage.setItem('whisker_export_history', JSON.stringify(trimmed));
-  } catch (error) {
-    console.error('Failed to save export history:', error);
-  }
+  // Keep only last 50 entries
+  const trimmed = history.slice(0, 50);
+  prefService.setPreferenceSync('whisker_export_history', trimmed);
 }
 
 /**
- * Load import history from localStorage
+ * Load import history
  */
 function loadImportHistory(): ImportHistoryEntry[] {
-  try {
-    const stored = localStorage.getItem('whisker_import_history');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Failed to load import history:', error);
-  }
-  return [];
+  const history = prefService.getPreferenceSync<ImportHistoryEntry[]>(
+    'whisker_import_history',
+    []
+  );
+  return history;
 }
 
 /**
- * Save import history to localStorage
+ * Save import history
  */
 function saveImportHistory(history: ImportHistoryEntry[]): void {
-  try {
-    // Keep only last 50 entries
-    const trimmed = history.slice(0, 50);
-    localStorage.setItem('whisker_import_history', JSON.stringify(trimmed));
-  } catch (error) {
-    console.error('Failed to save import history:', error);
-  }
+  // Keep only last 50 entries
+  const trimmed = history.slice(0, 50);
+  prefService.setPreferenceSync('whisker_import_history', trimmed);
 }
 
 // Stores

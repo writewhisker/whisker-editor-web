@@ -1,5 +1,17 @@
+/**
+ * View Preferences Store
+ *
+ * Manages per-project UI state and preferences.
+ *
+ * Phase 4 refactoring: Uses PreferenceService for storage adapter integration
+ */
+
 import { writable, derived } from 'svelte/store';
 import { currentStory } from './projectStore';
+import { getPreferenceService } from '../services/storage/PreferenceService';
+
+// Get preference service instance
+const prefService = getPreferenceService();
 
 export type ViewMode = 'list' | 'graph' | 'split' | 'preview';
 
@@ -55,59 +67,36 @@ const GLOBAL_VIEW_MODE_KEY = 'whisker-global-view-mode';
 const STORAGE_VERSION_KEY = 'whisker-preferences-version';
 const CURRENT_VERSION = '2'; // Increment when schema changes
 
-// Check and migrate localStorage if needed
+// Check and migrate storage if needed
 function checkStorageVersion(): void {
-  try {
-    const storedVersion = localStorage.getItem(STORAGE_VERSION_KEY);
-    if (storedVersion !== CURRENT_VERSION) {
-      console.log(`Migrating localStorage from version ${storedVersion || 'legacy'} to ${CURRENT_VERSION}`);
-      // Clear old preferences when version changes
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.setItem(STORAGE_VERSION_KEY, CURRENT_VERSION);
-    }
-  } catch (e) {
-    console.warn('Failed to check storage version:', e);
+  const storedVersion = prefService.getPreferenceSync<string>(STORAGE_VERSION_KEY, '');
+  if (storedVersion !== CURRENT_VERSION) {
+    console.log(`Migrating preferences from version ${storedVersion || 'legacy'} to ${CURRENT_VERSION}`);
+    // Clear old preferences when version changes
+    prefService.setPreferenceSync(STORAGE_KEY, {});
+    prefService.setPreferenceSync(STORAGE_VERSION_KEY, CURRENT_VERSION);
   }
 }
 
-// Load preferences from localStorage
+// Load preferences
 function loadPreferences(): ProjectViewPreferences {
-  try {
-    checkStorageVersion(); // Check version before loading
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : {};
-  } catch (e) {
-    console.warn('Failed to load view preferences:', e);
-    return {};
-  }
+  checkStorageVersion(); // Check version before loading
+  return prefService.getPreferenceSync<ProjectViewPreferences>(STORAGE_KEY, {});
 }
 
-// Save preferences to localStorage
+// Save preferences
 function savePreferences(prefs: ProjectViewPreferences): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  } catch (e) {
-    console.warn('Failed to save view preferences:', e);
-  }
+  prefService.setPreferenceSync(STORAGE_KEY, prefs);
 }
 
 // Load global default view mode
 function loadGlobalViewMode(): ViewMode {
-  try {
-    const stored = localStorage.getItem(GLOBAL_VIEW_MODE_KEY);
-    return (stored as ViewMode) || 'list';
-  } catch (e) {
-    return 'list';
-  }
+  return prefService.getPreferenceSync<ViewMode>(GLOBAL_VIEW_MODE_KEY, 'list');
 }
 
 // Save global default view mode
 function saveGlobalViewMode(mode: ViewMode): void {
-  try {
-    localStorage.setItem(GLOBAL_VIEW_MODE_KEY, mode);
-  } catch (e) {
-    console.warn('Failed to save global view mode:', e);
-  }
+  prefService.setPreferenceSync(GLOBAL_VIEW_MODE_KEY, mode);
 }
 
 // Current project preferences key (based on story title)

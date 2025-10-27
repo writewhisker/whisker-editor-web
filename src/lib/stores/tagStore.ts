@@ -1,6 +1,18 @@
+/**
+ * Tag Store
+ *
+ * Manages tag colors and tag-related operations.
+ *
+ * Phase 4 refactoring: Uses PreferenceService for storage adapter integration
+ */
+
 import { derived, writable, get } from 'svelte/store';
 import { currentStory } from './projectStore';
 import type { Story } from '../models/Story';
+import { getPreferenceService } from '../services/storage/PreferenceService';
+
+// Get preference service instance
+const prefService = getPreferenceService();
 
 // Tag metadata interface
 export interface TagInfo {
@@ -36,24 +48,15 @@ function hashStringToColor(str: string): string {
   return TAG_COLORS[index];
 }
 
-// Custom color overrides (persisted in localStorage)
+// Custom color overrides
 const customTagColors = writable<Record<string, string>>(loadCustomColors());
 
 function loadCustomColors(): Record<string, string> {
-  try {
-    const stored = localStorage.getItem('whisker-tag-colors');
-    return stored ? JSON.parse(stored) : {};
-  } catch {
-    return {};
-  }
+  return prefService.getPreferenceSync<Record<string, string>>('whisker-tag-colors', {});
 }
 
 function saveCustomColors(colors: Record<string, string>) {
-  try {
-    localStorage.setItem('whisker-tag-colors', JSON.stringify(colors));
-  } catch (e) {
-    console.error('Failed to save custom tag colors:', e);
-  }
+  prefService.setPreferenceSync('whisker-tag-colors', colors);
 }
 
 // Derived store: tag registry
@@ -281,5 +284,13 @@ export const tagActions = {
       mostUsedTag: tags.length > 0 ? tags.reduce((a, b) => (a.usageCount > b.usageCount ? a : b)) : null,
       averageUsage: tags.length > 0 ? tags.reduce((sum, tag) => sum + tag.usageCount, 0) / tags.length : 0,
     };
+  },
+
+  /**
+   * Reset custom colors (for testing)
+   * @internal
+   */
+  _resetCustomColors() {
+    customTagColors.set({});
   },
 };

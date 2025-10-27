@@ -263,6 +263,8 @@ export const projectActions = {
   },
 
   updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number }; color?: string }>) {
+    let changeMade = false;
+
     currentStory.update(story => {
       if (!story) return story;
 
@@ -298,15 +300,18 @@ export const projectActions = {
         passage.modified = new Date().toISOString();
 
         unsavedChanges.set(true);
+        changeMade = true;
       }
 
       return story;
     });
 
-    // Save new state to history AFTER making changes
-    const newState = get(currentStory);
-    if (newState) {
-      historyActions.pushState(newState.serialize());
+    // Save new state to history ONLY if changes were actually made
+    if (changeMade) {
+      const newState = get(currentStory);
+      if (newState) {
+        historyActions.pushState(newState.serialize());
+      }
     }
   },
 

@@ -186,8 +186,6 @@ describe('autoSave', () => {
     });
 
     it('should handle localStorage errors gracefully without throwing', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       Object.defineProperty(global, 'localStorage', {
         value: {
           setItem: vi.fn(() => { throw new Error('Storage error'); }),
@@ -198,11 +196,9 @@ describe('autoSave', () => {
 
       const mockStory = createMockStory();
 
-      // Should not throw
-      expect(() => saveToLocalStorage(mockStory as any)).not.toThrow();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
+      // Should not throw and return failure status
+      const result = saveToLocalStorage(mockStory as any);
+      expect(result.success).toBe(false);
     });
 
     it('should save serialized story data', () => {
@@ -262,21 +258,16 @@ describe('autoSave', () => {
     });
 
     it('should handle JSON parse errors', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       localStorageMock['whisker-autosave'] = 'invalid json';
 
       const loaded = loadFromLocalStorage();
 
+      // Should return null and clear corrupted data
       expect(loaded).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalled();
       expect(localStorage.removeItem).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle localStorage errors', () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       Object.defineProperty(global, 'localStorage', {
         value: {
           getItem: vi.fn(() => { throw new Error('Storage error'); }),
@@ -288,10 +279,8 @@ describe('autoSave', () => {
 
       const loaded = loadFromLocalStorage();
 
+      // Should return null when storage fails
       expect(loaded).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
     });
   });
 

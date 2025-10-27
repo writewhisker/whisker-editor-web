@@ -1,14 +1,26 @@
+/**
+ * Theme Store
+ *
+ * Manages application theme with system preference detection.
+ *
+ * Phase 4 refactoring: Uses PreferenceService for storage adapter integration
+ */
+
 import { writable } from 'svelte/store';
+import { getPreferenceService } from '../services/storage/PreferenceService';
 
 export type Theme = 'light' | 'dark' | 'auto';
 
 const THEME_KEY = 'whisker-theme';
 
-// Get initial theme from localStorage or default to 'auto'
+// Get preference service instance
+const prefService = getPreferenceService();
+
+// Get initial theme or default to 'auto'
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'auto';
 
-  const stored = localStorage.getItem(THEME_KEY);
+  const stored = prefService.getPreferenceSync<Theme>(THEME_KEY, 'auto');
   if (stored === 'light' || stored === 'dark' || stored === 'auto') {
     return stored;
   }
@@ -54,7 +66,7 @@ export function applyTheme(t: Theme) {
 export function setTheme(t: Theme) {
   theme.set(t);
   if (typeof window !== 'undefined') {
-    localStorage.setItem(THEME_KEY, t);
+    prefService.setPreferenceSync(THEME_KEY, t);
   }
   applyTheme(t);
 }

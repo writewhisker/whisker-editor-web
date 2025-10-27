@@ -169,6 +169,7 @@ export interface IStorageAdapter {
 	savePreference(key: string, value: any, scope?: PreferenceScope): Promise<void>;
 	loadPreference(key: string, scope?: PreferenceScope): Promise<any | null>;
 	loadAllPreferences(scope?: PreferenceScope): Promise<Record<string, any>>;
+	listPreferences(prefix?: string): Promise<string[]>;
 	deletePreference(key: string, scope?: PreferenceScope): Promise<void>;
 
 	/**

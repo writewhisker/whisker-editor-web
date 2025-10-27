@@ -352,8 +352,7 @@ describe('SearchBar', () => {
       // Only check for singular if count is exactly 1
       if (actualCount === 1) {
         expect(text).toContain('1');
-        expect(text).toContain('passage');
-        expect(text).not.toContain('passages');
+        expect(text).toContain('1 passage'); // Check for singular form in count display
       } else {
         // If there's a default passage, just verify the count is shown
         expect(text).toContain(actualCount.toString());

@@ -521,6 +521,36 @@ export class LocalStorageAdapter implements IStorageAdapter {
 	}
 
 	/**
+	 * List all preference keys matching a prefix
+	 */
+	async listPreferences(prefix?: string): Promise<string[]> {
+		this.ensureReady();
+
+		try {
+			const keys: string[] = [];
+			const searchPrefix = prefix || KEYS.PREFERENCE_PREFIX;
+
+			// Iterate through all localStorage keys
+			for (let i = 0; i < localStorage.length; i++) {
+				const fullKey = localStorage.key(i);
+				if (fullKey?.startsWith(searchPrefix)) {
+					// Return the key without the prefix
+					const keyWithoutPrefix = fullKey.substring(searchPrefix.length);
+					keys.push(keyWithoutPrefix);
+				}
+			}
+
+			return keys;
+		} catch (error) {
+			throw new StorageError(
+				`Failed to list preferences: ${error}`,
+				'LIST_ERROR',
+				error
+			);
+		}
+	}
+
+	/**
 	 * Get the full localStorage key for a preference
 	 */
 	private getPreferenceKey(key: string, scope: PreferenceScope): string {

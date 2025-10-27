@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { get, writable } from 'svelte/store';
 import type { ViewMode, PanelVisibility, PanelSizes, ViewPreferences } from './viewPreferencesStore';
+import { getPreferenceService, resetPreferenceService } from '../services/storage/PreferenceService';
 
 // Mock projectStore before importing
 const mockCurrentStory = writable<any>(null);
@@ -12,8 +13,8 @@ vi.mock('./projectStore', () => ({
 describe('viewPreferencesStore', () => {
   let localStorageMock: { [key: string]: string };
 
-  beforeEach(() => {
-    // Setup localStorage mock
+  beforeEach(async () => {
+    // Setup localStorage mock FIRST before anything else
     localStorageMock = {};
     const localStorageImpl = {
       getItem: vi.fn((key: string) => localStorageMock[key] || null),
@@ -35,8 +36,11 @@ describe('viewPreferencesStore', () => {
       configurable: true,
     });
 
-    // Set storage version to current
-    localStorageMock['whisker-preferences-version'] = '2';
+    // Set storage version to current (must be JSON stringified)
+    localStorageMock['whisker-preferences-version'] = JSON.stringify('2');
+
+    // Reset PreferenceService singleton so next access will create new instance with our localStorage mock
+    resetPreferenceService();
 
     // Reset mock current story
     mockCurrentStory.set(null);
@@ -209,13 +213,14 @@ describe('viewPreferencesStore', () => {
     });
 
     it('should clear old preferences when version changes', async () => {
-      localStorageMock['whisker-preferences-version'] = '1'; // Old version
+      localStorageMock['whisker-preferences-version'] = JSON.stringify('1'); // Old version
       localStorageMock['whisker-view-preferences'] = JSON.stringify({ 'Old': {} });
 
       await import('./viewPreferencesStore');
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith('whisker-view-preferences');
-      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-preferences-version', '2');
+      // When version changes, preferences are cleared by setting to empty object
+      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-view-preferences', JSON.stringify({}));
+      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-preferences-version', JSON.stringify('2'));
     });
 
     it('should migrate from legacy (no version) to current', async () => {
@@ -224,8 +229,9 @@ describe('viewPreferencesStore', () => {
 
       await import('./viewPreferencesStore');
 
-      expect(localStorage.removeItem).toHaveBeenCalledWith('whisker-view-preferences');
-      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-preferences-version', '2');
+      // When migrating from legacy, preferences are cleared by setting to empty object
+      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-view-preferences', JSON.stringify({}));
+      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-preferences-version', JSON.stringify('2'));
     });
 
     it('should handle localStorage errors during version check', async () => {
@@ -243,7 +249,8 @@ describe('viewPreferencesStore', () => {
 
       await import('./viewPreferencesStore');
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Failed to check storage version:', expect.any(Error));
+      // Error comes from PreferenceService.getPreferenceSync()
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to load preference'), expect.any(Error));
 
       consoleWarnSpy.mockRestore();
     });
@@ -277,7 +284,7 @@ describe('viewPreferencesStore', () => {
 
       viewPreferencesActions.setViewMode('graph');
 
-      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-global-view-mode', 'graph');
+      expect(localStorage.setItem).toHaveBeenCalledWith('whisker-preference-global:whisker-global-view-mode', '"graph"');
     });
 
     it('should not save to global view mode when updateGlobal is false', async () => {
@@ -292,7 +299,7 @@ describe('viewPreferencesStore', () => {
 
       viewPreferencesActions.setViewMode('graph', false);
 
-      expect(localStorage.setItem).not.toHaveBeenCalledWith('whisker-global-view-mode', 'graph');
+      expect(localStorage.setItem).not.toHaveBeenCalledWith('whisker-preference-global:whisker-global-view-mode', '"graph"');
     });
 
     it('should persist to localStorage', async () => {
@@ -615,6 +622,11 @@ describe('viewPreferencesStore', () => {
       });
 
       vi.resetModules();
+      // Clear PreferenceService cache after resetModules
+      const prefService = getPreferenceService();
+      await prefService.initialize();
+      prefService.clearCache();
+
       const { viewMode, panelVisibility, focusMode } = await import('./viewPreferencesStore');
 
       // Load Project A
@@ -649,9 +661,14 @@ describe('viewPreferencesStore', () => {
     });
 
     it('should use defaults for new projects', async () => {
-      localStorageMock['whisker-global-view-mode'] = 'graph';
+      localStorageMock['whisker-global-view-mode'] = JSON.stringify('graph');
 
       vi.resetModules();
+      // Clear PreferenceService cache after resetModules
+      const prefService = getPreferenceService();
+      await prefService.initialize();
+      prefService.clearCache();
+
       const { viewMode, panelVisibility, focusMode } = await import('./viewPreferencesStore');
 
       mockCurrentStory.set({
@@ -744,8 +761,8 @@ describe('viewPreferencesStore', () => {
       viewPreferencesActions.setViewMode('graph');
       const newSetItemCalls = vi.mocked(localStorage.setItem).mock.calls.length;
 
-      // Should only save global view mode, not project preferences
-      expect(newSetItemCalls - setItemCalls).toBeLessThanOrEqual(1);
+      // PreferenceService makes 2 calls per preference (unprefixed and prefixed)
+      expect(newSetItemCalls - setItemCalls).toBeLessThanOrEqual(2);
     });
 
     it('should reset to defaults when project is unloaded', async () => {

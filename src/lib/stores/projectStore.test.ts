@@ -21,6 +21,7 @@ import * as connectionValidator from '../utils/connectionValidator';
 vi.mock('./historyStore', () => ({
   historyActions: {
     clear: vi.fn(),
+    setPresent: vi.fn(),
     pushState: vi.fn(),
     undo: vi.fn(() => null),
     redo: vi.fn(() => null),
@@ -416,7 +417,7 @@ describe('projectStore', () => {
         const passage = projectActions.addPassage();
 
         expect(passage).not.toBeNull();
-        expect(passage?.title).toBe('New Passage');
+        expect(passage?.title).toBe('Untitled Passage');
 
         const story = get(currentStory);
         expect(story?.passages.has(passage!.id)).toBe(true);
@@ -648,7 +649,7 @@ describe('projectStore', () => {
     });
 
     describe('undo', () => {
-      it('should restore previous state when available', () => {
+      it('should restore previous state when available', async () => {
         const previousState = {
           metadata: {
             title: 'Previous',
@@ -662,30 +663,30 @@ describe('projectStore', () => {
           startPassage: null,
         };
 
-        vi.mocked(historyStore.historyActions.undo).mockReturnValueOnce(previousState);
+        (historyStore.historyActions.undo as ReturnType<typeof vi.fn>).mockReturnValueOnce(previousState);
 
         projectActions.newProject('Current');
-        projectActions.undo();
+        await projectActions.undo();
 
         const story = get(currentStory);
         expect(story?.metadata.title).toBe('Previous');
         expect(get(unsavedChanges)).toBe(true);
       });
 
-      it('should do nothing when no previous state', () => {
+      it('should do nothing when no previous state', async () => {
         vi.mocked(historyStore.historyActions.undo).mockReturnValueOnce(null);
 
         projectActions.newProject('Current');
         const originalTitle = get(currentStory)?.metadata.title;
 
-        projectActions.undo();
+        await projectActions.undo();
 
         expect(get(currentStory)?.metadata.title).toBe(originalTitle);
       });
     });
 
     describe('redo', () => {
-      it('should restore next state when available', () => {
+      it('should restore next state when available', async () => {
         const nextState = {
           metadata: {
             title: 'Next',
@@ -702,20 +703,20 @@ describe('projectStore', () => {
         vi.mocked(historyStore.historyActions.redo).mockReturnValueOnce(nextState);
 
         projectActions.newProject('Current');
-        projectActions.redo();
+        await projectActions.redo();
 
         const story = get(currentStory);
         expect(story?.metadata.title).toBe('Next');
         expect(get(unsavedChanges)).toBe(true);
       });
 
-      it('should do nothing when no next state', () => {
+      it('should do nothing when no next state', async () => {
         vi.mocked(historyStore.historyActions.redo).mockReturnValueOnce(null);
 
         projectActions.newProject('Current');
         const originalTitle = get(currentStory)?.metadata.title;
 
-        projectActions.redo();
+        await projectActions.redo();
 
         expect(get(currentStory)?.metadata.title).toBe(originalTitle);
       });

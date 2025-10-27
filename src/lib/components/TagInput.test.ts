@@ -142,11 +142,12 @@ describe('TagInput', () => {
       const input = container.querySelector('input') as HTMLInputElement;
 
       await fireEvent.input(input, { target: { value: 'act' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
       expect(dropdown).toBeTruthy();
 
-      const suggestions = Array.from(dropdown!.querySelectorAll('button'));
+      const suggestions = Array.from(dropdown!.querySelectorAll('div[role="option"]'));
       const suggestionTexts = suggestions.map(s => s.textContent);
 
       // Should show 'action' and 'Create new tag' button
@@ -161,9 +162,10 @@ describe('TagInput', () => {
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: 'a' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
-      const suggestions = Array.from(dropdown!.querySelectorAll('button'));
+      const suggestions = Array.from(dropdown!.querySelectorAll('div[role="option"]'));
       const suggestionTexts = suggestions.map(s => s.textContent);
 
       // 'action' should be excluded, but 'adventure' should be included
@@ -177,12 +179,13 @@ describe('TagInput', () => {
 
       // Use a partial match that will show suggestions
       await fireEvent.input(input, { target: { value: 'act' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
       expect(dropdown).toBeTruthy();
 
       // Should have both existing tag suggestions and create new button
-      const buttons = Array.from(dropdown!.querySelectorAll('button'));
+      const buttons = Array.from(dropdown!.querySelectorAll('div[role="option"]'));
       expect(buttons.length).toBeGreaterThan(0);
 
       // The "Create new tag" button appears when input doesn't exactly match
@@ -227,9 +230,10 @@ describe('TagInput', () => {
       const input = container.querySelector('input') as HTMLInputElement;
 
       await fireEvent.input(input, { target: { value: 'act' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
-      const suggestion = dropdown!.querySelector('button');
+      const suggestion = dropdown!.querySelector('div[role="option"]');
 
       // Should have color indicator
       const colorIndicator = suggestion!.querySelector('.inline-block.w-3.h-3.rounded');
@@ -345,10 +349,11 @@ describe('TagInput', () => {
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: 'act' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
-      const suggestion = Array.from(dropdown!.querySelectorAll('button'))
-        .find(btn => btn.textContent?.includes('action'));
+      const suggestion = Array.from(dropdown!.querySelectorAll('div[role="option"]'))
+        .find(div => div.textContent?.includes('action'));
 
       await fireEvent.click(suggestion!);
 
@@ -362,12 +367,13 @@ describe('TagInput', () => {
       const input = container.querySelector('input') as HTMLInputElement;
       // Use partial match that shows suggestions
       await fireEvent.input(input, { target: { value: 'adv' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
       expect(dropdown).toBeTruthy();
 
-      const createButton = Array.from(dropdown!.querySelectorAll('button'))
-        .find(btn => btn.textContent?.includes('Create new tag'));
+      const createButton = Array.from(dropdown!.querySelectorAll('div[role="option"]'))
+        .find(div => div.textContent?.includes('Create new tag'));
 
       // Create button should exist when input doesn't exactly match
       expect(createButton).toBeTruthy();
@@ -517,9 +523,10 @@ describe('TagInput', () => {
       const input = container.querySelector('input') as HTMLInputElement;
 
       await fireEvent.input(input, { target: { value: 'act' } });
+      await fireEvent.focus(input);
 
       const dropdown = container.querySelector('.absolute.z-10');
-      const suggestions = Array.from(dropdown!.querySelectorAll('button'));
+      const suggestions = Array.from(dropdown!.querySelectorAll('div[role="option"]'));
       const suggestionTexts = suggestions.map(s => s.textContent);
 
       expect(suggestionTexts.some(text => text?.includes('Action'))).toBe(true);

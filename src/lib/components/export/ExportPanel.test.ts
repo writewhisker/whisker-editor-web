@@ -102,7 +102,7 @@ describe('ExportPanel', () => {
       const htmlButton = getByText('HTML').closest('button') as HTMLElement;
       await fireEvent.click(htmlButton);
 
-      expect(getByText('Theme')).toBeTruthy();
+      expect(getByText('Custom Theme')).toBeTruthy();
       expect(getByText('Minify HTML output')).toBeTruthy();
     });
 

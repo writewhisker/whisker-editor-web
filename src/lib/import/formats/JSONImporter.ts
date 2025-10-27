@@ -10,6 +10,7 @@ import type {
   ImportResult,
   IImporter,
 } from '../types';
+import { importWhiskerFile, isWhiskerCoreFormat } from '../../utils/whiskerCoreAdapter';
 
 /**
  * JSON Importer
@@ -34,9 +35,14 @@ export class JSONImporter implements IImporter {
         ? JSON.parse(context.data)
         : context.data;
 
-      // Extract story data
+      // Detect format and extract story data
       let storyData;
-      if (data.story) {
+
+      // Check if it's whisker-core format
+      if (isWhiskerCoreFormat(data)) {
+        warnings.push('Detected whisker-core format - converting to editor format');
+        storyData = importWhiskerFile(data);
+      } else if (data.story) {
         // New format (from JSONExporter)
         storyData = data.story;
 
@@ -47,8 +53,8 @@ export class JSONImporter implements IImporter {
           warnings.push('Imported story had validation warnings');
         }
       } else if (data.metadata && data.passages) {
-        // Direct story data format
-        storyData = data;
+        // Direct story data format (could be editor or core format with Record)
+        storyData = importWhiskerFile(data);
       } else {
         throw new Error('Invalid JSON format: missing story data');
       }
@@ -102,6 +108,11 @@ export class JSONImporter implements IImporter {
   canImport(data: string | object): boolean {
     try {
       const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+
+      // Check for whisker-core format
+      if (isWhiskerCoreFormat(parsed)) {
+        return true;
+      }
 
       // Check for story data structure
       const hasNewFormat = parsed.story && parsed.metadata;

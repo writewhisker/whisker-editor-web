@@ -91,4 +91,80 @@ describe('Choice', () => {
       expect(choice.action).toBeUndefined();
     });
   });
+
+  describe('metadata property', () => {
+    it('should initialize with empty metadata object', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      expect(choice.metadata).toEqual({});
+    });
+
+    it('should accept metadata in constructor', () => {
+      const choice = new Choice({
+        text: 'Test',
+        target: 'target',
+        metadata: { priority: 'high', cost: 10 },
+      });
+      expect(choice.metadata).toEqual({ priority: 'high', cost: 10 });
+    });
+
+    it('should set metadata with setMetadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      choice.setMetadata('key1', 'value1');
+      expect(choice.metadata.key1).toBe('value1');
+    });
+
+    it('should get metadata with getMetadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      choice.setMetadata('key2', 'value2');
+      expect(choice.getMetadata('key2')).toBe('value2');
+    });
+
+    it('should return default value for missing metadata key', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      expect(choice.getMetadata('nonexistent', 'default')).toBe('default');
+    });
+
+    it('should check metadata existence with hasMetadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      choice.setMetadata('key3', 'value3');
+      expect(choice.hasMetadata('key3')).toBe(true);
+      expect(choice.hasMetadata('nonexistent')).toBe(false);
+    });
+
+    it('should delete metadata with deleteMetadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      choice.setMetadata('key4', 'value4');
+      expect(choice.hasMetadata('key4')).toBe(true);
+
+      const deleted = choice.deleteMetadata('key4');
+      expect(deleted).toBe(true);
+      expect(choice.hasMetadata('key4')).toBe(false);
+    });
+
+    it('should return false when deleting non-existent metadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      const deleted = choice.deleteMetadata('nonexistent');
+      expect(deleted).toBe(false);
+    });
+
+    it('should serialize metadata', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      choice.setMetadata('score', 100);
+      choice.setMetadata('hidden', true);
+      const data = choice.serialize();
+      expect(data.metadata).toEqual({ score: 100, hidden: true });
+    });
+
+    it('should deserialize metadata from ChoiceData', () => {
+      const data = {
+        id: 'test-id',
+        text: 'Test',
+        target: 'target',
+        metadata: { custom: 'data', numeric: 456 },
+      };
+
+      const choice = Choice.deserialize(data);
+      expect(choice.metadata).toEqual({ custom: 'data', numeric: 456 });
+    });
+  });
 });

@@ -10,3 +10,8 @@ export { UndefinedVariablesValidator } from './UndefinedVariablesValidator';
 export { UnusedVariablesValidator } from './UnusedVariablesValidator';
 export { MissingStartPassageValidator } from './MissingStartPassageValidator';
 export { EmptyPassagesValidator } from './EmptyPassagesValidator';
+export { ValidateIFIDValidator } from './ValidateIFIDValidator';
+export { ValidateStylesheetsValidator } from './ValidateStylesheetsValidator';
+export { ValidateScriptsValidator } from './ValidateScriptsValidator';
+export { ValidateAssetsValidator } from './ValidateAssetsValidator';
+export { ValidatePassageMetadataValidator } from './ValidatePassageMetadataValidator';

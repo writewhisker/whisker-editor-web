@@ -11,11 +11,11 @@ describe('defaultValidator', () => {
       expect(validator.registerValidator).toBeDefined();
     });
 
-    it('should register all 6 standard validators', () => {
+    it('should register all 11 standard validators', () => {
       const validator = createDefaultValidator();
       const validators = validator.getValidators();
 
-      expect(validators).toHaveLength(6);
+      expect(validators).toHaveLength(11);
     });
 
     it('should register MissingStartPassageValidator', () => {

@@ -12,6 +12,11 @@ import {
   UndefinedVariablesValidator,
   UnusedVariablesValidator,
   EmptyPassagesValidator,
+  ValidateIFIDValidator,
+  ValidateStylesheetsValidator,
+  ValidateScriptsValidator,
+  ValidateAssetsValidator,
+  ValidatePassageMetadataValidator,
 } from './validators';
 
 /**
@@ -27,6 +32,11 @@ export function createDefaultValidator(): StoryValidator {
   validator.registerValidator(new UndefinedVariablesValidator());
   validator.registerValidator(new UnusedVariablesValidator());
   validator.registerValidator(new EmptyPassagesValidator());
+  validator.registerValidator(new ValidateIFIDValidator());
+  validator.registerValidator(new ValidateStylesheetsValidator());
+  validator.registerValidator(new ValidateScriptsValidator());
+  validator.registerValidator(new ValidateAssetsValidator());
+  validator.registerValidator(new ValidatePassageMetadataValidator());
 
   return validator;
 }

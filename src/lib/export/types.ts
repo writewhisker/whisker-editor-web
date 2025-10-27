@@ -11,7 +11,7 @@ import type { QualityMetrics } from '../validation/QualityAnalyzer';
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'html' | 'markdown' | 'package' | 'epub';
+export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'markdown' | 'package' | 'epub';
 
 /**
  * Export options configuration
@@ -58,6 +58,12 @@ export interface ExportOptions {
 
   /** Include source map for debugging */
   includeSourceMap?: boolean;
+
+  /** whisker-core format version (1.0 or 2.0) */
+  whiskerCoreVersion?: '1.0' | '2.0';
+
+  /** Strip editor-specific extensions for whisker-core export */
+  stripExtensions?: boolean;
 }
 
 /**

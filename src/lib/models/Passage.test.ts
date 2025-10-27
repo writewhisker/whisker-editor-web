@@ -171,4 +171,136 @@ describe('Passage', () => {
       expect(cloned.title).toBe('Test Passage (copy)');
     });
   });
+
+  describe('size property', () => {
+    it('should have default size of 200x150', () => {
+      expect(passage.size).toEqual({ width: 200, height: 150 });
+    });
+
+    it('should accept custom size in constructor', () => {
+      const customPassage = new Passage({
+        title: 'Custom Size',
+        size: { width: 300, height: 250 },
+      });
+      expect(customPassage.size).toEqual({ width: 300, height: 250 });
+    });
+
+    it('should serialize size', () => {
+      passage.size = { width: 400, height: 300 };
+      const data = passage.serialize();
+      expect(data.size).toEqual({ width: 400, height: 300 });
+    });
+
+    it('should deserialize size from PassageData', () => {
+      const data = {
+        id: 'test-id',
+        title: 'Test',
+        content: 'Content',
+        position: { x: 0, y: 0 },
+        size: { width: 500, height: 400 },
+        choices: [],
+      };
+
+      const deserialized = Passage.deserialize(data);
+      expect(deserialized.size).toEqual({ width: 500, height: 400 });
+    });
+  });
+
+  describe('metadata property', () => {
+    it('should initialize with empty metadata object', () => {
+      expect(passage.metadata).toEqual({});
+    });
+
+    it('should accept metadata in constructor', () => {
+      const passageWithMetadata = new Passage({
+        title: 'Test',
+        metadata: { customKey: 'customValue', count: 42 },
+      });
+      expect(passageWithMetadata.metadata).toEqual({ customKey: 'customValue', count: 42 });
+    });
+
+    it('should set metadata with setMetadata', () => {
+      passage.setMetadata('key1', 'value1');
+      expect(passage.metadata.key1).toBe('value1');
+    });
+
+    it('should get metadata with getMetadata', () => {
+      passage.setMetadata('key2', 'value2');
+      expect(passage.getMetadata('key2')).toBe('value2');
+    });
+
+    it('should return default value for missing metadata key', () => {
+      expect(passage.getMetadata('nonexistent', 'default')).toBe('default');
+    });
+
+    it('should check metadata existence with hasMetadata', () => {
+      passage.setMetadata('key3', 'value3');
+      expect(passage.hasMetadata('key3')).toBe(true);
+      expect(passage.hasMetadata('nonexistent')).toBe(false);
+    });
+
+    it('should delete metadata with deleteMetadata', () => {
+      passage.setMetadata('key4', 'value4');
+      expect(passage.hasMetadata('key4')).toBe(true);
+
+      const deleted = passage.deleteMetadata('key4');
+      expect(deleted).toBe(true);
+      expect(passage.hasMetadata('key4')).toBe(false);
+    });
+
+    it('should return false when deleting non-existent metadata', () => {
+      const deleted = passage.deleteMetadata('nonexistent');
+      expect(deleted).toBe(false);
+    });
+
+    it('should serialize metadata', () => {
+      passage.setMetadata('author', 'John Doe');
+      passage.setMetadata('difficulty', 'hard');
+      const data = passage.serialize();
+      expect(data.metadata).toEqual({ author: 'John Doe', difficulty: 'hard' });
+    });
+
+    it('should deserialize metadata from PassageData', () => {
+      const data = {
+        id: 'test-id',
+        title: 'Test',
+        content: 'Content',
+        position: { x: 0, y: 0 },
+        choices: [],
+        metadata: { custom: 'data', numeric: 123 },
+      };
+
+      const deserialized = Passage.deserialize(data);
+      expect(deserialized.metadata).toEqual({ custom: 'data', numeric: 123 });
+    });
+  });
+
+  describe('name property', () => {
+    it('should return title as name', () => {
+      expect(passage.name).toBe('Test Passage');
+    });
+
+    it('should set title when setting name', () => {
+      passage.name = 'New Name';
+      expect(passage.title).toBe('New Name');
+      expect(passage.name).toBe('New Name');
+    });
+
+    it('should accept name in constructor (as alias for title)', () => {
+      const namedPassage = new Passage({
+        name: 'Named Passage',
+      });
+      expect(namedPassage.title).toBe('Named Passage');
+      expect(namedPassage.name).toBe('Named Passage');
+    });
+
+    it('should prioritize title over name in constructor', () => {
+      const passage = new Passage({
+        title: 'Title Value',
+        name: 'Name Value',
+      });
+      expect(passage.title).toBe('Title Value');
+      expect(passage.name).toBe('Title Value');
+    });
+  });
 });

@@ -1,13 +1,17 @@
-import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData } from './types';
+import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData, WhiskerCoreFormat, AssetReference } from './types';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { nanoid } from 'nanoid';
+import { generateIfid, toWhiskerCoreFormat } from '../utils/whiskerCoreAdapter';
 
 export class Story {
   metadata: StoryMetadata;
   startPassage: string;
   passages: Map<string, Passage>;
   variables: Map<string, Variable>;
+  stylesheets: string[];
+  scripts: string[];
+  assets: Map<string, AssetReference>;
 
   constructor(data?: Partial<StoryData>) {
     const now = new Date().toISOString();
@@ -19,11 +23,17 @@ export class Story {
       created: data?.metadata?.created || now,
       modified: data?.metadata?.modified || now,
       description: data?.metadata?.description,
+      tags: data?.metadata?.tags || [],
+      createdBy: data?.metadata?.createdBy || 'local',
+      ifid: data?.metadata?.ifid || generateIfid()  // Generate ifid if missing
     };
 
     this.startPassage = data?.startPassage || '';
     this.passages = new Map();
     this.variables = new Map();
+    this.stylesheets = data?.stylesheets || [];
+    this.scripts = data?.scripts || [];
+    this.assets = new Map();
 
     // Deserialize passages
     if (data?.passages) {
@@ -36,6 +46,13 @@ export class Story {
     if (data?.variables) {
       Object.entries(data.variables).forEach(([name, variableData]) => {
         this.variables.set(name, Variable.deserialize(variableData));
+      });
+    }
+
+    // Deserialize assets
+    if (data?.assets) {
+      data.assets.forEach(asset => {
+        this.assets.set(asset.id, asset);
       });
     }
 
@@ -95,6 +112,72 @@ export class Story {
     return this.variables.get(name);
   }
 
+  // Stylesheet management
+  addStylesheet(css: string): number {
+    this.stylesheets.push(css);
+    return this.stylesheets.length - 1;
+  }
+
+  removeStylesheet(index: number): boolean {
+    if (index >= 0 && index < this.stylesheets.length) {
+      this.stylesheets.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  updateStylesheet(index: number, css: string): boolean {
+    if (index >= 0 && index < this.stylesheets.length) {
+      this.stylesheets[index] = css;
+      return true;
+    }
+    return false;
+  }
+
+  // Script management
+  addScript(script: string): number {
+    this.scripts.push(script);
+    return this.scripts.length - 1;
+  }
+
+  removeScript(index: number): boolean {
+    if (index >= 0 && index < this.scripts.length) {
+      this.scripts.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  updateScript(index: number, script: string): boolean {
+    if (index >= 0 && index < this.scripts.length) {
+      this.scripts[index] = script;
+      return true;
+    }
+    return false;
+  }
+
+  // Asset management
+  addAsset(asset: AssetReference): void {
+    this.assets.set(asset.id, asset);
+  }
+
+  removeAsset(id: string): boolean {
+    return this.assets.delete(id);
+  }
+
+  getAsset(id: string): AssetReference | undefined {
+    return this.assets.get(id);
+  }
+
+  updateAsset(id: string, updates: Partial<AssetReference>): boolean {
+    const asset = this.assets.get(id);
+    if (asset) {
+      this.assets.set(id, { ...asset, ...updates });
+      return true;
+    }
+    return false;
+  }
+
   serialize(): StoryData {
     const passages: Record<string, PassageData> = {};
     this.passages.forEach((passage, id) => {
@@ -106,12 +189,27 @@ export class Story {
       variables[name] = variable.serialize();
     });
 
-    return {
+    const assets: AssetReference[] = Array.from(this.assets.values());
+
+    const data: StoryData = {
       metadata: { ...this.metadata },
       startPassage: this.startPassage,
       passages,
       variables,
     };
+
+    // Only include optional fields if they have content
+    if (this.stylesheets.length > 0) {
+      data.stylesheets = [...this.stylesheets];
+    }
+    if (this.scripts.length > 0) {
+      data.scripts = [...this.scripts];
+    }
+    if (assets.length > 0) {
+      data.assets = assets;
+    }
+
+    return data;
   }
 
   serializeProject(): ProjectData {
@@ -119,6 +217,17 @@ export class Story {
       ...this.serialize(),
       version: '1.0.0', // Editor format version
     };
+  }
+
+  /**
+   * Serializes to whisker-core compatible format
+   */
+  serializeWhiskerCore(options?: {
+    formatVersion?: '1.0' | '2.0';
+    stripExtensions?: boolean;
+  }): WhiskerCoreFormat {
+    const storyData = this.serialize();
+    return toWhiskerCoreFormat(storyData, options);
   }
 
   static deserialize(data: StoryData): Story {

@@ -29,7 +29,8 @@ export function modelToStorage(modelData: ModelProjectData): StoredProject {
 			description: storyData.metadata.description,
 			created: new Date(storyData.metadata.created),
 			modified: new Date(storyData.metadata.modified),
-			version: storyData.metadata.version
+			version: storyData.metadata.version,
+			ifid: storyData.metadata.ifid  // Preserve IFID
 		},
 		passages: Object.values(storyData.passages).map(passage => ({
 			id: passage.id,
@@ -37,14 +38,25 @@ export function modelToStorage(modelData: ModelProjectData): StoredProject {
 			content: passage.content,
 			tags: passage.tags || [],
 			position: passage.position,
+			size: passage.size,                // Preserve size
+			metadata: passage.metadata,        // Preserve passage metadata
+			onEnterScript: passage.onEnterScript,
+			onExitScript: passage.onExitScript,
 			connections: passage.choices.map((choice, index) => ({
+				choiceId: choice.id,           // Preserve original choice ID
 				targetPassageId: choice.target,
 				choiceText: choice.text,
-				choiceIndex: index
+				choiceIndex: index,
+				condition: choice.condition,   // Preserve condition
+				action: choice.action,         // Preserve action
+				metadata: choice.metadata      // Preserve choice metadata
 			}))
 		})),
 		startPassageId: storyData.startPassage,
-		tags: [] // Story-level tags (not currently used in editor)
+		tags: storyData.metadata.tags || [],
+		stylesheets: storyData.stylesheets,    // Preserve stylesheets
+		scripts: storyData.scripts,            // Preserve scripts
+		assets: storyData.assets               // Preserve assets
 	};
 
 	// Build storage ProjectData
@@ -61,11 +73,13 @@ export function modelToStorage(modelData: ModelProjectData): StoredProject {
 			updatedAt: new Date(storyData.metadata.modified),
 			passageCount: Object.keys(storyData.passages).length,
 			wordCount: calculateWordCount(storyData),
-			tags: []
+			tags: storyData.metadata.tags || [],
+			ownerId: storyData.metadata.createdBy
 		},
 		version: 1,
 		createdAt: new Date(storyData.metadata.created),
-		updatedAt: new Date(storyData.metadata.modified)
+		updatedAt: new Date(storyData.metadata.modified),
+		ownerId: storyData.metadata.createdBy
 	};
 
 	return storageProject;
@@ -85,12 +99,18 @@ export function storageToModel(storageData: StoredProject): ModelProjectData {
 			title: passage.title,
 			content: passage.content,
 			position: passage.position,
-			choices: passage.connections.map(conn => ({
-				id: `choice-${conn.targetPassageId}-${conn.choiceIndex}`,
+			size: passage.size || { width: 200, height: 150 },  // Default size if missing
+			onEnterScript: passage.onEnterScript,
+			onExitScript: passage.onExitScript,
+			metadata: passage.metadata || {},  // Restore passage metadata
+			choices: passage.connections.map((conn, index) => ({
+				// Use original choiceId if available, otherwise fallback for legacy data
+				id: conn.choiceId || `legacy-choice-${passage.id}-${index}-${hashString(conn.choiceText)}`,
 				text: conn.choiceText,
 				target: conn.targetPassageId,
-				condition: undefined,
-				action: undefined
+				condition: conn.condition,
+				action: conn.action,
+				metadata: conn.metadata || {}  // Restore choice metadata
 			})),
 			tags: passage.tags,
 			created: storageData.createdAt.toISOString(),
@@ -108,11 +128,17 @@ export function storageToModel(storageData: StoredProject): ModelProjectData {
 			version: story.metadata.version,
 			created: story.metadata.created.toISOString(),
 			modified: story.metadata.modified.toISOString(),
-			description: story.metadata.description
+			description: story.metadata.description,
+			tags: story.tags || [],
+			createdBy: storageData.ownerId || 'local',
+			ifid: story.metadata.ifid  // Restore IFID
 		},
 		startPassage: story.startPassageId,
 		passages,
 		variables,
+		stylesheets: story.stylesheets,    // Restore stylesheets
+		scripts: story.scripts,            // Restore scripts
+		assets: story.assets,              // Restore assets
 		version: '1.0.0' // Editor format version
 	};
 
@@ -141,4 +167,17 @@ function calculateWordCount(storyData: StoryData): number {
 		const words = passage.content.trim().split(/\s+/).filter(w => w.length > 0);
 		return total + words.length;
 	}, 0);
+}
+
+/**
+ * Generate stable hash from string for legacy ID generation
+ */
+function hashString(str: string): string {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		const char = str.charCodeAt(i);
+		hash = ((hash << 5) - hash) + char;
+		hash = hash & hash; // Convert to 32bit integer
+	}
+	return Math.abs(hash).toString(36);
 }

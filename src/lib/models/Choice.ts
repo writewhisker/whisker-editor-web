@@ -7,6 +7,7 @@ export class Choice {
   target: string;
   condition?: string;
   action?: string;
+  metadata: Record<string, any>;
 
   constructor(data?: Partial<ChoiceData>) {
     this.id = data?.id || nanoid();
@@ -14,6 +15,28 @@ export class Choice {
     this.target = data?.target || '';
     this.condition = data?.condition;
     this.action = data?.action;
+    this.metadata = data?.metadata || {};
+  }
+
+  // Metadata methods
+  setMetadata(key: string, value: any): void {
+    this.metadata[key] = value;
+  }
+
+  getMetadata(key: string, defaultValue?: any): any {
+    return this.metadata[key] !== undefined ? this.metadata[key] : defaultValue;
+  }
+
+  hasMetadata(key: string): boolean {
+    return this.metadata[key] !== undefined;
+  }
+
+  deleteMetadata(key: string): boolean {
+    if (this.metadata[key] !== undefined) {
+      delete this.metadata[key];
+      return true;
+    }
+    return false;
   }
 
   serialize(): ChoiceData {
@@ -25,6 +48,9 @@ export class Choice {
 
     if (this.condition) data.condition = this.condition;
     if (this.action) data.action = this.action;
+    if (Object.keys(this.metadata).length > 0) {
+      data.metadata = { ...this.metadata };
+    }
 
     return data;
   }

@@ -17,6 +17,7 @@ export interface SerializedStory {
 		created: Date;
 		modified: Date;
 		version: string;
+		ifid?: string;              // Interactive Fiction ID (whisker-core compat)
 	};
 	passages: Array<{
 		id: string;
@@ -24,14 +25,33 @@ export interface SerializedStory {
 		content: string;
 		tags: string[];
 		position: { x: number; y: number };
+		size?: { width: number; height: number };   // Passage size (whisker-core compat)
+		metadata?: Record<string, any>;             // Custom passage metadata
+		onEnterScript?: string;                     // Script on passage entry
+		onExitScript?: string;                      // Script on passage exit
 		connections: Array<{
+			choiceId: string;           // Unique choice ID (preserves editor IDs)
 			targetPassageId: string;
 			choiceText: string;
-			choiceIndex: number;
+			choiceIndex: number;        // Index in choices array (for ordering)
+			condition?: string;         // Choice condition expression
+			action?: string;            // Action to execute when chosen
+			metadata?: Record<string, any>;  // Custom choice metadata
 		}>;
 	}>;
 	startPassageId: string;
 	tags: string[];
+	stylesheets?: string[];         // CSS code blocks (whisker-core compat)
+	scripts?: string[];             // Story-wide Lua/JS scripts (whisker-core compat)
+	assets?: Array<{                // Asset references (whisker-core compat)
+		id: string;
+		name: string;
+		type: 'image' | 'audio' | 'video' | 'font' | 'other';
+		path: string;
+		mimeType: string;
+		size?: number;
+		metadata?: Record<string, any>;
+	}>;
 }
 
 /**

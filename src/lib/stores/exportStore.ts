@@ -256,7 +256,7 @@ export const exportActions = {
   /**
    * Import story from file (returns full result with loss reporting)
    */
-  async importStoryWithResult(file: File) {
+  async importStoryWithResult(file: File, conversionOptions?: any) {
     isImporting.set(true);
     importError.set(null);
 
@@ -285,10 +285,12 @@ export const exportActions = {
         throw new Error('Unsupported file format - please use JSON or Twine HTML files');
       }
 
-      // Import story
+      // Import story (pass conversion options)
       const result = await selectedImporter.import({
         data: content,
-        options: {},
+        options: {
+          conversionOptions,
+        },
         filename: file.name,
       });
 

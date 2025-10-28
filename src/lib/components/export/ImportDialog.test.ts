@@ -179,7 +179,10 @@ describe('ImportDialog', () => {
       await fireEvent.click(importButton);
 
       await waitFor(() => {
-        expect(importSpy).toHaveBeenCalledWith(file);
+        expect(importSpy).toHaveBeenCalled();
+        expect(importSpy.mock.calls[0][0]).toBe(file);
+        // Second argument is conversionOptions
+        expect(importSpy.mock.calls[0][1]).toBeDefined();
       });
 
       importSpy.mockRestore();

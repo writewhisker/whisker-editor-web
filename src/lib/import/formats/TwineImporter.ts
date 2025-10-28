@@ -135,6 +135,14 @@ export class TwineImporter implements IImporter {
     const warnings: string[] = [];
     const tracker = new ConversionTracker();
 
+    // Extract conversion options (for future use)
+    const conversionOptions = context.options.conversionOptions || {
+      convertVariables: true,
+      convertMacros: true,
+      preserveOriginalSyntax: false,
+      strictMode: false,
+    };
+
     try {
       // Parse HTML
       const html = typeof context.data === 'string'
@@ -144,6 +152,12 @@ export class TwineImporter implements IImporter {
       // Validate it's Twine HTML
       if (!this.isTwineHTML(html)) {
         throw new Error('Not a valid Twine HTML file');
+      }
+
+      // Log conversion options as info
+      if (conversionOptions) {
+        tracker.addIssue('info', 'conversion', 'Conversion Options',
+          `Using conversion options: variables=${conversionOptions.convertVariables}, macros=${conversionOptions.convertMacros}, preserve=${conversionOptions.preserveOriginalSyntax}, strict=${conversionOptions.strictMode}`);
       }
 
       // Parse Twine structure

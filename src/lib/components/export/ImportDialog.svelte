@@ -7,7 +7,7 @@
     recentImports,
     exportActions,
   } from '../../stores/exportStore';
-  import type { ImportResult } from '../../import/types';
+  import type { ImportResult, ConversionOptions } from '../../import/types';
   import ImportPreviewPanel from './ImportPreviewPanel.svelte';
 
   export let show = false;
@@ -21,11 +21,26 @@
   let currentStep: DialogStep = 'file-selection';
   let previewResult: ImportResult | null = null;
 
+  // Conversion options state
+  let conversionOptions: ConversionOptions = {
+    convertVariables: true,
+    preserveOriginalSyntax: false,
+    strictMode: false,
+    convertMacros: true,
+  };
+
   function close() {
     show = false;
     selectedFile = null;
     currentStep = 'file-selection';
     previewResult = null;
+    // Reset to defaults
+    conversionOptions = {
+      convertVariables: true,
+      preserveOriginalSyntax: false,
+      strictMode: false,
+      convertMacros: true,
+    };
   }
 
   function handleFileSelect(event: Event) {
@@ -53,8 +68,8 @@
 
     currentStep = 'importing';
 
-    // Generate preview first
-    const result = await exportActions.importStoryWithResult(selectedFile);
+    // Generate preview first (pass conversion options)
+    const result = await exportActions.importStoryWithResult(selectedFile, conversionOptions);
 
     if (result && result.success) {
       previewResult = result;
@@ -198,6 +213,53 @@
           The imported story will replace the current story. Make sure you've saved your work before importing.
         </p>
       </div>
+
+      <!-- Conversion Options (for Twine imports) -->
+      {#if selectedFile && (selectedFile.name.endsWith('.html') || selectedFile.name.endsWith('.htm'))}
+        <div class="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
+          <div class="block text-sm font-semibold mb-3">Conversion Options</div>
+          <div class="space-y-2">
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.convertVariables}
+                class="mr-2"
+              />
+              <span>Convert variables automatically (e.g., $var → {'{{var}}'})</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.convertMacros}
+                class="mr-2"
+              />
+              <span>Convert macros to Whisker syntax</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.preserveOriginalSyntax}
+                class="mr-2"
+              />
+              <span>Preserve original syntax in comments</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.strictMode}
+                class="mr-2"
+              />
+              <span>Strict mode (fail on unknown macros)</span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-500 mt-3">
+            These options affect how Twine HTML files are converted to Whisker format.
+          </p>
+        </div>
+      {/if}
 
       <!-- Recent Imports -->
       {#if $recentImports.length > 0}

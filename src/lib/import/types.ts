@@ -45,6 +45,9 @@ export interface ImportOptions {
 
   /** Custom import handlers */
   customHandlers?: Record<string, (data: unknown) => unknown>;
+
+  /** Conversion options for format conversion (e.g., Twine) */
+  conversionOptions?: ConversionOptions;
 }
 
 /**
@@ -104,6 +107,26 @@ export interface LossReport {
 
   /** Overall conversion quality estimate (0-1) */
   conversionQuality?: number;
+}
+
+/**
+ * Conversion options for Twine import
+ */
+export interface ConversionOptions {
+  /** Automatically convert variables (e.g., $var to {{var}}) */
+  convertVariables?: boolean;
+
+  /** Preserve original syntax in comments */
+  preserveOriginalSyntax?: boolean;
+
+  /** Strict mode - fail on unknown macros */
+  strictMode?: boolean;
+
+  /** Convert macros to equivalent Whisker syntax */
+  convertMacros?: boolean;
+
+  /** Target Whisker syntax version */
+  targetVersion?: string;
 }
 
 /**

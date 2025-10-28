@@ -46,7 +46,7 @@
 - 11 new tests for advanced syntax
 - **Tests:** 2379 passing (100% backward compatible)
 
-✅ **Stage 2.1: Import Preview UI** (COMPLETE - Ready to commit)
+✅ **Stage 2.1: Import Preview UI** (COMPLETE - Committed: 56ce091)
 - ImportPreviewPanel component (305 lines)
   - Story metadata display (title, author, passages, variables)
   - Conversion quality visualization with color-coded progress bar
@@ -58,6 +58,24 @@
   - importStoryWithResult() method in exportStore
   - History tracking on confirmation
 - 16 new tests for ImportPreviewPanel
+- **Tests:** 2395 passing (100% backward compatible)
+
+✅ **Stage 2.2: Conversion Options UI** (COMPLETE - Ready to commit)
+- ConversionOptions interface in types.ts
+  - convertVariables, convertMacros, preserveOriginalSyntax, strictMode
+- Conversion options UI in ImportDialog
+  - Shows for Twine HTML files (.html, .htm)
+  - 4 checkboxes with clear descriptions
+  - Gray background panel to distinguish from general options
+- Updated TwineImporter to accept conversion options
+  - Extracts options from ImportContext
+  - Logs options as info message in loss report
+  - Foundation for future option-driven conversion logic
+- Updated exportStore.importStoryWithResult()
+  - Accepts optional conversionOptions parameter
+  - Passes options to importer
+- Updated ImportDialog.test.ts
+  - Tests verify conversionOptions are passed correctly
 - **Tests:** 2395 passing (100% backward compatible)
 
 ---

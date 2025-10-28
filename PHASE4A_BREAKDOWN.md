@@ -25,7 +25,7 @@
 - 5 new tests for loss reporting
 - **Tests:** 2379 passing (100% backward compatible)
 
-✅ **Stage 1.3: Advanced Syntax Conversion** (COMPLETE - Ready to commit)
+✅ **Stage 1.3: Advanced Syntax Conversion** (COMPLETE - Committed: 91ebf3f)
 - **SugarCube Advanced:**
   - <<if>>/<<elseif>>/<<else>>/<<endif>> chains
   - Temp variables (_var) support
@@ -45,6 +45,20 @@
   - Embed passage warnings
 - 11 new tests for advanced syntax
 - **Tests:** 2379 passing (100% backward compatible)
+
+✅ **Stage 2.1: Import Preview UI** (COMPLETE - Ready to commit)
+- ImportPreviewPanel component (305 lines)
+  - Story metadata display (title, author, passages, variables)
+  - Conversion quality visualization with color-coded progress bar
+  - Loss report details (critical/warning/info issues)
+  - Sample passages preview (first 3)
+  - Collapsible sections for warnings and issues
+- Updated ImportDialog with preview workflow
+  - Three-step flow: file-selection → preview → importing
+  - importStoryWithResult() method in exportStore
+  - History tracking on confirmation
+- 16 new tests for ImportPreviewPanel
+- **Tests:** 2395 passing (100% backward compatible)
 
 ---
 

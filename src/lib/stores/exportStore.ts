@@ -254,7 +254,63 @@ export const exportActions = {
   },
 
   /**
-   * Import story from file
+   * Import story from file (returns full result with loss reporting)
+   */
+  async importStoryWithResult(file: File) {
+    isImporting.set(true);
+    importError.set(null);
+
+    try {
+      // Read file
+      const content = await file.text();
+
+      // Try importers in order
+      const importers = [
+        new JSONImporter(),
+        new TwineImporter(),
+      ];
+
+      let selectedImporter = null;
+      let detectedFormat: ImportFormat = 'json';
+
+      for (const importer of importers) {
+        if (importer.canImport(content)) {
+          selectedImporter = importer;
+          detectedFormat = importer.format;
+          break;
+        }
+      }
+
+      if (!selectedImporter) {
+        throw new Error('Unsupported file format - please use JSON or Twine HTML files');
+      }
+
+      // Import story
+      const result = await selectedImporter.import({
+        data: content,
+        options: {},
+        filename: file.name,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Import failed');
+      }
+
+      // Note: Don't add to history yet - wait for user confirmation
+      isImporting.set(false);
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      importError.set(message);
+      console.error('Import failed:', error);
+
+      isImporting.set(false);
+      return null;
+    }
+  },
+
+  /**
+   * Import story from file (returns story only, for backward compatibility)
    */
   async importStory(file: File): Promise<Story | null> {
     isImporting.set(true);

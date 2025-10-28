@@ -60,7 +60,7 @@
 - 16 new tests for ImportPreviewPanel
 - **Tests:** 2395 passing (100% backward compatible)
 
-✅ **Stage 2.2: Conversion Options UI** (COMPLETE - Ready to commit)
+✅ **Stage 2.2: Conversion Options UI** (COMPLETE - Committed: 920dd0f)
 - ConversionOptions interface in types.ts
   - convertVariables, convertMacros, preserveOriginalSyntax, strictMode
 - Conversion options UI in ImportDialog
@@ -78,103 +78,34 @@
   - Tests verify conversionOptions are passed correctly
 - **Tests:** 2395 passing (100% backward compatible)
 
+✅ **Stage 3.1: Twee Notation Support** (COMPLETE - Ready to commit)
+- **Twee Format Detection:**
+  - Extended TwineImporter to detect Twee format
+  - Added `.twee` and `.tw` to supported extensions
+  - isTwee() detection method using pattern matching
+- **Twee Parser Implementation:**
+  - Comprehensive parseTwee() method (109 lines)
+  - Parses `:: PassageName [tags] {metadata}` syntax
+  - Handles StoryTitle and StoryData special passages
+  - Extracts tags from square brackets
+  - Parses position metadata from JSON objects
+  - Multi-line passage content support
+  - Automatic start node selection (first non-script/stylesheet passage)
+- **UI Updates:**
+  - ImportDialog accepts .twee and .tw extensions
+  - Updated help text to mention Twee notation
+  - Conversion options show for Twee files
+- **Testing:**
+  - 17 new comprehensive Twee tests
+  - Detection, import, tags, metadata, special passages
+  - SugarCube and Harlowe syntax conversion in Twee
+  - Multi-line passages, start node selection
+  - Edge cases (empty files, missing title, etc.)
+- **Tests:** 2410 passing (100% backward compatible)
+
 ---
 
 ## Remaining Work - Broken Down
-
-### **Stage 2.1: Import Preview UI** (3-4 hours)
-**Goal:** Show user what will be imported before committing
-
-**Tasks:**
-1. Create ImportPreviewPanel component
-   - Story metadata preview
-   - Passage count, variable count
-   - Detected format display
-   - Warning/loss summary
-   - Sample passages preview (first 3-5)
-
-2. Update ImportDialog
-   - Add preview step after file selection
-   - "Back" and "Import" buttons
-   - Collapsible warning details
-   - Format badge display
-
-3. Add 10+ UI tests
-
-**Success Criteria:**
-- All tests pass (target: 2400+)
-- User can review import before confirming
-- Warnings clearly visible
-
-**Files to Create:**
-- `src/lib/components/export/ImportPreviewPanel.svelte`
-- `src/lib/components/export/ImportPreviewPanel.test.ts`
-
-**Files to Modify:**
-- `src/lib/components/export/ImportDialog.svelte`
-
----
-
-### **Stage 2.2: Conversion Options UI** (2-3 hours)
-**Goal:** Let users customize import behavior
-
-**Tasks:**
-1. Add conversion options to ImportDialog
-   - "Convert variables automatically" checkbox
-   - "Preserve original syntax in comments" checkbox
-   - "Strict mode" (fail on unknown macros) toggle
-   - Format-specific options panel
-
-2. Update TwineImporter to accept options
-   - Add ConversionOptions interface
-   - Implement option-driven behavior
-   - Update tests for options
-
-3. Add 8+ tests for options
-
-**Success Criteria:**
-- All tests pass (target: 2408+)
-- Options affect conversion behavior
-- Options persist in preferences
-
-**Files to Modify:**
-- `src/lib/components/export/ImportDialog.svelte`
-- `src/lib/import/formats/TwineImporter.ts`
-- `src/lib/import/types.ts` (add ConversionOptions)
-- `src/lib/stores/exportStore.ts` (persist options)
-
----
-
-### **Stage 3.1: Twee Notation Support** (3-4 hours)
-**Goal:** Support plain-text Twine format (Twee)
-
-**Tasks:**
-1. Extend TwineImporter to detect Twee format
-   - Check for `:: PassageName` syntax
-   - Distinguish from HTML
-
-2. Implement Twee parser
-   - Parse `:: StoryTitle`, `:: StoryData`
-   - Parse passages with metadata: `:: Name [tags] {position}`
-   - Handle passage content
-
-3. Update ImportDialog
-   - Accept `.twee`, `.tw` extensions
-   - Update help text
-
-4. Add 15+ tests for Twee format
-
-**Success Criteria:**
-- All tests pass (target: 2423+)
-- Can import Twee files
-- Correct passage/metadata extraction
-
-**Files to Modify:**
-- `src/lib/import/formats/TwineImporter.ts`
-- `src/lib/import/formats/TwineImporter.test.ts`
-- `src/lib/components/export/ImportDialog.svelte`
-
----
 
 ### **Stage 3.2: Sample Files & Documentation** (2-3 hours)
 **Goal:** Provide test files and usage documentation
@@ -249,13 +180,14 @@
 ## Implementation Strategy
 
 ### Order of Implementation
-1. **Stage 1.2** - Enhanced loss reporting (foundational)
-2. **Stage 1.3** - Advanced syntax (improves quality)
-3. **Stage 2.1** - Preview UI (better UX before options)
-4. **Stage 2.2** - Conversion options (enhances preview)
-5. **Stage 3.1** - Twee support (extends capability)
-6. **Stage 3.2** - Samples & docs (validates everything)
-7. **Stage 3.3** - Twine export (completes round-trip)
+1. ✅ **Stage 1.1** - Core Twine Import (c105e62)
+2. ✅ **Stage 1.2** - Enhanced loss reporting (committed)
+3. ✅ **Stage 1.3** - Advanced syntax (91ebf3f)
+4. ✅ **Stage 2.1** - Preview UI (56ce091)
+5. ✅ **Stage 2.2** - Conversion options (920dd0f)
+6. ✅ **Stage 3.1** - Twee support (ready to commit)
+7. **Stage 3.2** - Samples & docs (validates everything)
+8. **Stage 3.3** - Twine export (completes round-trip)
 
 ### Testing Requirements (Each Stage)
 - ✅ All existing tests pass
@@ -273,16 +205,17 @@
 
 ## Estimated Timeline
 
-| Stage | Estimate | Complexity |
-|-------|----------|------------|
-| 1.2 - Enhanced Loss Reporting | 2-3h | Medium |
-| 1.3 - Advanced Syntax | 3-4h | High |
-| 2.1 - Preview UI | 3-4h | Medium |
-| 2.2 - Conversion Options | 2-3h | Low |
-| 3.1 - Twee Support | 3-4h | Medium |
-| 3.2 - Samples & Docs | 2-3h | Low |
-| 3.3 - Twine Export | 4-5h | High |
-| **Total** | **19-26h** | - |
+| Stage | Estimate | Complexity | Status |
+|-------|----------|------------|--------|
+| 1.1 - Core Twine Import | 4-5h | High | ✅ Complete |
+| 1.2 - Enhanced Loss Reporting | 2-3h | Medium | ✅ Complete |
+| 1.3 - Advanced Syntax | 3-4h | High | ✅ Complete |
+| 2.1 - Preview UI | 3-4h | Medium | ✅ Complete |
+| 2.2 - Conversion Options | 2-3h | Low | ✅ Complete |
+| 3.1 - Twee Support | 3-4h | Medium | ✅ Complete |
+| 3.2 - Samples & Docs | 2-3h | Low | 🔄 Next |
+| 3.3 - Twine Export | 4-5h | High | ⬜ Pending |
+| **Total** | **23-31h** | - | **19-24h done** |
 
 ---
 

@@ -193,7 +193,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <p class="font-medium">Drop a file here or click to browse</p>
-              <p class="text-sm mt-1">Supports: .json, .html (Twine) files</p>
+              <p class="text-sm mt-1">Supports: .json, .html (Twine HTML), .twee (Twee notation) files</p>
             </div>
           {/if}
         </div>
@@ -202,7 +202,7 @@
           type="file"
           bind:this={fileInput}
           on:change={handleFileSelect}
-          accept=".json,.html,.htm,application/json,text/html"
+          accept=".json,.html,.htm,.twee,.tw,application/json,text/html"
           class="hidden"
         />
       </div>
@@ -215,7 +215,7 @@
       </div>
 
       <!-- Conversion Options (for Twine imports) -->
-      {#if selectedFile && (selectedFile.name.endsWith('.html') || selectedFile.name.endsWith('.htm'))}
+      {#if selectedFile && (selectedFile.name.endsWith('.html') || selectedFile.name.endsWith('.htm') || selectedFile.name.endsWith('.twee') || selectedFile.name.endsWith('.tw'))}
         <div class="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
           <div class="block text-sm font-semibold mb-3">Conversion Options</div>
           <div class="space-y-2">

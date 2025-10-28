@@ -125,7 +125,7 @@ class ConversionTracker {
 export class TwineImporter implements IImporter {
   readonly name = 'Twine Importer';
   readonly format = 'twine' as const;
-  readonly extensions = ['.html', '.htm'];
+  readonly extensions = ['.html', '.htm', '.twee', '.tw'];
 
   /**
    * Import a story from Twine HTML
@@ -144,14 +144,19 @@ export class TwineImporter implements IImporter {
     };
 
     try {
-      // Parse HTML
-      const html = typeof context.data === 'string'
+      // Parse input
+      const text = typeof context.data === 'string'
         ? context.data
         : JSON.stringify(context.data);
 
-      // Validate it's Twine HTML
-      if (!this.isTwineHTML(html)) {
-        throw new Error('Not a valid Twine HTML file');
+      // Determine format and parse
+      let twineStory: TwineStory;
+      if (this.isTwineHTML(text)) {
+        twineStory = this.parseTwineHTML(text);
+      } else if (this.isTwee(text)) {
+        twineStory = this.parseTwee(text);
+      } else {
+        throw new Error('Not a valid Twine HTML or Twee file');
       }
 
       // Log conversion options as info
@@ -159,9 +164,6 @@ export class TwineImporter implements IImporter {
         tracker.addIssue('info', 'conversion', 'Conversion Options',
           `Using conversion options: variables=${conversionOptions.convertVariables}, macros=${conversionOptions.convertMacros}, preserve=${conversionOptions.preserveOriginalSyntax}, strict=${conversionOptions.strictMode}`);
       }
-
-      // Parse Twine structure
-      const twineStory = this.parseTwineHTML(html);
 
       if (!twineStory.title) {
         warnings.push('Story has no title - using default');
@@ -211,12 +213,12 @@ export class TwineImporter implements IImporter {
   }
 
   /**
-   * Check if data is Twine HTML
+   * Check if data is Twine HTML or Twee
    */
   canImport(data: string | object): boolean {
     try {
-      const html = typeof data === 'string' ? data : JSON.stringify(data);
-      return this.isTwineHTML(html);
+      const text = typeof data === 'string' ? data : JSON.stringify(data);
+      return this.isTwineHTML(text) || this.isTwee(text);
     } catch {
       return false;
     }
@@ -391,6 +393,116 @@ export class TwineImporter implements IImporter {
     }
 
     return result;
+  }
+
+  /**
+   * Check if string is Twee notation
+   */
+  private isTwee(text: string): boolean {
+    // Twee passages start with :: PassageName
+    return text.includes('::') && /^::\s+\w+/m.test(text);
+  }
+
+  /**
+   * Parse Twee notation format
+   */
+  private parseTwee(text: string): TwineStory {
+    const story: TwineStory = {
+      title: 'Untitled Twee Story',
+      author: '',
+      ifid: nanoid(),
+      format: 'twee',
+      formatVersion: '3',
+      startNode: '',
+      passages: [],
+    };
+
+    const lines = text.split('\n');
+    let currentPassage: TwinePassage | null = null;
+    let passageContent: string[] = [];
+    let passageId = 1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Check for passage header: :: PassageName [tag1 tag2] {"position":"100,200"}
+      if (line.startsWith('::')) {
+        // Save previous passage if exists
+        if (currentPassage) {
+          currentPassage.text = passageContent.join('\n').trim();
+          story.passages.push(currentPassage);
+        }
+
+        // Parse passage header
+        // Format: :: PassageName [tag1 tag2] {"position":"100,200"}
+        const headerMatch = line.match(/^::\s+([^\[\{]+)(?:\s*\[([^\]]*)\])?(?:\s*\{([^}]*)\})?/);
+        if (headerMatch) {
+          const name = headerMatch[1].trim();
+          const tagsStr = headerMatch[2]?.trim();
+          const metadataStr = headerMatch[3];
+
+          // Special passages
+          if (name === 'StoryTitle') {
+            passageContent = [];
+            currentPassage = null;
+            // Next line is the story title
+            if (i + 1 < lines.length) {
+              story.title = lines[i + 1].trim();
+              i++; // Skip next line
+            }
+            continue;
+          } else if (name === 'StoryData') {
+            passageContent = [];
+            currentPassage = null;
+            // Skip StoryData JSON
+            while (i + 1 < lines.length && !lines[i + 1].startsWith('::')) {
+              i++;
+            }
+            continue;
+          }
+
+          // Parse tags
+          const tags = tagsStr ? tagsStr.split(/\s+/).filter(t => t.length > 0) : [];
+
+          // Parse position from metadata
+          let position = { x: passageId * 200, y: 100 };
+          if (metadataStr) {
+            const posMatch = metadataStr.match(/"position"\s*:\s*"(\d+),(\d+)"/);
+            if (posMatch) {
+              position = { x: parseInt(posMatch[1]), y: parseInt(posMatch[2]) };
+            }
+          }
+
+          const pid = String(passageId++);
+          currentPassage = {
+            pid,
+            name,
+            tags,
+            position,
+            size: { width: 100, height: 100 },
+            text: '',
+          };
+
+          passageContent = [];
+
+          // Set start node to first non-script/stylesheet passage if not set
+          if (!story.startNode && !tags.includes('script') && !tags.includes('stylesheet')) {
+            story.startNode = pid;
+          }
+        }
+      } else if (currentPassage) {
+        // Add line to current passage content
+        passageContent.push(line);
+      }
+    }
+
+    // Save last passage
+    if (currentPassage) {
+      currentPassage.text = passageContent.join('\n').trim();
+      story.passages.push(currentPassage);
+    }
+
+    return story;
   }
 
   /**

@@ -12,7 +12,7 @@ describe('TwineImporter', () => {
     it('should have correct name and format', () => {
       expect(importer.name).toBe('Twine Importer');
       expect(importer.format).toBe('twine');
-      expect(importer.extensions).toEqual(['.html', '.htm']);
+      expect(importer.extensions).toEqual(['.html', '.htm', '.twee', '.tw']);
     });
   });
 
@@ -567,7 +567,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Not a valid Twine HTML file');
+      expect(result.error).toContain('Not a valid Twine HTML or Twee file');
     });
 
     it('should reject empty passage list', async () => {
@@ -1000,6 +1000,276 @@ describe('TwineImporter', () => {
 
       expect(result.success).toBe(true);
       expect(result.lossReport?.critical.some(i => i.feature === 'Embed Passage')).toBe(true);
+    });
+  });
+
+  describe('Twee Notation (Stage 3.1)', () => {
+    it('should detect Twee format', () => {
+      const twee = `:: Start
+Hello, this is a Twee passage.
+
+:: Another Passage
+This is another passage.`;
+      expect(importer.canImport(twee)).toBe(true);
+    });
+
+    it('should import basic Twee story', async () => {
+      const twee = `:: StoryTitle
+Test Twee Story
+
+:: Start
+This is the start passage.
+[[Go to next->Next]]
+
+:: Next
+This is the next passage.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.story).toBeDefined();
+      expect(result.story!.metadata.title).toBe('Test Twee Story');
+      expect(result.passageCount).toBe(2); // Start and Next (StoryTitle is special)
+    });
+
+    it('should parse Twee passages with tags', async () => {
+      const twee = `:: Start [intro beginning]
+This is the start with tags.
+
+:: Next [middle]
+This is the next passage.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages.find(p => p.title === 'Start');
+      expect(startPassage).toBeDefined();
+      expect(startPassage!.tags).toContain('intro');
+      expect(startPassage!.tags).toContain('beginning');
+    });
+
+    it('should parse Twee passages with position metadata', async () => {
+      const twee = `:: Start {"position":"100,200"}
+This passage has position metadata.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages[0];
+      expect(startPassage.position.x).toBe(100);
+      expect(startPassage.position.y).toBe(200);
+    });
+
+    it('should handle Twee with tags and metadata', async () => {
+      const twee = `:: Start [tag1 tag2] {"position":"50,100"}
+Content here.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages[0];
+      expect(startPassage.tags).toEqual(['tag1', 'tag2']);
+      expect(startPassage.position.x).toBe(50);
+      expect(startPassage.position.y).toBe(100);
+    });
+
+    it('should handle StoryData passage in Twee', async () => {
+      const twee = `:: StoryTitle
+My Story
+
+:: StoryData
+{
+  "ifid": "12345",
+  "format": "Harlowe"
+}
+
+:: Start
+The actual content.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.story!.metadata.title).toBe('My Story');
+      expect(result.passageCount).toBe(1); // Only "Start" is a real passage
+    });
+
+    it('should convert Twee passages with SugarCube syntax', async () => {
+      const twee = `:: Start
+<<set $score = 100>>
+You have $score points.
+[[Next passage->Next]]`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages[0];
+      // Should convert $score to {{score}}
+      expect(startPassage.content).toContain('{{score}}');
+    });
+
+    it('should convert Twee passages with Harlowe syntax', async () => {
+      const twee = `:: Start
+(set: $name to "Alice")
+Hello, $name!
+[[Continue]]`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages[0];
+      // Should convert to Whisker format
+      expect(startPassage.content).toContain('{{name}}');
+    });
+
+    it('should handle multi-line Twee passages', async () => {
+      const twee = `:: Start
+Line 1
+Line 2
+Line 3
+
+Line 5 (with blank line above)
+
+:: Next
+Another passage`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages.find(p => p.title === 'Start');
+      expect(startPassage!.content).toContain('Line 1');
+      expect(startPassage!.content).toContain('Line 5');
+    });
+
+    it('should set first passage as start node', async () => {
+      const twee = `:: FirstPassage
+This is first.
+
+:: SecondPassage
+This is second.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const firstPassage = passages.find(p => p.title === 'FirstPassage');
+      expect(result.story!.startPassage).toBe(firstPassage!.id);
+    });
+
+    it('should skip script and stylesheet passages as start node', async () => {
+      const twee = `:: StoryScript [script]
+/* JavaScript code */
+
+:: Start
+Actual content.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const startPassage = passages.find(p => p.title === 'Start');
+      expect(result.story!.startPassage).toBe(startPassage!.id);
+    });
+
+    it('should handle Twee without StoryTitle', async () => {
+      const twee = `:: Start
+Content without story title.`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.story!.metadata.title).toBe('Untitled Twee Story');
+    });
+
+    it('should reject non-Twee text', () => {
+      const text = 'This is just plain text with no :: markers';
+      expect(importer.canImport(text)).toBe(false);
+    });
+
+    it('should handle empty Twee file', async () => {
+      const twee = '';
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(false);
+      // Empty file fails format detection
+      expect(result.error).toBeTruthy();
+    });
+
+    it('should generate unique IDs for Twee passages', async () => {
+      const twee = `:: First
+Content 1
+
+:: Second
+Content 2
+
+:: Third
+Content 3`;
+
+      const result = await importer.import({
+        data: twee,
+        options: {},
+        filename: 'test.twee',
+      });
+
+      expect(result.success).toBe(true);
+      const passages = Array.from(result.story!.passages.values());
+      const ids = passages.map(p => p.id);
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size).toBe(passages.length);
     });
   });
 });

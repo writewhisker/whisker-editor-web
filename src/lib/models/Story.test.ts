@@ -401,4 +401,300 @@ describe('Story', () => {
       expect(loaded.variables.size).toBe(1);
     });
   });
+
+  // Phase 3: Story Settings Management
+  describe('settings management', () => {
+    it('should initialize with empty settings', () => {
+      expect(story.settings).toEqual({});
+      expect(Object.keys(story.settings)).toHaveLength(0);
+    });
+
+    it('should set a setting', () => {
+      story.setSetting('difficulty', 'medium');
+      expect(story.getSetting('difficulty')).toBe('medium');
+    });
+
+    it('should throw error for empty key', () => {
+      expect(() => story.setSetting('', 'value')).toThrow('Invalid setting key');
+    });
+
+    it('should get a setting with default value', () => {
+      expect(story.getSetting('nonexistent', 'default')).toBe('default');
+    });
+
+    it('should check if setting exists', () => {
+      story.setSetting('theme', 'dark');
+      expect(story.hasSetting('theme')).toBe(true);
+      expect(story.hasSetting('nonexistent')).toBe(false);
+    });
+
+    it('should delete a setting', () => {
+      story.setSetting('temp', 'value');
+      expect(story.hasSetting('temp')).toBe(true);
+
+      const deleted = story.deleteSetting('temp');
+      expect(deleted).toBe(true);
+      expect(story.hasSetting('temp')).toBe(false);
+    });
+
+    it('should return false when deleting non-existent setting', () => {
+      expect(story.deleteSetting('nonexistent')).toBe(false);
+    });
+
+    it('should get all settings', () => {
+      story.setSetting('key1', 'value1');
+      story.setSetting('key2', 42);
+      story.setSetting('key3', true);
+
+      const allSettings = story.getAllSettings();
+      expect(allSettings).toEqual({
+        key1: 'value1',
+        key2: 42,
+        key3: true,
+      });
+    });
+
+    it('should clear all settings', () => {
+      story.setSetting('key1', 'value1');
+      story.setSetting('key2', 'value2');
+      expect(Object.keys(story.getAllSettings())).toHaveLength(2);
+
+      story.clearSettings();
+      expect(story.settings).toEqual({});
+      expect(Object.keys(story.getAllSettings())).toHaveLength(0);
+    });
+
+    it('should handle various value types', () => {
+      story.setSetting('stringVal', 'text');
+      story.setSetting('numberVal', 123);
+      story.setSetting('boolVal', false);
+      story.setSetting('objectVal', { nested: 'data' });
+      story.setSetting('arrayVal', [1, 2, 3]);
+
+      expect(story.getSetting('stringVal')).toBe('text');
+      expect(story.getSetting('numberVal')).toBe(123);
+      expect(story.getSetting('boolVal')).toBe(false);
+      expect(story.getSetting('objectVal')).toEqual({ nested: 'data' });
+      expect(story.getSetting('arrayVal')).toEqual([1, 2, 3]);
+    });
+
+    it('should serialize settings', () => {
+      story.setSetting('difficulty', 'hard');
+      story.setSetting('autoSave', true);
+
+      const data = story.serialize();
+      expect(data.settings).toEqual({
+        difficulty: 'hard',
+        autoSave: true,
+      });
+    });
+
+    it('should not serialize empty settings', () => {
+      const data = story.serialize();
+      expect(data.settings).toBeUndefined();
+    });
+
+    it('should deserialize settings', () => {
+      const data = {
+        metadata: {
+          title: 'Test',
+          author: 'Author',
+          version: '1.0.0',
+          created: '2024-01-01T00:00:00.000Z',
+          modified: '2024-01-01T00:00:00.000Z',
+        },
+        startPassage: 'start',
+        passages: {
+          start: {
+            id: 'start',
+            title: 'Start',
+            content: 'Content',
+            position: { x: 0, y: 0 },
+            tags: [],
+            choices: [],
+          },
+        },
+        variables: {},
+        settings: {
+          theme: 'dark',
+          volume: 0.8,
+          enableHints: true,
+        },
+      };
+
+      const loaded = Story.deserialize(data);
+      expect(loaded.getSetting('theme')).toBe('dark');
+      expect(loaded.getSetting('volume')).toBe(0.8);
+      expect(loaded.getSetting('enableHints')).toBe(true);
+    });
+  });
+
+  // Phase 3: Variable Usage Tracking
+  describe('variable usage tracking', () => {
+    beforeEach(() => {
+      // Add some test variables
+      story.addVariable(new Variable({ name: 'health', type: 'number', initial: 100 }));
+      story.addVariable(new Variable({ name: 'playerName', type: 'string', initial: 'Hero' }));
+      story.addVariable(new Variable({ name: 'hasKey', type: 'boolean', initial: false }));
+      story.addVariable(new Variable({ name: 'unused', type: 'string', initial: '' }));
+    });
+
+    it('should track variable usage in passage content', () => {
+      const passage = new Passage({
+        title: 'Test Passage',
+        content: 'Your health is {{health}}. Welcome, {{playerName}}!',
+      });
+      story.addPassage(passage);
+
+      const healthUsage = story.getVariableUsage('health');
+      expect(healthUsage).toHaveLength(1);
+      expect(healthUsage[0].passageId).toBe(passage.id);
+      expect(healthUsage[0].passageName).toBe('Test Passage');
+      expect(healthUsage[0].locations).toContain('content');
+
+      const nameUsage = story.getVariableUsage('playerName');
+      expect(nameUsage).toHaveLength(1);
+      expect(nameUsage[0].locations).toContain('content');
+    });
+
+    it('should track variable usage in choice conditions', () => {
+      const passage = new Passage({
+        title: 'Choice Passage',
+        content: 'What do you do?',
+      });
+      passage.choices.push({
+        id: 'choice1',
+        text: 'Open door',
+        target: 'next',
+        condition: 'hasKey == true',
+      });
+      story.addPassage(passage);
+
+      const usage = story.getVariableUsage('hasKey');
+      expect(usage).toHaveLength(1);
+      expect(usage[0].locations).toContain('choice:0:condition');
+    });
+
+    it('should track variable usage in choice actions', () => {
+      const passage = new Passage({
+        title: 'Action Passage',
+        content: 'You find a potion.',
+      });
+      passage.choices.push({
+        id: 'choice1',
+        text: 'Drink it',
+        target: 'next',
+        action: 'health = health + 50',
+      });
+      story.addPassage(passage);
+
+      const usage = story.getVariableUsage('health');
+      expect(usage).toHaveLength(1);
+      expect(usage[0].locations).toContain('choice:0:action');
+    });
+
+    it('should track variable usage in scripts', () => {
+      const passage = new Passage({
+        title: 'Script Passage',
+        content: 'Enter the room.',
+        onEnterScript: 'health = health - 10',
+        onExitScript: 'hasKey = true',
+      });
+      story.addPassage(passage);
+
+      const healthUsage = story.getVariableUsage('health');
+      expect(healthUsage).toHaveLength(1);
+      expect(healthUsage[0].locations).toContain('script:onEnter');
+
+      const keyUsage = story.getVariableUsage('hasKey');
+      expect(keyUsage).toHaveLength(1);
+      expect(keyUsage[0].locations).toContain('script:onExit');
+    });
+
+    it('should track variable usage in multiple locations within one passage', () => {
+      const passage = new Passage({
+        title: 'Multi Usage',
+        content: 'Health: {{health}}',
+        onEnterScript: 'health = 100',
+      });
+      passage.choices.push({
+        id: 'choice1',
+        text: 'Continue',
+        target: 'next',
+        condition: 'health > 0',
+      });
+      story.addPassage(passage);
+
+      const usage = story.getVariableUsage('health');
+      expect(usage).toHaveLength(1);
+      expect(usage[0].locations).toContain('content');
+      expect(usage[0].locations).toContain('script:onEnter');
+      expect(usage[0].locations).toContain('choice:0:condition');
+      expect(usage[0].locations.length).toBe(3);
+    });
+
+    it('should track variable usage across multiple passages', () => {
+      const passage1 = new Passage({
+        title: 'Passage 1',
+        content: 'Health: {{health}}',
+      });
+      const passage2 = new Passage({
+        title: 'Passage 2',
+        content: 'Your health is {{health}}.',
+      });
+      story.addPassage(passage1);
+      story.addPassage(passage2);
+
+      const usage = story.getVariableUsage('health');
+      expect(usage).toHaveLength(2);
+      expect(usage.map(u => u.passageName)).toContain('Passage 1');
+      expect(usage.map(u => u.passageName)).toContain('Passage 2');
+    });
+
+    it('should return empty array for unused variable', () => {
+      const usage = story.getVariableUsage('unused');
+      expect(usage).toHaveLength(0);
+    });
+
+    it('should get all variable usage', () => {
+      const passage = new Passage({
+        title: 'Test',
+        content: 'Health: {{health}}, Name: {{playerName}}',
+      });
+      story.addPassage(passage);
+
+      const allUsage = story.getAllVariableUsage();
+      expect(allUsage.size).toBe(4); // All 4 variables
+      expect(allUsage.get('health')).toHaveLength(1);
+      expect(allUsage.get('playerName')).toHaveLength(1);
+      expect(allUsage.get('hasKey')).toHaveLength(0);
+      expect(allUsage.get('unused')).toHaveLength(0);
+    });
+
+    it('should get unused variables', () => {
+      const passage = new Passage({
+        title: 'Test',
+        content: 'Health: {{health}}',
+      });
+      story.addPassage(passage);
+
+      const unused = story.getUnusedVariables();
+      expect(unused).toContain('unused');
+      expect(unused).toContain('playerName');
+      expect(unused).toContain('hasKey');
+      expect(unused).not.toContain('health');
+      expect(unused).toHaveLength(3);
+    });
+
+    it('should return empty array when all variables are used', () => {
+      const passage = new Passage({
+        title: 'Test',
+        content: 'Health: {{health}}, Name: {{playerName}}, Key: {{hasKey}}, Unused: {{unused}}',
+      });
+      story.addPassage(passage);
+
+      const unused = story.getUnusedVariables();
+      expect(unused).toHaveLength(0);
+    });
+  });
 });

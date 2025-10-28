@@ -460,7 +460,8 @@ describe('VariableManager', () => {
 
       const { getByText } = render(VariableManager);
 
-      expect(getByText('Used 2 times')).toBeTruthy();
+      // Phase 3: Now counts locations, not occurrences (content = 1 location)
+      expect(getByText('Used 1 time')).toBeTruthy();
     });
 
     it('should count variable usage in choice conditions', () => {

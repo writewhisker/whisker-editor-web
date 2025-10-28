@@ -42,6 +42,13 @@ export interface VariableData {
   initial: string | number | boolean;
 }
 
+// Variable usage tracking (whisker-core Phase 3 compat)
+export interface VariableUsage {
+  passageId: string;
+  passageName: string;
+  locations: string[];  // e.g., ['content', 'choice:condition', 'script:onEnter']
+}
+
 export interface StoryMetadata {
   title: string;
   author: string;
@@ -79,6 +86,7 @@ export interface StoryData {
   startPassage: string;
   passages: Record<string, PassageData>;
   variables: Record<string, VariableData>;
+  settings?: Record<string, any>;  // Story-level settings (whisker-core Phase 3 compat)
   stylesheets?: string[];   // CSS code blocks (whisker-core compat)
   scripts?: string[];       // Story-wide Lua/JS scripts (whisker-core compat)
   assets?: AssetReference[];  // Media references (whisker-core compat)

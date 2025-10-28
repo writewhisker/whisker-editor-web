@@ -1,4 +1,4 @@
-import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData, WhiskerCoreFormat, AssetReference } from './types';
+import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData, WhiskerCoreFormat, AssetReference, VariableUsage } from './types';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { nanoid } from 'nanoid';
@@ -9,6 +9,7 @@ export class Story {
   startPassage: string;
   passages: Map<string, Passage>;
   variables: Map<string, Variable>;
+  settings: Record<string, any>;  // Story-level settings (Phase 3)
   stylesheets: string[];
   scripts: string[];
   assets: Map<string, AssetReference>;
@@ -31,6 +32,7 @@ export class Story {
     this.startPassage = data?.startPassage || '';
     this.passages = new Map();
     this.variables = new Map();
+    this.settings = data?.settings || {};  // Initialize settings (Phase 3)
     this.stylesheets = data?.stylesheets || [];
     this.scripts = data?.scripts || [];
     this.assets = new Map();
@@ -178,6 +180,105 @@ export class Story {
     return false;
   }
 
+  // Story settings management (Phase 3)
+  setSetting(key: string, value: any): void {
+    if (!key || key.trim() === '') {
+      throw new Error('Invalid setting key: key cannot be empty');
+    }
+    this.settings[key] = value;
+  }
+
+  getSetting(key: string, defaultValue?: any): any {
+    const value = this.settings[key];
+    return value !== undefined ? value : defaultValue;
+  }
+
+  hasSetting(key: string): boolean {
+    return key in this.settings;
+  }
+
+  deleteSetting(key: string): boolean {
+    if (key in this.settings) {
+      delete this.settings[key];
+      return true;
+    }
+    return false;
+  }
+
+  getAllSettings(): Record<string, any> {
+    return { ...this.settings };
+  }
+
+  clearSettings(): void {
+    this.settings = {};
+  }
+
+  // Variable usage tracking (Phase 3)
+  getVariableUsage(variableName: string): VariableUsage[] {
+    const usage: VariableUsage[] = [];
+
+    this.passages.forEach((passage) => {
+      const locations: string[] = [];
+
+      // Check passage content (create fresh regex each time)
+      if (passage.content && new RegExp(`{{\\s*${variableName}\\s*}}`).test(passage.content)) {
+        locations.push('content');
+      }
+
+      // Check onEnter and onExit scripts
+      if (passage.onEnterScript && passage.onEnterScript.includes(variableName)) {
+        locations.push('script:onEnter');
+      }
+      if (passage.onExitScript && passage.onExitScript.includes(variableName)) {
+        locations.push('script:onExit');
+      }
+
+      // Check choices
+      passage.choices.forEach((choice, index) => {
+        if (choice.condition && choice.condition.includes(variableName)) {
+          locations.push(`choice:${index}:condition`);
+        }
+        if (choice.action && choice.action.includes(variableName)) {
+          locations.push(`choice:${index}:action`);
+        }
+      });
+
+      if (locations.length > 0) {
+        usage.push({
+          passageId: passage.id,
+          passageName: passage.title,
+          locations,
+        });
+      }
+    });
+
+    return usage;
+  }
+
+  getAllVariableUsage(): Map<string, VariableUsage[]> {
+    const allUsage = new Map<string, VariableUsage[]>();
+
+    this.variables.forEach((variable) => {
+      const usage = this.getVariableUsage(variable.name);
+      allUsage.set(variable.name, usage);
+    });
+
+    return allUsage;
+  }
+
+  getUnusedVariables(): string[] {
+    const unused: string[] = [];
+
+    this.variables.forEach((variable) => {
+      const usage = this.getVariableUsage(variable.name);
+      if (usage.length === 0) {
+        unused.push(variable.name);
+      }
+    });
+
+    return unused;
+  }
+
   serialize(): StoryData {
     const passages: Record<string, PassageData> = {};
     this.passages.forEach((passage, id) => {
@@ -199,6 +300,9 @@ export class Story {
     };
 
     // Only include optional fields if they have content
+    if (Object.keys(this.settings).length > 0) {
+      data.settings = { ...this.settings };
+    }
     if (this.stylesheets.length > 0) {
       data.stylesheets = [...this.stylesheets];
     }

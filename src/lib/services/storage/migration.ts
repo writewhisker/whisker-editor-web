@@ -103,7 +103,7 @@ export class StorageMigration {
         if (value !== null) {
           // Parse and re-save through adapter to ensure format consistency
           const parsed = JSON.parse(value);
-          await this.adapter.setPreference(key, parsed);
+          await this.adapter.savePreference(key, parsed);
           itemsMigrated++;
         }
       } catch (e) {

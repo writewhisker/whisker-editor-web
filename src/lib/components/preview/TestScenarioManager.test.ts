@@ -42,6 +42,10 @@ describe('TestScenarioManager', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
 
+    // Mock URL.createObjectURL and revokeObjectURL (not available in jsdom)
+    global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    global.URL.revokeObjectURL = vi.fn();
+
     // Import mocked stores
     const testScenarioStore = await import('../../stores/testScenarioStore');
     scenarioList = testScenarioStore.scenarioList;

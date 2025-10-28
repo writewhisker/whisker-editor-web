@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
+  import { currentStory, projectActions } from '../../stores/projectStore';
 
   import type { ValidationIssue } from '../../validation/types';
   import { tagActions } from '../../stores/tagStore';
@@ -32,6 +33,97 @@
   $: hasBreakpoint = $breakpoints.has(passage.id);
   $: isCurrentPreview = $currentPreviewPassage?.id === passage.id;
   $: wasVisitedInPreview = ($visitedPassages.get(passage.id) || 0) > 0;
+
+  // Resize functionality
+  let isResizing = false;
+  let resizeDirection: 'se' | 'sw' | 'ne' | 'nw' | 'e' | 'w' | 's' | 'n' | null = null;
+  let startMouseX = 0;
+  let startMouseY = 0;
+  let startWidth = 0;
+  let startHeight = 0;
+
+  function handleResizeStart(event: MouseEvent, direction: typeof resizeDirection) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    isResizing = true;
+    resizeDirection = direction;
+    startMouseX = event.clientX;
+    startMouseY = event.clientY;
+    startWidth = passage.size?.width || 200;
+    startHeight = passage.size?.height || 150;
+
+    document.body.style.cursor = getCursorStyle(direction);
+    document.body.style.userSelect = 'none';
+
+    window.addEventListener('mousemove', handleResizeMove);
+    window.addEventListener('mouseup', handleResizeEnd);
+  }
+
+  function handleResizeMove(event: MouseEvent) {
+    if (!isResizing || !resizeDirection) return;
+
+    const deltaX = event.clientX - startMouseX;
+    const deltaY = event.clientY - startMouseY;
+
+    let newWidth = startWidth;
+    let newHeight = startHeight;
+
+    // Calculate new dimensions based on resize direction
+    if (resizeDirection.includes('e')) {
+      newWidth = Math.max(150, startWidth + deltaX);
+    }
+    if (resizeDirection.includes('w')) {
+      newWidth = Math.max(150, startWidth - deltaX);
+    }
+    if (resizeDirection.includes('s')) {
+      newHeight = Math.max(100, startHeight + deltaY);
+    }
+    if (resizeDirection.includes('n')) {
+      newHeight = Math.max(100, startHeight - deltaY);
+    }
+
+    // Update passage size
+    if (!passage.size) {
+      passage.size = { width: 200, height: 150 };
+    }
+    passage.size.width = newWidth;
+    passage.size.height = newHeight;
+
+    if ($currentStory) {
+      currentStory.update(s => s);
+    }
+  }
+
+  function handleResizeEnd() {
+    if (!isResizing) return;
+
+    isResizing = false;
+    resizeDirection = null;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+
+    window.removeEventListener('mousemove', handleResizeMove);
+    window.removeEventListener('mouseup', handleResizeEnd);
+
+    if ($currentStory) {
+      projectActions.markChanged();
+    }
+  }
+
+  function getCursorStyle(direction: typeof resizeDirection): string {
+    switch (direction) {
+      case 'se': return 'nwse-resize';
+      case 'nw': return 'nwse-resize';
+      case 'ne': return 'nesw-resize';
+      case 'sw': return 'nesw-resize';
+      case 'e': return 'ew-resize';
+      case 'w': return 'ew-resize';
+      case 's': return 'ns-resize';
+      case 'n': return 'ns-resize';
+      default: return 'default';
+    }
+  }
 
   function toggleBreakpoint(event: MouseEvent) {
     event.stopPropagation();
@@ -96,8 +188,8 @@
 </script>
 
 <div
-  class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all min-w-[200px] max-w-[300px] relative"
-  style={getCustomStyle()}
+  class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all relative"
+  style="{getCustomStyle()} width: {passage.size?.width || 200}px; height: {passage.size?.height || 150}px;"
   role="button"
   tabindex="0"
   aria-label={getAccessibleLabel()}
@@ -207,15 +299,68 @@
     class="!bg-blue-400 !w-4 !h-4 !border-2 !border-white"
     title="Drag to create new connection"
   />
+
+  <!-- Resize Handles -->
+  <div class="resize-handles">
+    <!-- Corner handles -->
+    <div
+      class="resize-handle resize-se"
+      on:mousedown={(e) => handleResizeStart(e, 'se')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-sw"
+      on:mousedown={(e) => handleResizeStart(e, 'sw')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-ne"
+      on:mousedown={(e) => handleResizeStart(e, 'ne')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-nw"
+      on:mousedown={(e) => handleResizeStart(e, 'nw')}
+      title="Resize"
+    />
+
+    <!-- Edge handles -->
+    <div
+      class="resize-handle resize-e"
+      on:mousedown={(e) => handleResizeStart(e, 'e')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-w"
+      on:mousedown={(e) => handleResizeStart(e, 'w')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-s"
+      on:mousedown={(e) => handleResizeStart(e, 's')}
+      title="Resize"
+    />
+    <div
+      class="resize-handle resize-n"
+      on:mousedown={(e) => handleResizeStart(e, 'n')}
+      title="Resize"
+    />
+  </div>
 </div>
 
 <style>
   .passage-node {
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
   }
 
   .passage-node:hover {
     transform: translateY(-1px);
+  }
+
+  .passage-node:hover .resize-handles {
+    opacity: 1;
   }
 
   .line-clamp-3 {
@@ -223,5 +368,97 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Resize Handles */
+  .resize-handles {
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: auto;
+  }
+
+  .resize-handle {
+    position: absolute;
+    background: #007bff;
+    border: 1px solid white;
+    z-index: 10;
+    transition: background 0.2s;
+  }
+
+  .resize-handle:hover {
+    background: #0056b3;
+  }
+
+  /* Corner handles */
+  .resize-se,
+  .resize-sw,
+  .resize-ne,
+  .resize-nw {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .resize-se {
+    bottom: -4px;
+    right: -4px;
+    cursor: nwse-resize;
+  }
+
+  .resize-sw {
+    bottom: -4px;
+    left: -4px;
+    cursor: nesw-resize;
+  }
+
+  .resize-ne {
+    top: -4px;
+    right: -4px;
+    cursor: nesw-resize;
+  }
+
+  .resize-nw {
+    top: -4px;
+    left: -4px;
+    cursor: nwse-resize;
+  }
+
+  /* Edge handles */
+  .resize-e,
+  .resize-w {
+    width: 6px;
+    height: 40px;
+    border-radius: 3px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .resize-n,
+  .resize-s {
+    width: 40px;
+    height: 6px;
+    border-radius: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .resize-e {
+    right: -3px;
+    cursor: ew-resize;
+  }
+
+  .resize-w {
+    left: -3px;
+    cursor: ew-resize;
+  }
+
+  .resize-s {
+    bottom: -3px;
+    cursor: ns-resize;
+  }
+
+  .resize-n {
+    top: -3px;
+    cursor: ns-resize;
   }
 </style>

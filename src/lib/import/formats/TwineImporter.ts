@@ -12,6 +12,9 @@ import type {
   ImportContext,
   ImportResult,
   IImporter,
+  ConversionIssue,
+  ConversionSeverity,
+  LossReport,
 } from '../types';
 import { nanoid } from 'nanoid';
 
@@ -52,6 +55,69 @@ interface TwinePassage {
 }
 
 /**
+ * Conversion tracker for tracking issues during import
+ */
+class ConversionTracker {
+  private issues: ConversionIssue[] = [];
+  private affectedPassages: Set<string> = new Set();
+
+  addIssue(
+    severity: ConversionSeverity,
+    category: string,
+    feature: string,
+    message: string,
+    options?: {
+      passageId?: string;
+      passageName?: string;
+      original?: string;
+      suggestion?: string;
+    }
+  ): void {
+    this.issues.push({
+      severity,
+      category,
+      feature,
+      message,
+      ...options,
+    });
+
+    if (options?.passageId) {
+      this.affectedPassages.add(options.passageId);
+    }
+  }
+
+  buildLossReport(): LossReport {
+    const critical = this.issues.filter((i) => i.severity === 'critical');
+    const warnings = this.issues.filter((i) => i.severity === 'warning');
+    const info = this.issues.filter((i) => i.severity === 'info');
+
+    const categoryCounts: Record<string, number> = {};
+    this.issues.forEach((issue) => {
+      categoryCounts[issue.category] = (categoryCounts[issue.category] || 0) + 1;
+    });
+
+    // Calculate conversion quality (simple heuristic)
+    // 100% - (critical * 10% + warnings * 3%)
+    const qualityLoss = critical.length * 0.1 + warnings.length * 0.03;
+    const conversionQuality = Math.max(0, Math.min(1, 1 - qualityLoss));
+
+    return {
+      totalIssues: this.issues.length,
+      critical,
+      warnings,
+      info,
+      categoryCounts,
+      affectedPassages: Array.from(this.affectedPassages),
+      conversionQuality,
+    };
+  }
+
+  hasIssues(): boolean {
+    return this.issues.length > 0;
+  }
+}
+
+/**
  * Twine Importer
  *
  * Imports stories from Twine HTML format with format detection and conversion.
@@ -67,6 +133,7 @@ export class TwineImporter implements IImporter {
   async import(context: ImportContext): Promise<ImportResult> {
     const startTime = Date.now();
     const warnings: string[] = [];
+    const tracker = new ConversionTracker();
 
     try {
       // Parse HTML
@@ -94,10 +161,12 @@ export class TwineImporter implements IImporter {
       const storyFormat = this.detectFormat(twineStory);
       if (storyFormat === TwineFormat.UNKNOWN) {
         warnings.push('Could not detect Twine format - using basic conversion');
+        tracker.addIssue('warning', 'format', 'Unknown Format',
+          'Could not detect Twine story format - conversion may be incomplete');
       }
 
       // Convert to Whisker format
-      const story = this.convertToWhisker(twineStory, storyFormat, warnings);
+      const story = this.convertToWhisker(twineStory, storyFormat, warnings, tracker);
 
       // Validate story structure
       if (story.passages.size === 0) {
@@ -106,6 +175,9 @@ export class TwineImporter implements IImporter {
 
       const duration = Date.now() - startTime;
 
+      // Build loss report if there are any issues
+      const lossReport = tracker.hasIssues() ? tracker.buildLossReport() : undefined;
+
       return {
         success: true,
         story,
@@ -113,6 +185,7 @@ export class TwineImporter implements IImporter {
         passageCount: story.passages.size,
         variableCount: story.variables.size,
         warnings: warnings.length > 0 ? warnings : undefined,
+        lossReport,
       };
     } catch (error) {
       return {
@@ -351,7 +424,8 @@ export class TwineImporter implements IImporter {
   private convertToWhisker(
     twineStory: TwineStory,
     storyFormat: TwineFormat,
-    warnings: string[]
+    warnings: string[],
+    tracker: ConversionTracker
   ): Story {
     // Track passage ID mapping (Twine PID -> Whisker ID)
     const pidToId = new Map<string, string>();
@@ -366,7 +440,10 @@ export class TwineImporter implements IImporter {
       const convertedText = this.convertPassageText(
         twinePassage.text,
         storyFormat,
-        warnings
+        warnings,
+        tracker,
+        id,
+        twinePassage.name
       );
 
       passagesRecord[id] = {
@@ -458,25 +535,77 @@ export class TwineImporter implements IImporter {
   private convertPassageText(
     text: string,
     format: TwineFormat,
-    warnings: string[]
+    warnings: string[],
+    tracker: ConversionTracker,
+    passageId?: string,
+    passageName?: string
   ): string {
     switch (format) {
       case TwineFormat.HARLOWE:
-        return this.convertFromHarlowe(text, warnings);
+        return this.convertFromHarlowe(text, warnings, tracker, passageId, passageName);
       case TwineFormat.SUGARCUBE:
-        return this.convertFromSugarCube(text, warnings);
+        return this.convertFromSugarCube(text, warnings, tracker, passageId, passageName);
       case TwineFormat.CHAPBOOK:
-        return this.convertFromChapbook(text, warnings);
+        return this.convertFromChapbook(text, warnings, tracker, passageId, passageName);
       default:
         return text;
     }
   }
 
   /**
-   * Convert from Harlowe syntax
+   * Convert from Harlowe syntax (with advanced features)
    */
-  private convertFromHarlowe(text: string, warnings: string[]): string {
+  private convertFromHarlowe(
+    text: string,
+    warnings: string[],
+    tracker: ConversionTracker,
+    passageId?: string,
+    passageName?: string
+  ): string {
     let converted = text;
+
+    // Track unsupported data structures
+    const dataStructures = text.match(/\(\s*(datamap:|dataset:|dataarray:)/gi);
+    if (dataStructures) {
+      tracker.addIssue('warning', 'data-structure', 'Harlowe Data Structures',
+        'Harlowe data structures (datamap, dataset, dataarray) are not directly supported', {
+          passageId,
+          passageName,
+          suggestion: 'Consider using simple variables or JSON objects'
+        });
+    }
+
+    // Track named hooks
+    const namedHooks = text.match(/\|(\w+)>/g);
+    if (namedHooks) {
+      tracker.addIssue('info', 'syntax', 'Named Hooks',
+        'Harlowe named hooks will be converted to regular text', {
+          passageId,
+          passageName,
+          suggestion: 'Named hooks functionality is not preserved - structure may need adjustment'
+        });
+    }
+
+    // Track hook references
+    if (text.match(/\?(\w+)/)) {
+      tracker.addIssue('warning', 'syntax', 'Hook References',
+        'Harlowe hook references (?hookname) cannot be converted', {
+          passageId,
+          passageName,
+          original: text.match(/\?(\w+)/)?.[0],
+          suggestion: 'Restructure to avoid dynamic hook references'
+        });
+    }
+
+    // Track random/either macros
+    if (text.match(/\(\s*(either:|random:)/i)) {
+      tracker.addIssue('warning', 'macro', 'Random/Either',
+        'Harlowe (either:) and (random:) macros are not supported', {
+          passageId,
+          passageName,
+          suggestion: 'Implement randomness using Whisker scripts'
+        });
+    }
 
     // Convert (set: $var to value) -> {{var = value}}
     converted = converted.replace(
@@ -486,12 +615,38 @@ export class TwineImporter implements IImporter {
       }
     );
 
+    // Convert (put: value into $var) -> {{var = value}}
+    converted = converted.replace(
+      /\(\s*put:\s+([^)]+)\s+into\s+\$(\w+)\)/gi,
+      (_, value, varName) => {
+        return `{{${varName} = ${value.trim()}}}`;
+      }
+    );
+
     // Convert (if: condition)[text] -> {{if condition then}}text{{end}}
-    // This is a simplified conversion - Harlowe's if syntax is complex
     converted = converted.replace(
       /\(\s*if:\s*([^)]+)\)\[([^\]]+)\]/gi,
       (_, cond, body) => {
-        return `{{if ${cond.trim()} then}}${body}{{end}}`;
+        // Convert $var to {{var}} in condition
+        const convertedCond = cond.trim().replace(/\$(\w+)/g, '{{$1}}');
+        return `{{if ${convertedCond} then}}${body}{{end}}`;
+      }
+    );
+
+    // Convert (else-if: condition)[text] chains
+    converted = converted.replace(
+      /\(\s*else-if:\s*([^)]+)\)\[([^\]]+)\]/gi,
+      (_, cond, body) => {
+        const convertedCond = cond.trim().replace(/\$(\w+)/g, '{{$1}}');
+        return `{{elseif ${convertedCond} then}}${body}`;
+      }
+    );
+
+    // Convert (else:)[text]
+    converted = converted.replace(
+      /\(\s*else:\s*\)\[([^\]]+)\]/gi,
+      (_, body) => {
+        return `{{else}}${body}{{end}}`;
       }
     );
 
@@ -503,21 +658,65 @@ export class TwineImporter implements IImporter {
       }
     );
 
-    // Warn about complex Harlowe features
-    if (text.match(/\(\s*(either:|random:|datamap:|dataset:)/i)) {
-      warnings.push('Some advanced Harlowe features may not convert correctly');
-    }
+    // Convert $var in text (but Harlowe uses $ less commonly than SugarCube)
+    converted = converted.replace(
+      /\$(\w+)(?![^{]*}})/g,
+      (match, varName) => {
+        return `{{${varName}}}`;
+      }
+    );
+
+    // Remove named hook markers |name> (convert to regular text)
+    converted = converted.replace(/\|(\w+)>/g, '');
 
     return converted;
   }
 
   /**
-   * Convert from SugarCube syntax
+   * Convert from SugarCube syntax (with advanced features)
    */
-  private convertFromSugarCube(text: string, warnings: string[]): string {
+  private convertFromSugarCube(
+    text: string,
+    warnings: string[],
+    tracker: ConversionTracker,
+    passageId?: string,
+    passageName?: string
+  ): string {
     let converted = text;
 
-    // Convert <<set $var to value>> -> {{var = value}}
+    // Track unsupported macros
+    const unsupportedMacros = text.match(/<<(include|widget|script|createaudiotrack|createplaylist|cacheaudio|waitforaudio|playlist|removeaudiotrack)[\s>]/gi);
+    if (unsupportedMacros) {
+      unsupportedMacros.forEach((macro) => {
+        const macroName = macro.match(/<<(\w+)/)?.[1] || 'unknown';
+        tracker.addIssue('critical', 'macro', `<<${macroName}>>`,
+          `SugarCube macro <<${macroName}>> is not supported`, {
+            passageId,
+            passageName,
+            original: macro,
+            suggestion: macroName === 'include' ? 'Manually merge included passage content' :
+                       macroName === 'widget' ? 'Convert widget to regular passage' :
+                       'This feature requires manual implementation'
+          });
+      });
+    }
+
+    // Track UI macros (warning level)
+    const uiMacros = text.match(/<<(button|checkbox|cycle|link|linkappend|linkreplace|linkrepeat|listbox|numberbox|radiobutton|textarea|textbox)[\s>]/gi);
+    if (uiMacros) {
+      uiMacros.forEach((macro) => {
+        const macroName = macro.match(/<<(\w+)/)?.[1] || 'unknown';
+        tracker.addIssue('warning', 'ui', `<<${macroName}>>`,
+          `UI macro <<${macroName}>> will be converted to simple text`, {
+            passageId,
+            passageName,
+            original: macro,
+            suggestion: 'Consider using Whisker choice system for interactive elements'
+          });
+      });
+    }
+
+    // Convert <<set $var to value>> and <<set $var = value>>
     converted = converted.replace(
       /<<set\s+\$(\w+)\s+(?:to|=)\s+([^>]+)>>/gi,
       (_, varName, value) => {
@@ -525,25 +724,60 @@ export class TwineImporter implements IImporter {
       }
     );
 
-    // Convert <<if condition>>text<<endif>> -> {{if condition then}}text{{end}}
-    // Also convert $var in conditions to {{var}}
-    // Use non-greedy match for condition to handle > operators
+    // Convert <<if>><<elseif>><<else>><<endif>> chains
     converted = converted.replace(
-      /<<if\s+(.*?)>>(.+?)<<\/?endif>>/gis,
-      (_, cond, body) => {
-        // Convert $var in condition
-        const convertedCond = cond.trim().replace(/\$(\w+)/g, '{{$1}}');
-        return `{{if ${convertedCond} then}}${body.trim()}{{end}}`;
+      /<<if\s+(.*?)>>(.*?)(?:<<elseif\s+(.*?)>>(.*?))*(?:<<else>>(.*?))?<<\/?endif>>/gis,
+      (match) => {
+        // Parse the if/elseif/else chain
+        let result = match;
+
+        // Convert <<if condition>>
+        result = result.replace(/<<if\s+(.*?)>>/gi, (_, cond) => {
+          const convertedCond = cond.trim().replace(/\$(\w+)/g, '{{$1}}');
+          return `{{if ${convertedCond} then}}`;
+        });
+
+        // Convert <<elseif condition>>
+        result = result.replace(/<<elseif\s+(.*?)>>/gi, (_, cond) => {
+          const convertedCond = cond.trim().replace(/\$(\w+)/g, '{{$1}}');
+          return `{{elseif ${convertedCond} then}}`;
+        });
+
+        // Convert <<else>>
+        result = result.replace(/<<else>>/gi, '{{else}}');
+
+        // Convert <<endif>>
+        result = result.replace(/<<\/?endif>>/gi, '{{end}}');
+
+        return result;
       }
     );
 
-    // Convert <<print $var>> -> {{var}}
+    // Convert <<print $var>> and <<print expression>>
     converted = converted.replace(
       /<<print\s+\$(\w+)>>/gi,
       (_, varName) => {
         return `{{${varName}}}`;
       }
     );
+
+    // Convert <<= $var>> (short form)
+    converted = converted.replace(
+      /<<= \s*\$(\w+)\s*>>/gi,
+      (_, varName) => {
+        return `{{${varName}}}`;
+      }
+    );
+
+    // Convert temp variables (_var) - track as info
+    if (text.match(/_\w+/)) {
+      tracker.addIssue('info', 'variable', 'Temporary Variables',
+        'SugarCube temporary variables (_var) converted to regular variables', {
+          passageId,
+          passageName,
+          suggestion: 'Temporary variables will persist in Whisker - manage state accordingly'
+        });
+    }
 
     // Convert standalone $var -> {{var}} (but not inside {{}} already)
     converted = converted.replace(
@@ -553,19 +787,60 @@ export class TwineImporter implements IImporter {
       }
     );
 
-    // Warn about complex SugarCube features
-    if (text.match(/<<(include|widget|script|button|textbox|radio)/i)) {
-      warnings.push('Some advanced SugarCube features may not convert correctly');
-    }
+    // Convert _var (temp variables) to {{var}}
+    converted = converted.replace(
+      /_(\w+)(?![^{]*}})/g,
+      (match, varName) => {
+        return `{{${varName}}}`;
+      }
+    );
 
     return converted;
   }
 
   /**
-   * Convert from Chapbook syntax
+   * Convert from Chapbook syntax (with advanced features)
    */
-  private convertFromChapbook(text: string, warnings: string[]): string {
+  private convertFromChapbook(
+    text: string,
+    warnings: string[],
+    tracker: ConversionTracker,
+    passageId?: string,
+    passageName?: string
+  ): string {
     let converted = text;
+
+    // Track time-based modifiers
+    if (text.match(/\[after\s+\d+/i)) {
+      tracker.addIssue('warning', 'modifier', 'Time-based Modifiers',
+        'Chapbook time-based modifiers ([after Xs]) are not supported', {
+          passageId,
+          passageName,
+          original: text.match(/\[after\s+[\d.]+\w*\]/i)?.[0],
+          suggestion: 'Consider using passage transitions or removing timed effects'
+        });
+    }
+
+    // Track embed/insert macros
+    if (text.match(/\{embed\s+passage:/i)) {
+      tracker.addIssue('critical', 'macro', 'Embed Passage',
+        'Chapbook {embed passage:} is not supported', {
+          passageId,
+          passageName,
+          original: text.match(/\{embed\s+passage:[^}]+\}/i)?.[0],
+          suggestion: 'Manually merge embedded passage content'
+        });
+    }
+
+    // Info: Chapbook is experimental
+    if (text.length > 0) {
+      tracker.addIssue('info', 'format', 'Chapbook Format',
+        'Chapbook conversion is experimental - please verify output carefully', {
+          passageId,
+          passageName,
+          suggestion: 'Test all interactive elements after import'
+        });
+    }
 
     // Convert [if condition] -> {{if condition then}}
     converted = converted.replace(
@@ -575,14 +850,25 @@ export class TwineImporter implements IImporter {
       }
     );
 
+    // Convert [else if condition] -> {{elseif condition then}}
+    converted = converted.replace(
+      /\[else\s+if\s+([^\]]+)\]/gi,
+      (_, cond) => {
+        return `{{elseif ${cond.trim()} then}}`;
+      }
+    );
+
+    // Convert [else] -> {{else}}
+    converted = converted.replace(/\[else\]/gi, '{{else}}');
+
     // Convert [continued] -> {{end}}
     converted = converted.replace(/\[continued\]/gi, '{{end}}');
 
-    // Convert variable.name = value -> {{variable.name = value}}
-    // This is tricky as we need to avoid converting regular text
-    // We'll skip this for now to avoid false positives
+    // Convert variable references {varname} -> {{varname}}
+    converted = converted.replace(/\{(\w+)\}/g, '{{$1}}');
 
-    warnings.push('Chapbook conversion is experimental - please verify output');
+    // Remove time-based modifiers (can't convert meaningfully)
+    converted = converted.replace(/\[after\s+[\d.]+\w*\]/gi, '');
 
     return converted;
   }

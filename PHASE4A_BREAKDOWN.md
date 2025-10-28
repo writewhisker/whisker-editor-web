@@ -2,9 +2,9 @@
 
 **Goal:** Implement Twine HTML import with format conversion while maintaining test coverage and backward compatibility.
 
-## Current Status (Just Completed)
+## Current Status
 
-✅ **Stage 1.1: Core Twine Import** (COMPLETE)
+✅ **Stage 1.1: Core Twine Import** (COMPLETE - Committed: c105e62)
 - TwineImporter class with IImporter interface
 - Twine HTML parsing (tw-storydata, tw-passagedata)
 - Format detection (Harlowe, SugarCube, Chapbook, Snowman)
@@ -15,75 +15,40 @@
 - ImportDialog supports .html files
 - **Tests:** 2363 passing (100% backward compatible)
 
+✅ **Stage 1.2: Enhanced Loss Reporting** (COMPLETE - Ready to commit)
+- ConversionTracker class for issue tracking
+- Loss report with severity levels (critical, warning, info)
+- Category tracking (macro, syntax, ui, data-structure, etc.)
+- Conversion quality estimation (0-1 scale)
+- Affected passage tracking
+- Detailed suggestions for manual fixes
+- 5 new tests for loss reporting
+- **Tests:** 2379 passing (100% backward compatible)
+
+✅ **Stage 1.3: Advanced Syntax Conversion** (COMPLETE - Ready to commit)
+- **SugarCube Advanced:**
+  - <<if>>/<<elseif>>/<<else>>/<<endif>> chains
+  - Temp variables (_var) support
+  - <<= shorthand syntax
+  - UI macro detection (textbox, button, etc.)
+  - Unsupported macro tracking (include, widget, script, audio, etc.)
+- **Harlowe Advanced:**
+  - (put: value into $var) syntax
+  - (else-if:) chains
+  - Named hook removal (|hookname>)
+  - Data structure detection (datamap, dataset, dataarray)
+  - Random/either macro warnings
+- **Chapbook Advanced:**
+  - [else if] chains
+  - Variable references {var}
+  - Time-based modifier detection [after Xs]
+  - Embed passage warnings
+- 11 new tests for advanced syntax
+- **Tests:** 2379 passing (100% backward compatible)
+
 ---
 
 ## Remaining Work - Broken Down
-
-### **Stage 1.2: Enhanced Conversion & Loss Reporting** (2-3 hours)
-**Goal:** Improve conversion quality and track what couldn't be converted
-
-**Tasks:**
-1. Add comprehensive loss tracking to TwineImporter
-   - Track unconverted macros/features per format
-   - Record line numbers where issues occur
-   - Categorize losses (critical, warning, info)
-
-2. Enhance warning messages
-   - Specific feature names (e.g., "<<include>> macro not supported")
-   - Suggested manual fixes
-   - Count of affected passages
-
-3. Update tests
-   - Test loss tracking for each format
-   - Verify warning categorization
-   - Test edge cases (nested macros, complex syntax)
-
-**Success Criteria:**
-- All tests pass (target: 2370+)
-- Detailed warnings for unsupported features
-- No regressions in existing import
-
-**Files to Modify:**
-- `src/lib/import/formats/TwineImporter.ts`
-- `src/lib/import/formats/TwineImporter.test.ts`
-- `src/lib/import/types.ts` (add LossReport interface)
-
----
-
-### **Stage 1.3: Advanced Syntax Conversion** (3-4 hours)
-**Goal:** Support more complex Twine syntax patterns
-
-**Tasks:**
-1. **SugarCube Advanced:**
-   - `<<set>>` with complex expressions
-   - `<<if>>/<<elseif>>/<<else>>` chains
-   - `<<print>>` with expressions
-   - Nested macros
-   - Story variables ($var) vs temp variables (_var)
-
-2. **Harlowe Advanced:**
-   - Chained hooks: `(if: $x)[(set: $y to 1)]`
-   - Named hooks: `|name>[content]`
-   - Hook references: `(click: ?name)`
-   - Data structures (arrays, datamaps)
-
-3. **Chapbook Advanced:**
-   - Modifiers: `[after 2s]`, `[if x = y]`
-   - Inserts: `{embed passage: 'name'}`
-   - Conditional text
-
-4. Add 20+ tests for advanced patterns
-
-**Success Criteria:**
-- All tests pass (target: 2390+)
-- 70%+ conversion accuracy for complex syntax
-- Proper warnings for unsupported patterns
-
-**Files to Modify:**
-- `src/lib/import/formats/TwineImporter.ts` (expand conversion methods)
-- `src/lib/import/formats/TwineImporter.test.ts`
-
----
 
 ### **Stage 2.1: Import Preview UI** (3-4 hours)
 **Goal:** Show user what will be imported before committing

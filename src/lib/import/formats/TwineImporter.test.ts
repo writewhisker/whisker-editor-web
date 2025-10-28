@@ -640,4 +640,366 @@ describe('TwineImporter', () => {
       expect(version).toBe('unknown');
     });
   });
+
+  describe('Loss Reporting (Stage 1.2)', () => {
+    it('should report unsupported SugarCube macros', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<include "OtherPassage">>
+            <<widget "CustomWidget">>Content<</widget>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport!.critical.length).toBeGreaterThan(0);
+      expect(result.lossReport!.critical.some(i => i.feature === '<<include>>')).toBe(true);
+      expect(result.lossReport!.critical.some(i => i.feature === '<<widget>>')).toBe(true);
+    });
+
+    it('should report UI macros as warnings', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<textbox "$name" "Enter name">>
+            <<button "Click">>Action<</button>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport!.warnings.length).toBeGreaterThan(0);
+      expect(result.lossReport!.warnings.some(i => i.category === 'ui')).toBe(true);
+    });
+
+    it('should report Harlowe data structures as warnings', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (set: $inventory to (datamap: "gold", 100, "items", (a: "sword")))
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport!.warnings.some(i => i.feature === 'Harlowe Data Structures')).toBe(true);
+    });
+
+    it('should calculate conversion quality', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<set $x = 10>>
+            Simple passage with basic syntax.
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      if (result.lossReport) {
+        expect(result.lossReport.conversionQuality).toBeDefined();
+        expect(result.lossReport.conversionQuality).toBeGreaterThan(0);
+        expect(result.lossReport.conversionQuality).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('should track affected passages', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="First">
+            <<include "Other">>
+          </tw-passagedata>
+          <tw-passagedata pid="2" name="Second">
+            <<widget "test">><</widget>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport!.affectedPassages.length).toBe(2);
+    });
+  });
+
+  describe('Advanced SugarCube Syntax (Stage 1.3)', () => {
+    it('should convert if/elseif/else chains', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<if $score > 90>>
+              Excellent!
+            <<elseif $score > 70>>
+              Good!
+            <<else>>
+              Try harder!
+            <<endif>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{if');
+      expect(passage.content).toContain('{{elseif');
+      expect(passage.content).toContain('{{else}}');
+      expect(passage.content).toContain('{{end}}');
+    });
+
+    it('should convert temp variables (_var)', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<set _temp = 5>>
+            Value: _temp
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{temp');
+      expect(result.lossReport?.info.some(i => i.feature === 'Temporary Variables')).toBe(true);
+    });
+
+    it('should convert <<= shorthand', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            Your score: <<= $score>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{score}}');
+    });
+  });
+
+  describe('Advanced Harlowe Syntax (Stage 1.3)', () => {
+    it('should convert (put:) macro', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (put: 10 into $score)
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{score = 10}}');
+    });
+
+    it('should convert (else-if:) chains', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (if: $x > 5)[High](else-if: $x > 2)[Medium](else:)[Low]
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{if');
+      expect(passage.content).toContain('{{elseif');
+      expect(passage.content).toContain('{{else}}');
+    });
+
+    it('should remove named hook markers', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            |hookname>[This is hooked content]
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).not.toContain('|hookname>');
+      expect(passage.content).toContain('[This is hooked content]');
+    });
+
+    it('should warn about random/either macros', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (either: "A", "B", "C")
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport?.warnings.some(i => i.feature === 'Random/Either')).toBe(true);
+    });
+  });
+
+  describe('Advanced Chapbook Syntax (Stage 1.3)', () => {
+    it('should convert else if chains', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Chapbook" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            [if x > 5]
+            High
+            [else if x > 2]
+            Medium
+            [else]
+            Low
+            [continued]
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{if');
+      expect(passage.content).toContain('{{elseif');
+      expect(passage.content).toContain('{{else}}');
+      expect(passage.content).toContain('{{end}}');
+    });
+
+    it('should convert variable references {var}', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Chapbook" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            Your name is {playerName}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0];
+      expect(passage.content).toContain('{{playerName}}');
+    });
+
+    it('should warn about time-based modifiers', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Chapbook" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            [after 5s]
+            Delayed text appears
+            [continued]
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport?.warnings.some(i => i.feature === 'Time-based Modifiers')).toBe(true);
+    });
+
+    it('should report embed passage as critical', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Chapbook" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            {embed passage: "EmbeddedPassage"}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport?.critical.some(i => i.feature === 'Embed Passage')).toBe(true);
+    });
+  });
 });

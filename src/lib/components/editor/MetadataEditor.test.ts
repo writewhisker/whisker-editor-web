@@ -24,9 +24,12 @@ describe('MetadataEditor', () => {
         },
       });
 
-      expect(container.textContent).toContain('difficulty');
-      expect(container.textContent).toContain('points');
-      expect(container.textContent).toContain('completed');
+      // Check that input fields have the keys as values
+      const keyInputs = container.querySelectorAll('.key-input') as NodeListOf<HTMLInputElement>;
+      const keyValues = Array.from(keyInputs).map(input => input.value);
+      expect(keyValues).toContain('difficulty');
+      expect(keyValues).toContain('points');
+      expect(keyValues).toContain('completed');
     });
 
     it('should display custom label', () => {

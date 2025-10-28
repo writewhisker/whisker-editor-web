@@ -16,6 +16,9 @@ describe('CommandPalette', () => {
     currentStory.set(null);
     selectedPassageId.set(null);
     vi.clearAllMocks();
+
+    // Mock scrollIntoView (not available in jsdom)
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
   afterEach(() => {

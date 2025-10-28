@@ -32,10 +32,12 @@ describe('StylesheetEditor', () => {
 
   describe('rendering', () => {
     it('should render stylesheet list', () => {
-      const { getByText } = render(StylesheetEditor);
+      const { container } = render(StylesheetEditor);
 
-      expect(getByText('Stylesheet 1')).toBeTruthy();
-      expect(getByText('Stylesheet 2')).toBeTruthy();
+      const stylesheetItems = container.querySelectorAll('.stylesheet-item .stylesheet-name');
+      const stylesheetNames = Array.from(stylesheetItems).map(el => el.textContent?.trim());
+      expect(stylesheetNames).toContain('Stylesheet 1');
+      expect(stylesheetNames).toContain('Stylesheet 2');
     });
 
     it('should show empty state when no stylesheets', () => {

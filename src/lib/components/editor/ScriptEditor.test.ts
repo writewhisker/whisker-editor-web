@@ -32,10 +32,12 @@ describe('ScriptEditor', () => {
 
   describe('rendering', () => {
     it('should render script list', () => {
-      const { getByText } = render(ScriptEditor);
+      const { container } = render(ScriptEditor);
 
-      expect(getByText('Script 1')).toBeTruthy();
-      expect(getByText('Script 2')).toBeTruthy();
+      const scriptItems = container.querySelectorAll('.script-item .script-name');
+      const scriptNames = Array.from(scriptItems).map(el => el.textContent?.trim());
+      expect(scriptNames).toContain('Script 1');
+      expect(scriptNames).toContain('Script 2');
     });
 
     it('should show empty state when no scripts', () => {

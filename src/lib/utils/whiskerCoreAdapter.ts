@@ -57,7 +57,7 @@ export function toWhiskerCoreFormat(
   // Optionally strip editor-specific extensions
   const passages = stripExtensions
     ? passagesArray.map(p => {
-        const { color, created, modified, ...corePassage } = p;
+        const { color, created, modified, onEnterScript, onExitScript, ...corePassage } = p;
         return corePassage;
       })
     : passagesArray;

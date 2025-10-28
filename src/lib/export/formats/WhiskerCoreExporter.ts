@@ -51,7 +51,7 @@ export class WhiskerCoreExporter implements IExporter {
 
       // Warn if editor extensions are present and not stripped
       if (!stripExtensions) {
-        const hasExtensions = Object.values(story.passages).some(
+        const hasExtensions = Array.from(story.passages.values()).some(
           p => p.onEnterScript || p.onExitScript || p.color
         );
         if (hasExtensions) {

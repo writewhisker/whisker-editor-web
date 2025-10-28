@@ -747,4 +747,313 @@ describe('PassageNode', () => {
       expect(style).toMatch(/(rgb\(255, 0, 0\)|#ff0000)/);
     });
   });
+
+  describe('resize functionality', () => {
+    it('should render all 8 resize handles', () => {
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      // Check for corner handles
+      expect(container.querySelector('.resize-se')).toBeTruthy();
+      expect(container.querySelector('.resize-sw')).toBeTruthy();
+      expect(container.querySelector('.resize-ne')).toBeTruthy();
+      expect(container.querySelector('.resize-nw')).toBeTruthy();
+
+      // Check for edge handles
+      expect(container.querySelector('.resize-e')).toBeTruthy();
+      expect(container.querySelector('.resize-w')).toBeTruthy();
+      expect(container.querySelector('.resize-s')).toBeTruthy();
+      expect(container.querySelector('.resize-n')).toBeTruthy();
+    });
+
+    it('should use default size when passage.size is not set', () => {
+      delete passage.size;
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const node = container.querySelector('.passage-node') as HTMLElement;
+      const style = node?.getAttribute('style') || '';
+      expect(style).toContain('width: 200px');
+      expect(style).toContain('height: 150px');
+    });
+
+    it('should use custom size when passage.size is set', () => {
+      passage.size = { width: 300, height: 250 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const node = container.querySelector('.passage-node') as HTMLElement;
+      const style = node?.getAttribute('style') || '';
+      expect(style).toContain('width: 300px');
+      expect(style).toContain('height: 250px');
+    });
+
+    it('should start resize on mousedown of resize handle', async () => {
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-se') as HTMLElement;
+      expect(resizeHandle).toBeTruthy();
+
+      // Simulate mousedown
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Check that cursor style was set
+      expect(document.body.style.cursor).toBeTruthy();
+    });
+
+    it('should constrain width to minimum 150px', async () => {
+      passage.size = { width: 200, height: 150 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-e') as HTMLElement;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Try to resize smaller than minimum
+      await fireEvent.mouseMove(window, { clientX: 0, clientY: 100 });
+
+      // Width should not go below 150px
+      expect(passage.size.width).toBeGreaterThanOrEqual(150);
+    });
+
+    it('should constrain height to minimum 100px', async () => {
+      passage.size = { width: 200, height: 150 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-s') as HTMLElement;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Try to resize smaller than minimum
+      await fireEvent.mouseMove(window, { clientX: 100, clientY: 0 });
+
+      // Height should not go below 100px
+      expect(passage.size.height).toBeGreaterThanOrEqual(100);
+    });
+
+    it('should increase width when dragging east handle right', async () => {
+      passage.size = { width: 200, height: 150 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-e') as HTMLElement;
+      const initialWidth = passage.size.width;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Drag right by 50px
+      await fireEvent.mouseMove(window, { clientX: 150, clientY: 100 });
+
+      // Width should increase
+      expect(passage.size.width).toBeGreaterThan(initialWidth);
+    });
+
+    it('should increase height when dragging south handle down', async () => {
+      passage.size = { width: 200, height: 150 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-s') as HTMLElement;
+      const initialHeight = passage.size.height;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Drag down by 50px
+      await fireEvent.mouseMove(window, { clientX: 100, clientY: 150 });
+
+      // Height should increase
+      expect(passage.size.height).toBeGreaterThan(initialHeight);
+    });
+
+    it('should handle southeast corner resize (both dimensions)', async () => {
+      passage.size = { width: 200, height: 150 };
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-se') as HTMLElement;
+      const initialWidth = passage.size.width;
+      const initialHeight = passage.size.height;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Drag diagonally (right and down)
+      await fireEvent.mouseMove(window, { clientX: 150, clientY: 150 });
+
+      // Both dimensions should increase
+      expect(passage.size.width).toBeGreaterThan(initialWidth);
+      expect(passage.size.height).toBeGreaterThan(initialHeight);
+    });
+
+    it('should reset cursor style on mouseup', async () => {
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-se') as HTMLElement;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+      expect(document.body.style.cursor).toBeTruthy();
+
+      // End resize
+      await fireEvent.mouseUp(window);
+
+      // Cursor should be reset
+      expect(document.body.style.cursor).toBe('');
+    });
+
+    it('should stop propagation on resize handle mousedown', async () => {
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-se') as HTMLElement;
+      let propagated = false;
+
+      container.addEventListener('mousedown', () => {
+        propagated = true;
+      });
+
+      const event = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        clientX: 100,
+        clientY: 100
+      });
+
+      resizeHandle.dispatchEvent(event);
+
+      // Event should have been stopped
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('should initialize passage.size if not present during resize', async () => {
+      delete passage.size;
+
+      const { container } = render(PassageNode, {
+        props: {
+          data: {
+            passage,
+            isStart: false,
+            isOrphan: false,
+            isDead: false,
+          },
+        },
+      });
+
+      const resizeHandle = container.querySelector('.resize-se') as HTMLElement;
+
+      // Start resize
+      await fireEvent.mouseDown(resizeHandle, { clientX: 100, clientY: 100 });
+
+      // Move mouse
+      await fireEvent.mouseMove(window, { clientX: 150, clientY: 150 });
+
+      // passage.size should now be initialized
+      expect(passage.size).toBeDefined();
+      expect(passage.size?.width).toBeDefined();
+      expect(passage.size?.height).toBeDefined();
+    });
+  });
 });

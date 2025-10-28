@@ -78,7 +78,7 @@
   - Tests verify conversionOptions are passed correctly
 - **Tests:** 2395 passing (100% backward compatible)
 
-✅ **Stage 3.1: Twee Notation Support** (COMPLETE - Ready to commit)
+✅ **Stage 3.1: Twee Notation Support** (COMPLETE - Committed: 6b9369b)
 - **Twee Format Detection:**
   - Extended TwineImporter to detect Twee format
   - Added `.twee` and `.tw` to supported extensions
@@ -103,11 +103,37 @@
   - Edge cases (empty files, missing title, etc.)
 - **Tests:** 2410 passing (100% backward compatible)
 
+✅ **Stage 3.2: Sample Files & Documentation** (COMPLETE - Ready to commit)
+- **Sample Files Created:**
+  - `samples/harlowe-sample.html` - Harlowe story with variables, conditionals, links (10 passages)
+  - `samples/sugarcube-sample.html` - SugarCube quest with inventory, gold, strength system (17 passages)
+  - `samples/chapbook-sample.html` - Chapbook journey with modifiers and variables (16 passages)
+  - `samples/twee-sample.twee` - Twee notation story with tags and position metadata (12 passages)
+  - All samples demonstrate format-specific features and conversion scenarios
+- **Documentation:**
+  - `docs/IMPORTING_TWINE.md` - Comprehensive 300+ line guide
+  - Supported formats and versions table
+  - Conversion accuracy matrix (50-95% by format)
+  - Step-by-step import instructions
+  - Conversion options explained
+  - Known limitations and troubleshooting
+  - Best practices for before/during/after import
+  - Technical details and future improvements
+- **Integration Tests:**
+  - `src/lib/import/formats/TwineImporter.integration.test.ts` (12 tests)
+  - Tests all 4 sample files import successfully
+  - Verifies passage counts, titles, tags, metadata
+  - Tests conversion quality reporting
+  - Tests error handling for empty stories
+  - Tests conversion options (convertVariables, preserveOriginalSyntax)
+  - Tests metadata preservation (IFID, passage structure)
+- **Tests:** 2422 passing (12 new integration tests, 100% backward compatible)
+
 ---
 
 ## Remaining Work - Broken Down
 
-### **Stage 3.2: Sample Files & Documentation** (2-3 hours)
+### **Stage 3.3: Export to Twine HTML** (4-5 hours)
 **Goal:** Provide test files and usage documentation
 
 **Tasks:**

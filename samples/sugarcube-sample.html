@@ -1,0 +1,207 @@
+<tw-storydata name="SugarCube Quest" startnode="1" creator="Twine" creator-version="2.5.1" ifid="B2C3D4E5-F6A7-8901-BCDE-F12345678901" zoom="1" format="SugarCube" format-version="2.36.1" options="" hidden>
+<style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
+<script role="script" id="twine-user-script" type="text/twine-javascript"></script>
+<tw-passagedata pid="1" name="Start" tags="init" position="100,100" size="100,100">Welcome to SugarCube Quest!
+
+&lt;&lt;set $playerName = &quot;Hero&quot;&gt;&gt;
+&lt;&lt;set $gold = 0&gt;&gt;
+&lt;&lt;set $strength = 10&gt;&gt;
+&lt;&lt;set $inventory = []&gt;&gt;
+
+You are $playerName, a brave adventurer seeking fortune and glory.
+
+Current Stats:
+- Gold: $gold
+- Strength: $strength
+
+[[Begin your quest-&gt;Village Square]]</tw-passagedata>
+<tw-passagedata pid="2" name="Village Square" tags="village" position="100,250" size="100,100">You stand in the village square. The sun is shining and villagers bustle about their daily business.
+
+&lt;&lt;if $gold &gt; 50&gt;&gt;
+  The villagers seem impressed by your wealth!
+&lt;&lt;/if&gt;&gt;
+
+Where would you like to go?
+
+[[Visit the shop-&gt;Shop]]
+[[Go to the tavern-&gt;Tavern]]
+[[Leave the village-&gt;Crossroads]]</tw-passagedata>
+<tw-passagedata pid="3" name="Shop" tags="shop" position="250,250" size="100,100">You enter a small shop filled with various goods.
+
+The shopkeeper greets you: &quot;Welcome! Take a look at my wares.&quot;
+
+&lt;&lt;if $gold &gt;= 20&gt;&gt;
+  [[Buy a sword (20 gold)-&gt;Buy Sword]]
+&lt;&lt;else&gt;&gt;
+  You need 20 gold to buy a sword. (You have $gold gold)
+&lt;&lt;/if&gt;&gt;
+
+&lt;&lt;if $gold &gt;= 10&gt;&gt;
+  [[Buy a shield (10 gold)-&gt;Buy Shield]]
+&lt;&lt;else&gt;&gt;
+  You need 10 gold to buy a shield. (You have $gold gold)
+&lt;&lt;/if&gt;&gt;
+
+[[Leave the shop-&gt;Village Square]]</tw-passagedata>
+<tw-passagedata pid="4" name="Tavern" tags="social" position="250,100" size="100,100">You enter the tavern. It&#39;s dimly lit and smells of ale and wood smoke.
+
+A mysterious stranger sits in the corner.
+
+&lt;&lt;if visited(&quot;Stranger&quot;) is 0&gt;&gt;
+  [[Approach the stranger-&gt;Stranger]]
+&lt;&lt;else&gt;&gt;
+  The stranger has already given you their quest.
+&lt;&lt;/if&gt;&gt;
+
+[[Order a drink (5 gold)-&gt;Drink]]
+[[Leave the tavern-&gt;Village Square]]</tw-passagedata>
+<tw-passagedata pid="5" name="Crossroads" tags="" position="100,400" size="100,100">You leave the village and come to a crossroads.
+
+Three paths stretch out before you.
+
+[[Take the forest path-&gt;Forest]]
+[[Take the mountain path-&gt;Mountain]]
+[[Take the desert path-&gt;Desert]]
+[[Return to the village-&gt;Village Square]]</tw-passagedata>
+<tw-passagedata pid="6" name="Buy Sword" tags="shop" position="400,250" size="100,100">&lt;&lt;set $gold -= 20&gt;&gt;
+&lt;&lt;set $inventory.push(&quot;sword&quot;)&gt;&gt;
+&lt;&lt;set $strength += 15&gt;&gt;
+
+You purchase a fine steel sword!
+
+Your strength increases by 15! (Now: $strength)
+Gold remaining: $gold
+
+[[Continue shopping-&gt;Shop]]</tw-passagedata>
+<tw-passagedata pid="7" name="Buy Shield" tags="shop" position="400,150" size="100,100">&lt;&lt;set $gold -= 10&gt;&gt;
+&lt;&lt;set $inventory.push(&quot;shield&quot;)&gt;&gt;
+&lt;&lt;set $strength += 8&gt;&gt;
+
+You purchase a sturdy wooden shield!
+
+Your strength increases by 8! (Now: $strength)
+Gold remaining: $gold
+
+[[Continue shopping-&gt;Shop]]</tw-passagedata>
+<tw-passagedata pid="8" name="Stranger" tags="quest" position="400,100" size="100,100">The stranger looks up as you approach.
+
+&quot;Greetings, $playerName. I have a quest for you.&quot;
+
+&quot;In the forest to the east, there is an ancient temple. Retrieve the golden idol from within, and I will reward you handsomely.&quot;
+
+&lt;&lt;set $hasQuest = true&gt;&gt;
+
+Quest received: Retrieve the golden idol from the forest temple!
+
+[[Accept the quest-&gt;Tavern]]</tw-passagedata>
+<tw-passagedata pid="9" name="Drink" tags="" position="350,50" size="100,100">&lt;&lt;if $gold &gt;= 5&gt;&gt;
+  &lt;&lt;set $gold -= 5&gt;&gt;
+
+  You order a mug of ale and drink deeply. It&#39;s refreshing!
+
+  Gold remaining: $gold
+
+  [[Continue-&gt;Tavern]]
+&lt;&lt;else&gt;&gt;
+  You don&#39;t have enough gold for a drink.
+
+  [[Return-&gt;Tavern]]
+&lt;&lt;/if&gt;&gt;</tw-passagedata>
+<tw-passagedata pid="10" name="Forest" tags="forest" position="250,400" size="100,100">You enter a dense forest. Ancient trees tower above you.
+
+&lt;&lt;if $hasQuest&gt;&gt;
+  You remember the stranger&#39;s quest. The temple should be nearby.
+
+  [[Search for the temple-&gt;Temple]]
+&lt;&lt;else&gt;&gt;
+  You wander through the forest but find nothing of interest.
+&lt;&lt;/if&gt;&gt;
+
+[[Return to the crossroads-&gt;Crossroads]]</tw-passagedata>
+<tw-passagedata pid="11" name="Mountain" tags="mountain danger" position="250,500" size="100,100">You climb up a steep mountain path.
+
+&lt;&lt;if $strength &gt;= 25&gt;&gt;
+  Your strength allows you to reach the peak!
+
+  [[Reach the summit-&gt;Summit]]
+&lt;&lt;else&gt;&gt;
+  The climb is too difficult. You need more strength. (Current: $strength, Need: 25)
+
+  [[Return-&gt;Crossroads]]
+&lt;&lt;/if&gt;&gt;</tw-passagedata>
+<tw-passagedata pid="12" name="Desert" tags="desert" position="100,550" size="100,100">You enter a vast desert. The sun beats down mercilessly.
+
+After hours of walking, you find a small oasis.
+
+&lt;&lt;set $gold += 30&gt;&gt;
+
+Hidden in the sand, you discover a pouch of gold!
+
+Gold gained: 30 (Total: $gold)
+
+[[Return to the crossroads-&gt;Crossroads]]</tw-passagedata>
+<tw-passagedata pid="13" name="Temple" tags="temple quest" position="400,400" size="100,100">You discover an ancient temple covered in vines and moss.
+
+&lt;&lt;if $inventory.includes(&quot;sword&quot;)&gt;&gt;
+  With your sword, you cut through the vines and enter.
+
+  [[Enter the temple-&gt;Temple Interior]]
+&lt;&lt;else&gt;&gt;
+  The entrance is blocked by thick vines. You need a sword to cut through them.
+
+  [[Return to the forest-&gt;Forest]]
+&lt;&lt;/if&gt;&gt;</tw-passagedata>
+<tw-passagedata pid="14" name="Temple Interior" tags="temple danger" position="550,400" size="100,100">Inside the temple, you see the golden idol on a pedestal in the center of the room.
+
+As you approach, the ground begins to shake!
+
+&lt;&lt;if $strength &gt;= 30&gt;&gt;
+  You quickly grab the idol and run before the temple collapses!
+
+  &lt;&lt;set $hasIdol = true&gt;&gt;
+
+  [[Escape the temple-&gt;Temple Escape]]
+&lt;&lt;else&gt;&gt;
+  You&#39;re not strong enough to grab the idol and escape in time!
+
+  [[Retreat-&gt;Forest]]
+&lt;&lt;/if&gt;&gt;</tw-passagedata>
+<tw-passagedata pid="15" name="Temple Escape" tags="quest" position="550,250" size="100,100">You escape the collapsing temple with the golden idol in hand!
+
+Quest complete!
+
+[[Return to the village to claim your reward-&gt;Quest Complete]]</tw-passagedata>
+<tw-passagedata pid="16" name="Quest Complete" tags="quest victory" position="550,100" size="100,100">You return to the tavern and present the golden idol to the stranger.
+
+&quot;Excellent work, $playerName! Here is your reward.&quot;
+
+&lt;&lt;set $gold += 100&gt;&gt;
+
+You receive 100 gold! (Total: $gold)
+
+**Congratulations! You have completed the quest!**
+
+Final Stats:
+- Gold: $gold
+- Strength: $strength
+- Items: &lt;&lt;= $inventory.join(&quot;, &quot;)&gt;&gt;
+
+[[Start a new adventure-&gt;Start]]
+**THE END**</tw-passagedata>
+<tw-passagedata pid="17" name="Summit" tags="mountain victory" position="400,500" size="100,100">You reach the mountain summit and see a breathtaking view of the entire realm.
+
+On the peak, you find an ancient shrine with a treasure chest.
+
+&lt;&lt;set $gold += 50&gt;&gt;
+&lt;&lt;set $strength += 10&gt;&gt;
+
+You gain 50 gold and 10 strength!
+
+Current Stats:
+- Gold: $gold
+- Strength: $strength
+
+**You have discovered the Mountain Treasure!**
+
+[[Descend the mountain-&gt;Crossroads]]</tw-passagedata>
+</tw-storydata>

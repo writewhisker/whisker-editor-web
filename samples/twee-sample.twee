@@ -1,0 +1,188 @@
+:: StoryTitle
+Twee Format Example
+
+:: StoryData
+{
+  "ifid": "D4E5F6A7-B8C9-0123-DEFG-H23456789012",
+  "format": "Harlowe",
+  "format-version": "3.3.5",
+  "start": "Awakening"
+}
+
+:: Awakening [intro beginning] {"position":"100,100"}
+You wake up in a dimly lit room with no memory of how you got here.
+
+The air is cold and damp. You hear water dripping somewhere nearby.
+
+$name = "Stranger"
+$health = 100
+$inventory = []
+
+Your name... you can barely remember. They call you $name.
+
+[[Stand up and look around->Examine Room]]
+[[Try to remember->Flashback]]
+
+:: Examine Room [exploration] {"position":"250,100"}
+You stand and examine your surroundings.
+
+The room is small and bare, with stone walls. A single torch flickers on the wall, providing the only light.
+
+You notice:
+- A wooden door on the north wall
+- A small window high up on the east wall
+- Some scratches on the floor near the door
+
+$examined_room = true
+
+[[Try the door->Locked Door]]
+[[Look at the scratches->Clue]]
+[[Look out the window->Window View]]
+
+:: Flashback [memory] {"position":"100,250"}
+You close your eyes and try to remember...
+
+Fragments of memory flash through your mind:
+- A dark figure approaching
+- The sound of breaking glass
+- A feeling of falling
+
+$remembered = true
+$name = "Alex"
+
+Your name! It's $name!
+
+But the rest remains unclear.
+
+[[Open your eyes->Awakening]]
+
+:: Locked Door [puzzle] {"position":"400,100"}
+You approach the wooden door and try the handle.
+
+It's locked, but the lock looks old and rusty.
+
+[if $inventory.includes("key")]
+  You have a key! Maybe it will work here.
+
+  [[Use the key->Escape]]
+[else]
+  You need to find a key.
+
+  [[Look elsewhere->Examine Room]]
+
+:: Clue [puzzle discovery] {"position":"400,200"}
+You kneel down to examine the scratches on the floor.
+
+They form letters: "L-O-O-K U-P"
+
+[if not $looked_up]
+  Look up? But where?
+
+  $looked_up = true
+
+  [[Look at the torch on the wall->Torch Secret]]
+[else]
+  You've already discovered this clue.
+
+  [[Continue exploring->Examine Room]]
+
+:: Window View [exploration] {"position":"250,250"}
+You look out the high window.
+
+Outside, you can see:
+- A forest in the distance
+- Mountains on the horizon
+- The sun is setting
+
+You must be in some kind of tower or elevated structure.
+
+$knows_location = true
+
+[[Turn back->Examine Room]]
+
+:: Torch Secret [puzzle discovery] {"position":"550,200"}
+You approach the torch and look closely at the wall around it.
+
+Behind the torch, hidden in a small nook, you find something!
+
+$inventory.push("key")
+
+You found a rusty key!
+
+[if $remembered]
+  Something about this key feels familiar...
+
+  [[Take the key and try the door->Locked Door]]
+[else]
+  [[Take the key->Examine Room]]
+
+:: Escape [success] {"position":"550,100"}
+You insert the key into the lock. It turns with a loud click!
+
+The door swings open, revealing a corridor beyond.
+
+[if $remembered and $knows_location]
+  With your memories returning and knowledge of where you are, you feel ready for whatever comes next.
+
+  [[Step into the corridor->Best Escape]]
+[else]
+  You step cautiously into the unknown.
+
+  [[Proceed carefully->Basic Escape]]
+
+:: Best Escape [ending victory] {"position":"700,100"}
+You escape into the corridor with confidence.
+
+Your memories guide you through the tower, and you successfully navigate to freedom.
+
+As you step outside into the fresh air, you remember everything:
+- Why you were captured
+- Who trapped you here
+- What you must do next
+
+**Achievement: Perfect Escape!**
+
+Your journey is just beginning, $name.
+
+**THE END - Best Ending**
+
+Final Stats:
+- Name: $name
+- Health: $health
+- Remembered: Yes
+- Location Known: Yes
+
+:: Basic Escape [ending] {"position":"700,200"}
+You escape into the corridor and make your way through the tower.
+
+Though you don't remember everything, you're free now.
+
+As you step outside, you feel the sun on your face. Whatever happened before, you have a chance to start anew.
+
+**You have escaped!**
+
+**THE END - Standard Ending**
+
+Final Stats:
+- Name: $name
+- Health: $health
+
+:: stylesheet [stylesheet]
+tw-story {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+tw-passage {
+  font-family: Georgia, serif;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+tw-link {
+  color: #6ab0ff;
+}
+
+tw-link:hover {
+  color: #8fc5ff;
+}

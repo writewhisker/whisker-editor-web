@@ -12,6 +12,7 @@ import type { ImportFormat, ImportHistoryEntry } from '../import/types';
 import { JSONExporter } from '../export/formats/JSONExporter';
 import { HTMLExporter } from '../export/formats/HTMLExporter';
 import { MarkdownExporter } from '../export/formats/MarkdownExporter';
+import { TwineExporter } from '../export/formats/TwineExporter';
 import { EPUBExporter } from '../export/formats/EPUBExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
 import { TwineImporter } from '../import/formats/TwineImporter';
@@ -173,6 +174,9 @@ export const exportActions = {
           break;
         case 'markdown':
           exporter = new MarkdownExporter();
+          break;
+        case 'twine':
+          exporter = new TwineExporter();
           break;
         case 'epub':
           exporter = new EPUBExporter();

@@ -11,7 +11,7 @@ import type { QualityMetrics } from '../validation/QualityAnalyzer';
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'markdown' | 'package' | 'epub';
+export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'markdown' | 'package' | 'epub' | 'twine';
 
 /**
  * Export options configuration

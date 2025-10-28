@@ -103,7 +103,7 @@
   - Edge cases (empty files, missing title, etc.)
 - **Tests:** 2410 passing (100% backward compatible)
 
-✅ **Stage 3.2: Sample Files & Documentation** (COMPLETE - Ready to commit)
+✅ **Stage 3.2: Sample Files & Documentation** (COMPLETE - Committed: 658b516)
 - **Sample Files Created:**
   - `samples/harlowe-sample.html` - Harlowe story with variables, conditionals, links (10 passages)
   - `samples/sugarcube-sample.html` - SugarCube quest with inventory, gold, strength system (17 passages)
@@ -129,12 +129,53 @@
   - Tests metadata preservation (IFID, passage structure)
 - **Tests:** 2422 passing (12 new integration tests, 100% backward compatible)
 
+✅ **Stage 3.3: Export to Twine HTML** (COMPLETE - Ready to commit)
+- **TwineExporter Class:**
+  - Implements IExporter interface for Twine 2 HTML format
+  - Exports to Harlowe 3.x compatible format
+  - Converts Whisker syntax to Harlowe macros
+  - Variable conversion: {{var}} → $var
+  - Conditional conversion: {{#if}}{{else}}{{/if}} → (if:)[](else:)[]
+  - Set statement conversion: {{set var = val}} → (set: $var to val)
+  - HTML entity escaping for safety
+  - Preserves passage positions, tags, metadata
+  - Generates valid IFID if not present
+- **Integration:**
+  - Added 'twine' to ExportFormat type
+  - Registered TwineExporter in exportStore
+  - Export action automatically routes to TwineExporter
+- **Testing:**
+  - 15 comprehensive unit tests
+  - Tests simple and multi-passage exports
+  - Tests tag preservation
+  - Tests HTML entity escaping
+  - Tests Whisker → Harlowe syntax conversion
+  - Tests variable, conditional, and set conversions
+  - Tests position and metadata preservation
+  - Tests error handling (null story, empty story)
+  - Tests IFID generation
+- **Tests:** 2437 passing (15 new tests, 100% backward compatible)
+
+---
+
+## Phase 4A Complete!
+
+All stages of Phase 4A (Import & Format Conversion) have been successfully implemented:
+- ✅ Stage 1.1: Core Twine Import
+- ✅ Stage 1.2: Enhanced Loss Reporting
+- ✅ Stage 1.3: Advanced Syntax Conversion
+- ✅ Stage 2.1: Import Preview UI
+- ✅ Stage 2.2: Conversion Options UI
+- ✅ Stage 3.1: Twee Notation Support
+- ✅ Stage 3.2: Sample Files & Documentation
+- ✅ Stage 3.3: Twine HTML Export
+
 ---
 
 ## Remaining Work - Broken Down
 
 ### **Stage 3.3: Export to Twine HTML** (4-5 hours)
-**Goal:** Provide test files and usage documentation
+**Goal:** Round-trip support - export Whisker stories to Twine HTML
 
 **Tasks:**
 1. Create sample Twine files

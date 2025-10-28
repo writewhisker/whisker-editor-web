@@ -106,6 +106,28 @@ export class StaticSiteExporter implements IExporter {
 
   private getPlayerStyles(): string {
     return `
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --accent-color: #3498db;
+            --accent-hover: #2980b9;
+            --border-color: #eeeeee;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #121212;
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b0b0;
+            --accent-color: #5dade2;
+            --accent-hover: #85c1e9;
+            --border-color: #333333;
+            --shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -115,18 +137,20 @@ export class StaticSiteExporter implements IExporter {
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
+            color: var(--text-primary);
+            background: var(--bg-secondary);
             padding: 20px;
+            transition: background 0.3s, color 0.3s;
         }
 
         #whisker-player {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
+            background: var(--bg-primary);
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow);
             padding: 40px;
+            transition: background 0.3s, box-shadow 0.3s;
         }
 
         #passage-container {
@@ -146,11 +170,12 @@ export class StaticSiteExporter implements IExporter {
         .passage h1 {
             font-size: 2em;
             margin-bottom: 20px;
-            color: #2c3e50;
+            color: var(--text-primary);
         }
 
         .passage p {
             margin-bottom: 15px;
+            color: var(--text-primary);
         }
 
         .choices {
@@ -161,7 +186,7 @@ export class StaticSiteExporter implements IExporter {
             display: block;
             padding: 15px 20px;
             margin: 10px 0;
-            background: #3498db;
+            background: var(--accent-color);
             color: white;
             text-decoration: none;
             border-radius: 5px;
@@ -174,19 +199,20 @@ export class StaticSiteExporter implements IExporter {
         }
 
         .choice:hover {
-            background: #2980b9;
+            background: var(--accent-hover);
         }
 
         #controls {
             display: flex;
             gap: 10px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
+            flex-wrap: wrap;
         }
 
         .control-btn {
             padding: 10px 20px;
-            background: #95a5a6;
+            background: var(--text-secondary);
             color: white;
             border: none;
             border-radius: 5px;
@@ -195,12 +221,20 @@ export class StaticSiteExporter implements IExporter {
         }
 
         .control-btn:hover {
-            background: #7f8c8d;
+            background: var(--text-primary);
         }
 
         .control-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        .control-btn.primary {
+            background: var(--accent-color);
+        }
+
+        .control-btn.primary:hover {
+            background: var(--accent-hover);
         }
 
         @media (max-width: 600px) {
@@ -223,6 +257,7 @@ export class StaticSiteExporter implements IExporter {
                 this.currentPassageId = storyData.startPassage;
                 this.history = [];
                 this.variables = {};
+                this.saveKey = 'whisker_save_' + (storyData.metadata?.title || 'story').replace(/\\s+/g, '_');
 
                 // Initialize variables
                 if (this.story.variables) {
@@ -231,7 +266,79 @@ export class StaticSiteExporter implements IExporter {
                     });
                 }
 
+                // Load theme preference
+                this.loadTheme();
+
+                // Try to load saved game
+                this.tryLoadSave();
+
                 this.render();
+            }
+
+            loadTheme() {
+                const savedTheme = localStorage.getItem('whisker_theme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+
+            toggleTheme() {
+                const current = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = current === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('whisker_theme', newTheme);
+            }
+
+            saveGame() {
+                const saveData = {
+                    currentPassageId: this.currentPassageId,
+                    history: this.history,
+                    variables: this.variables,
+                    timestamp: Date.now()
+                };
+                try {
+                    localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+                    return true;
+                } catch (e) {
+                    console.error('Failed to save game:', e);
+                    return false;
+                }
+            }
+
+            loadGame() {
+                try {
+                    const saveData = localStorage.getItem(this.saveKey);
+                    if (saveData) {
+                        const data = JSON.parse(saveData);
+                        this.currentPassageId = data.currentPassageId;
+                        this.history = data.history || [];
+                        this.variables = data.variables || {};
+                        this.render();
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Failed to load game:', e);
+                }
+                return false;
+            }
+
+            tryLoadSave() {
+                // Check if there's a saved game (but don't auto-load it)
+                try {
+                    const saveData = localStorage.getItem(this.saveKey);
+                    this.hasSave = !!saveData;
+                } catch (e) {
+                    this.hasSave = false;
+                }
+            }
+
+            deleteSave() {
+                try {
+                    localStorage.removeItem(this.saveKey);
+                    this.hasSave = false;
+                    return true;
+                } catch (e) {
+                    console.error('Failed to delete save:', e);
+                    return false;
+                }
             }
 
             render() {
@@ -343,18 +450,58 @@ export class StaticSiteExporter implements IExporter {
                 // Back button
                 const backBtn = document.createElement('button');
                 backBtn.className = 'control-btn';
-                backBtn.textContent = 'Back';
+                backBtn.textContent = '← Back';
                 backBtn.disabled = this.history.length === 0;
                 backBtn.onclick = () => this.goBack();
                 controls.appendChild(backBtn);
 
+                // Save button
+                const saveBtn = document.createElement('button');
+                saveBtn.className = 'control-btn primary';
+                saveBtn.textContent = '💾 Save';
+                saveBtn.onclick = () => {
+                    if (this.saveGame()) {
+                        this.hasSave = true;
+                        alert('Game saved successfully!');
+                        this.updateControls();
+                    } else {
+                        alert('Failed to save game. Please check your browser settings.');
+                    }
+                };
+                controls.appendChild(saveBtn);
+
+                // Load button (only if there's a save)
+                if (this.hasSave) {
+                    const loadBtn = document.createElement('button');
+                    loadBtn.className = 'control-btn';
+                    loadBtn.textContent = '📂 Load';
+                    loadBtn.onclick = () => {
+                        if (confirm('Load saved game? Current progress will be lost.')) {
+                            this.loadGame();
+                        }
+                    };
+                    controls.appendChild(loadBtn);
+                }
+
+                // Theme toggle button
+                const themeBtn = document.createElement('button');
+                themeBtn.className = 'control-btn';
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                themeBtn.textContent = currentTheme === 'light' ? '🌙 Dark' : '☀️ Light';
+                themeBtn.onclick = () => {
+                    this.toggleTheme();
+                    this.updateControls();
+                };
+                controls.appendChild(themeBtn);
+
                 // Restart button
                 const restartBtn = document.createElement('button');
                 restartBtn.className = 'control-btn';
-                restartBtn.textContent = 'Restart';
+                restartBtn.textContent = '🔄 Restart';
                 restartBtn.onclick = () => {
-                    if (confirm('Are you sure you want to restart?')) {
+                    if (confirm('Are you sure you want to restart? Current progress will be lost.')) {
                         this.restart();
+                        this.deleteSave();
                     }
                 };
                 controls.appendChild(restartBtn);

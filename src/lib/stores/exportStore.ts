@@ -14,6 +14,7 @@ import { HTMLExporter } from '../export/formats/HTMLExporter';
 import { MarkdownExporter } from '../export/formats/MarkdownExporter';
 import { TwineExporter } from '../export/formats/TwineExporter';
 import { EPUBExporter } from '../export/formats/EPUBExporter';
+import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
 import { TwineImporter } from '../import/formats/TwineImporter';
 import type { Story } from '../models/Story';
@@ -171,6 +172,9 @@ export const exportActions = {
           break;
         case 'html':
           exporter = new HTMLExporter();
+          break;
+        case 'html-standalone':
+          exporter = new StaticSiteExporter();
           break;
         case 'markdown':
           exporter = new MarkdownExporter();

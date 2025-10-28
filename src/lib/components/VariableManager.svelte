@@ -61,23 +61,21 @@
     }
   }
 
-  function countVariableUsage(name: string): number {
-    if (!$currentStory) return 0;
+  // Use Phase 3 variable usage tracking
+  function getVariableUsageInfo(name: string) {
+    if (!$currentStory) return { count: 0, usage: [] };
 
-    let count = 0;
-    const pattern = new RegExp(`{{\\s*${name}\\s*}}`, 'g');
+    const usage = $currentStory.getVariableUsage(name);
+    const count = usage.reduce((sum, u) => sum + u.locations.length, 0);
 
-    $currentStory.passages.forEach(passage => {
-      const matches = passage.content.match(pattern);
-      if (matches) count += matches.length;
+    return { count, usage };
+  }
 
-      passage.choices.forEach(choice => {
-        if (choice.condition?.includes(name)) count++;
-        if (choice.action?.includes(name)) count++;
-      });
-    });
+  // Show/hide usage details
+  let expandedVariable: string | null = null;
 
-    return count;
+  function toggleUsageDetails(name: string) {
+    expandedVariable = expandedVariable === name ? null : name;
   }
 
   function insertVariableAtCursor(name: string) {
@@ -112,6 +110,7 @@
       </div>
     {:else}
       {#each $variableList as variable (variable.name)}
+        {@const usageInfo = getVariableUsageInfo(variable.name)}
         <div class="border border-gray-300 rounded p-2 space-y-2">
           <!-- Name and Type -->
           <div class="flex items-center justify-between">
@@ -159,9 +158,34 @@
             {/if}
           </div>
 
-          <!-- Usage Count -->
-          <div class="text-xs text-gray-500">
-            Used {countVariableUsage(variable.name)} time{countVariableUsage(variable.name) !== 1 ? 's' : ''}
+          <!-- Usage Count with Details -->
+          <div class="space-y-1">
+            <button
+              class="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1 w-full"
+              on:click={() => toggleUsageDetails(variable.name)}
+            >
+              <span class={expandedVariable === variable.name ? 'rotate-90' : ''}>▶</span>
+              <span>Used {usageInfo.count} time{usageInfo.count !== 1 ? 's' : ''}</span>
+              {#if usageInfo.count === 0}
+                <span class="text-orange-500 font-medium">(unused)</span>
+              {/if}
+            </button>
+
+            <!-- Usage Details (Expandable) -->
+            {#if expandedVariable === variable.name && usageInfo.usage.length > 0}
+              <div class="pl-4 space-y-1 text-xs">
+                {#each usageInfo.usage as usage}
+                  <div class="bg-gray-50 p-1 rounded">
+                    <div class="font-medium text-gray-700">{usage.passageName}</div>
+                    <div class="text-gray-500 pl-2">
+                      {#each usage.locations as location}
+                        <div>• {location}</div>
+                      {/each}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/if}
           </div>
         </div>
       {/each}

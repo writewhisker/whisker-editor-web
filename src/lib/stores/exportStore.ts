@@ -14,6 +14,7 @@ import { HTMLExporter } from '../export/formats/HTMLExporter';
 import { MarkdownExporter } from '../export/formats/MarkdownExporter';
 import { EPUBExporter } from '../export/formats/EPUBExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
+import { TwineImporter } from '../import/formats/TwineImporter';
 import type { Story } from '../models/Story';
 import { getPreferenceService } from '../services/storage/PreferenceService';
 
@@ -263,15 +264,29 @@ export const exportActions = {
       // Read file
       const content = await file.text();
 
-      // Try JSON importer first
-      const importer = new JSONImporter();
+      // Try importers in order
+      const importers = [
+        new JSONImporter(),
+        new TwineImporter(),
+      ];
 
-      if (!importer.canImport(content)) {
-        throw new Error('Unsupported file format');
+      let selectedImporter = null;
+      let detectedFormat: ImportFormat = 'json';
+
+      for (const importer of importers) {
+        if (importer.canImport(content)) {
+          selectedImporter = importer;
+          detectedFormat = importer.format;
+          break;
+        }
+      }
+
+      if (!selectedImporter) {
+        throw new Error('Unsupported file format - please use JSON or Twine HTML files');
       }
 
       // Import story
-      const result = await importer.import({
+      const result = await selectedImporter.import({
         data: content,
         options: {},
         filename: file.name,
@@ -285,7 +300,7 @@ export const exportActions = {
       const historyEntry: ImportHistoryEntry = {
         id: `import_${Date.now()}`,
         timestamp: Date.now(),
-        format: 'json',
+        format: detectedFormat,
         storyTitle: result.story?.metadata.title || 'Unknown',
         passageCount: result.passageCount || 0,
         success: true,
@@ -304,7 +319,7 @@ export const exportActions = {
       const historyEntry: ImportHistoryEntry = {
         id: `import_${Date.now()}`,
         timestamp: Date.now(),
-        format: 'json',
+        format: 'json', // Default to json for failed imports
         storyTitle: 'Unknown',
         passageCount: 0,
         success: false,

@@ -1,10 +1,24 @@
 <script lang="ts">
   import StoryMetrics from './StoryMetrics.svelte';
   import IssueList from './IssueList.svelte';
+  import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
+  import PlaythroughList from './PlaythroughList.svelte';
   import { currentMetrics, isAnalyzing, analyticsActions, lastAnalyzed } from '$lib/stores/analyticsStore';
+  import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
+  import { currentStory } from '$lib/stores/projectStore';
 
   // State
-  let activeTab = $state<'metrics' | 'issues'>('metrics');
+  let activeTab = $state<'metrics' | 'issues' | 'playthroughs' | 'history'>('metrics');
+  let playthroughCount = $state(0);
+
+  // Load playthrough count
+  $effect(() => {
+    const story = $currentStory;
+    if (story && story.metadata.id) {
+      const recorder = getPlaythroughRecorder();
+      playthroughCount = recorder.getPlaythroughsByStory(story.metadata.id).length;
+    }
+  });
 
   function formatLastAnalyzed(): string {
     if (!$lastAnalyzed) return 'Never';
@@ -70,10 +84,27 @@
         <span class="badge warning">{$currentMetrics.issues.length}</span>
       {/if}
     </button>
+    <button
+      class="tab"
+      class:active={activeTab === 'playthroughs'}
+      onclick={() => (activeTab = 'playthroughs')}
+    >
+      📈 Playthroughs
+      {#if playthroughCount > 0}
+        <span class="badge">{playthroughCount}</span>
+      {/if}
+    </button>
+    <button
+      class="tab"
+      class:active={activeTab === 'history'}
+      onclick={() => (activeTab = 'history')}
+    >
+      📝 History
+    </button>
   </div>
 
   <div class="dashboard-content">
-    {#if $isAnalyzing}
+    {#if $isAnalyzing && activeTab === 'metrics'}
       <div class="loading-state">
         <div class="spinner"></div>
         <p>Analyzing your story...</p>
@@ -82,6 +113,10 @@
       <StoryMetrics metrics={$currentMetrics} />
     {:else if activeTab === 'issues'}
       <IssueList issues={$currentMetrics?.issues || []} />
+    {:else if activeTab === 'playthroughs'}
+      <PlaythroughAnalyticsPanel />
+    {:else if activeTab === 'history'}
+      <PlaythroughList />
     {/if}
   </div>
 </div>

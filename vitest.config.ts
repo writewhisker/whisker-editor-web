@@ -22,11 +22,16 @@ export default defineConfig({
         'src/lib/components/**/*.svelte',
       ],
     },
+    deps: {
+      inline: ['monaco-editor', 'wasmoon'],
+    },
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
       '$lib': path.resolve(__dirname, './src/lib'),
+      'monaco-editor': path.resolve(__dirname, './src/test/mocks/monaco-editor.ts'),
+      'wasmoon': path.resolve(__dirname, './src/test/mocks/wasmoon.ts'),
     },
     conditions: ['browser', 'default'],
   },

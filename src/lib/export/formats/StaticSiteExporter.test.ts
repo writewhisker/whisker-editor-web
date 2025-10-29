@@ -239,7 +239,7 @@ describe('StaticSiteExporter', () => {
 
       const choice = new Choice({
         text: 'Go to A',
-        targetPassageId: passage2.id,
+        target: passage2.id,
       });
       passage1.addChoice(choice);
 

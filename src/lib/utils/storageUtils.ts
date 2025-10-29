@@ -209,7 +209,7 @@ export function safeSetJSON(key: string, value: any): StorageResult {
 export function safeGetJSON<T>(key: string): StorageResult<T | null> {
   const result = safeGetItem(key);
   if (!result.success || !result.data) {
-    return result;
+    return result as StorageResult<T | null>;
   }
 
   return safeJSONParse<T>(result.data);

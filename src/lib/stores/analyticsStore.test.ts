@@ -12,7 +12,7 @@ import {
 } from './analyticsStore';
 import { currentStory } from './projectStore';
 import { StoryAnalytics } from '../analytics/StoryAnalytics';
-import type { Story } from 'whisker-core';
+import type { Story } from '../models/Story';
 import type { StoryMetrics } from '../analytics/types';
 
 // Mock StoryAnalytics
@@ -41,8 +41,8 @@ describe('analyticsStore', () => {
         title: 'Test Story',
         author: 'Test Author',
         version: '1.0.0',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        created: Date.now().toString(),
+        modified: Date.now().toString(),
       },
       passages: [
         {
@@ -280,9 +280,9 @@ describe('analyticsStore', () => {
   });
 
   describe('analyticsActions.exportReport', () => {
-    let createElementSpy: ReturnType<typeof vi.spyOn>;
-    let createObjectURLSpy: ReturnType<typeof vi.spyOn>;
-    let revokeObjectURLSpy: ReturnType<typeof vi.spyOn>;
+    let createElementSpy: any;
+    let createObjectURLSpy: any;
+    let revokeObjectURLSpy: any;
     let mockAnchor: HTMLAnchorElement;
 
     beforeEach(() => {

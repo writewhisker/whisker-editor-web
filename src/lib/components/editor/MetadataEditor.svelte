@@ -33,7 +33,7 @@
     return 'string';
   }
 
-  function parseValue(value: string, type: string): any {
+  function parseValue(value: string | boolean, type: string): any {
     switch (type) {
       case 'boolean':
         return value === 'true' || value === true;

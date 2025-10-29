@@ -1077,9 +1077,7 @@
   <!-- Auto-save indicator -->
   {#if autoSaveStatus !== 'idle' && $currentStory}
     <div
-      class="fixed bottom-4 right-4 px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-lg text-sm flex items-center gap-2 transition-opacity duration-300"
-      class:opacity-100={autoSaveStatus === 'saving' || autoSaveStatus === 'saved'}
-      class:opacity-0={autoSaveStatus === 'idle'}
+      class="fixed bottom-4 right-4 px-3 py-2 bg-white border border-gray-300 rounded-lg shadow-lg text-sm flex items-center gap-2 transition-opacity duration-300 opacity-100"
       role="status"
       aria-live="polite"
     >

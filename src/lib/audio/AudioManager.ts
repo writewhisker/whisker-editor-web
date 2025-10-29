@@ -6,6 +6,7 @@
 
 export interface AudioTrack {
   id: string;
+  name?: string;
   url: string;
   volume?: number; // 0-1
   loop?: boolean;

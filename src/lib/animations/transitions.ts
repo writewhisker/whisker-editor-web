@@ -4,7 +4,7 @@
  * Animation utilities for story passages and elements.
  */
 
-export type TransitionType = 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'typewriter';
+export type TransitionType = 'fade' | 'slide-left' | 'slide-right' | 'slide-up' | 'slide-down' | 'typewriter' | 'zoom-in' | 'zoom-out' | 'none';
 export type EasingFunction = 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out';
 
 export interface TransitionOptions {

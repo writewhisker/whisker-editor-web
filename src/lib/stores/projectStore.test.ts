@@ -242,6 +242,7 @@ describe('projectStore', () => {
     describe('loadProject', () => {
       it('should load project from data', () => {
         const projectData: ProjectData = {
+          version: 1,
           metadata: {
             title: 'Loaded Story',
             author: 'Test Author',
@@ -258,6 +259,7 @@ describe('projectStore', () => {
               position: { x: 0, y: 0 },
               created: '2024-01-01',
               modified: '2024-01-02',
+              choices: [],
             },
           ],
           variables: {},
@@ -273,6 +275,7 @@ describe('projectStore', () => {
 
       it('should set filePath if provided', () => {
         const projectData: ProjectData = {
+          version: 1,
           metadata: {
             title: 'Test',
             author: '',
@@ -293,6 +296,7 @@ describe('projectStore', () => {
         unsavedChanges.set(true);
 
         const projectData: ProjectData = {
+          version: 1,
           metadata: {
             title: 'Test',
             author: '',
@@ -311,6 +315,7 @@ describe('projectStore', () => {
 
       it('should select start passage if present', () => {
         const projectData: ProjectData = {
+          version: 1,
           metadata: {
             title: 'Test',
             author: '',
@@ -327,6 +332,7 @@ describe('projectStore', () => {
               position: { x: 0, y: 0 },
               created: '2024-01-01',
               modified: '2024-01-02',
+              choices: [],
             },
           ],
           variables: {},

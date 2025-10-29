@@ -109,28 +109,28 @@ describe('ViewPreferencesStore with PreferenceService', () => {
 		it('should persist view mode to PreferenceService', () => {
 			viewPreferencesActions.setViewMode('graph', false);
 
-			const stored = prefService.getPreferenceSync('whisker-view-preferences', {});
+			const stored = prefService.getPreferenceSync('whisker-view-preferences', {}) as Record<string, any>;
 			expect(stored['Test Story']?.viewMode).toBe('graph');
 		});
 
 		it('should persist panel visibility to PreferenceService', () => {
 			viewPreferencesActions.setPanelVisibility({ passageList: false });
 
-			const stored = prefService.getPreferenceSync('whisker-view-preferences', {});
+			const stored = prefService.getPreferenceSync('whisker-view-preferences', {}) as Record<string, any>;
 			expect(stored['Test Story']?.panelVisibility?.passageList).toBe(false);
 		});
 
 		it('should persist panel sizes to PreferenceService', () => {
 			viewPreferencesActions.setPanelSize('passageListWidth', 300);
 
-			const stored = prefService.getPreferenceSync('whisker-view-preferences', {});
+			const stored = prefService.getPreferenceSync('whisker-view-preferences', {}) as Record<string, any>;
 			expect(stored['Test Story']?.panelSizes?.passageListWidth).toBe(300);
 		});
 
 		it('should persist focus mode to PreferenceService', () => {
 			viewPreferencesActions.setFocusMode(true);
 
-			const stored = prefService.getPreferenceSync('whisker-view-preferences', {});
+			const stored = prefService.getPreferenceSync('whisker-view-preferences', {}) as Record<string, any>;
 			expect(stored['Test Story']?.focusMode).toBe(true);
 		});
 	});

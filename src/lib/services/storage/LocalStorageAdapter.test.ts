@@ -123,7 +123,7 @@ describe('LocalStorageAdapter', () => {
 			const firstSave = await adapter.saveProject(project);
 
 			// Update - use version from first save
-			const updatedProject = { ...project, version: firstSave.version };
+			const updatedProject = { ...project, version: firstSave.version ?? 1 };
 			const result = await adapter.saveProject(updatedProject);
 
 			expect(result.version).toBe(2);

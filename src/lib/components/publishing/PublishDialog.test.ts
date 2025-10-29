@@ -110,23 +110,15 @@ describe('PublishDialog - Publishing Logic', () => {
         description: 'A test story',
         author: 'Test Author',
         version: '1.0.0',
-        createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z',
+        created: Date.now().toString(),
+        modified: Date.now().toString(),
         tags: [],
       },
       startPassage: 'start',
-      passages: [
-        {
-          id: 'start',
-          title: 'Start',
-          content: 'This is the start',
-          tags: [],
-          position: { x: 0, y: 0 },
-        },
-      ],
-      variables: {},
+      passages: new Map(),
+      variables: new Map(),
       settings: {},
-    } as Story;
+    } as unknown as Story;
   });
 
   describe('Successful Publishing', () => {
@@ -703,7 +695,7 @@ describe('PublishDialog - State Management', () => {
 
       state.filename = 'my-story';
       state.description = 'A cool story';
-      state.defaultTheme = 'dark';
+      state.defaultTheme = 'dark' as const;
 
       expect(state.filename).toBe('my-story');
       expect(state.description).toBe('A cool story');

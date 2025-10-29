@@ -87,7 +87,7 @@
   function handleSfxVolumeChange(event: Event) {
     const value = parseFloat((event.target as HTMLInputElement).value);
     sfxVolume = value;
-    audioManager.setSfxVolume(value);
+    audioManager.setSFXVolume(value);
     dispatch('volumeChanged', { type: 'sfx', value });
   }
 

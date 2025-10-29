@@ -6,13 +6,14 @@
   // Props
   let {
     passageId = null,
-    showResolved = $state(false),
+    showResolved: initialShowResolved = false,
   }: {
     passageId?: string | null;
     showResolved?: boolean;
   } = $props();
 
   // State
+  let showResolved = $state(initialShowResolved);
   let newCommentText = $state('');
   let usernameInput = $state($currentUser);
   let showUserSettings = $state(false);
@@ -41,8 +42,8 @@
     newCommentText = '';
   }
 
-  function handleReply(event: CustomEvent) {
-    const { parentId, content } = event.detail;
+  function handleReply(detail: { parentId: string; content: string }) {
+    const { parentId, content } = detail;
     if (!passageId) return;
 
     commentActions.addComment({
@@ -53,23 +54,23 @@
     });
   }
 
-  function handleEdit(event: CustomEvent) {
-    const { commentId, content } = event.detail;
+  function handleEdit(detail: { commentId: string; content: string }) {
+    const { commentId, content } = detail;
     commentActions.updateComment(commentId, content);
   }
 
-  function handleDelete(event: CustomEvent) {
-    const { commentId } = event.detail;
+  function handleDelete(detail: { commentId: string }) {
+    const { commentId } = detail;
     commentActions.deleteComment(commentId);
   }
 
-  function handleResolve(event: CustomEvent) {
-    const { commentId } = event.detail;
+  function handleResolve(detail: { commentId: string }) {
+    const { commentId } = detail;
     commentActions.resolveComment(commentId);
   }
 
-  function handleUnresolve(event: CustomEvent) {
-    const { commentId } = event.detail;
+  function handleUnresolve(detail: { commentId: string }) {
+    const { commentId } = detail;
     commentActions.unresolveComment(commentId);
   }
 
@@ -145,11 +146,11 @@
     {#each displayComments() as comment (comment.id)}
       <CommentThread
         {comment}
-        on:reply={handleReply}
-        on:edit={handleEdit}
-        on:delete={handleDelete}
-        on:resolve={handleResolve}
-        on:unresolve={handleUnresolve}
+        onreply={handleReply}
+        onedit={handleEdit}
+        ondelete={handleDelete}
+        onresolve={handleResolve}
+        onunresolve={handleUnresolve}
       />
     {:else}
       <div class="empty-state">

@@ -72,7 +72,7 @@ export const analyticsActions = {
     if (!story || !metrics) return null;
 
     return {
-      storyId: story.metadata.id,
+      storyId: story.metadata.id ?? story.id,
       storyTitle: story.metadata.title,
       generatedAt: Date.now(),
       metrics,

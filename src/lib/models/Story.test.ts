@@ -305,7 +305,7 @@ describe('Story', () => {
     it('should serialize stylesheets, scripts, and assets', () => {
       story.addStylesheet('body { color: red; }');
       story.addScript('function test() {}');
-      story.addAsset({ id: 'asset1', name: 'Asset', type: 'image', path: 'path', mimeType: 'image/png' });
+      story.addAsset({ id: 'asset1', name: 'Asset', type: 'image' as const, path: 'path', mimeType: 'image/png' });
 
       const data = story.serialize();
       expect(data.stylesheets).toEqual(['body { color: red; }']);
@@ -373,8 +373,8 @@ describe('Story', () => {
         stylesheets: ['css1', 'css2'],
         scripts: ['script1', 'script2'],
         assets: [
-          { id: 'asset1', name: 'Asset 1', type: 'image', path: 'path1', mimeType: 'image/png' },
-          { id: 'asset2', name: 'Asset 2', type: 'audio', path: 'path2', mimeType: 'audio/mp3' },
+          { id: 'asset1', name: 'Asset 1', type: 'image' as const, path: 'path1', mimeType: 'image/png' },
+          { id: 'asset2', name: 'Asset 2', type: 'audio' as const, path: 'path2', mimeType: 'audio/mp3' },
         ],
       };
 
@@ -582,12 +582,12 @@ describe('Story', () => {
         title: 'Action Passage',
         content: 'You find a potion.',
       });
-      passage.choices.push({
+      passage.choices.push(new Choice({
         id: 'choice1',
         text: 'Drink it',
         target: 'next',
         action: 'health = health + 50',
-      });
+      }));
       story.addPassage(passage);
 
       const usage = story.getVariableUsage('health');

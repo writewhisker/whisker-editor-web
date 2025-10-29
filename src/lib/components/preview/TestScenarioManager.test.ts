@@ -94,7 +94,7 @@ describe('TestScenarioManager', () => {
           name: 'Test Scenario 1',
           description: 'First test',
           steps: [{ description: 'Step 1' }],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
         {
@@ -102,7 +102,7 @@ describe('TestScenarioManager', () => {
           name: 'Test Scenario 2',
           description: '',
           steps: [{ description: 'Step A' }, { description: 'Step B' }],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
       ]);
@@ -207,7 +207,7 @@ describe('TestScenarioManager', () => {
           name: 'Passing Test',
           description: '',
           steps: [],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
         {
@@ -215,7 +215,7 @@ describe('TestScenarioManager', () => {
           name: 'Failing Test',
           description: '',
           steps: [],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
       ]);
@@ -267,7 +267,7 @@ describe('TestScenarioManager', () => {
           name: 'Test Scenario',
           description: 'Test',
           steps: [],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
       ]);
@@ -322,7 +322,7 @@ describe('TestScenarioManager', () => {
           name: 'Test',
           description: '',
           steps: [],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
       ]);
@@ -374,7 +374,7 @@ describe('TestScenarioManager', () => {
           name: 'Test',
           description: '',
           steps: [],
-          modified: Date.now(),
+          modified: Date.now().toString(),
           tags: [],
         },
       ]);

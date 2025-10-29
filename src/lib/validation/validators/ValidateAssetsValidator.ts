@@ -140,11 +140,9 @@ export class ValidateAssetsValidator implements Validator {
           message: `Unused asset "${asset?.name || assetId}"`,
           description: 'This asset is not referenced in any passage.',
           fixable: true,
-          fix: {
-            description: 'Remove unused asset',
-            apply: () => {
-              story.removeAsset(assetId);
-            }
+          fixDescription: 'Remove unused asset',
+          fixAction: () => {
+            story.removeAsset(assetId);
           }
         });
       }

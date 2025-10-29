@@ -27,11 +27,9 @@ export class ValidatePassageMetadataValidator implements Validator {
             description: `Width must be greater than 0, got ${passage.size.width}.`,
             fixable: true,
             passageId,
-            fix: {
-              description: 'Reset to default width (200)',
-              apply: () => {
-                passage.size.width = 200;
-              }
+            fixDescription: 'Reset to default width (200)',
+            fixAction: () => {
+              passage.size.width = 200;
             }
           });
         }
@@ -45,11 +43,9 @@ export class ValidatePassageMetadataValidator implements Validator {
             description: `Height must be greater than 0, got ${passage.size.height}.`,
             fixable: true,
             passageId,
-            fix: {
-              description: 'Reset to default height (150)',
-              apply: () => {
-                passage.size.height = 150;
-              }
+            fixDescription: 'Reset to default height (150)',
+            fixAction: () => {
+              passage.size.height = 150;
             }
           });
         }

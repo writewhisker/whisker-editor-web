@@ -27,11 +27,9 @@ export class ValidateIFIDValidator implements Validator {
         message: 'Missing IFID',
         description: 'Story should have an Interactive Fiction ID (IFID). One will be generated automatically when saved.',
         fixable: true,
-        fix: {
-          description: 'Generate a new IFID',
-          apply: () => {
-            story.metadata.ifid = crypto.randomUUID();
-          }
+        fixDescription: 'Generate a new IFID',
+        fixAction: () => {
+          story.metadata.ifid = crypto.randomUUID();
         }
       });
       return issues;
@@ -46,11 +44,9 @@ export class ValidateIFIDValidator implements Validator {
         message: 'Invalid IFID format',
         description: `IFID "${story.metadata.ifid}" is not a valid UUID v4 format. Expected format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`,
         fixable: true,
-        fix: {
-          description: 'Generate a new valid IFID',
-          apply: () => {
-            story.metadata.ifid = crypto.randomUUID();
-          }
+        fixDescription: 'Generate a new valid IFID',
+        fixAction: () => {
+          story.metadata.ifid = crypto.randomUUID();
         }
       });
     }

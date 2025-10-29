@@ -29,11 +29,9 @@ export class ValidateScriptsValidator implements Validator {
           message: `Script ${index + 1}: Empty`,
           description: 'This script is empty and can be removed.',
           fixable: true,
-          fix: {
-            description: 'Remove empty script',
-            apply: () => {
-              story.removeScript(index);
-            }
+          fixDescription: 'Remove empty script',
+          fixAction: () => {
+            story.removeScript(index);
           }
         });
         return;

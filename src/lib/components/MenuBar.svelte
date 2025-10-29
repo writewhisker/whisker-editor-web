@@ -477,6 +477,7 @@
           id="test-menu"
           bind:this={testMenuElement}
           role="menu"
+          tabindex="-1"
           aria-labelledby="test-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
           on:click={closeMenus}
@@ -528,6 +529,7 @@
           id="help-menu"
           bind:this={helpMenuElement}
           role="menu"
+          tabindex="-1"
           aria-labelledby="help-menu-button"
           class="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
           on:click={closeMenus}

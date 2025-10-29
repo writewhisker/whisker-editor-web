@@ -44,11 +44,9 @@ export class ValidateStylesheetsValidator implements Validator {
           message: `Stylesheet ${index + 1}: Empty`,
           description: 'This stylesheet is empty and can be removed.',
           fixable: true,
-          fix: {
-            description: 'Remove empty stylesheet',
-            apply: () => {
-              story.removeStylesheet(index);
-            }
+          fixDescription: 'Remove empty stylesheet',
+          fixAction: () => {
+            story.removeStylesheet(index);
           }
         });
       }

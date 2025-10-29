@@ -7,10 +7,8 @@
  * Phase 4 implementation - Store refactoring to use storage adapter
  */
 
-import type { IStorageAdapter } from './types';
+import type { IStorageAdapter, PreferenceScope } from './types';
 import { getDefaultStorageAdapter } from './StorageServiceFactory';
-
-export type PreferenceScope = 'global' | 'project';
 
 export interface PreferenceEntry<T = any> {
 	value: T;

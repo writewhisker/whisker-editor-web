@@ -8,6 +8,7 @@
 import { Story } from '../../models/Story';
 import { Passage } from '../../models/Passage';
 import { Variable } from '../../models/Variable';
+import { Choice } from '../../models/Choice';
 import type {
   ImportContext,
   ImportResult,
@@ -636,11 +637,11 @@ export class TwineImporter implements IImporter {
         );
 
         if (targetPassage) {
-          passage.addChoice({
+          passage.addChoice(new Choice({
             id: nanoid(),
             text: link.text,
             target: targetPassage.id,
-          });
+          }));
         } else {
           warnings.push(
             `Broken link in passage "${passage.title}": target "${link.target}" not found`

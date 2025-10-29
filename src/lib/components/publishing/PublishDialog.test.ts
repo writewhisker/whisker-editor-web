@@ -451,7 +451,7 @@ describe('PublishDialog - Publishing Logic', () => {
           ...mockStory.metadata,
           title: '',
         },
-      };
+      } as Story;
 
       const successResult: PublishResult = {
         success: true,
@@ -476,7 +476,7 @@ describe('PublishDialog - Publishing Logic', () => {
           ...mockStory.metadata,
           description: undefined,
         },
-      };
+      } as Story;
 
       const successResult: PublishResult = {
         success: true,

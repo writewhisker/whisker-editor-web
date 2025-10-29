@@ -199,6 +199,11 @@ export interface IStorageAdapter {
 	downloadAsset?(assetId: string): Promise<Blob>;
 	deleteAsset?(assetId: string): Promise<void>;
 	listAssets?(projectId: string): Promise<AssetMetadata[]>;
+
+	/**
+	 * Storage Quota Operations
+	 */
+	getQuotaInfo(): Promise<{ used: number; available: number; total: number }>;
 }
 
 /**

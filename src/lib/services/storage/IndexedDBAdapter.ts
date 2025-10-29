@@ -3,16 +3,19 @@
  *
  * Provides IndexedDB backend for the storage system.
  * Suitable for larger data sets like stories and project files.
+ *
+ * Note: This is a partial implementation focusing on preferences.
+ * Full IStorageAdapter implementation is pending.
  */
 
-import type { IStorageAdapter, PreferenceScope } from './types';
+import type { PreferenceScope } from './types';
 
 export interface IndexedDBConfig {
   dbName: string;
   version: number;
 }
 
-export class IndexedDBAdapter implements IStorageAdapter {
+export class IndexedDBAdapter {
   private dbName: string;
   private dbVersion: number;
   private db: IDBDatabase | null = null;

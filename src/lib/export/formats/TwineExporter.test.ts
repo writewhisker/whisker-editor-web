@@ -10,7 +10,7 @@ describe('TwineExporter', () => {
     it('should have correct exporter metadata', () => {
       expect(exporter.name).toBe('Twine HTML Exporter');
       expect(exporter.format).toBe('twine');
-      expect(exporter.extensions).toEqual(['.html']);
+      expect(exporter.extension).toBe('.html');
       expect(exporter.mimeType).toBe('text/html');
     });
   });
@@ -158,7 +158,7 @@ describe('TwineExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: {}, format: 'twine' });
+      const result = await exporter.export({ story: null as any, options: { format: 'twine' } });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();

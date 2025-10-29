@@ -1,5 +1,7 @@
 import type { IExporter } from '../types';
 import type { ExportContext, ExportResult } from '../types';
+import type { Story } from '$lib/models/Story';
+import type { Passage } from '$lib/models/Passage';
 import { nanoid } from 'nanoid';
 
 /**
@@ -47,7 +49,7 @@ export class TwineExporter implements IExporter {
 
     // Convert passages to tw-passagedata elements
     const passageElements = passages
-      .map((passage, index) => {
+      .map((passage: Passage, index: number) => {
         const pid = String(index + 1);
         const name = this.escapeHTML(passage.title || `Passage ${pid}`);
         const tags = passage.tags?.join(' ') || '';

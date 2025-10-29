@@ -136,9 +136,9 @@
     </div>
 
     {#if selectedHotspot}
+      {@const hotspot = hotspots.find((h) => h.id === selectedHotspot)}
+      {#if hotspot}
       <div class="selected-info">
-        {@const hotspot = hotspots.find((h) => h.id === selectedHotspot)}
-        {#if hotspot}
           <div class="info-header">
             <span class="info-icon">📍</span>
             <h4>{hotspot.label || 'Selected Area'}</h4>
@@ -153,8 +153,8 @@
           {#if hotspot.description}
             <p class="info-description">{hotspot.description}</p>
           {/if}
-        {/if}
       </div>
+      {/if}
     {/if}
   {/if}
 </div>

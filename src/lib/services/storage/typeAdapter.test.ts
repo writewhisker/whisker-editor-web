@@ -105,6 +105,7 @@ describe('typeAdapter', () => {
       story.addAsset({
         id: 'asset1',
         name: 'Test Image',
+        type: 'image',
         path: 'path/to/image.png',
         mimeType: 'image/png',
         size: 1024,
@@ -113,6 +114,7 @@ describe('typeAdapter', () => {
       story.addAsset({
         id: 'asset2',
         name: 'Test Audio',
+        type: 'audio',
         path: 'path/to/audio.mp3',
         mimeType: 'audio/mp3',
       });
@@ -385,6 +387,7 @@ describe('typeAdapter', () => {
       original.addAsset({
         id: 'img1',
         name: 'Image',
+        type: 'image',
         path: 'img.png',
         mimeType: 'image/png',
         size: 2048,

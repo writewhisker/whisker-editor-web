@@ -27,7 +27,6 @@ export class StaticPublisher implements IPublisher {
           filename: options.filename,
           theme: options.defaultTheme,
         },
-        format: 'html-standalone',
       });
 
       if (!result.success) {
@@ -39,7 +38,7 @@ export class StaticPublisher implements IPublisher {
       }
 
       // Create blob for download
-      const blob = new Blob([result.data as string], { type: 'text/html' });
+      const blob = new Blob([result.content as string], { type: 'text/html' });
 
       // Trigger download
       const url = URL.createObjectURL(blob);

@@ -305,12 +305,12 @@ describe('Story', () => {
     it('should serialize stylesheets, scripts, and assets', () => {
       story.addStylesheet('body { color: red; }');
       story.addScript('function test() {}');
-      story.addAsset({ id: 'asset1', name: 'Asset', path: 'path', mimeType: 'image/png' });
+      story.addAsset({ id: 'asset1', name: 'Asset', type: 'image', path: 'path', mimeType: 'image/png' });
 
       const data = story.serialize();
       expect(data.stylesheets).toEqual(['body { color: red; }']);
       expect(data.scripts).toEqual(['function test() {}']);
-      expect(data.assets).toEqual([{ id: 'asset1', name: 'Asset', path: 'path', mimeType: 'image/png' }]);
+      expect(data.assets).toEqual([{ id: 'asset1', name: 'Asset', type: 'image', path: 'path', mimeType: 'image/png' }]);
     });
 
     it('should deserialize story data', () => {
@@ -373,8 +373,8 @@ describe('Story', () => {
         stylesheets: ['css1', 'css2'],
         scripts: ['script1', 'script2'],
         assets: [
-          { id: 'asset1', name: 'Asset 1', path: 'path1', mimeType: 'image/png' },
-          { id: 'asset2', name: 'Asset 2', path: 'path2', mimeType: 'audio/mp3' },
+          { id: 'asset1', name: 'Asset 1', type: 'image', path: 'path1', mimeType: 'image/png' },
+          { id: 'asset2', name: 'Asset 2', type: 'audio', path: 'path2', mimeType: 'audio/mp3' },
         ],
       };
 
@@ -382,8 +382,8 @@ describe('Story', () => {
       expect(loaded.stylesheets).toEqual(['css1', 'css2']);
       expect(loaded.scripts).toEqual(['script1', 'script2']);
       expect(loaded.assets.size).toBe(2);
-      expect(loaded.getAsset('asset1')).toEqual({ id: 'asset1', name: 'Asset 1', path: 'path1', mimeType: 'image/png' });
-      expect(loaded.getAsset('asset2')).toEqual({ id: 'asset2', name: 'Asset 2', path: 'path2', mimeType: 'audio/mp3' });
+      expect(loaded.getAsset('asset1')).toEqual({ id: 'asset1', name: 'Asset 1', type: 'image', path: 'path1', mimeType: 'image/png' });
+      expect(loaded.getAsset('asset2')).toEqual({ id: 'asset2', name: 'Asset 2', type: 'audio', path: 'path2', mimeType: 'audio/mp3' });
     });
 
     it('should serialize and deserialize project data', () => {

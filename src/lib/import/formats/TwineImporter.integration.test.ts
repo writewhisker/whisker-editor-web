@@ -206,7 +206,7 @@ describe('TwineImporter Integration Tests', () => {
 
       const result = await importer.import({
         data: htmlContent,
-        options: { convertVariables: true },
+        options: { conversionOptions: { convertVariables: true } },
         filename: 'harlowe-sample.html',
       });
 
@@ -224,7 +224,7 @@ describe('TwineImporter Integration Tests', () => {
 
       const result = await importer.import({
         data: htmlContent,
-        options: { preserveOriginalSyntax: true },
+        options: { conversionOptions: { preserveOriginalSyntax: true } },
         filename: 'sugarcube-sample.html',
       });
 

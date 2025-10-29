@@ -157,7 +157,6 @@ describe('ImportDialog', () => {
       importSpy.mockResolvedValue({
         success: true,
         story: testStory,
-        format: 'json',
         passageCount: 1,
         variableCount: 0,
         warnings: [],

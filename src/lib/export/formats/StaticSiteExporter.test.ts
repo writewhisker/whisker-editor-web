@@ -11,7 +11,7 @@ describe('StaticSiteExporter', () => {
     it('should have correct exporter metadata', () => {
       expect(exporter.name).toBe('Static Site Exporter');
       expect(exporter.format).toBe('html-standalone');
-      expect(exporter.extensions).toEqual(['.html']);
+      expect(exporter.extension).toBe('.html');
       expect(exporter.mimeType).toBe('text/html');
     });
   });
@@ -256,7 +256,7 @@ describe('StaticSiteExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story: null as any, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();

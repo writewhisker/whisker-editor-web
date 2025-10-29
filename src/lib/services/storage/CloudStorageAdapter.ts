@@ -55,8 +55,11 @@ export type ConflictCallback = (conflicts: ConflictResolution[]) => Promise<Conf
  * - Conflict resolution strategies
  * - Online/offline detection
  * - Background sync worker
+ *
+ * Note: This is a partial implementation focusing on preference syncing.
+ * Full IStorageAdapter implementation is pending.
  */
-export class CloudStorageAdapter implements IStorageAdapter {
+export class CloudStorageAdapter {
   private config: CloudStorageConfig;
   private localAdapter: LocalStorageAdapter;
   private cache: Map<string, { value: any; timestamp: number }> = new Map();
@@ -164,7 +167,7 @@ export class CloudStorageAdapter implements IStorageAdapter {
     }
 
     // Load from local storage
-    const localValue = await this.localAdapter.loadPreference<T>(key, scope);
+    const localValue = await this.localAdapter.loadPreference(key, scope) as T | null;
 
     if (localValue !== null) {
       this.cache.set(key, { value: localValue, timestamp: Date.now() });

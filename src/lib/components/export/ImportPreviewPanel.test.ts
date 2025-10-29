@@ -36,7 +36,6 @@ describe('ImportPreviewPanel', () => {
     mockResult = {
       success: true,
       story,
-      format: 'twine',
       passageCount: 3,
       variableCount: 1,
       warnings: [],

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, fireEvent, screen } from '@testing-library/svelte';
+import { render, fireEvent, screen, within } from '@testing-library/svelte';
 import type { Comment } from '$lib/models/Comment';
 import { writable } from 'svelte/store';
 
@@ -18,6 +18,9 @@ describe('CommentThread', () => {
   let mockComment: Comment;
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-01-01 12:00:00'));
+
     mockComment = {
       id: 'comment-1',
       passageId: 'passage-1',
@@ -27,9 +30,6 @@ describe('CommentThread', () => {
       resolved: false,
       replies: [],
     } as Comment;
-
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01 12:00:00'));
   });
 
   afterEach(() => {
@@ -134,8 +134,9 @@ describe('CommentThread', () => {
       };
       render(CommentThread, { comment: veryOldComment });
 
-      // Should show formatted date
-      expect(screen.getByText(/12\/1\/2023/i)).toBeInTheDocument();
+      // Should show formatted date (toLocaleDateString format varies by locale)
+      const timestampEl = screen.getByText(/11\/30\/2023|12\/1\/2023/i);
+      expect(timestampEl).toBeInTheDocument();
     });
   });
 
@@ -197,11 +198,9 @@ describe('CommentThread', () => {
       expect(screen.queryByPlaceholderText('Write a reply...')).not.toBeInTheDocument();
     });
 
-    it('should dispatch reply event with content', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should call onreply with content', async () => {
       const replyHandler = vi.fn();
-      component.$on('reply', replyHandler);
+      const { container } = render(CommentThread, { comment: mockComment, onreply: replyHandler });
 
       const replyButton = screen.getByText('Reply');
       await fireEvent.click(replyButton);
@@ -209,36 +208,34 @@ describe('CommentThread', () => {
       const textarea = screen.getByPlaceholderText('Write a reply...');
       await fireEvent.input(textarea, { target: { value: 'Test reply' } });
 
-      const submitButton = screen.getByRole('button', { name: 'Reply' });
+      // Get submit button from reply form
+      const replyForm = container.querySelector('.reply-form');
+      const submitButton = within(replyForm as HTMLElement).getByText('Reply');
       await fireEvent.click(submitButton);
 
-      expect(replyHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: {
-            parentId: 'comment-1',
-            content: 'Test reply',
-          },
-        })
-      );
+      expect(replyHandler).toHaveBeenCalledWith({
+        parentId: 'comment-1',
+        content: 'Test reply',
+      });
     });
 
-    it('should not dispatch reply with empty content', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should not call onreply with empty content', async () => {
       const replyHandler = vi.fn();
-      component.$on('reply', replyHandler);
+      const { container } = render(CommentThread, { comment: mockComment, onreply: replyHandler });
 
       const replyButton = screen.getByText('Reply');
       await fireEvent.click(replyButton);
 
-      const submitButton = screen.getByRole('button', { name: 'Reply' });
+      // Get submit button from reply form
+      const replyForm = container.querySelector('.reply-form');
+      const submitButton = within(replyForm as HTMLElement).getByText('Reply');
       await fireEvent.click(submitButton);
 
       expect(replyHandler).not.toHaveBeenCalled();
     });
 
     it('should clear reply form after submission', async () => {
-      render(CommentThread, { comment: mockComment });
+      const { container } = render(CommentThread, { comment: mockComment });
 
       const replyButton = screen.getByText('Reply');
       await fireEvent.click(replyButton);
@@ -246,7 +243,9 @@ describe('CommentThread', () => {
       const textarea = screen.getByPlaceholderText('Write a reply...');
       await fireEvent.input(textarea, { target: { value: 'Test reply' } });
 
-      const submitButton = screen.getByRole('button', { name: 'Reply' });
+      // Get submit button from reply form
+      const replyForm = container.querySelector('.reply-form');
+      const submitButton = within(replyForm as HTMLElement).getByText('Reply');
       await fireEvent.click(submitButton);
 
       // Reply form should be hidden after submission
@@ -277,11 +276,9 @@ describe('CommentThread', () => {
       expect(screen.queryByPlaceholderText('Edit comment...')).not.toBeInTheDocument();
     });
 
-    it('should dispatch edit event with updated content', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should call onedit with updated content', async () => {
       const editHandler = vi.fn();
-      component.$on('edit', editHandler);
+      render(CommentThread, { comment: mockComment, onedit: editHandler });
 
       const editButton = screen.getByTitle('Edit');
       await fireEvent.click(editButton);
@@ -292,21 +289,15 @@ describe('CommentThread', () => {
       const saveButton = screen.getByRole('button', { name: 'Save' });
       await fireEvent.click(saveButton);
 
-      expect(editHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: {
-            commentId: 'comment-1',
-            content: 'Updated comment',
-          },
-        })
-      );
+      expect(editHandler).toHaveBeenCalledWith({
+        commentId: 'comment-1',
+        content: 'Updated comment',
+      });
     });
 
-    it('should not dispatch edit with empty content', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should not call onedit with empty content', async () => {
       const editHandler = vi.fn();
-      component.$on('edit', editHandler);
+      render(CommentThread, { comment: mockComment, onedit: editHandler });
 
       const editButton = screen.getByTitle('Edit');
       await fireEvent.click(editButton);
@@ -344,31 +335,23 @@ describe('CommentThread', () => {
       confirmSpy.mockRestore();
     });
 
-    it('should dispatch delete event when confirmed', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should call ondelete when confirmed', async () => {
       const deleteHandler = vi.fn();
-      component.$on('delete', deleteHandler);
+      render(CommentThread, { comment: mockComment, ondelete: deleteHandler });
 
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       const deleteButton = screen.getByTitle('Delete');
       await fireEvent.click(deleteButton);
 
-      expect(deleteHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { commentId: 'comment-1' },
-        })
-      );
+      expect(deleteHandler).toHaveBeenCalledWith({ commentId: 'comment-1' });
 
       confirmSpy.mockRestore();
     });
 
-    it('should not dispatch delete event when cancelled', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should not call ondelete when cancelled', async () => {
       const deleteHandler = vi.fn();
-      component.$on('delete', deleteHandler);
+      render(CommentThread, { comment: mockComment, ondelete: deleteHandler });
 
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
 
@@ -382,37 +365,25 @@ describe('CommentThread', () => {
   });
 
   describe('resolve/unresolve functionality', () => {
-    it('should dispatch resolve event', async () => {
-      const { component } = render(CommentThread, { comment: mockComment });
-
+    it('should call onresolve', async () => {
       const resolveHandler = vi.fn();
-      component.$on('resolve', resolveHandler);
+      render(CommentThread, { comment: mockComment, onresolve: resolveHandler });
 
       const resolveButton = screen.getByTitle('Resolve');
       await fireEvent.click(resolveButton);
 
-      expect(resolveHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { commentId: 'comment-1' },
-        })
-      );
+      expect(resolveHandler).toHaveBeenCalledWith({ commentId: 'comment-1' });
     });
 
-    it('should dispatch unresolve event', async () => {
+    it('should call onunresolve', async () => {
       const resolvedComment = { ...mockComment, resolved: true };
-      const { component } = render(CommentThread, { comment: resolvedComment });
-
       const unresolveHandler = vi.fn();
-      component.$on('unresolve', unresolveHandler);
+      render(CommentThread, { comment: resolvedComment, onunresolve: unresolveHandler });
 
       const unresolveButton = screen.getByTitle('Unresolve');
       await fireEvent.click(unresolveButton);
 
-      expect(unresolveHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { commentId: 'comment-1' },
-        })
-      );
+      expect(unresolveHandler).toHaveBeenCalledWith({ commentId: 'comment-1' });
     });
   });
 
@@ -488,10 +459,8 @@ describe('CommentThread', () => {
         ],
       };
 
-      const { component } = render(CommentThread, { comment: commentWithReplies });
-
       const deleteHandler = vi.fn();
-      component.$on('delete', deleteHandler);
+      render(CommentThread, { comment: commentWithReplies, ondelete: deleteHandler });
 
       const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
@@ -499,11 +468,7 @@ describe('CommentThread', () => {
       const deleteButtons = screen.getAllByTitle('Delete');
       await fireEvent.click(deleteButtons[1]);
 
-      expect(deleteHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: { commentId: 'reply-1' },
-        })
-      );
+      expect(deleteHandler).toHaveBeenCalledWith({ commentId: 'reply-1' });
 
       confirmSpy.mockRestore();
     });

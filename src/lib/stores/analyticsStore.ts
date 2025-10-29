@@ -110,13 +110,16 @@ export const analyticsActions = {
 
 // Auto-analyze when story changes
 let analyzeTimeout: ReturnType<typeof setTimeout> | null = null;
-currentStory.subscribe(() => {
+currentStory.subscribe(($story) => {
   // Debounce analysis
   if (analyzeTimeout) {
     clearTimeout(analyzeTimeout);
   }
 
-  analyzeTimeout = setTimeout(() => {
-    analyticsActions.analyzeStory();
-  }, 500);
+  // Only analyze if there's actually a story
+  if ($story) {
+    analyzeTimeout = setTimeout(() => {
+      analyticsActions.analyzeStory();
+    }, 500);
+  }
 });

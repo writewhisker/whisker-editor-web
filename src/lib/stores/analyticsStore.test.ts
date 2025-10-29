@@ -29,8 +29,10 @@ describe('analyticsStore', () => {
   beforeEach(() => {
     // Clear stores
     analyticsActions.clear();
+    currentStory.set(null);
     vi.clearAllMocks();
     vi.useFakeTimers();
+    vi.clearAllTimers(); // Clear any pending timers from module load
 
     // Mock story
     mockStory = {
@@ -373,8 +375,9 @@ describe('analyticsStore', () => {
 
       currentStory.set(mockStory);
 
-      // Wait for debounce (500ms)
+      // Wait for debounce (500ms) and any async operations
       await vi.advanceTimersByTimeAsync(500);
+      await vi.runAllTimersAsync();
 
       expect(StoryAnalytics.analyze).toHaveBeenCalledWith(mockStory);
       expect(get(currentMetrics)).toEqual(mockMetrics);
@@ -399,6 +402,7 @@ describe('analyticsStore', () => {
 
       // Wait for full debounce
       await vi.advanceTimersByTimeAsync(300);
+      await vi.runAllTimersAsync();
 
       // Should have analyzed only once
       expect(StoryAnalytics.analyze).toHaveBeenCalledTimes(1);
@@ -419,6 +423,7 @@ describe('analyticsStore', () => {
 
       // Wait for new timeout
       await vi.advanceTimersByTimeAsync(500);
+      await vi.runAllTimersAsync();
 
       expect(StoryAnalytics.analyze).toHaveBeenCalledTimes(1);
     });

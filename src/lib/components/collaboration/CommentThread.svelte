@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import type { Comment } from '$lib/models/Comment';
   import { currentUser } from '$lib/stores/commentStore';
 
@@ -7,12 +6,20 @@
   let {
     comment,
     depth = 0,
+    onreply,
+    onedit,
+    ondelete,
+    onresolve,
+    onunresolve,
   }: {
     comment: Comment;
     depth?: number;
+    onreply?: (detail: { parentId: string; content: string }) => void;
+    onedit?: (detail: { commentId: string; content: string }) => void;
+    ondelete?: (detail: { commentId: string }) => void;
+    onresolve?: (detail: { commentId: string }) => void;
+    onunresolve?: (detail: { commentId: string }) => void;
   } = $props();
-
-  const dispatch = createEventDispatcher();
 
   // State
   let isReplying = $state(false);
@@ -38,7 +45,7 @@
 
   function handleReply() {
     if (!replyText.trim()) return;
-    dispatch('reply', {
+    onreply?.({
       parentId: comment.id,
       content: replyText,
     });
@@ -48,7 +55,7 @@
 
   function handleEdit() {
     if (!editText.trim()) return;
-    dispatch('edit', {
+    onedit?.({
       commentId: comment.id,
       content: editText,
     });
@@ -57,16 +64,16 @@
 
   function handleDelete() {
     if (confirm('Delete this comment?')) {
-      dispatch('delete', { commentId: comment.id });
+      ondelete?.({ commentId: comment.id });
     }
   }
 
   function handleResolve() {
-    dispatch('resolve', { commentId: comment.id });
+    onresolve?.({ commentId: comment.id });
   }
 
   function handleUnresolve() {
-    dispatch('unresolve', { commentId: comment.id });
+    onunresolve?.({ commentId: comment.id });
   }
 
   function startEditing() {
@@ -168,11 +175,11 @@
         <svelte:self
           comment={reply}
           depth={depth + 1}
-          on:reply
-          on:edit
-          on:delete
-          on:resolve
-          on:unresolve
+          {onreply}
+          {onedit}
+          {ondelete}
+          {onresolve}
+          {onunresolve}
         />
       {/each}
     </div>

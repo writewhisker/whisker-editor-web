@@ -260,10 +260,10 @@ describe('AIPromptTemplates', () => {
     });
 
     it('should combine search with category filter', async () => {
-      render(AIPromptTemplates, { open: true });
+      const { container } = render(AIPromptTemplates, { open: true });
 
-      const writingButton = screen.getByRole('button', { name: /Writing/i });
-      await fireEvent.click(writingButton);
+      const writingButton = screen.getByText('📝 Writing').closest('.filter-btn');
+      if (writingButton) await fireEvent.click(writingButton);
 
       const searchInput = screen.getByPlaceholderText('Search templates...');
       await fireEvent.input(searchInput, { target: { value: 'passage' } });
@@ -274,37 +274,31 @@ describe('AIPromptTemplates', () => {
   });
 
   describe('template selection', () => {
-    it('should dispatch select event when template clicked', async () => {
-      const { component } = render(AIPromptTemplates, { open: true });
-
+    it('should call onselect when template clicked', async () => {
       const selectHandler = vi.fn();
-      component.$on('select', selectHandler);
+      render(AIPromptTemplates, { open: true, onselect: selectHandler });
 
       const expandPassageCard = screen.getByText('Expand Passage').closest('button');
       if (expandPassageCard) {
         await fireEvent.click(expandPassageCard);
       }
 
-      expect(selectHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: {
-            template: expect.objectContaining({
-              id: 'expand-passage',
-              name: 'Expand Passage',
-              category: 'writing',
-            }),
-          },
-        })
-      );
+      expect(selectHandler).toHaveBeenCalledWith({
+        template: expect.objectContaining({
+          id: 'expand-passage',
+          name: 'Expand Passage',
+          category: 'writing',
+        }),
+      });
     });
 
     it('should close dialog after template selection', async () => {
-      let isOpen = $state(true);
-      const { component, rerender } = render(AIPromptTemplates, { open: isOpen });
-
-      component.$on('select', () => {
+      let isOpen = true;
+      const selectHandler = () => {
         isOpen = false;
-      });
+      };
+
+      const { rerender } = render(AIPromptTemplates, { open: isOpen, onselect: selectHandler });
 
       const expandPassageCard = screen.getByText('Expand Passage').closest('button');
       if (expandPassageCard) {
@@ -317,48 +311,39 @@ describe('AIPromptTemplates', () => {
     });
 
     it('should include template prompt in selection', async () => {
-      const { component } = render(AIPromptTemplates, { open: true });
-
       const selectHandler = vi.fn();
-      component.$on('select', selectHandler);
+      render(AIPromptTemplates, { open: true, onselect: selectHandler });
 
       const expandPassageCard = screen.getByText('Expand Passage').closest('button');
       if (expandPassageCard) {
         await fireEvent.click(expandPassageCard);
       }
 
-      expect(selectHandler).toHaveBeenCalledWith(
-        expect.objectContaining({
-          detail: {
-            template: expect.objectContaining({
-              prompt: expect.stringContaining('Expand this passage'),
-            }),
-          },
-        })
-      );
+      expect(selectHandler).toHaveBeenCalledWith({
+        template: expect.objectContaining({
+          prompt: expect.stringContaining('Expand this passage'),
+        }),
+      });
     });
   });
 
   describe('dialog controls', () => {
     it('should close when close button clicked', async () => {
-      let isOpen = $state(true);
-      const { rerender } = render(AIPromptTemplates, {
-        open: isOpen,
+      const { container } = render(AIPromptTemplates, {
+        open: true,
       });
 
       const closeButton = screen.getByLabelText('Close');
       await fireEvent.click(closeButton);
 
-      // Component should update open binding
-      await rerender({ open: false });
-
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Dialog should be removed from DOM after close
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(container.querySelector('.dialog-overlay')).not.toBeInTheDocument();
     });
 
     it('should close when overlay clicked', async () => {
-      let isOpen = $state(true);
-      const { container, rerender } = render(AIPromptTemplates, {
-        open: isOpen,
+      const { container } = render(AIPromptTemplates, {
+        open: true,
       });
 
       const overlay = container.querySelector('.dialog-overlay');
@@ -366,9 +351,9 @@ describe('AIPromptTemplates', () => {
         await fireEvent.click(overlay);
       }
 
-      await rerender({ open: false });
-
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Dialog should be removed from DOM after close
+      await new Promise(resolve => setTimeout(resolve, 0));
+      expect(container.querySelector('.dialog-overlay')).not.toBeInTheDocument();
     });
 
     it('should not close when dialog content clicked', async () => {

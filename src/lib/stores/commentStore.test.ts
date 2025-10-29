@@ -6,7 +6,7 @@ import type { Comment } from '$lib/models/Comment';
 describe('commentStore', () => {
   beforeEach(() => {
     // Clear comments before each test
-    commentActions.clear();
+    commentActions.clearAll();
     vi.clearAllMocks();
   });
 

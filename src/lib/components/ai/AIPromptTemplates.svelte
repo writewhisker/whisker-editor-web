@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-
   interface PromptTemplate {
     id: string;
     name: string;
@@ -13,11 +11,11 @@
   // Props
   let {
     open = $bindable(false),
+    onselect,
   }: {
     open?: boolean;
+    onselect?: (detail: { template: PromptTemplate }) => void;
   } = $props();
-
-  const dispatch = createEventDispatcher();
 
   // State
   let selectedCategory = $state<PromptTemplate['category'] | 'all'>('all');
@@ -170,7 +168,7 @@
   });
 
   function handleSelectTemplate(template: PromptTemplate) {
-    dispatch('select', { template });
+    onselect?.({ template });
     open = false;
   }
 

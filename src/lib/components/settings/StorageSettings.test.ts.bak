@@ -13,7 +13,7 @@ import { getMigrationUtil } from '../../services/storage/migration';
 vi.mock('../../services/storage/PreferenceService');
 vi.mock('../../services/storage/migration');
 
-describe.skip('StorageSettings', () => {
+describe('StorageSettings', () => {
   let mockPrefService: any;
   let mockMigration: any;
 

@@ -1,12 +1,28 @@
 /**
- * LuaEngine - Lua scripting engine for interactive fiction
+ * LuaEngine - SIMPLIFIED Lua scripting engine for interactive fiction preview
  *
- * Supports essential Lua features for story scripting:
- * - Variables (numbers, strings, booleans, tables)
- * - Operators (arithmetic, comparison, logical)
- * - Control flow (if/elseif/else, while, for)
- * - Functions
- * - Standard library subset (string, math, table)
+ * ⚠️ WARNING: This is a LIMITED preview engine with ~30% Lua compatibility.
+ * For production use, deploy to whisker-core which has FULL Lua 5.1+ support.
+ *
+ * SUPPORTED Features:
+ * - ✅ Variables (numbers, strings, booleans)
+ * - ✅ Arithmetic operators (+, -, *, /, %)
+ * - ✅ Comparison operators (==, ~=, <, >, <=, >=)
+ * - ✅ Logical operators (and, or, not)
+ * - ✅ Limited stdlib (math.random, math.floor, string.upper, string.lower, print)
+ *
+ * PARTIALLY SUPPORTED:
+ * - ⚠️ If/then/else statements (with elseif support)
+ * - ⚠️ While loops (basic implementation, max 10000 iterations)
+ * - ⚠️ For loops (numeric only: for i=1,10 do...end, max 10000 iterations)
+ *
+ * NOT SUPPORTED (will throw errors):
+ * - ❌ Function definitions (function...end)
+ * - ❌ Generic for loops (for k,v in pairs...)
+ * - ❌ Tables (very limited, unreliable)
+ * - ❌ Most standard library functions
+ *
+ * See LUAENGINE_LIMITATIONS.md for complete documentation.
  */
 
 export interface LuaValue {
@@ -218,12 +234,7 @@ export class LuaEngine {
    * Execute a single statement
    */
   private executeStatement(statement: string, context: LuaExecutionContext): void {
-    // Variable assignment
-    if (statement.includes('=') && !this.isComparison(statement)) {
-      this.executeAssignment(statement, context);
-      return;
-    }
-
+    // Check for control structures first (before assignment check)
     // If statement
     if (statement.startsWith('if ')) {
       this.executeIf(statement, context);
@@ -239,6 +250,12 @@ export class LuaEngine {
     // For loop
     if (statement.startsWith('for ')) {
       this.executeFor(statement, context);
+      return;
+    }
+
+    // Variable assignment
+    if (statement.includes('=') && !this.isComparison(statement)) {
+      this.executeAssignment(statement, context);
       return;
     }
 
@@ -572,23 +589,230 @@ export class LuaEngine {
   /**
    * Execute if statement
    */
-  private executeIf(statement: string, context: LuaExecutionContext): void {
-    // Simple if statement parsing - in real implementation would need proper parser
-    throw new Error('If statements not yet implemented in simplified engine');
+  private executeIf(fullCode: string, context: LuaExecutionContext): void {
+    // Parse if...then...elseif...else...end structure
+    const lines = fullCode.split('\n').map(l => l.trim());
+
+    interface Branch {
+      condition: string | null; // null for 'else'
+      body: string[];
+    }
+
+    const branches: Branch[] = [];
+    let currentBranch: Branch | null = null;
+    let blockDepth = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Start of if block
+      if (line.startsWith('if ')) {
+        const condition = line.substring(3, line.indexOf(' then')).trim();
+        currentBranch = { condition, body: [] };
+        blockDepth = 1;
+        continue;
+      }
+
+      // elseif branch
+      if (line.startsWith('elseif ') && blockDepth === 1) {
+        if (currentBranch) {
+          branches.push(currentBranch);
+        }
+        const condition = line.substring(7, line.indexOf(' then')).trim();
+        currentBranch = { condition, body: [] };
+        continue;
+      }
+
+      // else branch
+      if (line === 'else' && blockDepth === 1) {
+        if (currentBranch) {
+          branches.push(currentBranch);
+        }
+        currentBranch = { condition: null, body: [] };
+        continue;
+      }
+
+      // end of block
+      if (line === 'end') {
+        blockDepth--;
+        if (blockDepth === 0) {
+          if (currentBranch) {
+            branches.push(currentBranch);
+          }
+          break;
+        }
+      }
+
+      // Track nested blocks
+      if (line.match(/\b(if|while|for|function)\s/)) {
+        blockDepth++;
+      }
+
+      // Add line to current branch body
+      if (currentBranch && line !== 'then') {
+        currentBranch.body.push(line);
+      }
+    }
+
+    // Execute the first branch whose condition is true
+    for (const branch of branches) {
+      if (branch.condition === null) {
+        // else clause - always execute
+        this.executeBlock(branch.body.join('\n'), context);
+        return;
+      }
+
+      const conditionValue = this.evaluateExpression(branch.condition, context);
+      if (this.isTruthy(conditionValue)) {
+        this.executeBlock(branch.body.join('\n'), context);
+        return;
+      }
+    }
+
+    // No branch executed (no else clause or all conditions false)
   }
 
   /**
    * Execute while loop
    */
-  private executeWhile(statement: string, context: LuaExecutionContext): void {
-    throw new Error('While loops not yet implemented in simplified engine');
+  private executeWhile(fullCode: string, context: LuaExecutionContext): void {
+    // Parse: while <condition> do <body> end
+    const whileMatch = fullCode.match(/^while\s+(.+?)\s+do\s+([\s\S]*?)\s+end/);
+
+    if (!whileMatch) {
+      throw new Error('Invalid while loop syntax. Expected: while <condition> do <body> end');
+    }
+
+    const condition = whileMatch[1].trim();
+    const body = whileMatch[2].trim();
+
+    // Infinite loop protection
+    const MAX_ITERATIONS = 10000;
+    let iterations = 0;
+
+    while (iterations < MAX_ITERATIONS) {
+      const conditionValue = this.evaluateExpression(condition, context);
+
+      if (!this.isTruthy(conditionValue)) {
+        break;
+      }
+
+      try {
+        this.executeBlock(body, context);
+      } catch (error) {
+        if (error instanceof Error && error.message === 'break') {
+          break;
+        }
+        throw error;
+      }
+
+      iterations++;
+    }
+
+    if (iterations >= MAX_ITERATIONS) {
+      throw new Error(`While loop exceeded maximum iterations (${MAX_ITERATIONS})`);
+    }
   }
 
   /**
    * Execute for loop
    */
-  private executeFor(statement: string, context: LuaExecutionContext): void {
-    throw new Error('For loops not yet implemented in simplified engine');
+  private executeFor(fullCode: string, context: LuaExecutionContext): void {
+    // Parse numeric for loop: for var = start, end [, step] do <body> end
+    // Extract parts more carefully
+    const forStart = fullCode.match(/^for\s+(\w+)\s*=\s*/);
+    if (!forStart) {
+      throw new Error('Invalid for loop syntax. Expected: for var = start, end [, step] do <body> end');
+    }
+
+    const varName = forStart[1];
+    const afterVar = fullCode.substring(forStart[0].length);
+
+    // Find 'do' keyword (can be followed by newline or space)
+    const doMatch = afterVar.match(/\s+do(?:\s|$)/);
+    if (!doMatch) {
+      throw new Error('Invalid for loop syntax. Expected: for var = start, end [, step] do <body> end');
+    }
+
+    const doIndex = doMatch.index!;
+    const params = afterVar.substring(0, doIndex).trim();
+    const rest = afterVar.substring(doIndex + doMatch[0].length); // skip past 'do' and whitespace
+
+    // Extract body
+    const endIndex = rest.lastIndexOf('end');
+    if (endIndex === -1) {
+      throw new Error('Invalid for loop syntax. Missing end keyword');
+    }
+
+    const body = rest.substring(0, endIndex).trim();
+
+    // Parse parameters (start, end, step)
+    const paramParts = params.split(',').map(p => p.trim());
+    if (paramParts.length < 2 || paramParts.length > 3) {
+      throw new Error(`For loop requires 2 or 3 parameters: start, end [, step]. Got: ${paramParts.length} (${JSON.stringify(paramParts)})`);
+    }
+
+    const startExpr = paramParts[0];
+    const endExpr = paramParts[1];
+    const stepExpr = paramParts[2] || '1';
+
+    // Evaluate loop parameters
+    const startValue = this.evaluateExpression(startExpr, context);
+    const endValue = this.evaluateExpression(endExpr, context);
+    const stepValue = this.evaluateExpression(stepExpr, context);
+
+    if (startValue.type !== 'number' || endValue.type !== 'number' || stepValue.type !== 'number') {
+      throw new Error('For loop parameters must be numbers');
+    }
+
+    const start = startValue.value;
+    const end = endValue.value;
+    const step = stepValue.value;
+
+    if (step === 0) {
+      throw new Error('For loop step cannot be zero');
+    }
+
+    // Infinite loop protection
+    const MAX_ITERATIONS = 10000;
+    let iterations = 0;
+
+    // Execute loop
+    if (step > 0) {
+      for (let i = start; i <= end; i += step) {
+        if (iterations++ >= MAX_ITERATIONS) {
+          throw new Error(`For loop exceeded maximum iterations (${MAX_ITERATIONS})`);
+        }
+
+        context.variables.set(varName, { type: 'number', value: i });
+
+        try {
+          this.executeBlock(body, context);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'break') {
+            break;
+          }
+          throw error;
+        }
+      }
+    } else {
+      for (let i = start; i >= end; i += step) {
+        if (iterations++ >= MAX_ITERATIONS) {
+          throw new Error(`For loop exceeded maximum iterations (${MAX_ITERATIONS})`);
+        }
+
+        context.variables.set(varName, { type: 'number', value: i });
+
+        try {
+          this.executeBlock(body, context);
+        } catch (error) {
+          if (error instanceof Error && error.message === 'break') {
+            break;
+          }
+          throw error;
+        }
+      }
+    }
   }
 
   /**
@@ -676,14 +900,59 @@ export class LuaEngine {
   }
 
   /**
-   * Split code into statements
+   * Split code into statements, preserving block structures
    */
   private splitStatements(code: string): string[] {
-    // Simple split by newlines and semicolons
-    return code
-      .split(/[\n;]/)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+    const statements: string[] = [];
+    const lines = code.split('\n');
+    let currentStatement = '';
+    let blockDepth = 0;
+    let inBlock = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+
+      if (!line) continue;
+
+      // Check for block start keywords
+      if (/^(while|for|if|function)\s/.test(line)) {
+        inBlock = true;
+        blockDepth = 1;
+        currentStatement = line;
+        continue;
+      }
+
+      if (inBlock) {
+        currentStatement += '\n' + line;
+
+        // Track nested blocks
+        if (/\b(while|for|if|function)\s/.test(line)) {
+          blockDepth++;
+        }
+
+        // Check for block end
+        if (line.includes('end')) {
+          blockDepth--;
+          if (blockDepth === 0) {
+            statements.push(currentStatement);
+            currentStatement = '';
+            inBlock = false;
+          }
+        }
+      } else {
+        // Regular statement (not in a block)
+        // Split by semicolons
+        const parts = line.split(';').map(s => s.trim()).filter(s => s.length > 0);
+        statements.push(...parts);
+      }
+    }
+
+    // Add any remaining statement
+    if (currentStatement.trim()) {
+      statements.push(currentStatement);
+    }
+
+    return statements;
   }
 }
 

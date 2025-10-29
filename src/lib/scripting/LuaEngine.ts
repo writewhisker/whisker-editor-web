@@ -223,6 +223,10 @@ export class LuaEngine {
       try {
         this.executeStatement(trimmed, context);
       } catch (error) {
+        // Re-throw return statements (they're not errors)
+        if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+          throw error;
+        }
         context.errors.push(
           `Error in statement "${trimmed}": ${error instanceof Error ? error.message : String(error)}`
         );
@@ -235,6 +239,19 @@ export class LuaEngine {
    */
   private executeStatement(statement: string, context: LuaExecutionContext): void {
     // Check for control structures first (before assignment check)
+    // Function definition
+    if (statement.startsWith('function ')) {
+      this.executeFunction(statement, context);
+      return;
+    }
+
+    // Return statement
+    if (statement.startsWith('return ')) {
+      const expr = statement.substring(7).trim();
+      const value = this.evaluateExpression(expr, context);
+      throw { type: 'return', value }; // Use exception for control flow
+    }
+
     // If statement
     if (statement.startsWith('if ')) {
       this.executeIf(statement, context);
@@ -277,12 +294,145 @@ export class LuaEngine {
   }
 
   /**
+   * Check if operator appears outside of string literals
+   */
+  private hasOperatorOutsideStrings(expr: string, op: string): boolean {
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      // Toggle string state
+      if ((char === '"' || char === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      // Check for operator outside strings
+      if (!inString && expr.substring(i, i + op.length) === op) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if expression is a single string literal (not concatenation)
+   */
+  private isStringLiteral(expr: string): boolean {
+    if (!expr.startsWith('"') && !expr.startsWith("'")) {
+      return false;
+    }
+
+    const quote = expr[0];
+    let i = 1;
+
+    // Find the closing quote
+    while (i < expr.length) {
+      if (expr[i] === quote && expr[i - 1] !== '\\') {
+        // Found closing quote - check if there's more after it
+        const remaining = expr.substring(i + 1).trim();
+        return remaining.length === 0; // True only if nothing after the string
+      }
+      i++;
+    }
+
+    return false; // No closing quote found
+  }
+
+  /**
+   * Split expression by operator, respecting string literals
+   */
+  private splitByOperator(expr: string, op: string): string[] {
+    const parts: string[] = [];
+    let currentPart = '';
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      // Toggle string state
+      if ((char === '"' || char === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      // Check for operator outside strings
+      if (!inString && expr.substring(i, i + op.length) === op) {
+        parts.push(currentPart.trim());
+        currentPart = '';
+        i += op.length - 1; // Skip operator
+      } else {
+        currentPart += char;
+      }
+    }
+
+    // Add last part
+    if (currentPart) {
+      parts.push(currentPart.trim());
+    }
+
+    return parts;
+  }
+
+  /**
    * Execute variable assignment
    */
   private executeAssignment(statement: string, context: LuaExecutionContext): void {
     const equalIndex = statement.indexOf('=');
     const varName = statement.substring(0, equalIndex).trim();
     const expression = statement.substring(equalIndex + 1).trim();
+
+    // Handle table assignments: t[key] = value
+    if (varName.includes('[') && varName.includes(']')) {
+      const bracketIndex = varName.indexOf('[');
+      const tableName = varName.substring(0, bracketIndex).trim();
+      const keyExpr = varName.substring(bracketIndex + 1, varName.lastIndexOf(']')).trim();
+
+      const tableValue = context.variables.get(tableName);
+      if (!tableValue || tableValue.type !== 'table') {
+        // Create new table if it doesn't exist
+        context.variables.set(tableName, { type: 'table', value: {} });
+      }
+
+      const table = context.variables.get(tableName)!;
+      const keyValue = this.evaluateExpression(keyExpr, context);
+      const key = String(keyValue.value);
+      const value = this.evaluateExpression(expression, context);
+
+      (table.value as Record<string, LuaValue>)[key] = value;
+      return;
+    }
+
+    // Handle table dot notation: t.key = value
+    if (varName.includes('.')) {
+      const dotIndex = varName.indexOf('.');
+      const tableName = varName.substring(0, dotIndex).trim();
+      const key = varName.substring(dotIndex + 1).trim();
+
+      const tableValue = context.variables.get(tableName);
+      if (!tableValue || tableValue.type !== 'table') {
+        // Create new table if it doesn't exist
+        context.variables.set(tableName, { type: 'table', value: {} });
+      }
+
+      const table = context.variables.get(tableName)!;
+      const value = this.evaluateExpression(expression, context);
+
+      (table.value as Record<string, LuaValue>)[key] = value;
+      return;
+    }
 
     // Handle compound operators
     if (varName.endsWith('+')) {
@@ -345,12 +495,31 @@ export class LuaEngine {
       return { type: 'boolean', value: false };
     }
 
-    // String literals
-    if (
-      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
-    ) {
+    // String literals (only if it's a SINGLE complete string, not concatenation)
+    if (this.isStringLiteral(trimmed)) {
       return { type: 'string', value: trimmed.slice(1, -1) };
+    }
+
+    // Table literals
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      return this.evaluateTableLiteral(trimmed, context);
+    }
+
+    // Table indexing (before function call to handle t[key] correctly)
+    if (trimmed.includes('[') && trimmed.includes(']')) {
+      return this.evaluateTableIndex(trimmed, context);
+    }
+
+    // Table dot notation (t.key)
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      const dotIndex = trimmed.indexOf('.');
+      const tableName = trimmed.substring(0, dotIndex);
+      const key = trimmed.substring(dotIndex + 1);
+      const tableValue = context.variables.get(tableName);
+      if (tableValue?.type === 'table') {
+        return tableValue.value[key] || { type: 'nil', value: null };
+      }
+      return { type: 'nil', value: null };
     }
 
     // Number literals
@@ -404,6 +573,11 @@ export class LuaEngine {
     }
 
     // Binary operators
+    // String concatenation (check before other operators)
+    // Only check if .. appears outside of string literals
+    if (this.hasOperatorOutsideStrings(trimmed, '..')) {
+      return this.evaluateBinaryOp(trimmed, '..', context);
+    }
     if (trimmed.includes('+') && !trimmed.startsWith('+')) {
       return this.evaluateBinaryOp(trimmed, '+', context);
     }
@@ -438,7 +612,8 @@ export class LuaEngine {
     op: string,
     context: LuaExecutionContext
   ): LuaValue {
-    const parts = expr.split(op);
+    // Split by operator, but respect string literals
+    const parts = this.splitByOperator(expr, op);
     if (parts.length < 2) {
       throw new Error(`Invalid binary operation: ${expr}`);
     }
@@ -449,6 +624,10 @@ export class LuaEngine {
       const right = this.evaluateExpression(parts[i], context);
 
       switch (op) {
+        case '..':
+          // Lua string concatenation
+          result = { type: 'string', value: String(result.value) + String(right.value) };
+          break;
         case '+':
           result = this.add(result, right);
           break;
@@ -601,6 +780,31 @@ export class LuaEngine {
       return { type: 'number', value: String(args[0].value).length };
     }
 
+    // Check for user-defined functions
+    const userFunc = context.functions.get(funcName);
+    if (userFunc) {
+      // Lua has global scope by default (no 'local' keyword implementation)
+      // So we share the same variables map
+      // Bind parameters to arguments
+      for (let i = 0; i < userFunc.params.length; i++) {
+        const paramName = userFunc.params[i];
+        const argValue = args[i] || { type: 'nil', value: null };
+        context.variables.set(paramName, argValue);
+      }
+
+      // Execute function body
+      try {
+        this.executeBlock(userFunc.body, context);
+        return { type: 'nil', value: null }; // Default return
+      } catch (error) {
+        // Check if it's a return statement
+        if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+          return (error as { type: string; value: LuaValue }).value;
+        }
+        throw error;
+      }
+    }
+
     throw new Error(`Unknown function: ${funcName}`);
   }
 
@@ -616,6 +820,56 @@ export class LuaEngine {
     }
 
     return args;
+  }
+
+  /**
+   * Evaluate table literal
+   */
+  private evaluateTableLiteral(expr: string, context: LuaExecutionContext): LuaValue {
+    const content = expr.slice(1, -1).trim(); // Remove { }
+    if (!content) {
+      return { type: 'table', value: {} };
+    }
+
+    const table: Record<string, LuaValue> = {};
+    const parts = content.split(',').map(p => p.trim());
+    let numericIndex = 1;
+
+    for (const part of parts) {
+      if (part.includes('=')) {
+        // Key-value pair: key = value
+        const eqIndex = part.indexOf('=');
+        const key = part.substring(0, eqIndex).trim();
+        const valueExpr = part.substring(eqIndex + 1).trim();
+        const value = this.evaluateExpression(valueExpr, context);
+        table[key] = value;
+      } else {
+        // Array-style: {1, 2, 3} -> {[1] = 1, [2] = 2, [3] = 3}
+        const value = this.evaluateExpression(part, context);
+        table[String(numericIndex++)] = value;
+      }
+    }
+
+    return { type: 'table', value: table };
+  }
+
+  /**
+   * Evaluate table indexing
+   */
+  private evaluateTableIndex(expr: string, context: LuaExecutionContext): LuaValue {
+    const bracketIndex = expr.indexOf('[');
+    const tableName = expr.substring(0, bracketIndex).trim();
+    const keyExpr = expr.substring(bracketIndex + 1, expr.lastIndexOf(']')).trim();
+
+    const tableValue = context.variables.get(tableName);
+    if (!tableValue || tableValue.type !== 'table') {
+      return { type: 'nil', value: null };
+    }
+
+    const keyValue = this.evaluateExpression(keyExpr, context);
+    const key = String(keyValue.value);
+
+    return tableValue.value[key] || { type: 'nil', value: null };
   }
 
   /**
@@ -894,6 +1148,48 @@ export class LuaEngine {
   }
 
   /**
+   * Execute function definition
+   */
+  private executeFunction(fullCode: string, context: LuaExecutionContext): void {
+    // Parse: function name(param1, param2, ...) <body> end
+    const funcMatch = fullCode.match(/^function\s+(\w+)\s*\((.*?)\)/);
+    if (!funcMatch) {
+      throw new Error('Invalid function syntax. Expected: function name(params) ... end');
+    }
+
+    const funcName = funcMatch[1];
+    const paramsStr = funcMatch[2].trim();
+    const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+    // Extract body using depth tracking (similar to while/for loops)
+    const afterParams = fullCode.substring(funcMatch[0].length).trim();
+    const lines = afterParams.split('\n');
+    let depth = 1;
+    const bodyLines: string[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Track nested blocks
+      if (/^(while|for|if|function)\s/.test(trimmed)) {
+        depth++;
+      }
+
+      if (trimmed === 'end' || trimmed.startsWith('end ')) {
+        depth--;
+        if (depth === 0) break;
+      }
+
+      bodyLines.push(line);
+    }
+
+    const body = bodyLines.join('\n').trim();
+
+    // Store function definition
+    context.functions.set(funcName, { params, body });
+  }
+
+  /**
    * Arithmetic operations
    */
   private add(a: LuaValue, b: LuaValue): LuaValue {
@@ -963,6 +1259,14 @@ export class LuaEngine {
    */
   private fromLuaValue(value: LuaValue): any {
     if (value.type === 'nil') return null;
+    if (value.type === 'table') {
+      // Recursively unwrap table values
+      const unwrapped: Record<string, any> = {};
+      for (const [key, val] of Object.entries(value.value as Record<string, LuaValue>)) {
+        unwrapped[key] = this.fromLuaValue(val);
+      }
+      return unwrapped;
+    }
     return value.value;
   }
 

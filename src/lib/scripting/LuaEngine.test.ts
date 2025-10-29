@@ -544,4 +544,365 @@ describe('LuaEngine', () => {
       expect(engine.getVariable('health')).toBe(75);
     });
   });
+
+  describe('Function Definitions', () => {
+    it('should define and call a simple function', () => {
+      const code = `
+        function greet(name)
+          return "Hello " .. name
+        end
+        result = greet("World")
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Hello World');
+    });
+
+    it('should define function with no parameters', () => {
+      const code = `
+        function getValue()
+          return 42
+        end
+        x = getValue()
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(42);
+    });
+
+    it('should define function with multiple parameters', () => {
+      const code = `
+        function add(a, b, c)
+          return a + b + c
+        end
+        sum = add(10, 20, 30)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('sum')).toBe(60);
+    });
+
+    it('should handle function with local variables', () => {
+      const code = `
+        function calculate(x)
+          temp = x * 2
+          return temp + 10
+        end
+        result = calculate(5)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(20);
+      expect(engine.getVariable('temp')).toBe(10); // Function variables persist
+    });
+
+    it('should handle nested function calls', () => {
+      const code = `
+        function double(x)
+          return x * 2
+        end
+        function addTen(x)
+          return x + 10
+        end
+        result = addTen(double(5))
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(20);
+    });
+
+    it('should handle function without return (returns nil)', () => {
+      const code = `
+        function noReturn()
+          x = 42
+        end
+        result = noReturn()
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeNull();
+      expect(engine.getVariable('x')).toBe(42);
+    });
+
+    it('should handle function with control flow', () => {
+      const code = `
+        function max(a, b)
+          if a > b then
+            return a
+          else
+            return b
+          end
+        end
+        result = max(15, 10)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(15);
+    });
+
+    it('should handle function with loops', () => {
+      const code = `
+        function factorial(n)
+          result = 1
+          for i = 1, n do
+            result = result * i
+          end
+          return result
+        end
+        fact5 = factorial(5)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('fact5')).toBe(120);
+    });
+  });
+
+  describe('Tables', () => {
+    it('should create empty table', () => {
+      const code = 't = {}';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const table = engine.getVariable('t');
+      expect(table).toEqual({});
+    });
+
+    it('should create table with key-value pairs', () => {
+      const code = 't = {name = "Alice", age = 30}';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const table = engine.getVariable('t');
+      expect(table).toEqual({
+        name: 'Alice',
+        age: 30,
+      });
+    });
+
+    it('should create array-style table', () => {
+      const code = 't = {10, 20, 30}';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const table = engine.getVariable('t');
+      expect(table).toEqual({
+        '1': 10,
+        '2': 20,
+        '3': 30,
+      });
+    });
+
+    it('should access table with bracket notation', () => {
+      const code = `
+        t = {name = "Bob"}
+        result = t["name"]
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Bob');
+    });
+
+    it('should access table with dot notation', () => {
+      const code = `
+        t = {score = 100}
+        result = t.score
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(100);
+    });
+
+    it('should assign to table with bracket notation', () => {
+      const code = `
+        t = {}
+        t["key"] = "value"
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const table = engine.getVariable('t');
+      expect(table).toEqual({ key: 'value' });
+    });
+
+    it('should assign to table with dot notation', () => {
+      const code = `
+        t = {}
+        t.name = "Charlie"
+        t.age = 25
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const table = engine.getVariable('t');
+      expect(table).toEqual({
+        name: 'Charlie',
+        age: 25,
+      });
+    });
+
+    it('should use variable as table key', () => {
+      const code = `
+        t = {a = 10, b = 20}
+        key = "a"
+        result = t[key]
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(10);
+    });
+
+    it('should handle numeric table indices', () => {
+      const code = `
+        t = {100, 200, 300}
+        result = t[2]
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(200);
+    });
+
+    it('should handle mixed table (keys and indices)', () => {
+      const code = `
+        t = {10, 20, name = "Test"}
+        v1 = t[1]
+        v2 = t.name
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('v1')).toBe(10);
+      expect(engine.getVariable('v2')).toBe('Test');
+    });
+  });
+
+  describe('String Concatenation', () => {
+    it('should concatenate strings with .. operator', () => {
+      const code = 'result = "Hello" .. " " .. "World"';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Hello World');
+    });
+
+    it('should concatenate strings and numbers', () => {
+      const code = 'result = "Score: " .. 100';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Score: 100');
+    });
+
+    it('should concatenate with variables', () => {
+      const code = `
+        name = "Alice"
+        age = 30
+        result = "Name: " .. name .. ", Age: " .. age
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Name: Alice, Age: 30');
+    });
+
+    it('should use concatenation in function return', () => {
+      const code = `
+        function greet(name)
+          return "Hello, " .. name .. "!"
+        end
+        message = greet("World")
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('message')).toBe('Hello, World!');
+    });
+  });
+
+  describe('Advanced Function and Table Integration', () => {
+    it('should pass table to function', () => {
+      const code = `
+        function getTotal(t)
+          return t.a + t.b
+        end
+        data = {a = 10, b = 20}
+        result = getTotal(data)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(30);
+    });
+
+    it('should return table from function', () => {
+      const code = `
+        function createPerson(name, age)
+          return {name = name, age = age}
+        end
+        person = createPerson("Bob", 25)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const person = engine.getVariable('person');
+      expect(person).toEqual({
+        name: 'Bob',
+        age: 25,
+      });
+    });
+
+    it('should modify table in function', () => {
+      const code = `
+        function addField(t, key, value)
+          t[key] = value
+        end
+        obj = {a = 1}
+        addField(obj, "b", 2)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const obj = engine.getVariable('obj');
+      expect(obj).toEqual({
+        a: 1,
+        b: 2,
+      });
+    });
+  });
 });

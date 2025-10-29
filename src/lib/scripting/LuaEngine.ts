@@ -303,6 +303,24 @@ export class LuaEngine {
       return;
     }
 
+    if (varName.endsWith('*')) {
+      const name = varName.slice(0, -1).trim();
+      const current = context.variables.get(name);
+      const value = this.evaluateExpression(expression, context);
+      const result = this.multiply(current, value);
+      context.variables.set(name, result);
+      return;
+    }
+
+    if (varName.endsWith('/')) {
+      const name = varName.slice(0, -1).trim();
+      const current = context.variables.get(name);
+      const value = this.evaluateExpression(expression, context);
+      const result = this.divide(current, value);
+      context.variables.set(name, result);
+      return;
+    }
+
     // Regular assignment
     const value = this.evaluateExpression(expression, context);
     context.variables.set(varName, value);
@@ -345,6 +363,46 @@ export class LuaEngine {
       return this.evaluateFunctionCall(trimmed, context);
     }
 
+    // Logical operators (lowest precedence - check first)
+    if (trimmed.includes(' and ') || trimmed.includes(' && ')) {
+      const op = trimmed.includes(' && ') ? ' && ' : ' and ';
+      return this.evaluateLogical(trimmed, op, context);
+    }
+    if (trimmed.includes(' or ') || trimmed.includes(' || ')) {
+      const op = trimmed.includes(' || ') ? ' || ' : ' or ';
+      return this.evaluateLogical(trimmed, op, context);
+    }
+    if (trimmed.startsWith('not ') || trimmed.startsWith('!')) {
+      const prefix = trimmed.startsWith('not ') ? 'not ' : '!';
+      return this.evaluateNot(trimmed.substring(prefix.length), context);
+    }
+
+    // Comparison operators (check === before ==, <= before <, etc.)
+    if (trimmed.includes('===')) {
+      return this.evaluateComparison(trimmed, '===', context);
+    }
+    if (trimmed.includes('!==')) {
+      return this.evaluateComparison(trimmed, '!==', context);
+    }
+    if (trimmed.includes('==')) {
+      return this.evaluateComparison(trimmed, '==', context);
+    }
+    if (trimmed.includes('~=') || trimmed.includes('!=')) {
+      return this.evaluateComparison(trimmed, trimmed.includes('~=') ? '~=': '!=', context);
+    }
+    if (trimmed.includes('<=')) {
+      return this.evaluateComparison(trimmed, '<=', context);
+    }
+    if (trimmed.includes('>=')) {
+      return this.evaluateComparison(trimmed, '>=', context);
+    }
+    if (trimmed.includes('<') && !trimmed.includes('<<')) {
+      return this.evaluateComparison(trimmed, '<', context);
+    }
+    if (trimmed.includes('>') && !trimmed.includes('>>')) {
+      return this.evaluateComparison(trimmed, '>', context);
+    }
+
     // Binary operators
     if (trimmed.includes('+') && !trimmed.startsWith('+')) {
       return this.evaluateBinaryOp(trimmed, '+', context);
@@ -360,37 +418,6 @@ export class LuaEngine {
     }
     if (trimmed.includes('%')) {
       return this.evaluateBinaryOp(trimmed, '%', context);
-    }
-
-    // Comparison operators
-    if (trimmed.includes('==')) {
-      return this.evaluateComparison(trimmed, '==', context);
-    }
-    if (trimmed.includes('~=')) {
-      return this.evaluateComparison(trimmed, '~=', context);
-    }
-    if (trimmed.includes('<=')) {
-      return this.evaluateComparison(trimmed, '<=', context);
-    }
-    if (trimmed.includes('>=')) {
-      return this.evaluateComparison(trimmed, '>=', context);
-    }
-    if (trimmed.includes('<') && !trimmed.includes('<<')) {
-      return this.evaluateComparison(trimmed, '<', context);
-    }
-    if (trimmed.includes('>') && !trimmed.includes('>>')) {
-      return this.evaluateComparison(trimmed, '>', context);
-    }
-
-    // Logical operators
-    if (trimmed.includes(' and ')) {
-      return this.evaluateLogical(trimmed, 'and', context);
-    }
-    if (trimmed.includes(' or ')) {
-      return this.evaluateLogical(trimmed, 'or', context);
-    }
-    if (trimmed.startsWith('not ')) {
-      return this.evaluateNot(trimmed.substring(4), context);
     }
 
     // Variable reference
@@ -459,9 +486,12 @@ export class LuaEngine {
 
     switch (op) {
       case '==':
+      case '===':
         result = leftVal.value === rightVal.value;
         break;
       case '~=':
+      case '!=':
+      case '!==':
         result = leftVal.value !== rightVal.value;
         break;
       case '<':
@@ -486,18 +516,20 @@ export class LuaEngine {
    */
   private evaluateLogical(
     expr: string,
-    op: 'and' | 'or',
+    op: ' and ' | ' or ' | ' && ' | ' || ',
     context: LuaExecutionContext
   ): LuaValue {
-    const parts = expr.split(` ${op} `);
+    const parts = expr.split(op);
     const left = this.evaluateExpression(parts[0], context);
 
-    if (op === 'and') {
+    const isAnd = op === ' and ' || op === ' && ';
+
+    if (isAnd) {
       if (!this.isTruthy(left)) return { type: 'boolean', value: false };
       const right = this.evaluateExpression(parts[1], context);
       return { type: 'boolean', value: this.isTruthy(right) };
     } else {
-      // or
+      // or / ||
       if (this.isTruthy(left)) return { type: 'boolean', value: true };
       const right = this.evaluateExpression(parts[1], context);
       return { type: 'boolean', value: this.isTruthy(right) };
@@ -659,6 +691,11 @@ export class LuaEngine {
       }
     }
 
+    // Validate that we found at least one branch
+    if (branches.length === 0) {
+      throw new Error('Invalid if statement syntax. Expected: if <condition> then <body> end');
+    }
+
     // Execute the first branch whose condition is true
     for (const branch of branches) {
       if (branch.condition === null) {
@@ -682,14 +719,50 @@ export class LuaEngine {
    */
   private executeWhile(fullCode: string, context: LuaExecutionContext): void {
     // Parse: while <condition> do <body> end
-    const whileMatch = fullCode.match(/^while\s+(.+?)\s+do\s+([\s\S]*?)\s+end/);
-
-    if (!whileMatch) {
+    // Extract condition from first line
+    const firstLineMatch = fullCode.match(/^while\s+(.+?)\s+do/);
+    if (!firstLineMatch) {
       throw new Error('Invalid while loop syntax. Expected: while <condition> do <body> end');
     }
 
-    const condition = whileMatch[1].trim();
-    const body = whileMatch[2].trim();
+    const condition = firstLineMatch[1].trim();
+
+    // Extract body by tracking block depth
+    const doIndex = fullCode.indexOf(' do');
+    if (doIndex === -1) {
+      throw new Error('Invalid while loop syntax. Missing do keyword');
+    }
+
+    const afterDo = fullCode.substring(doIndex + 3).trim(); // Skip ' do'
+    const lines = afterDo.split('\n');
+    let depth = 1;
+    const bodyLines: string[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+
+      // Check for nested block starts
+      if (/^(while|for|if|function)\s/.test(trimmed)) {
+        depth++;
+      }
+
+      // Check for block ends
+      if (trimmed === 'end' || trimmed.startsWith('end ') || trimmed.endsWith(' end')) {
+        depth--;
+        if (depth === 0) {
+          // This is the closing 'end' for our while loop
+          break;
+        }
+      }
+
+      bodyLines.push(line);
+    }
+
+    if (depth !== 0) {
+      throw new Error('Invalid while loop syntax. Missing end keyword');
+    }
+
+    const body = bodyLines.join('\n').trim();
 
     // Infinite loop protection
     const MAX_ITERATIONS = 10000;
@@ -850,7 +923,7 @@ export class LuaEngine {
 
   private divide(a: LuaValue, b: LuaValue): LuaValue {
     if (a.type === 'number' && b.type === 'number') {
-      if (b.value === 0) throw new Error('Division by zero');
+      if (b.value === 0) return { type: 'number', value: 0 }; // Safely return 0 for division by zero
       return { type: 'number', value: a.value / b.value };
     }
     throw new Error('Cannot divide non-numbers');

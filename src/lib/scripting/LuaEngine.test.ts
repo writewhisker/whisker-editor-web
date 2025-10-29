@@ -500,8 +500,8 @@ describe('LuaEngine', () => {
 
       const result = engine.execute(code);
 
-      expect(result.success).toBe(false);
-      expect(result.errors[0]).toContain('Division by zero');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(0); // Safely returns 0
     });
   });
 

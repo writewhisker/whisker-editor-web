@@ -91,6 +91,7 @@ export interface StoryData {
   stylesheets?: string[];   // CSS code blocks (whisker-core compat)
   scripts?: string[];       // Story-wide Lua/JS scripts (whisker-core compat)
   assets?: AssetReference[];  // Media references (whisker-core compat)
+  luaFunctions?: Record<string, any>;  // Reusable Lua function library
 }
 
 // whisker-core compatible format

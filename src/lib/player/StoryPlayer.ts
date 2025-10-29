@@ -10,6 +10,9 @@ import type {
   PlayerEventCallback,
   PlayerState,
 } from './types';
+import { getPlaythroughRecorder, type PlaythroughRecorder } from '../analytics/PlaythroughRecorder';
+import type { Playthrough } from '../models/Playthrough';
+import { getLuaEngine, type LuaEngine } from '../scripting/LuaEngine';
 
 /**
  * StoryPlayer - Core player engine for preview and testing
@@ -27,6 +30,10 @@ export class StoryPlayer {
   private eventListeners: Map<PlayerEvent, Set<PlayerEventCallback>> = new Map();
   private startTime: number = 0;
   private paused: boolean = false;
+  private recordingEnabled: boolean = false;
+  private recorder: PlaythroughRecorder;
+  private currentPlaythrough: Playthrough | null = null;
+  private luaEngine: LuaEngine;
 
   constructor() {
     // Initialize event listener maps
@@ -35,6 +42,12 @@ export class StoryPlayer {
     this.eventListeners.set('variableChanged', new Set());
     this.eventListeners.set('error', new Set());
     this.eventListeners.set('stateChanged', new Set());
+
+    // Initialize playthrough recorder
+    this.recorder = getPlaythroughRecorder();
+
+    // Initialize Lua engine
+    this.luaEngine = getLuaEngine();
   }
 
   /**
@@ -72,6 +85,14 @@ export class StoryPlayer {
     // Initialize variables from story
     this.initializeVariables();
 
+    // Start playthrough recording if enabled
+    if (this.recordingEnabled && this.story) {
+      this.currentPlaythrough = this.recorder.startPlaythrough(this.story, {
+        fromPassageId,
+        playerVersion: '1.0',
+      });
+    }
+
     // Enter first passage
     this.enterPassage(startId);
   }
@@ -80,6 +101,12 @@ export class StoryPlayer {
    * Reset player to initial state
    */
   reset(): void {
+    // Cancel any active playthrough recording
+    if (this.recordingEnabled && this.currentPlaythrough) {
+      this.recorder.cancelPlaythrough();
+      this.currentPlaythrough = null;
+    }
+
     this.currentPassageId = null;
     this.variables.clear();
     this.visitedPassages.clear();
@@ -157,6 +184,12 @@ export class StoryPlayer {
     // Execute choice script if present
     if (choice.action) {
       this.executeScript(choice.action, 'choice.action');
+    }
+
+    // Record choice if recording is enabled
+    if (this.recordingEnabled && this.currentPlaythrough) {
+      const choiceIndex = currentPassage.choices.findIndex(c => c.id === choiceId);
+      this.recorder.recordChoice(choiceIndex, choice.text);
     }
 
     // Emit choice selected event
@@ -392,6 +425,63 @@ export class StoryPlayer {
   }
 
   /**
+   * Playthrough recording management
+   */
+
+  /**
+   * Enable playthrough recording for analytics
+   */
+  enableRecording(): void {
+    this.recordingEnabled = true;
+  }
+
+  /**
+   * Disable playthrough recording
+   */
+  disableRecording(): void {
+    this.recordingEnabled = false;
+    if (this.currentPlaythrough) {
+      this.recorder.cancelPlaythrough();
+      this.currentPlaythrough = null;
+    }
+  }
+
+  /**
+   * Check if recording is enabled
+   */
+  isRecordingEnabled(): boolean {
+    return this.recordingEnabled;
+  }
+
+  /**
+   * Complete the current playthrough and save it
+   */
+  completePlaythrough(): Playthrough | null {
+    if (!this.recordingEnabled || !this.currentPlaythrough) {
+      return null;
+    }
+
+    const finalVariables = Object.fromEntries(this.variables);
+    const completed = this.recorder.completePlaythrough(finalVariables);
+    this.currentPlaythrough = null;
+    return completed;
+  }
+
+  /**
+   * Get the current playthrough (if recording)
+   */
+  getCurrentPlaythroughRecording(): Playthrough | null {
+    return this.currentPlaythrough;
+  }
+
+  /**
+   * Get the playthrough recorder instance
+   */
+  getRecorder(): PlaythroughRecorder {
+    return this.recorder;
+  }
+
+  /**
    * Initialize variables from story
    */
   private initializeVariables(): void {
@@ -400,7 +490,7 @@ export class StoryPlayer {
     this.variables.clear();
 
     // Set initial values from story variables
-    for (const variable of this.story.variables.values()) {
+    for (const variable of Array.from(this.story.variables.values())) {
       this.variables.set(variable.name, variable.initial);
     }
   }
@@ -431,6 +521,11 @@ export class StoryPlayer {
 
     // Save variables after executing passage scripts
     const variablesAfter = Object.fromEntries(this.variables);
+
+    // Record passage visit if recording is enabled
+    if (this.recordingEnabled && this.currentPlaythrough) {
+      this.recorder.recordPassageVisit(passageId, passage.title, variablesAfter);
+    }
 
     // Add to history
     const step: PlaythroughStep = {
@@ -463,101 +558,87 @@ export class StoryPlayer {
   }
 
   /**
-   * Execute a script (simplified - no Lua for now)
-   * This is a placeholder for script execution
+   * Execute a script using LuaEngine
    */
   private executeScript(script: string, context: string): void {
     console.log(`[Script - ${context}]:`, script);
 
-    // Parse and execute simple variable assignments
-    // Supports: var = value, var += value, var -= value, var *= value, var /= value
-    const trimmed = script.trim();
+    try {
+      // Sync player variables to Lua engine
+      this.variables.forEach((value, key) => {
+        this.luaEngine.setVariable(key, value);
+      });
 
-    // Match assignment patterns: varName operator value
-    const assignmentMatch = trimmed.match(/^(\w+)\s*(=|\+=|-=|\*=|\/=)\s*(.+)$/);
+      // Execute the script
+      const result = this.luaEngine.execute(script);
 
-    if (assignmentMatch) {
-      const [, varName, operator, expression] = assignmentMatch;
-
-      try {
-        // Evaluate the right-hand side expression
-        let evaluated = expression.trim();
-
-        // Replace variable names with their values
-        for (const [name, value] of this.variables.entries()) {
-          const regex = new RegExp(`\\b${name}\\b`, 'g');
-          const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
-          evaluated = evaluated.replace(regex, valueStr);
-        }
-
-        // Evaluate the expression safely
-        const result = new Function(`return ${evaluated}`)();
-
-        // Apply the operator
-        let finalValue = result;
-        const currentValue = this.variables.get(varName) || 0;
-
-        switch (operator) {
-          case '=':
-            finalValue = result;
-            break;
-          case '+=':
-            finalValue = (typeof currentValue === 'number' ? currentValue : 0) + (typeof result === 'number' ? result : 0);
-            break;
-          case '-=':
-            finalValue = (typeof currentValue === 'number' ? currentValue : 0) - (typeof result === 'number' ? result : 0);
-            break;
-          case '*=':
-            finalValue = (typeof currentValue === 'number' ? currentValue : 0) * (typeof result === 'number' ? result : 0);
-            break;
-          case '/=':
-            const divisor = typeof result === 'number' ? result : 1;
-            finalValue = divisor !== 0 ? (typeof currentValue === 'number' ? currentValue : 0) / divisor : 0;
-            break;
-        }
-
-        // Set the variable
-        this.variables.set(varName, finalValue);
-        console.log(`  → Set ${varName} = ${finalValue}`);
-
-        // Emit state changed event
-        this.emit('stateChanged', this.getState());
-      } catch (error) {
-        console.warn('Script execution error:', script, error);
+      // Log any output
+      if (result.output.length > 0) {
+        console.log('Script output:', result.output.join('\n'));
       }
-    } else {
-      console.warn('Unrecognized script format:', script);
+
+      // Log any errors
+      if (result.errors.length > 0) {
+        console.warn('Script errors:', result.errors.join('\n'));
+        this.handleError(
+          new Error(`Script execution failed: ${result.errors.join('; ')}`),
+          this.currentPassageId || '',
+          context
+        );
+      }
+
+      // Sync Lua variables back to player
+      const luaVars = this.luaEngine.getAllVariables();
+      Object.entries(luaVars).forEach(([key, value]) => {
+        const oldValue = this.variables.get(key);
+        if (oldValue !== value) {
+          this.variables.set(key, value);
+          console.log(`  → Set ${key} = ${value}`);
+
+          // Emit variable changed event
+          this.emit('variableChanged', {
+            name: key,
+            oldValue,
+            newValue: value,
+            timestamp: Date.now(),
+          });
+        }
+      });
+
+      // Emit state changed event
+      this.emit('stateChanged', this.getState());
+    } catch (error) {
+      console.warn('Script execution error:', script, error);
+      this.handleError(
+        error instanceof Error ? error : new Error(String(error)),
+        this.currentPassageId || '',
+        context
+      );
     }
   }
 
   /**
-   * Evaluate a condition (simplified - no Lua for now)
+   * Evaluate a condition using LuaEngine
    */
   private evaluateCondition(condition: string): boolean {
     if (!condition || condition.trim() === '') {
       return true;
     }
 
-    // Simple condition parsing
-    // Format: "variable operator value" e.g., "health > 50"
-    const trimmed = condition.trim();
-
-    // Try to evaluate simple comparisons
     try {
-      // Replace variable names with their values
-      let evaluated = trimmed;
+      // Sync player variables to Lua engine
+      this.variables.forEach((value, key) => {
+        this.luaEngine.setVariable(key, value);
+      });
 
-      // Replace variables with their values
-      for (const [name, value] of this.variables.entries()) {
-        const regex = new RegExp(`\\b${name}\\b`, 'g');
-        const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
-        evaluated = evaluated.replace(regex, valueStr);
-      }
+      // Evaluate the condition
+      const result = this.luaEngine.evaluate(condition);
 
-      // Use Function constructor for safe evaluation
-      // Only allow basic comparisons
-      const result = new Function(`return ${evaluated}`)();
-      return Boolean(result);
+      // Convert to boolean
+      if (result.type === 'nil') return false;
+      if (result.type === 'boolean') return result.value;
+      // Everything else is truthy in Lua
+      return true;
     } catch (error) {
       console.warn('Condition evaluation error:', condition, error);
       return false; // Fail safely

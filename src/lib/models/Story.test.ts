@@ -3,6 +3,7 @@ import { Story } from './Story';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { Choice } from './Choice';
+import { LuaFunction } from './LuaFunction';
 
 describe('Story', () => {
   let story: Story;
@@ -697,6 +698,194 @@ describe('Story', () => {
 
       const unused = story.getUnusedVariables();
       expect(unused).toHaveLength(0);
+    });
+  });
+
+  describe('Lua Function Management', () => {
+    describe('addLuaFunction', () => {
+      it('should add a Lua function to the story', () => {
+        const func = new LuaFunction({
+          name: 'testFunction',
+          description: 'Test function',
+          code: 'function test() return true end',
+          category: 'Testing',
+        });
+
+        story.addLuaFunction(func);
+        expect(story.luaFunctions.size).toBe(1);
+        expect(story.getLuaFunction(func.id)).toBe(func);
+      });
+
+      it('should create a default function if none provided', () => {
+        const func = story.addLuaFunction();
+        expect(story.luaFunctions.size).toBe(1);
+        expect(func.name).toBe('New Function');
+        expect(story.getLuaFunction(func.id)).toBe(func);
+      });
+    });
+
+    describe('removeLuaFunction', () => {
+      it('should remove a Lua function from the story', () => {
+const func = new LuaFunction({ name: 'toRemove' });
+        story.addLuaFunction(func);
+
+        expect(story.luaFunctions.size).toBe(1);
+        const result = story.removeLuaFunction(func.id);
+        expect(result).toBe(true);
+        expect(story.luaFunctions.size).toBe(0);
+        expect(story.getLuaFunction(func.id)).toBeUndefined();
+      });
+
+      it('should return false for non-existent function', () => {
+        const result = story.removeLuaFunction('non-existent-id');
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('getLuaFunction', () => {
+      it('should retrieve a function by id', () => {
+const func = new LuaFunction({ name: 'findMe' });
+        story.addLuaFunction(func);
+
+        const retrieved = story.getLuaFunction(func.id);
+        expect(retrieved).toBe(func);
+        expect(retrieved?.name).toBe('findMe');
+      });
+
+      it('should return undefined for non-existent function', () => {
+        const retrieved = story.getLuaFunction('non-existent-id');
+        expect(retrieved).toBeUndefined();
+      });
+    });
+
+    describe('updateLuaFunction', () => {
+      it('should update a function', () => {
+const func = new LuaFunction({
+          name: 'original',
+          description: 'Original description',
+        });
+        story.addLuaFunction(func);
+
+        const result = story.updateLuaFunction(func.id, {
+          name: 'updated',
+          description: 'Updated description',
+        });
+
+        expect(result).toBe(true);
+        const updated = story.getLuaFunction(func.id);
+        expect(updated?.name).toBe('updated');
+        expect(updated?.description).toBe('Updated description');
+      });
+
+      it('should update modified timestamp', () => {
+        const func = new LuaFunction({ name: 'test' });
+        story.addLuaFunction(func);
+
+        const originalModified = func.modified;
+
+        // Wait 1ms to ensure timestamp changes
+        const start = Date.now();
+        while (Date.now() - start < 1) {
+          // Wait
+        }
+
+        story.updateLuaFunction(func.id, { name: 'updated' });
+
+        const updated = story.getLuaFunction(func.id);
+        // Modified timestamp should be greater than or equal to original
+        expect(updated?.modified! >= originalModified).toBe(true);
+      });
+
+      it('should return false for non-existent function', () => {
+        const result = story.updateLuaFunction('non-existent', { name: 'test' });
+        expect(result).toBe(false);
+      });
+    });
+
+    describe('loadDefaultFunctionTemplates', () => {
+      it('should load default function templates', () => {
+        story.loadDefaultFunctionTemplates();
+
+        expect(story.luaFunctions.size).toBeGreaterThan(0);
+
+        // Check for specific template categories
+        const functions = Array.from(story.luaFunctions.values());
+        const categories = [...new Set(functions.map(f => f.category))];
+
+        expect(categories).toContain('Combat');
+        expect(categories).toContain('Inventory');
+        expect(categories).toContain('Quests');
+      });
+
+      it('should not duplicate templates on multiple loads', () => {
+        story.loadDefaultFunctionTemplates();
+        const firstCount = story.luaFunctions.size;
+
+        story.loadDefaultFunctionTemplates();
+        const secondCount = story.luaFunctions.size;
+
+        expect(secondCount).toBe(firstCount);
+      });
+
+      it('should preserve custom functions when loading templates', () => {
+const custom = new LuaFunction({
+          name: 'customFunction',
+          description: 'Custom function',
+        });
+        story.addLuaFunction(custom);
+
+        story.loadDefaultFunctionTemplates();
+
+        // Custom function should still exist
+        expect(story.getLuaFunction(custom.id)).toBeDefined();
+        expect(story.getLuaFunction(custom.id)?.name).toBe('customFunction');
+      });
+    });
+
+    describe('serialize with luaFunctions', () => {
+      it('should serialize lua functions', () => {
+const func1 = new LuaFunction({ name: 'func1' });
+        const func2 = new LuaFunction({ name: 'func2' });
+
+        story.addLuaFunction(func1);
+        story.addLuaFunction(func2);
+
+        const serialized = story.serialize();
+
+        expect(serialized.luaFunctions).toBeDefined();
+        expect(Object.keys(serialized.luaFunctions!).length).toBe(2);
+        expect(serialized.luaFunctions![func1.id]).toBeDefined();
+        expect(serialized.luaFunctions![func1.id].name).toBe('func1');
+        expect(serialized.luaFunctions![func2.id]).toBeDefined();
+        expect(serialized.luaFunctions![func2.id].name).toBe('func2');
+      });
+
+      it('should not include luaFunctions if empty', () => {
+        const serialized = story.serialize();
+        expect(serialized.luaFunctions).toBeUndefined();
+      });
+
+      it('should deserialize lua functions', () => {
+const func = new LuaFunction({
+          id: 'test-id',
+          name: 'testFunc',
+          description: 'Test function',
+          code: 'function test() end',
+          category: 'Testing',
+        });
+        story.addLuaFunction(func);
+
+        const serialized = story.serialize();
+        const deserialized = Story.deserialize(serialized);
+
+        expect(deserialized.luaFunctions.size).toBe(1);
+        const deserializedFunc = deserialized.getLuaFunction('test-id');
+        expect(deserializedFunc).toBeDefined();
+        expect(deserializedFunc?.name).toBe('testFunc');
+        expect(deserializedFunc?.description).toBe('Test function');
+        expect(deserializedFunc?.code).toBe('function test() end');
+        expect(deserializedFunc?.category).toBe('Testing');
+      });
     });
   });
 });

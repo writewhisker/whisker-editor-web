@@ -2,17 +2,50 @@
   /**
    * ScriptEditor - Edit Lua scripts for the story
    */
+  import { onMount } from 'svelte';
   import { currentStory } from '../../stores/projectStore';
+  import MonacoEditor from './MonacoEditor.svelte';
+  import FunctionLibraryPanel from '../scripting/FunctionLibraryPanel.svelte';
+  import VisualScriptBuilder from '../scripting/VisualScriptBuilder.svelte';
+  import LuaConsole from '../scripting/LuaConsole.svelte';
+  import { initializeLuaSupport } from '../../scripting/luaConfig';
+  import { getLuaExecutor, type LuaExecutionResult } from '../../scripting/LuaExecutor';
 
-  let activeIndex = 0;
-  let code = '';
-  let hasChanges = false;
+  let activeIndex = $state(0);
+  let code = $state('');
+  let hasChanges = $state(false);
+  let editorRef = $state<MonacoEditor>();
+  let executionResult = $state<LuaExecutionResult | null>(null);
+  let isRunning = $state(false);
+  let activeTab = $state<'editor' | 'library' | 'visual' | 'console'>('editor');
 
-  $: scripts = $currentStory?.scripts || [];
-  $: if (scripts.length > 0 && activeIndex < scripts.length) {
-    code = scripts[activeIndex];
-    hasChanges = false;
-  }
+  let scripts = $derived($currentStory?.scripts || []);
+
+  // Initialize on mount
+  onMount(() => {
+    // Initialize Lua support
+    initializeLuaSupport();
+
+    // Listen for code insertion from function library
+    const handleInsertCode = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      if (customEvent.detail && editorRef) {
+        editorRef.insertText('\n' + customEvent.detail + '\n');
+        activeTab = 'editor'; // Switch back to editor
+      }
+    };
+
+    window.addEventListener('insertcode', handleInsertCode);
+    return () => window.removeEventListener('insertcode', handleInsertCode);
+  });
+
+  // Update code when active script changes
+  $effect(() => {
+    if (scripts.length > 0 && activeIndex < scripts.length) {
+      code = scripts[activeIndex];
+      hasChanges = false;
+    }
+  });
 
   function addScript() {
     if (!$currentStory) return;
@@ -37,9 +70,8 @@
     }
   }
 
-  function updateCode(event: Event) {
-    const target = event.target as HTMLTextAreaElement;
-    code = target.value;
+  function handleCodeChange(newCode: string) {
+    code = newCode;
     hasChanges = true;
   }
 
@@ -59,20 +91,43 @@
   }
 
   function insertSnippet(snippet: string) {
-    const textarea = document.querySelector('.code-editor') as HTMLTextAreaElement;
-    if (!textarea) return;
+    if (!editorRef) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    code = code.substring(0, start) + snippet + code.substring(end);
+    editorRef.insertText(snippet);
+    editorRef.focus();
     hasChanges = true;
+  }
 
-    setTimeout(() => {
-      textarea.focus();
-      textarea.selectionStart = start + snippet.length;
-      textarea.selectionEnd = start + snippet.length;
-    }, 0);
+  async function runScript() {
+    if (!$currentStory || !code) return;
+
+    isRunning = true;
+    executionResult = null;
+
+    try {
+      const executor = getLuaExecutor();
+      await executor.initialize();
+
+      // Create execution context
+      const context = {
+        story: $currentStory,
+        currentPassageId: $currentStory.startPassage || Array.from($currentStory.passages.keys())[0],
+        variables: {},
+        history: [],
+      };
+
+      // Execute the script
+      const result = await executor.execute(code, context);
+      executionResult = result;
+    } catch (error) {
+      executionResult = {
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+        output: [],
+      };
+    } finally {
+      isRunning = false;
+    }
   }
 
   const snippets = [
@@ -128,27 +183,31 @@ game_state:set_variable("variableName", newValue)`
   <div class="sidebar">
     <div class="sidebar-header">
       <h3>Scripts</h3>
-      <button class="btn-add" on:click={addScript} title="Add script">+</button>
+      <button class="btn-add" onclick={addScript} title="Add script">+</button>
     </div>
 
     <div class="script-list">
       {#if scripts.length === 0}
         <div class="empty-message">
           <p>No scripts</p>
-          <button class="btn-primary" on:click={addScript}>Add First Script</button>
+          <button class="btn-primary" onclick={addScript}>Add First Script</button>
         </div>
       {:else}
         {#each scripts as script, index (index)}
           <div
             class="script-item"
             class:active={index === activeIndex}
-            on:click={() => { activeIndex = index; }}
+            onclick={() => { activeIndex = index; }}
+            role="button"
+            tabindex="0"
+            onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activeIndex = index; } }}
           >
             <span class="script-name">Script {index + 1}</span>
             <button
               class="btn-delete-small"
-              on:click|stopPropagation={() => deleteScript(index)}
+              onclick={(e) => { e.stopPropagation(); deleteScript(index); }}
               title="Delete"
+              type="button"
             >
               ×
             </button>
@@ -163,8 +222,9 @@ game_state:set_variable("variableName", newValue)`
         {#each snippets as snippet}
           <button
             class="snippet-btn"
-            on:click={() => insertSnippet(snippet.code)}
+            onclick={() => insertSnippet(snippet.code)}
             title="Insert snippet"
+            type="button"
           >
             {snippet.name}
           </button>
@@ -174,11 +234,52 @@ game_state:set_variable("variableName", newValue)`
   </div>
 
   <div class="editor-area">
-    {#if scripts.length === 0}
+    <div class="editor-tabs">
+      <button
+        class="tab"
+        class:active={activeTab === 'editor'}
+        onclick={() => { activeTab = 'editor'; }}
+        type="button"
+      >
+        Scripts
+      </button>
+      <button
+        class="tab"
+        class:active={activeTab === 'library'}
+        onclick={() => { activeTab = 'library'; }}
+        type="button"
+      >
+        Function Library
+      </button>
+      <button
+        class="tab"
+        class:active={activeTab === 'visual'}
+        onclick={() => { activeTab = 'visual'; }}
+        type="button"
+      >
+        🧩 Visual Builder
+      </button>
+      <button
+        class="tab"
+        class:active={activeTab === 'console'}
+        onclick={() => { activeTab = 'console'; }}
+        type="button"
+      >
+        💻 Lua Console
+      </button>
+    </div>
+
+    {#if activeTab === 'library'}
+      <FunctionLibraryPanel />
+    {:else if activeTab === 'visual'}
+      <VisualScriptBuilder onCodeChange={handleCodeChange} />
+    {:else if activeTab === 'console'}
+      <LuaConsole />
+    {:else if scripts.length === 0}
       <div class="empty-state">
         <h2>No Scripts</h2>
         <p>Add Lua scripts to add custom logic and interactivity to your story.</p>
-        <button class="btn-primary-large" on:click={addScript}>
+        <button class="btn-primary-large" onclick={addScript} type="button">
           Create Script
         </button>
       </div>
@@ -193,22 +294,97 @@ game_state:set_variable("variableName", newValue)`
         </div>
 
         <div class="editor-actions">
+          <button
+            class="btn-run"
+            onclick={runScript}
+            disabled={isRunning || !code}
+            type="button"
+            title="Run script (Ctrl+Enter)"
+          >
+            {#if isRunning}
+              Running...
+            {:else}
+              ▶ Run Script
+            {/if}
+          </button>
           {#if hasChanges}
-            <button class="btn-secondary" on:click={revertChanges}>Revert</button>
-            <button class="btn-primary" on:click={saveChanges}>Save Changes</button>
+            <button class="btn-secondary" onclick={revertChanges} type="button">Revert</button>
+            <button class="btn-primary" onclick={saveChanges} type="button">Save Changes</button>
           {:else}
             <span class="saved-indicator">✓ Saved</span>
           {/if}
         </div>
       </div>
 
-      <textarea
-        class="code-editor"
-        bind:value={code}
-        on:input={updateCode}
-        spellcheck="false"
-        placeholder="-- Write your Lua code here"
-      ></textarea>
+      <div class="monaco-container">
+        <MonacoEditor
+          bind:this={editorRef}
+          bind:value={code}
+          language="lua"
+          theme="story-dark"
+          lineNumbers="on"
+          minimap={false}
+          fontSize={14}
+          tabSize={2}
+          wordWrap="on"
+          onchange={handleCodeChange}
+        />
+      </div>
+
+      {#if executionResult}
+        <div class="execution-results" class:error={!executionResult.success}>
+          <div class="results-header">
+            <span class="results-title">
+              {#if executionResult.success}
+                ✓ Execution Successful
+              {:else}
+                ✗ Execution Failed
+              {/if}
+            </span>
+            <button
+              class="btn-close-results"
+              onclick={() => { executionResult = null; }}
+              type="button"
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="results-body">
+            {#if executionResult.error}
+              <div class="error-message">
+                <strong>Error:</strong> {executionResult.error}
+              </div>
+            {/if}
+
+            {#if executionResult.value !== undefined}
+              <div class="return-value">
+                <strong>Return Value:</strong>
+                <code>{JSON.stringify(executionResult.value, null, 2)}</code>
+              </div>
+            {/if}
+
+            {#if executionResult.output && executionResult.output.length > 0}
+              <div class="output-section">
+                <strong>Output:</strong>
+                <div class="output-lines">
+                  {#each executionResult.output as line}
+                    <div class="output-line">{line}</div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+
+            {#if executionResult.variables && Object.keys(executionResult.variables).length > 0}
+              <div class="variables-section">
+                <strong>Modified Variables:</strong>
+                <code>{JSON.stringify(executionResult.variables, null, 2)}</code>
+              </div>
+            {/if}
+          </div>
+        </div>
+      {/if}
 
       <div class="editor-footer">
         <span class="line-count">{code.split('\n').length} lines</span>
@@ -381,6 +557,35 @@ game_state:set_variable("variableName", newValue)`
     overflow: hidden;
   }
 
+  .editor-tabs {
+    display: flex;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .tab {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .tab:hover {
+    color: var(--color-text);
+    background: var(--color-background);
+  }
+
+  .tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+  }
+
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -471,21 +676,10 @@ game_state:set_variable("variableName", newValue)`
     color: var(--color-success);
   }
 
-  .code-editor {
+  .monaco-container {
     flex: 1;
-    padding: 1rem;
-    background: var(--color-background);
-    color: var(--color-text);
-    border: none;
-    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 0.875rem;
-    line-height: 1.6;
-    resize: none;
-    tab-size: 2;
-  }
-
-  .code-editor:focus {
-    outline: none;
+    overflow: hidden;
+    min-height: 400px;
   }
 
   .editor-footer {
@@ -497,5 +691,125 @@ game_state:set_variable("variableName", newValue)`
     border-top: 1px solid var(--color-border);
     font-size: 0.75rem;
     color: var(--color-text-secondary);
+  }
+
+  .btn-run {
+    padding: 0.5rem 1rem;
+    background: var(--color-success);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .btn-run:hover:not(:disabled) {
+    background: var(--color-success-dark, #059669);
+  }
+
+  .btn-run:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .execution-results {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .execution-results.error {
+    border-top: 2px solid var(--color-error);
+  }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--color-background);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .results-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .execution-results.error .results-title {
+    color: var(--color-error);
+  }
+
+  .btn-close-results {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: background 0.2s;
+  }
+
+  .btn-close-results:hover {
+    background: var(--color-background);
+  }
+
+  .results-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .error-message {
+    padding: 0.75rem;
+    background: var(--color-error-light, #fee2e2);
+    color: var(--color-error);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-family: monospace;
+  }
+
+  .return-value,
+  .output-section,
+  .variables-section {
+    font-size: 0.875rem;
+  }
+
+  .return-value code,
+  .variables-section code {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8125rem;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  .output-lines {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.8125rem;
+  }
+
+  .output-line {
+    padding: 0.125rem 0;
+    color: var(--color-text);
   }
 </style>

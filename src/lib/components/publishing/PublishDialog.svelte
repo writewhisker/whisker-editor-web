@@ -3,6 +3,10 @@
   import type { Story } from '$lib/models/Story';
   import type { PublishOptions, PublishPlatform } from '$lib/publishing/types';
   import { StaticPublisher } from '$lib/publishing/StaticPublisher';
+  import { ItchPublisher } from '$lib/publishing/ItchPublisher';
+  import { GitHubPublisher } from '$lib/publishing/GitHubPublisher';
+  import { getVersionManager } from '$lib/publishing/versionManager';
+  import type { StoryVersion } from '$lib/publishing/versionManager';
 
   // Props
   let {
@@ -24,6 +28,31 @@
   let defaultTheme = $state<'light' | 'dark'>('light');
   let isPublishing = $state(false);
   let publishError = $state<string | null>(null);
+
+  // Platform-specific state
+  let itchApiKey = $state('');
+  let itchVisibility = $state<'public' | 'private' | 'draft'>('draft');
+  let githubToken = $state('');
+  let githubRepo = $state('');
+  let githubBranch = $state('gh-pages');
+
+  // Version management
+  const versionManager = getVersionManager();
+  let version = $state('');
+  let versionNotes = $state('');
+  let versionHistory = $state<StoryVersion[]>([]);
+  let showVersionHistory = $state(false);
+
+  // Load version history when story changes
+  $effect(() => {
+    if (story) {
+      versionHistory = versionManager.getVersions(story.id);
+      // Suggest next version
+      if (!version) {
+        version = versionManager.suggestNextVersion(story.id, 'patch');
+      }
+    }
+  });
 
   // Initialize filename from story title
   $effect(() => {
@@ -54,14 +83,29 @@
         includeSaveLoad,
         defaultTheme,
         description: description || story.metadata.description,
+        visibility: itchVisibility,
+        githubRepo: githubRepo || undefined,
+        githubBranch: githubBranch || undefined,
       };
 
       let result;
 
       switch (platform) {
         case 'static':
-          const publisher = new StaticPublisher();
-          result = await publisher.publish(story, options);
+          const staticPublisher = new StaticPublisher();
+          result = await staticPublisher.publish(story, options);
+          break;
+
+        case 'itch-io':
+          const itchPublisher = new ItchPublisher();
+          itchPublisher.authenticate({ apiKey: itchApiKey });
+          result = await itchPublisher.publish(story, options);
+          break;
+
+        case 'github-pages':
+          const githubPublisher = new GitHubPublisher();
+          githubPublisher.authenticate({ token: githubToken });
+          result = await githubPublisher.publish(story, options);
           break;
 
         default:
@@ -69,6 +113,19 @@
       }
 
       if (result.success) {
+        // Save version to history
+        versionManager.addVersion(
+          story.id,
+          story.metadata.title,
+          version,
+          platform,
+          result,
+          versionNotes || undefined
+        );
+
+        // Refresh version history
+        versionHistory = versionManager.getVersions(story.id);
+
         dispatch('published', result);
         open = false;
       } else {
@@ -121,19 +178,85 @@
           <label for="platform">Platform</label>
           <select id="platform" bind:value={platform} disabled={isPublishing}>
             <option value="static">Download HTML File</option>
-            <option value="github-pages" disabled>GitHub Pages (Coming Soon)</option>
-            <option value="itch-io" disabled>itch.io (Coming Soon)</option>
+            <option value="github-pages">GitHub Pages</option>
+            <option value="itch-io">itch.io</option>
           </select>
           <p class="help-text">
             {#if platform === 'static'}
               Download a standalone HTML file that can be hosted anywhere.
             {:else if platform === 'github-pages'}
-              Publish directly to GitHub Pages (requires authentication).
+              Publish directly to GitHub Pages (requires personal access token).
             {:else if platform === 'itch-io'}
-              Publish to itch.io (requires authentication).
+              Publish to itch.io gaming platform (requires API key).
             {/if}
           </p>
         </div>
+
+        {#if platform === 'itch-io'}
+          <div class="form-group">
+            <label for="itch-api-key">itch.io API Key</label>
+            <input
+              type="password"
+              id="itch-api-key"
+              bind:value={itchApiKey}
+              disabled={isPublishing}
+              placeholder="Enter your itch.io API key"
+            />
+            <p class="help-text">
+              Get your API key from <a href="https://itch.io/user/settings/api-keys" target="_blank" rel="noopener">itch.io user settings</a>
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="itch-visibility">Visibility</label>
+            <select id="itch-visibility" bind:value={itchVisibility} disabled={isPublishing}>
+              <option value="draft">Draft (hidden)</option>
+              <option value="private">Private (only you)</option>
+              <option value="public">Public</option>
+            </select>
+            <p class="help-text">Choose who can see your game on itch.io</p>
+          </div>
+        {/if}
+
+        {#if platform === 'github-pages'}
+          <div class="form-group">
+            <label for="github-token">GitHub Personal Access Token</label>
+            <input
+              type="password"
+              id="github-token"
+              bind:value={githubToken}
+              disabled={isPublishing}
+              placeholder="ghp_xxxxxxxxxxxxxxxx"
+            />
+            <p class="help-text">
+              Create a token with 'repo' permissions at <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener">GitHub Settings</a>
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label for="github-repo">Repository Name (Optional)</label>
+            <input
+              type="text"
+              id="github-repo"
+              bind:value={githubRepo}
+              disabled={isPublishing}
+              placeholder="my-story (auto-generated from filename if empty)"
+            />
+            <p class="help-text">Leave empty to use sanitized story title</p>
+          </div>
+
+          <div class="form-group">
+            <label for="github-branch">Branch</label>
+            <input
+              type="text"
+              id="github-branch"
+              bind:value={githubBranch}
+              disabled={isPublishing}
+              placeholder="gh-pages"
+            />
+            <p class="help-text">Branch to deploy to (usually 'gh-pages')</p>
+          </div>
+        {/if}
 
         <div class="form-group">
           <label for="filename">Filename</label>
@@ -155,6 +278,67 @@
             disabled={isPublishing}
             placeholder="A brief description of your story..."
             rows="3"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="version">Version</label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input
+              type="text"
+              id="version"
+              bind:value={version}
+              disabled={isPublishing}
+              placeholder="1.0.0"
+              style="flex: 1;"
+            />
+            {#if versionHistory.length > 0}
+              <button
+                type="button"
+                class="btn btn-secondary"
+                onclick={() => showVersionHistory = !showVersionHistory}
+                disabled={isPublishing}
+              >
+                History ({versionHistory.length})
+              </button>
+            {/if}
+          </div>
+          <p class="help-text">
+            Semantic version (e.g., 1.0.0). Suggested: {versionManager.suggestNextVersion(story?.id || '', 'patch')}
+          </p>
+        </div>
+
+        {#if showVersionHistory}
+          <div class="form-group">
+            <label>Version History</label>
+            <div class="version-history">
+              {#each versionHistory as v}
+                <div class="version-entry">
+                  <div class="version-info">
+                    <strong>v{v.version}</strong>
+                    <span class="version-platform">{v.platform}</span>
+                    <span class="version-date">{new Date(v.publishedAt).toLocaleDateString()}</span>
+                  </div>
+                  {#if v.notes}
+                    <p class="version-notes">{v.notes}</p>
+                  {/if}
+                  {#if v.url}
+                    <a href={v.url} target="_blank" rel="noopener" class="version-url">View</a>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        <div class="form-group">
+          <label for="version-notes">Version Notes (Optional)</label>
+          <textarea
+            id="version-notes"
+            bind:value={versionNotes}
+            disabled={isPublishing}
+            placeholder="What's new in this version..."
+            rows="2"
           ></textarea>
         </div>
 
@@ -407,5 +591,68 @@
 
   .btn-primary:hover:not(:disabled) {
     background: var(--accent-hover, #2980b9);
+  }
+
+  .version-history {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 4px;
+    padding: 12px;
+    background: var(--bg-secondary, #f9f9f9);
+  }
+
+  .version-entry {
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent-color, #3498db);
+  }
+
+  .version-entry:last-child {
+    margin-bottom: 0;
+  }
+
+  .version-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+
+  .version-platform {
+    padding: 2px 8px;
+    background: var(--accent-color, #3498db);
+    color: white;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .version-date {
+    color: var(--text-secondary, #666);
+    font-size: 13px;
+  }
+
+  .version-notes {
+    margin: 8px 0 0 0;
+    color: var(--text-secondary, #666);
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  .version-url {
+    display: inline-block;
+    margin-top: 4px;
+    color: var(--accent-color, #3498db);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .version-url:hover {
+    text-decoration: underline;
   }
 </style>

@@ -7,12 +7,17 @@
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { StaticPublisher } from '$lib/publishing/StaticPublisher';
+import { ItchPublisher } from '$lib/publishing/ItchPublisher';
 import type { Story } from '$lib/models/Story';
 import type { PublishResult } from '$lib/publishing/types';
 
-// Mock the StaticPublisher
+// Mock the publishers
 vi.mock('$lib/publishing/StaticPublisher', () => ({
   StaticPublisher: vi.fn(),
+}));
+
+vi.mock('$lib/publishing/ItchPublisher', () => ({
+  ItchPublisher: vi.fn(),
 }));
 
 describe('PublishDialog - Filename Sanitization', () => {
@@ -700,6 +705,236 @@ describe('PublishDialog - State Management', () => {
       expect(state.filename).toBe('my-story');
       expect(state.description).toBe('A cool story');
       expect(state.defaultTheme).toBe('light');
+    });
+  });
+});
+
+describe('PublishDialog - itch.io Publishing', () => {
+  let mockItchPublish: Mock;
+  let mockAuthenticate: Mock;
+  let mockStory: Story;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockItchPublish = vi.fn();
+    mockAuthenticate = vi.fn();
+
+    // Mock ItchPublisher constructor
+    (ItchPublisher as any).mockImplementation(() => ({
+      publish: mockItchPublish,
+      authenticate: mockAuthenticate,
+      platform: 'itch-io',
+      name: 'itch.io',
+      description: 'Publish to itch.io gaming platform',
+      requiresAuth: true,
+    }));
+
+    mockStory = {
+      id: 'test-story',
+      metadata: {
+        id: 'test-story',
+        title: 'Test Story',
+        description: 'A test story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: Date.now().toString(),
+        modified: Date.now().toString(),
+        tags: [],
+      },
+      startPassage: 'start',
+      passages: new Map(),
+      variables: new Map(),
+      settings: {},
+    } as unknown as Story;
+  });
+
+  describe('Authentication', () => {
+    it('should authenticate with API key', () => {
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      expect(mockAuthenticate).toHaveBeenCalledWith({ apiKey: 'test-api-key' });
+    });
+  });
+
+  describe('Successful Publishing', () => {
+    it('should publish to itch.io with default visibility', async () => {
+      const successResult: PublishResult = {
+        success: true,
+        platform: 'itch-io',
+        url: 'https://testuser.itch.io/test-story',
+        metadata: {
+          gameId: 12345,
+          username: 'testuser',
+          visibility: 'draft',
+        },
+      };
+
+      mockItchPublish.mockResolvedValue(successResult);
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      const result = await publisher.publish(mockStory, {
+        platform: 'itch-io',
+        filename: 'test-story',
+        description: 'A test story',
+        visibility: 'draft',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.platform).toBe('itch-io');
+      expect(result.url).toBe('https://testuser.itch.io/test-story');
+      expect(result.metadata?.gameId).toBe(12345);
+    });
+
+    it('should publish with custom visibility setting', async () => {
+      const successResult: PublishResult = {
+        success: true,
+        platform: 'itch-io',
+        url: 'https://testuser.itch.io/test-story',
+        metadata: {
+          gameId: 12345,
+          username: 'testuser',
+          visibility: 'public',
+        },
+      };
+
+      mockItchPublish.mockResolvedValue(successResult);
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      await publisher.publish(mockStory, {
+        platform: 'itch-io',
+        filename: 'test-story',
+        description: 'A test story',
+        visibility: 'public',
+      });
+
+      expect(mockItchPublish).toHaveBeenCalledWith(
+        mockStory,
+        expect.objectContaining({
+          visibility: 'public',
+        })
+      );
+    });
+
+    it('should pass description to itch.io', async () => {
+      const successResult: PublishResult = {
+        success: true,
+        platform: 'itch-io',
+        url: 'https://testuser.itch.io/test-story',
+      };
+
+      mockItchPublish.mockResolvedValue(successResult);
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      await publisher.publish(mockStory, {
+        platform: 'itch-io',
+        filename: 'test-story',
+        description: 'Custom description for itch.io',
+        visibility: 'draft',
+      });
+
+      expect(mockItchPublish).toHaveBeenCalledWith(
+        mockStory,
+        expect.objectContaining({
+          description: 'Custom description for itch.io',
+        })
+      );
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle authentication failure', async () => {
+      const errorResult: PublishResult = {
+        success: false,
+        platform: 'itch-io',
+        error: 'Failed to authenticate with itch.io. Please check your API key.',
+      };
+
+      mockItchPublish.mockResolvedValue(errorResult);
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'invalid-key' });
+
+      const result = await publisher.publish(mockStory, {
+        platform: 'itch-io',
+        filename: 'test-story',
+        visibility: 'draft',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('authenticate with itch.io');
+    });
+
+    it('should handle upload failure', async () => {
+      const errorResult: PublishResult = {
+        success: false,
+        platform: 'itch-io',
+        error: 'Failed to upload file to itch.io',
+      };
+
+      mockItchPublish.mockResolvedValue(errorResult);
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      const result = await publisher.publish(mockStory, {
+        platform: 'itch-io',
+        filename: 'test-story',
+        visibility: 'draft',
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Failed to upload file');
+    });
+
+    it('should handle network errors', async () => {
+      mockItchPublish.mockRejectedValue(new Error('Network error'));
+
+      const publisher = new ItchPublisher();
+      publisher.authenticate({ apiKey: 'test-api-key' });
+
+      await expect(
+        publisher.publish(mockStory, {
+          platform: 'itch-io',
+          filename: 'test-story',
+          visibility: 'draft',
+        })
+      ).rejects.toThrow('Network error');
+    });
+  });
+
+  describe('Form State for itch.io', () => {
+    it('should initialize itch.io specific state', () => {
+      const state = {
+        platform: 'itch-io' as const,
+        itchApiKey: '',
+        itchVisibility: 'draft' as const,
+      };
+
+      expect(state.platform).toBe('itch-io');
+      expect(state.itchApiKey).toBe('');
+      expect(state.itchVisibility).toBe('draft');
+    });
+
+    it('should update itch.io state values', () => {
+      const state = {
+        platform: 'itch-io' as const,
+        itchApiKey: '',
+        itchVisibility: 'draft' as const,
+      };
+
+      state.itchApiKey = 'my-api-key-123';
+      state.itchVisibility = 'public';
+
+      expect(state.itchApiKey).toBe('my-api-key-123');
+      expect(state.itchVisibility).toBe('public');
     });
   });
 });

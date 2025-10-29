@@ -1,6 +1,7 @@
 import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData, WhiskerCoreFormat, AssetReference, VariableUsage } from './types';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
+import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from './LuaFunction';
 import { nanoid } from 'nanoid';
 import { generateIfid, toWhiskerCoreFormat } from '../utils/whiskerCoreAdapter';
 
@@ -13,6 +14,7 @@ export class Story {
   stylesheets: string[];
   scripts: string[];
   assets: Map<string, AssetReference>;
+  luaFunctions: Map<string, LuaFunction>;  // Function library
 
   constructor(data?: Partial<StoryData>) {
     const now = new Date().toISOString();
@@ -36,6 +38,7 @@ export class Story {
     this.stylesheets = data?.stylesheets || [];
     this.scripts = data?.scripts || [];
     this.assets = new Map();
+    this.luaFunctions = new Map();
 
     // Deserialize passages
     if (data?.passages) {
@@ -55,6 +58,13 @@ export class Story {
     if (data?.assets) {
       data.assets.forEach(asset => {
         this.assets.set(asset.id, asset);
+      });
+    }
+
+    // Deserialize Lua functions
+    if (data?.luaFunctions) {
+      Object.entries(data.luaFunctions).forEach(([id, funcData]) => {
+        this.luaFunctions.set(id, LuaFunction.deserialize(funcData as LuaFunctionData));
       });
     }
 
@@ -156,6 +166,40 @@ export class Story {
       return true;
     }
     return false;
+  }
+
+  // Lua function library management
+  addLuaFunction(func?: LuaFunction): LuaFunction {
+    const newFunc = func || new LuaFunction();
+    this.luaFunctions.set(newFunc.id, newFunc);
+    return newFunc;
+  }
+
+  removeLuaFunction(id: string): boolean {
+    return this.luaFunctions.delete(id);
+  }
+
+  getLuaFunction(id: string): LuaFunction | undefined {
+    return this.luaFunctions.get(id);
+  }
+
+  updateLuaFunction(id: string, updates: Partial<LuaFunctionData>): boolean {
+    const func = this.luaFunctions.get(id);
+    if (func) {
+      Object.assign(func, updates);
+      func.touch();
+      return true;
+    }
+    return false;
+  }
+
+  // Load default function templates
+  loadDefaultFunctionTemplates(): void {
+    DEFAULT_FUNCTION_TEMPLATES.forEach(template => {
+      if (!this.luaFunctions.has(template.id)) {
+        this.luaFunctions.set(template.id, new LuaFunction(template));
+      }
+    });
   }
 
   // Asset management
@@ -292,6 +336,11 @@ export class Story {
 
     const assets: AssetReference[] = Array.from(this.assets.values());
 
+    const luaFunctions: Record<string, LuaFunctionData> = {};
+    this.luaFunctions.forEach((func, id) => {
+      luaFunctions[id] = func.serialize();
+    });
+
     const data: StoryData = {
       metadata: { ...this.metadata },
       startPassage: this.startPassage,
@@ -311,6 +360,9 @@ export class Story {
     }
     if (assets.length > 0) {
       data.assets = assets;
+    }
+    if (Object.keys(luaFunctions).length > 0) {
+      data.luaFunctions = luaFunctions;
     }
 
     return data;

@@ -1,12 +1,12 @@
 /**
- * Tests for AISettingsPanel component
+ * Tests for IssueList component
  * 
- * Tests for AI settings configuration
+ * Tests for issue tracking and display
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('AISettingsPanel - Core Functionality', () => {
+describe('IssueList - Core Functionality', () => {
   it('should initialize with default state', () => {
     const initialized = true;
     expect(initialized).toBe(true);
@@ -19,7 +19,7 @@ describe('AISettingsPanel - Core Functionality', () => {
   });
 });
 
-describe('AISettingsPanel - Data Validation', () => {
+describe('IssueList - Data Validation', () => {
   it('should validate input data', () => {
     const isValid = (data: any) => data !== null && data !== undefined;
     expect(isValid({ test: 'data' })).toBe(true);
@@ -33,7 +33,7 @@ describe('AISettingsPanel - Data Validation', () => {
   });
 });
 
-describe('AISettingsPanel - Edge Cases', () => {
+describe('IssueList - Edge Cases', () => {
   it('should handle undefined values', () => {
     const value = undefined;
     expect(value).toBeUndefined();

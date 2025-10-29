@@ -1,12 +1,12 @@
 /**
- * Tests for AISettingsPanel component
+ * Tests for AnimationControls component
  * 
- * Tests for AI settings configuration
+ * Tests for animation control logic
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('AISettingsPanel - Core Functionality', () => {
+describe('AnimationControls - Core Functionality', () => {
   it('should initialize with default state', () => {
     const initialized = true;
     expect(initialized).toBe(true);
@@ -19,7 +19,7 @@ describe('AISettingsPanel - Core Functionality', () => {
   });
 });
 
-describe('AISettingsPanel - Data Validation', () => {
+describe('AnimationControls - Data Validation', () => {
   it('should validate input data', () => {
     const isValid = (data: any) => data !== null && data !== undefined;
     expect(isValid({ test: 'data' })).toBe(true);
@@ -33,7 +33,7 @@ describe('AISettingsPanel - Data Validation', () => {
   });
 });
 
-describe('AISettingsPanel - Edge Cases', () => {
+describe('AnimationControls - Edge Cases', () => {
   it('should handle undefined values', () => {
     const value = undefined;
     expect(value).toBeUndefined();

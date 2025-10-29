@@ -242,7 +242,7 @@ describe('projectStore', () => {
     describe('loadProject', () => {
       it('should load project from data', () => {
         const projectData: ProjectData = {
-          version: 1,
+          version: '1.0.0',
           metadata: {
             title: 'Loaded Story',
             author: 'Test Author',
@@ -250,8 +250,8 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [
-            {
+          passages: {
+            p1: {
               id: 'p1',
               title: 'Start',
               content: 'Content',
@@ -261,7 +261,7 @@ describe('projectStore', () => {
               modified: '2024-01-02',
               choices: [],
             },
-          ],
+          },
           variables: {},
           startPassage: 'p1',
         };
@@ -275,7 +275,7 @@ describe('projectStore', () => {
 
       it('should set filePath if provided', () => {
         const projectData: ProjectData = {
-          version: 1,
+          version: '1.0.0',
           metadata: {
             title: 'Test',
             author: '',
@@ -296,7 +296,7 @@ describe('projectStore', () => {
         unsavedChanges.set(true);
 
         const projectData: ProjectData = {
-          version: 1,
+          version: '1.0.0',
           metadata: {
             title: 'Test',
             author: '',
@@ -315,7 +315,7 @@ describe('projectStore', () => {
 
       it('should select start passage if present', () => {
         const projectData: ProjectData = {
-          version: 1,
+          version: '1.0.0',
           metadata: {
             title: 'Test',
             author: '',
@@ -323,8 +323,8 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [
-            {
+          passages: {
+            'start-id': {
               id: 'start-id',
               title: 'Start',
               content: '',
@@ -334,7 +334,7 @@ describe('projectStore', () => {
               modified: '2024-01-02',
               choices: [],
             },
-          ],
+          },
           variables: {},
           startPassage: 'start-id',
         };

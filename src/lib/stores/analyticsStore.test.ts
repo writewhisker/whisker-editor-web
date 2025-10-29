@@ -44,18 +44,21 @@ describe('analyticsStore', () => {
         created: Date.now().toString(),
         modified: Date.now().toString(),
       },
-      passages: [
-        {
-          id: 'start',
-          name: 'Start',
-          content: 'Test content',
-          tags: [],
-          metadata: {},
-        },
-      ],
-      variables: [],
+      passages: new Map([
+        [
+          'start',
+          {
+            id: 'start',
+            name: 'Start',
+            content: 'Test content',
+            tags: [],
+            metadata: {},
+          } as any,
+        ],
+      ]),
+      variables: new Map(),
       startPassage: 'start',
-    };
+    } as any;
 
     // Mock metrics
     mockMetrics = {
@@ -336,7 +339,7 @@ describe('analyticsStore', () => {
       analyticsActions.exportReport();
 
       expect(capturedBlob).toBeInstanceOf(Blob);
-      expect(capturedBlob?.type).toBe('application/json');
+      expect((capturedBlob as unknown as Blob)?.type).toBe('application/json');
     });
 
     it('should do nothing when no report available', () => {
@@ -391,10 +394,10 @@ describe('analyticsStore', () => {
       currentStory.set(mockStory);
       await vi.advanceTimersByTimeAsync(100);
 
-      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated' } });
+      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated' } } as any);
       await vi.advanceTimersByTimeAsync(100);
 
-      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated Again' } });
+      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated Again' } } as any);
       await vi.advanceTimersByTimeAsync(100);
 
       // Analysis should not have run yet
@@ -416,7 +419,7 @@ describe('analyticsStore', () => {
       await vi.advanceTimersByTimeAsync(400);
 
       // Change again before timeout completes
-      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated' } });
+      currentStory.set({ ...mockStory, metadata: { ...mockStory.metadata, title: 'Updated' } } as any);
 
       // Original timeout should be cancelled
       expect(StoryAnalytics.analyze).not.toHaveBeenCalled();

@@ -10,7 +10,7 @@ import type { ProjectData } from '../models/types';
 
 describe('fileOperations', () => {
   const mockProjectData: ProjectData = {
-    version: 1,
+    version: '1.0.0',
     metadata: {
       title: 'Test Story',
       author: 'Test Author',

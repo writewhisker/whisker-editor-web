@@ -19,10 +19,10 @@
   let selectedAnalysis = $state<'full' | 'plot' | 'characters' | 'pacing'>('full');
 
   const analysisTypes = [
-    { value: 'full', label: 'Full Analysis', icon: '📊', description: 'Comprehensive story analysis' },
-    { value: 'plot', label: 'Plot', icon: '📖', description: 'Plot consistency and structure' },
-    { value: 'characters', label: 'Characters', icon: '👤', description: 'Character development and consistency' },
-    { value: 'pacing', label: 'Pacing', icon: '⏱️', description: 'Story pacing and flow' },
+    { value: 'full' as const, label: 'Full Analysis', icon: '📊', description: 'Comprehensive story analysis' },
+    { value: 'plot' as const, label: 'Plot', icon: '📖', description: 'Plot consistency and structure' },
+    { value: 'characters' as const, label: 'Characters', icon: '👤', description: 'Character development and consistency' },
+    { value: 'pacing' as const, label: 'Pacing', icon: '⏱️', description: 'Story pacing and flow' },
   ];
 
   async function handleAnalyze() {

@@ -695,11 +695,11 @@ describe('PublishDialog - State Management', () => {
 
       state.filename = 'my-story';
       state.description = 'A cool story';
-      state.defaultTheme = 'dark' as const;
+      state.defaultTheme = 'light' as const; // Changed from 'dark' to 'light' to match type
 
       expect(state.filename).toBe('my-story');
       expect(state.description).toBe('A cool story');
-      expect(state.defaultTheme).toBe('dark');
+      expect(state.defaultTheme).toBe('light');
     });
   });
 });

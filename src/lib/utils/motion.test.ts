@@ -234,7 +234,7 @@ describe('motion', () => {
 
       matchMediaMock.addEventListener = vi.fn((event, callback) => {
         if (event === 'change') {
-          changeCallback = callback;
+          changeCallback = callback as (e: MediaQueryListEvent) => void;
         }
       });
 
@@ -245,7 +245,7 @@ describe('motion', () => {
 
       // Simulate system preference change
       if (changeCallback) {
-        changeCallback({ matches: true } as MediaQueryListEvent);
+        (changeCallback as (e: MediaQueryListEvent) => void)({ matches: true } as MediaQueryListEvent);
       }
 
       expect(get(prefersReducedMotion)).toBe(true);

@@ -25,53 +25,6 @@ let storageAdapter: IStorageAdapter | null = null;
 let currentProjectId: string | null = null;
 let storageReady = false;
 
-// Storage initialization
-(async () => {
-  try {
-    storageAdapter = await getDefaultStorageAdapter();
-    storageReady = true;
-    console.log('Storage initialized successfully');
-
-    // Try to load last project from localStorage preference
-    const lastProjectId = localStorage.getItem('whisker-last-project-id');
-    if (lastProjectId && storageAdapter) {
-      try {
-        const storedProject = await storageAdapter.loadProject(lastProjectId);
-        if (storedProject) {
-          const modelData = storageToModel(storedProject);
-          projectActions.loadProject(modelData);
-          currentProjectId = lastProjectId;
-          console.log(`Loaded last project: ${storedProject.name}`);
-        }
-      } catch (err) {
-        console.warn('Could not load last project:', err);
-      }
-    }
-  } catch (err) {
-    console.error('Storage initialization failed, running in-memory mode:', err);
-    storageReady = false;
-  }
-})();
-
-// Derived stores
-export const passageList = derived(currentStory, $story => {
-  if (!$story) return [];
-  return Array.from($story.passages.values());
-});
-
-export const variableList = derived(currentStory, $story => {
-  if (!$story) return [];
-  return Array.from($story.variables.values());
-});
-
-export const selectedPassage = derived(
-  [currentStory, selectedPassageId],
-  ([$story, $selectedId]) => {
-    if (!$story || !$selectedId) return null;
-    return $story.getPassage($selectedId) || null;
-  }
-);
-
 /**
  * Save current project to storage
  */
@@ -417,3 +370,50 @@ export const projectActions = {
     return await storageAdapter.listProjects();
   },
 };
+
+// Storage initialization
+(async () => {
+  try {
+    storageAdapter = await getDefaultStorageAdapter();
+    storageReady = true;
+    console.log('Storage initialized successfully');
+
+    // Try to load last project from localStorage preference
+    const lastProjectId = localStorage.getItem('whisker-last-project-id');
+    if (lastProjectId && storageAdapter) {
+      try {
+        const storedProject = await storageAdapter.loadProject(lastProjectId);
+        if (storedProject) {
+          const modelData = storageToModel(storedProject);
+          projectActions.loadProject(modelData);
+          currentProjectId = lastProjectId;
+          console.log(`Loaded last project: ${storedProject.name}`);
+        }
+      } catch (err) {
+        console.warn('Could not load last project:', err);
+      }
+    }
+  } catch (err) {
+    console.error('Storage initialization failed, running in-memory mode:', err);
+    storageReady = false;
+  }
+})();
+
+// Derived stores
+export const passageList = derived(currentStory, $story => {
+  if (!$story) return [];
+  return Array.from($story.passages.values());
+});
+
+export const variableList = derived(currentStory, $story => {
+  if (!$story) return [];
+  return Array.from($story.variables.values());
+});
+
+export const selectedPassage = derived(
+  [currentStory, selectedPassageId],
+  ([$story, $selectedId]) => {
+    if (!$story || !$selectedId) return null;
+    return $story.getPassage($selectedId) || null;
+  }
+);

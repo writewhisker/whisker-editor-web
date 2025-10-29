@@ -168,6 +168,7 @@
           id="file-menu"
           bind:this={fileMenuElement}
           role="menu"
+          tabindex="-1"
           aria-labelledby="file-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
           on:click={closeMenus}
@@ -264,6 +265,7 @@
           id="edit-menu"
           bind:this={editMenuElement}
           role="menu"
+          tabindex="-1"
           aria-labelledby="edit-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
           on:click={closeMenus}
@@ -322,6 +324,7 @@
           id="view-menu"
           bind:this={viewMenuElement}
           role="menu"
+          tabindex="-1"
           aria-labelledby="view-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
           on:click={closeMenus}

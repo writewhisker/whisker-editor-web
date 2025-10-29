@@ -45,6 +45,88 @@ export interface ImportOptions {
 
   /** Custom import handlers */
   customHandlers?: Record<string, (data: unknown) => unknown>;
+
+  /** Conversion options for format conversion (e.g., Twine) */
+  conversionOptions?: ConversionOptions;
+}
+
+/**
+ * Conversion issue severity
+ */
+export type ConversionSeverity = 'critical' | 'warning' | 'info';
+
+/**
+ * Conversion issue details
+ */
+export interface ConversionIssue {
+  /** Severity level */
+  severity: ConversionSeverity;
+
+  /** Issue category (e.g., 'macro', 'syntax', 'variable') */
+  category: string;
+
+  /** Feature or syntax that couldn't be converted */
+  feature: string;
+
+  /** Passage where issue occurred */
+  passageId?: string;
+
+  /** Passage name for display */
+  passageName?: string;
+
+  /** Line number in passage (if applicable) */
+  line?: number;
+
+  /** Original syntax */
+  original?: string;
+
+  /** Suggested manual fix */
+  suggestion?: string;
+
+  /** Detailed explanation */
+  message: string;
+}
+
+/**
+ * Loss report for format conversion
+ */
+export interface LossReport {
+  /** Total number of issues */
+  totalIssues: number;
+
+  /** Issues by severity */
+  critical: ConversionIssue[];
+  warnings: ConversionIssue[];
+  info: ConversionIssue[];
+
+  /** Count by category */
+  categoryCounts: Record<string, number>;
+
+  /** Passages affected */
+  affectedPassages: string[];
+
+  /** Overall conversion quality estimate (0-1) */
+  conversionQuality?: number;
+}
+
+/**
+ * Conversion options for Twine import
+ */
+export interface ConversionOptions {
+  /** Automatically convert variables (e.g., $var to {{var}}) */
+  convertVariables?: boolean;
+
+  /** Preserve original syntax in comments */
+  preserveOriginalSyntax?: boolean;
+
+  /** Strict mode - fail on unknown macros */
+  strictMode?: boolean;
+
+  /** Convert macros to equivalent Whisker syntax */
+  convertMacros?: boolean;
+
+  /** Target Whisker syntax version */
+  targetVersion?: string;
 }
 
 /**
@@ -74,6 +156,9 @@ export interface ImportResult {
 
   /** Warnings encountered during import */
   warnings?: string[];
+
+  /** Loss report for format conversions */
+  lossReport?: LossReport;
 
   /** Skipped elements */
   skipped?: {

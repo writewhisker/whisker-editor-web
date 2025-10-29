@@ -115,7 +115,7 @@ describe('ImportDialog', () => {
     it('should disable Import button when no file is selected', () => {
       const { getByText } = render(ImportDialog, { props: { show: true } });
 
-      const importButton = getByText('Import').closest('button') as HTMLButtonElement;
+      const importButton = getByText('Preview Import').closest('button') as HTMLButtonElement;
       expect(importButton.disabled).toBe(true);
     });
 
@@ -131,7 +131,7 @@ describe('ImportDialog', () => {
       });
       await fireEvent.change(fileInput);
 
-      const importButton = getByText('Import').closest('button') as HTMLButtonElement;
+      const importButton = getByText('Preview Import').closest('button') as HTMLButtonElement;
       expect(importButton.disabled).toBe(false);
     });
 
@@ -152,9 +152,16 @@ describe('ImportDialog', () => {
       expect(getByText('Importing...')).toBeTruthy();
     });
 
-    it('should call exportActions.importStory when Import button is clicked', async () => {
-      const importSpy = vi.spyOn(exportActions, 'importStory');
-      importSpy.mockResolvedValue(testStory);
+    it('should call exportActions.importStoryWithResult when Import button is clicked', async () => {
+      const importSpy = vi.spyOn(exportActions, 'importStoryWithResult');
+      importSpy.mockResolvedValue({
+        success: true,
+        story: testStory,
+        format: 'json',
+        passageCount: 1,
+        variableCount: 0,
+        warnings: [],
+      });
 
       const { container, getByText } = render(ImportDialog, { props: { show: true } });
 
@@ -167,12 +174,15 @@ describe('ImportDialog', () => {
       });
       await fireEvent.change(fileInput);
 
-      // Click import
-      const importButton = getByText('Import').closest('button') as HTMLElement;
+      // Click preview import
+      const importButton = getByText('Preview Import').closest('button') as HTMLElement;
       await fireEvent.click(importButton);
 
       await waitFor(() => {
-        expect(importSpy).toHaveBeenCalledWith(file);
+        expect(importSpy).toHaveBeenCalled();
+        expect(importSpy.mock.calls[0][0]).toBe(file);
+        // Second argument is conversionOptions
+        expect(importSpy.mock.calls[0][1]).toBeDefined();
       });
 
       importSpy.mockRestore();

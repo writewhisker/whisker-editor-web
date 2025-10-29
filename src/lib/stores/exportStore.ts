@@ -12,8 +12,11 @@ import type { ImportFormat, ImportHistoryEntry } from '../import/types';
 import { JSONExporter } from '../export/formats/JSONExporter';
 import { HTMLExporter } from '../export/formats/HTMLExporter';
 import { MarkdownExporter } from '../export/formats/MarkdownExporter';
+import { TwineExporter } from '../export/formats/TwineExporter';
 import { EPUBExporter } from '../export/formats/EPUBExporter';
+import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
+import { TwineImporter } from '../import/formats/TwineImporter';
 import type { Story } from '../models/Story';
 import { getPreferenceService } from '../services/storage/PreferenceService';
 
@@ -170,8 +173,14 @@ export const exportActions = {
         case 'html':
           exporter = new HTMLExporter();
           break;
+        case 'html-standalone':
+          exporter = new StaticSiteExporter();
+          break;
         case 'markdown':
           exporter = new MarkdownExporter();
+          break;
+        case 'twine':
+          exporter = new TwineExporter();
           break;
         case 'epub':
           exporter = new EPUBExporter();
@@ -253,7 +262,65 @@ export const exportActions = {
   },
 
   /**
-   * Import story from file
+   * Import story from file (returns full result with loss reporting)
+   */
+  async importStoryWithResult(file: File, conversionOptions?: any) {
+    isImporting.set(true);
+    importError.set(null);
+
+    try {
+      // Read file
+      const content = await file.text();
+
+      // Try importers in order
+      const importers = [
+        new JSONImporter(),
+        new TwineImporter(),
+      ];
+
+      let selectedImporter = null;
+      let detectedFormat: ImportFormat = 'json';
+
+      for (const importer of importers) {
+        if (importer.canImport(content)) {
+          selectedImporter = importer;
+          detectedFormat = importer.format;
+          break;
+        }
+      }
+
+      if (!selectedImporter) {
+        throw new Error('Unsupported file format - please use JSON or Twine HTML files');
+      }
+
+      // Import story (pass conversion options)
+      const result = await selectedImporter.import({
+        data: content,
+        options: {
+          conversionOptions,
+        },
+        filename: file.name,
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Import failed');
+      }
+
+      // Note: Don't add to history yet - wait for user confirmation
+      isImporting.set(false);
+      return result;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      importError.set(message);
+      console.error('Import failed:', error);
+
+      isImporting.set(false);
+      return null;
+    }
+  },
+
+  /**
+   * Import story from file (returns story only, for backward compatibility)
    */
   async importStory(file: File): Promise<Story | null> {
     isImporting.set(true);
@@ -263,15 +330,29 @@ export const exportActions = {
       // Read file
       const content = await file.text();
 
-      // Try JSON importer first
-      const importer = new JSONImporter();
+      // Try importers in order
+      const importers = [
+        new JSONImporter(),
+        new TwineImporter(),
+      ];
 
-      if (!importer.canImport(content)) {
-        throw new Error('Unsupported file format');
+      let selectedImporter = null;
+      let detectedFormat: ImportFormat = 'json';
+
+      for (const importer of importers) {
+        if (importer.canImport(content)) {
+          selectedImporter = importer;
+          detectedFormat = importer.format;
+          break;
+        }
+      }
+
+      if (!selectedImporter) {
+        throw new Error('Unsupported file format - please use JSON or Twine HTML files');
       }
 
       // Import story
-      const result = await importer.import({
+      const result = await selectedImporter.import({
         data: content,
         options: {},
         filename: file.name,
@@ -285,7 +366,7 @@ export const exportActions = {
       const historyEntry: ImportHistoryEntry = {
         id: `import_${Date.now()}`,
         timestamp: Date.now(),
-        format: 'json',
+        format: detectedFormat,
         storyTitle: result.story?.metadata.title || 'Unknown',
         passageCount: result.passageCount || 0,
         success: true,
@@ -304,7 +385,7 @@ export const exportActions = {
       const historyEntry: ImportHistoryEntry = {
         id: `import_${Date.now()}`,
         timestamp: Date.now(),
-        format: 'json',
+        format: 'json', // Default to json for failed imports
         storyTitle: 'Unknown',
         passageCount: 0,
         success: false,

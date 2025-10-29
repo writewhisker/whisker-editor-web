@@ -7,17 +7,40 @@
     recentImports,
     exportActions,
   } from '../../stores/exportStore';
+  import type { ImportResult, ConversionOptions } from '../../import/types';
+  import ImportPreviewPanel from './ImportPreviewPanel.svelte';
 
   export let show = false;
 
   const dispatch = createEventDispatcher();
 
+  type DialogStep = 'file-selection' | 'preview' | 'importing';
+
   let fileInput: HTMLInputElement;
   let selectedFile: File | null = null;
+  let currentStep: DialogStep = 'file-selection';
+  let previewResult: ImportResult | null = null;
+
+  // Conversion options state
+  let conversionOptions: ConversionOptions = {
+    convertVariables: true,
+    preserveOriginalSyntax: false,
+    strictMode: false,
+    convertMacros: true,
+  };
 
   function close() {
     show = false;
     selectedFile = null;
+    currentStep = 'file-selection';
+    previewResult = null;
+    // Reset to defaults
+    conversionOptions = {
+      convertVariables: true,
+      preserveOriginalSyntax: false,
+      strictMode: false,
+      convertMacros: true,
+    };
   }
 
   function handleFileSelect(event: Event) {
@@ -43,12 +66,45 @@
       return;
     }
 
-    const story = await exportActions.importStory(selectedFile);
+    currentStep = 'importing';
 
-    if (story) {
-      dispatch('import', { story });
-      close();
+    // Generate preview first (pass conversion options)
+    const result = await exportActions.importStoryWithResult(selectedFile, conversionOptions);
+
+    if (result && result.success) {
+      previewResult = result;
+      currentStep = 'preview';
+    } else {
+      // Error occurred, stay on file selection
+      currentStep = 'file-selection';
     }
+  }
+
+  async function confirmImport() {
+    if (!previewResult || !previewResult.story || !selectedFile) {
+      return;
+    }
+
+    // Add to history
+    const historyEntry = {
+      id: `import_${Date.now()}`,
+      timestamp: Date.now(),
+      format: previewResult.format || 'json',
+      storyTitle: previewResult.story.metadata.title,
+      passageCount: previewResult.passageCount || 0,
+      success: true,
+      filename: selectedFile.name,
+    };
+    importHistory.update((h) => [historyEntry, ...h]);
+
+    // User confirmed, dispatch the story
+    dispatch('import', { story: previewResult.story });
+    close();
+  }
+
+  function backToFileSelection() {
+    currentStep = 'file-selection';
+    previewResult = null;
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -81,14 +137,34 @@
       aria-labelledby="import-title"
       tabindex="-1"
     >
-      <h2 id="import-title" class="text-2xl font-bold mb-6">Import Story</h2>
+      <h2 id="import-title" class="text-2xl font-bold mb-6">
+        {currentStep === 'preview' ? 'Import Preview' : 'Import Story'}
+      </h2>
 
-      {#if $importError}
+      {#if $importError && currentStep === 'file-selection'}
         <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
           <p class="font-semibold">Import Error:</p>
           <p>{$importError}</p>
         </div>
       {/if}
+
+      {#if currentStep === 'preview' && previewResult}
+        <!-- Preview Step -->
+        <ImportPreviewPanel
+          result={previewResult}
+          onConfirm={confirmImport}
+          onCancel={backToFileSelection}
+        />
+      {:else if currentStep === 'importing'}
+        <!-- Loading State -->
+        <div class="flex flex-col items-center justify-center py-12">
+          <svg class="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-gray-600">Analyzing file...</p>
+        </div>
+      {:else}
 
       <!-- File Upload Area -->
       <div class="mb-6">
@@ -117,7 +193,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
               <p class="font-medium">Drop a file here or click to browse</p>
-              <p class="text-sm mt-1">Supports: .json files</p>
+              <p class="text-sm mt-1">Supports: .json, .html (Twine HTML), .twee (Twee notation) files</p>
             </div>
           {/if}
         </div>
@@ -126,7 +202,7 @@
           type="file"
           bind:this={fileInput}
           on:change={handleFileSelect}
-          accept=".json,application/json"
+          accept=".json,.html,.htm,.twee,.tw,application/json,text/html"
           class="hidden"
         />
       </div>
@@ -137,6 +213,53 @@
           The imported story will replace the current story. Make sure you've saved your work before importing.
         </p>
       </div>
+
+      <!-- Conversion Options (for Twine imports) -->
+      {#if selectedFile && (selectedFile.name.endsWith('.html') || selectedFile.name.endsWith('.htm') || selectedFile.name.endsWith('.twee') || selectedFile.name.endsWith('.tw'))}
+        <div class="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
+          <div class="block text-sm font-semibold mb-3">Conversion Options</div>
+          <div class="space-y-2">
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.convertVariables}
+                class="mr-2"
+              />
+              <span>Convert variables automatically (e.g., $var → {'{{var}}'})</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.convertMacros}
+                class="mr-2"
+              />
+              <span>Convert macros to Whisker syntax</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.preserveOriginalSyntax}
+                class="mr-2"
+              />
+              <span>Preserve original syntax in comments</span>
+            </label>
+
+            <label class="flex items-center text-sm">
+              <input
+                type="checkbox"
+                bind:checked={conversionOptions.strictMode}
+                class="mr-2"
+              />
+              <span>Strict mode (fail on unknown macros)</span>
+            </label>
+          </div>
+          <p class="text-xs text-gray-500 mt-3">
+            These options affect how Twine HTML files are converted to Whisker format.
+          </p>
+        </div>
+      {/if}
 
       <!-- Recent Imports -->
       {#if $recentImports.length > 0}
@@ -195,11 +318,12 @@
               </svg>
               Importing...
             {:else}
-              Import
+              Preview Import
             {/if}
           </button>
         </div>
       </div>
+      {/if}
     </div>
   </div>
 {/if}

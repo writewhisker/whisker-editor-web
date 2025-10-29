@@ -1,0 +1,258 @@
+<tw-storydata name="Chapbook Journey" startnode="1" creator="Twine" creator-version="2.5.1" ifid="C3D4E5F6-A7B8-9012-CDEF-G34567890123" zoom="1" format="Chapbook" format-version="1.2.3" options="" hidden>
+<style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
+<script role="script" id="twine-user-script" type="text/twine-javascript"></script>
+<tw-passagedata pid="1" name="Start" tags="beginning" position="100,100" size="100,100">Welcome to Your Journey
+
+name: &quot;Traveler&quot;
+energy: 50
+mood: &quot;curious&quot;
+--
+
+Hello, {name}!
+
+Your energy level is {energy} and you feel {mood}.
+
+This is the beginning of your adventure.
+
+[[Explore the garden-&gt;Garden]]
+[[Visit the library-&gt;Library]]
+[[Go to the marketplace-&gt;Marketplace]]</tw-passagedata>
+<tw-passagedata pid="2" name="Garden" tags="peaceful" position="250,100" size="100,100">The Peaceful Garden
+
+You enter a beautiful garden filled with colorful flowers and singing birds.
+
+energy: energy + 10
+mood: &quot;peaceful&quot;
+--
+
+Your energy increases to {energy}!
+Your mood becomes {mood}.
+
+An elderly gardener greets you with a smile.
+
+&quot;Would you like a flower from my garden?&quot; she asks.
+
+[[Accept the flower-&gt;Flower Gift]]
+[[Politely decline-&gt;Garden Leave]]</tw-passagedata>
+<tw-passagedata pid="3" name="Library" tags="knowledge" position="100,250" size="100,100">The Grand Library
+
+You step into a vast library with towering bookshelves.
+
+The smell of old books fills the air.
+
+intelligence: 5
+--
+
+Being surrounded by books makes you feel smarter! Intelligence: {intelligence}
+
+What would you like to read?
+
+[[Read a history book-&gt;History Book]]
+[[Read about magic-&gt;Magic Book]]
+[[Read about geography-&gt;Geography Book]]
+[[Leave the library-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="4" name="Flower Gift" tags="" position="400,50" size="100,100">Receiving the Flower
+
+The gardener hands you a beautiful blue flower.
+
+hasFlower: true
+mood: &quot;happy&quot;
+--
+
+&quot;This flower is special,&quot; she says mysteriously.
+
+Your mood becomes {mood}!
+
+[[Thank the gardener-&gt;Garden Leave]]</tw-passagedata>
+<tw-passagedata pid="5" name="Marketplace" tags="busy" position="250,400" size="100,100">The Bustling Marketplace
+
+The marketplace is full of vendors selling various goods.
+
+gold: 50
+--
+
+You check your coin purse and find {gold} gold coins.
+
+[if gold &gt;= 30]
+[[Buy a map (30 gold)-&gt;Buy Map]]
+
+[if gold &gt;= 20]
+[[Buy food (20 gold)-&gt;Buy Food]]
+
+[[Just browse-&gt;Browse Market]]
+[[Leave the marketplace-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="6" name="Garden Leave" tags="" position="400,100" size="100,100">Leaving the Garden
+
+With the flower in hand, you thank the gardener and leave the peaceful garden.
+
+[[Continue your journey-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="7" name="History Book" tags="knowledge" position="400,200" size="100,100">Reading History
+
+You open a large tome about the history of this land.
+
+intelligence: 10
+--
+
+You learn about ancient civilizations and forgotten empires.
+
+Your intelligence increases! (Now: {intelligence})
+
+hasKnowledge: &quot;history&quot;
+--
+
+[[Read more-&gt;Library]]
+[[Leave the library-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="8" name="Magic Book" tags="knowledge magic" position="400,250" size="100,100">Reading About Magic
+
+You discover a book of magical knowledge with glowing runes on its cover.
+
+[if intelligence &gt;= 10]
+Your knowledge allows you to understand the magical text!
+
+magic: 15
+hasKnowledge: &quot;magic&quot;
+--
+
+You learn basic magical principles. Magic skill: {magic}
+[else]
+The text is too complex to understand. You need more intelligence.
+
+[[Leave the book-&gt;Library]]</tw-passagedata>
+<tw-passagedata pid="9" name="Geography Book" tags="knowledge" position="400,300" size="100,100">Reading Geography
+
+You study maps and descriptions of distant lands.
+
+navigation: 10
+hasKnowledge: &quot;geography&quot;
+--
+
+You gain valuable navigation skills! (Navigation: {navigation})
+
+This knowledge might prove useful in your travels.
+
+[[Continue reading-&gt;Library]]
+[[Stop reading-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="10" name="Buy Map" tags="shop" position="400,400" size="100,100">Purchasing a Map
+
+gold: gold - 30
+hasMap: true
+navigation: navigation + 5
+--
+
+You purchase a detailed map of the region!
+
+Gold remaining: {gold}
+Navigation bonus: +5
+
+The map will help you find your way.
+
+[[Continue-&gt;Marketplace]]</tw-passagedata>
+<tw-passagedata pid="11" name="Buy Food" tags="shop" position="400,450" size="100,100">Purchasing Food
+
+gold: gold - 20
+energy: energy + 30
+hasFood: true
+--
+
+You buy some delicious food and eat it immediately.
+
+Gold remaining: {gold}
+Energy restored! (Now: {energy})
+
+[[Continue-&gt;Marketplace]]</tw-passagedata>
+<tw-passagedata pid="12" name="Browse Market" tags="" position="400,500" size="100,100">Browsing the Market
+
+You walk through the marketplace, taking in the sights and sounds.
+
+[if hasMap]
+With your map, you notice some interesting locations marked nearby.
+
+[[Investigate marked location-&gt;Secret Place]]
+[else]
+Nothing particularly catches your eye.
+
+[[Return to the journey-&gt;Journey Begin]]</tw-passagedata>
+<tw-passagedata pid="13" name="Secret Place" tags="secret discovery" position="550,450" size="100,100">A Secret Discovery!
+
+Your map leads you to a hidden location few know about.
+
+treasure: 100
+mood: &quot;excited&quot;
+--
+
+You discover a treasure worth {treasure} gold!
+
+Your mood becomes {mood}!
+
+[if hasFlower]
+The flower you received glows softly, as if responding to this place.
+
+magicFlower: true
+magic: magic + 10
+--
+
+The flower has magical properties! Magic +10 (Now: {magic})
+
+**You have found a special ending!**
+
+[[Reflect on your journey-&gt;Special Ending]]
+[else]
+This is an amazing discovery!
+
+[[Celebrate-&gt;Good Ending]]</tw-passagedata>
+<tw-passagedata pid="14" name="Good Ending" tags="ending" position="550,550" size="100,100">A Successful Journey
+
+You reflect on your adventures:
+
+- Name: {name}
+- Mood: {mood}
+- Energy: {energy}
+[if intelligence]
+- Intelligence: {intelligence}
+[if navigation]
+- Navigation: {navigation}
+[if magic]
+- Magic: {magic}
+[if treasure]
+- Treasure: {treasure}
+
+You have completed a rewarding journey!
+
+**THE END**
+
+[[Start over-&gt;Start]]</tw-passagedata>
+<tw-passagedata pid="15" name="Special Ending" tags="ending special" position="700,450" size="100,100">The Magical Journey
+
+Your journey has been extraordinary!
+
+Final Status:
+- Name: {name}
+- Mood: {mood}
+- Energy: {energy}
+- Intelligence: {intelligence}
+- Magic: {magic}
+- Navigation: {navigation}
+- Treasure: {treasure}
+
+The magical flower and the hidden treasure have revealed a deeper truth about this world.
+
+**You have achieved the SPECIAL ENDING!**
+
+Congratulations, {name}!
+
+[[Begin a new journey-&gt;Start]]</tw-passagedata>
+<tw-passagedata pid="16" name="Journey Begin" tags="" position="250,250" size="100,100">Continuing the Journey
+
+You set off on your journey with renewed determination.
+
+energy: energy + 5
+--
+
+Energy: {energy}
+
+Where would you like to go?
+
+[[Visit the garden-&gt;Garden]]
+[[Visit the library-&gt;Library]]
+[[Visit the marketplace-&gt;Marketplace]]</tw-passagedata>
+</tw-storydata>

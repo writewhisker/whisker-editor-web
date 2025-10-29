@@ -1,0 +1,133 @@
+<tw-storydata name="Harlowe Adventure" startnode="1" creator="Twine" creator-version="2.5.1" ifid="A1B2C3D4-E5F6-7890-ABCD-EF1234567890" zoom="1" format="Harlowe" format-version="3.3.5" options="" hidden>
+<style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style>
+<script role="script" id="twine-user-script" type="text/twine-javascript"></script>
+<tw-passagedata pid="1" name="Start" tags="" position="100,100" size="100,100">Welcome to the Harlowe Adventure!
+
+You are standing at a crossroads in a mysterious forest. The air is thick with magic.
+
+(set: $playerName to &quot;Adventurer&quot;)
+(set: $health to 100)
+(set: $hasKey to false)
+
+Your name is $playerName and you have $health health points.
+
+Where would you like to go?
+
+[[Go north-&gt;Forest Path]]
+[[Go east-&gt;Old Cottage]]
+[[Go south-&gt;Dark Cave]]</tw-passagedata>
+<tw-passagedata pid="2" name="Forest Path" tags="forest" position="100,250" size="100,100">You walk along a winding forest path. Sunlight filters through the canopy above.
+
+(if: $hasKey)[
+  You notice a treasure chest by the side of the path. With your key, you could open it!
+
+  [[Open the chest-&gt;Treasure]]
+](else: )[
+  You see a locked treasure chest, but you don&#39;t have a key.
+]
+
+(set: $health to $health + 10)
+Your health increases to $health.
+
+[[Continue north-&gt;Mountain Base]]
+[[Go back-&gt;Start]]</tw-passagedata>
+<tw-passagedata pid="3" name="Old Cottage" tags="building" position="250,100" size="100,100">You approach an old, weathered cottage. Smoke rises from its chimney.
+
+An elderly wizard greets you at the door.
+
+&quot;Hello, $playerName! I have a gift for you.&quot;
+
+(set: $hasKey to true)
+
+The wizard hands you a rusty key.
+
+[[Thank the wizard and leave-&gt;Start]]
+[[Ask about the key-&gt;Key Info]]</tw-passagedata>
+<tw-passagedata pid="4" name="Dark Cave" tags="danger" position="100,400" size="100,100">You enter a dark, foreboding cave. You can barely see anything.
+
+(if: $health &gt; 50)[
+  You feel strong enough to explore deeper.
+
+  [[Explore deeper-&gt;Cave Depths]]
+](else: )[
+  You feel too weak to continue. The darkness is overwhelming.
+
+  (set: $health to $health - 20)
+  You lose 20 health. Current health: $health
+
+  [[Retreat-&gt;Start]]
+]</tw-passagedata>
+<tw-passagedata pid="5" name="Mountain Base" tags="mountain" position="100,400" size="100,100">You reach the base of a towering mountain. The peak is shrouded in clouds.
+
+(set: $atMountain to true)
+
+This seems like a good place to rest.
+
+[[Climb the mountain-&gt;Mountain Peak]]
+[[Rest here-&gt;Rest]]
+[[Go back to the forest-&gt;Forest Path]]</tw-passagedata>
+<tw-passagedata pid="6" name="Key Info" tags="" position="400,100" size="100,100">The wizard explains:
+
+&quot;This key opens the ancient treasure chest in the forest. Inside, you&#39;ll find something valuable.&quot;
+
+(if: $health &lt; 100)[
+  &quot;You look injured. Let me heal you.&quot;
+
+  (set: $health to 100)
+
+  Your health is restored to $health!
+]
+
+[[Thank the wizard-&gt;Old Cottage]]</tw-passagedata>
+<tw-passagedata pid="7" name="Treasure" tags="treasure" position="250,250" size="100,100">You use the key to open the treasure chest!
+
+Inside, you find:
+- A gleaming sword
+- 100 gold coins
+- A healing potion
+
+(set: $hasSword to true)
+(set: $gold to 100)
+(set: $health to $health + 50)
+
+Your health increases by 50! Current health: $health
+
+Congratulations, $playerName! You&#39;ve found the treasure!
+
+[[Continue your adventure-&gt;Start]]
+**THE END**</tw-passagedata>
+<tw-passagedata pid="8" name="Cave Depths" tags="danger" position="250,400" size="100,100">You venture deeper into the cave and discover an underground lake with glowing crystals.
+
+The crystals emit a healing light.
+
+(set: $health to 100)
+(set: $foundCrystals to true)
+
+Your health is fully restored!
+
+You take a crystal with you as a souvenir.
+
+[[Return to the entrance-&gt;Dark Cave]]</tw-passagedata>
+<tw-passagedata pid="9" name="Mountain Peak" tags="victory" position="250,400" size="100,100">You climb to the mountain peak and see the entire land spread out before you.
+
+(if: $hasSword)[
+  With your sword in hand, you feel like a true hero!
+
+  **You have achieved the best ending!**
+](else: )[
+  The view is breathtaking, but you feel like your adventure is incomplete.
+
+  **You have reached an ending.**
+]
+
+[[Start over-&gt;Start]]</tw-passagedata>
+<tw-passagedata pid="10" name="Rest" tags="" position="150,500" size="100,100">You sit down and rest for a while.
+
+(set: $health to it + 30)
+
+You recover 30 health. Current health: $health
+
+Feeling refreshed, you stand up and prepare to continue.
+
+[[Continue-&gt;Mountain Base]]</tw-passagedata>
+</tw-storydata>

@@ -9,6 +9,11 @@
   let migrationStatus: 'pending' | 'complete' = 'complete';
   let migrationProgress = '';
   let usagePercent = 0;
+  let importExportMessage = '';
+  let fileInput: HTMLInputElement;
+  let showImportPreview = false;
+  let importPreviewData: Record<string, any> = {};
+  let selectedPreferences: Set<string> = new Set();
 
   onMount(async () => {
     await loadQuotaInfo();
@@ -91,6 +96,154 @@
 
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   }
+
+  async function exportPreferences() {
+    importExportMessage = 'Exporting preferences...';
+
+    try {
+      const prefService = getPreferenceService();
+      const allPrefs: Record<string, any> = {};
+
+      // Load all global preferences
+      const keys = await prefService.listPreferences('global');
+
+      for (const key of keys) {
+        const value = await prefService.getPreference(key, null);
+        if (value !== null) {
+          allPrefs[key] = value;
+        }
+      }
+
+      // Create JSON file
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        preferences: allPrefs,
+      };
+
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      // Download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `whisker-preferences-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      importExportMessage = `Successfully exported ${keys.length} preferences`;
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        importExportMessage = '';
+      }, 3000);
+    } catch (error) {
+      importExportMessage = `Export failed: ${error}`;
+      console.error('Export failed:', error);
+    }
+  }
+
+  function triggerImport() {
+    fileInput?.click();
+  }
+
+  async function handleImportFile(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) return;
+
+    importExportMessage = 'Reading file...';
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      // Validate file structure
+      if (!data.preferences || typeof data.preferences !== 'object') {
+        throw new Error('Invalid preferences file format');
+      }
+
+      // Store preview data
+      importPreviewData = data.preferences;
+
+      // Select all preferences by default
+      selectedPreferences = new Set(Object.keys(data.preferences));
+
+      // Show preview dialog
+      showImportPreview = true;
+      importExportMessage = '';
+    } catch (error) {
+      importExportMessage = `Failed to read file: ${error}`;
+      console.error('Import file read failed:', error);
+
+      setTimeout(() => {
+        importExportMessage = '';
+      }, 3000);
+    }
+
+    // Reset input
+    input.value = '';
+  }
+
+  function togglePreferenceSelection(key: string) {
+    if (selectedPreferences.has(key)) {
+      selectedPreferences.delete(key);
+    } else {
+      selectedPreferences.add(key);
+    }
+    selectedPreferences = selectedPreferences; // Trigger reactivity
+  }
+
+  function selectAllPreferences() {
+    selectedPreferences = new Set(Object.keys(importPreviewData));
+  }
+
+  function deselectAllPreferences() {
+    selectedPreferences = new Set();
+  }
+
+  async function confirmImport() {
+    importExportMessage = 'Importing preferences...';
+    showImportPreview = false;
+
+    try {
+      const prefService = getPreferenceService();
+      let importCount = 0;
+
+      // Import only selected preferences
+      for (const key of selectedPreferences) {
+        const value = importPreviewData[key];
+        if (value !== undefined) {
+          await prefService.setPreference(key, value);
+          importCount++;
+        }
+      }
+
+      importExportMessage = `Successfully imported ${importCount} preferences`;
+
+      // Refresh quota info after import
+      await loadQuotaInfo();
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        importExportMessage = '';
+      }, 3000);
+    } catch (error) {
+      importExportMessage = `Import failed: ${error}`;
+      console.error('Import failed:', error);
+    }
+  }
+
+  function cancelImport() {
+    showImportPreview = false;
+    importPreviewData = {};
+    selectedPreferences = new Set();
+    importExportMessage = '';
+  }
 </script>
 
 <div class="storage-settings p-4 space-y-6">
@@ -145,6 +298,40 @@
       {/if}
     </section>
 
+    <!-- Import/Export -->
+    <section class="import-export-section space-y-2">
+      <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Backup & Restore</h3>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
+        Export your preferences to a JSON file for backup or sharing, or import preferences from a previous export.
+      </p>
+      <div class="flex gap-3">
+        <button
+          on:click={exportPreferences}
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex items-center gap-2"
+        >
+          <span>📥</span> Export Preferences
+        </button>
+        <button
+          on:click={triggerImport}
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors flex items-center gap-2"
+        >
+          <span>📤</span> Import Preferences
+        </button>
+      </div>
+      {#if importExportMessage}
+        <div class="import-export-message text-sm text-gray-600 dark:text-gray-400 mt-2">
+          {importExportMessage}
+        </div>
+      {/if}
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept=".json"
+        on:change={handleImportFile}
+        class="hidden"
+      />
+    </section>
+
     <!-- Actions -->
     <section class="actions-section space-y-2">
       <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Actions</h3>
@@ -165,3 +352,77 @@
     </section>
   {/if}
 </div>
+
+<!-- Import Preview Dialog -->
+{#if showImportPreview}
+  <div class="import-preview-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="import-preview-dialog bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+      <!-- Header -->
+      <div class="dialog-header p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Preview Import</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Select which preferences to import
+        </p>
+      </div>
+
+      <!-- Content -->
+      <div class="dialog-content p-4 overflow-y-auto flex-1">
+        <div class="mb-4 flex gap-2">
+          <button
+            on:click={selectAllPreferences}
+            class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Select All
+          </button>
+          <button
+            on:click={deselectAllPreferences}
+            class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+          >
+            Deselect All
+          </button>
+          <span class="text-sm text-gray-600 dark:text-gray-400 ml-auto self-center">
+            {selectedPreferences.size} of {Object.keys(importPreviewData).length} selected
+          </span>
+        </div>
+
+        <div class="preferences-list space-y-2">
+          {#each Object.entries(importPreviewData) as [key, value]}
+            <div class="preference-item border border-gray-200 dark:border-gray-700 rounded p-3">
+              <label class="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedPreferences.has(key)}
+                  on:change={() => togglePreferenceSelection(key)}
+                  class="mt-1"
+                />
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900 dark:text-gray-100">{key}</div>
+                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 font-mono">
+                    {JSON.stringify(value, null, 2).substring(0, 200)}{JSON.stringify(value, null, 2).length > 200 ? '...' : ''}
+                  </div>
+                </div>
+              </label>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="dialog-footer p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+        <button
+          on:click={cancelImport}
+          class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          on:click={confirmImport}
+          disabled={selectedPreferences.size === 0}
+          class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Import Selected ({selectedPreferences.size})
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}

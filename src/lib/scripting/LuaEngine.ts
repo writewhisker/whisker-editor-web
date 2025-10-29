@@ -606,24 +606,34 @@ export class LuaEngine {
       const line = lines[i];
 
       // Start of if block
-      if (line.startsWith('if ')) {
-        const condition = line.substring(3, line.indexOf(' then')).trim();
+      if (line.startsWith('if ') && blockDepth === 0) {
+        const thenIndex = line.indexOf(' then');
+        if (thenIndex === -1) continue;
+        const condition = line.substring(3, thenIndex).trim();
         currentBranch = { condition, body: [] };
         blockDepth = 1;
         continue;
       }
 
-      // elseif branch
+      // Track nested blocks BEFORE checking elseif/else
+      // This ensures we only catch top-level elseif/else
+      if (line.match(/\b(if|while|for|function)\s/)) {
+        blockDepth++;
+      }
+
+      // elseif branch (only at depth 1 = top-level)
       if (line.startsWith('elseif ') && blockDepth === 1) {
         if (currentBranch) {
           branches.push(currentBranch);
         }
-        const condition = line.substring(7, line.indexOf(' then')).trim();
+        const thenIndex = line.indexOf(' then');
+        if (thenIndex === -1) continue;
+        const condition = line.substring(7, thenIndex).trim();
         currentBranch = { condition, body: [] };
         continue;
       }
 
-      // else branch
+      // else branch (only at depth 1 = top-level)
       if (line === 'else' && blockDepth === 1) {
         if (currentBranch) {
           branches.push(currentBranch);
@@ -641,11 +651,6 @@ export class LuaEngine {
           }
           break;
         }
-      }
-
-      // Track nested blocks
-      if (line.match(/\b(if|while|for|function)\s/)) {
-        blockDepth++;
       }
 
       // Add line to current branch body
@@ -914,8 +919,8 @@ export class LuaEngine {
 
       if (!line) continue;
 
-      // Check for block start keywords
-      if (/^(while|for|if|function)\s/.test(line)) {
+      // Check for block start keywords (only when NOT already in a block)
+      if (/^(while|for|if|function)\s/.test(line) && !inBlock) {
         inBlock = true;
         blockDepth = 1;
         currentStatement = line;

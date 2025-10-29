@@ -16,9 +16,9 @@ const createMockStory = (title = 'Test Story') => ({
   metadata: { title },
   serialize: vi.fn(() => ({
     metadata: { title },
-    passages: [],
-    variables: [],
-    startPassage: null,
+    passages: {},
+    variables: {},
+    startPassage: '',
   })),
 });
 
@@ -203,7 +203,7 @@ describe('autoSave', () => {
 
     it('should save serialized story data', () => {
       const mockStory = createMockStory('Test');
-      const serializedData = { metadata: { title: 'Test' }, passages: ['p1'], variables: [], startPassage: 'p1' };
+      const serializedData = { metadata: { title: 'Test' }, passages: ['p1'], variables: {}, startPassage: 'p1' };
       mockStory.serialize.mockReturnValue(serializedData);
 
       saveToLocalStorage(mockStory as any);
@@ -216,7 +216,7 @@ describe('autoSave', () => {
   describe('loadFromLocalStorage', () => {
     it('should load saved story from localStorage', () => {
       const testData: AutoSaveData = {
-        story: { metadata: { title: 'Loaded Story' }, passages: [], variables: [], startPassage: null },
+        story: { metadata: { title: 'Loaded Story' }, passages: {}, variables: {}, startPassage: '' },
         timestamp: Date.now(),
         storyTitle: 'Loaded Story',
       };

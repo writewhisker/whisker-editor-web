@@ -216,7 +216,7 @@ p {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <dc:identifier id="uid">${story.id}</dc:identifier>
+    <dc:identifier id="uid">${story.metadata.ifid || story.metadata.id || 'unknown'}</dc:identifier>
     <dc:title>${this.escapeXML(metadata.title || 'Untitled Story')}</dc:title>
     <dc:creator>${this.escapeXML(metadata.author || 'Unknown Author')}</dc:creator>
     <dc:language>${language}</dc:language>
@@ -289,8 +289,8 @@ p {
     <div class="choices">
       <h2>Choices</h2>
       ${choices.map((choice: any) => {
-        const targetPassage = story.passages[choice.target];
-        const targetIndex = Object.keys(story.passages).indexOf(choice.target) + 1;
+        const targetPassage = story.passages.get(choice.target);
+        const targetIndex = Array.from(story.passages.keys()).indexOf(choice.target) + 1;
         const targetFilename = `chapter_${String(targetIndex).padStart(4, '0')}.xhtml`;
         return `<div class="choice">
           <a href="${targetFilename}">${this.escapeXML(choice.text || 'Continue')}</a>

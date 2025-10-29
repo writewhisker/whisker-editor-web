@@ -96,7 +96,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { currentProjectKey } = await import('./viewPreferencesStore');
@@ -140,7 +140,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { currentPreferences } = await import('./viewPreferencesStore');
@@ -163,7 +163,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { currentPreferences } = await import('./viewPreferencesStore');
@@ -189,7 +189,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { currentPreferences } = await import('./viewPreferencesStore');
@@ -262,7 +262,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, viewMode } = await import('./viewPreferencesStore');
@@ -277,7 +277,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -292,7 +292,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -307,7 +307,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -325,7 +325,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelVisibility } = await import('./viewPreferencesStore');
@@ -342,7 +342,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelVisibility } = await import('./viewPreferencesStore');
@@ -360,7 +360,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -378,7 +378,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelVisibility } = await import('./viewPreferencesStore');
@@ -394,7 +394,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelVisibility } = await import('./viewPreferencesStore');
@@ -413,7 +413,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelVisibility } = await import('./viewPreferencesStore');
@@ -431,7 +431,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelSizes } = await import('./viewPreferencesStore');
@@ -446,7 +446,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, panelSizes } = await import('./viewPreferencesStore');
@@ -462,7 +462,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -480,7 +480,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, focusMode } = await import('./viewPreferencesStore');
@@ -495,7 +495,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, focusMode } = await import('./viewPreferencesStore');
@@ -511,7 +511,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -529,7 +529,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, focusMode } = await import('./viewPreferencesStore');
@@ -545,7 +545,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, focusMode } = await import('./viewPreferencesStore');
@@ -566,7 +566,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions, viewMode, panelVisibility, panelSizes, focusMode } = await import('./viewPreferencesStore');
@@ -591,7 +591,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test Story' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       const { viewPreferencesActions } = await import('./viewPreferencesStore');
@@ -634,7 +634,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Project A' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Wait for subscription to trigger
@@ -649,7 +649,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Project B' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Wait for subscription to trigger
@@ -675,7 +675,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'New Project' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Wait for subscription to trigger
@@ -704,7 +704,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Corrupted Project' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Wait for subscription to trigger
@@ -737,7 +737,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Wait for subscription to trigger
@@ -774,7 +774,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -814,7 +814,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Should not throw
@@ -843,7 +843,7 @@ describe('viewPreferencesStore', () => {
         metadata: { title: 'Test' },
         passages: [],
         variables: [],
-        startPassage: null,
+        startPassage: '',
       });
 
       // Should not throw

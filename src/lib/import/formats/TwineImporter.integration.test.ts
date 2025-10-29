@@ -146,8 +146,8 @@ describe('TwineImporter Integration Tests', () => {
 
       expect(result.success).toBe(true);
       // Conversion quality may be undefined, that's okay
-      if (result.conversionQuality !== undefined) {
-        expect(result.conversionQuality).toBeGreaterThan(0.5);
+      if (result.lossReport?.conversionQuality !== undefined) {
+        expect(result.lossReport?.conversionQuality).toBeGreaterThan(0.5);
       }
     });
 
@@ -163,8 +163,8 @@ describe('TwineImporter Integration Tests', () => {
 
       expect(result.success).toBe(true);
       // Conversion quality may be undefined, that's okay
-      if (result.conversionQuality !== undefined) {
-        expect(result.conversionQuality).toBeGreaterThan(0.5);
+      if (result.lossReport?.conversionQuality !== undefined) {
+        expect(result.lossReport?.conversionQuality).toBeGreaterThan(0.5);
       }
     });
 

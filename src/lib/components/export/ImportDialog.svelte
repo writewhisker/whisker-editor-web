@@ -86,10 +86,12 @@
     }
 
     // Add to history
+    // Detect format from filename extension
+    const format = selectedFile.name.endsWith('.html') ? 'twine' as const : 'json' as const;
     const historyEntry = {
       id: `import_${Date.now()}`,
       timestamp: Date.now(),
-      format: previewResult.format || 'json',
+      format,
       storyTitle: previewResult.story.metadata.title,
       passageCount: previewResult.passageCount || 0,
       success: true,

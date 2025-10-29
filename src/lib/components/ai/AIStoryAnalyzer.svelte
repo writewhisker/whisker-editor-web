@@ -55,7 +55,7 @@
   function buildStoryText(): string {
     if (!$currentStory) return '';
 
-    const passages = $currentStory.passages.map((p) => {
+    const passages = Array.from($currentStory.passages.values()).map((p) => {
       const choices = p.choices.map((c) => `  - ${c.text}`).join('\n');
       return `PASSAGE: ${p.title}\n${p.content}\nCHOICES:\n${choices}\n`;
     }).join('\n\n');

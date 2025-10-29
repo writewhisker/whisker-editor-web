@@ -91,8 +91,8 @@ describe('ValidatePassageMetadataValidator', () => {
     const validator = new ValidatePassageMetadataValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fix).toBeDefined();
-    issues[0].fix?.apply();
+    expect(issues[0].fixAction).toBeDefined();
+    issues[0].fixAction?.();
 
     expect(passage.size.width).toBe(200);
   });

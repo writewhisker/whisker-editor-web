@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Story } from './Story';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
+import { Choice } from './Choice';
 
 describe('Story', () => {
   let story: Story;
@@ -228,6 +229,7 @@ describe('Story', () => {
       const asset = {
         id: 'asset1',
         name: 'Test Asset',
+        type: 'image' as const,
         path: 'path/to/asset.png',
         mimeType: 'image/png',
       };
@@ -237,8 +239,8 @@ describe('Story', () => {
     });
 
     it('should remove an asset by id', () => {
-      const asset1 = { id: 'asset1', name: 'Asset 1', path: 'path1', mimeType: 'image/png' };
-      const asset2 = { id: 'asset2', name: 'Asset 2', path: 'path2', mimeType: 'image/png' };
+      const asset1 = { id: 'asset1', name: 'Asset 1', type: 'image' as const, path: 'path1', mimeType: 'image/png' };
+      const asset2 = { id: 'asset2', name: 'Asset 2', type: 'image' as const, path: 'path2', mimeType: 'image/png' };
       story.addAsset(asset1);
       story.addAsset(asset2);
 
@@ -254,7 +256,7 @@ describe('Story', () => {
     });
 
     it('should get an asset by id', () => {
-      const asset = { id: 'asset1', name: 'Test', path: 'path', mimeType: 'image/png' };
+      const asset = { id: 'asset1', name: 'Test', type: 'image' as const, path: 'path', mimeType: 'image/png' };
       story.addAsset(asset);
       expect(story.getAsset('asset1')).toEqual(asset);
     });
@@ -264,7 +266,7 @@ describe('Story', () => {
     });
 
     it('should update an asset', () => {
-      const asset = { id: 'asset1', name: 'Original', path: 'path', mimeType: 'image/png' };
+      const asset = { id: 'asset1', name: 'Original', type: 'image' as const, path: 'path', mimeType: 'image/png' };
       story.addAsset(asset);
 
       const updated = story.updateAsset('asset1', { name: 'Updated', size: 1024 });
@@ -562,12 +564,12 @@ describe('Story', () => {
         title: 'Choice Passage',
         content: 'What do you do?',
       });
-      passage.choices.push({
+      passage.choices.push(new Choice({
         id: 'choice1',
         text: 'Open door',
         target: 'next',
         condition: 'hasKey == true',
-      });
+      }));
       story.addPassage(passage);
 
       const usage = story.getVariableUsage('hasKey');
@@ -617,12 +619,12 @@ describe('Story', () => {
         content: 'Health: {{health}}',
         onEnterScript: 'health = 100',
       });
-      passage.choices.push({
+      passage.choices.push(new Choice({
         id: 'choice1',
         text: 'Continue',
         target: 'next',
         condition: 'health > 0',
-      });
+      }));
       story.addPassage(passage);
 
       const usage = story.getVariableUsage('health');

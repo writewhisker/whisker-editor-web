@@ -65,7 +65,7 @@ describe('ExportStore with PreferenceService', () => {
 			});
 
 			// Should be in storage
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('html');
 		});
 	});
@@ -77,7 +77,7 @@ describe('ExportStore with PreferenceService', () => {
 				includeValidation: false,
 			});
 
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('html');
 			expect(stored?.includeValidation).toBe(false);
 		});
@@ -92,7 +92,7 @@ describe('ExportStore with PreferenceService', () => {
 				minifyHTML: true,
 			});
 
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('markdown');
 			expect(stored?.includeValidation).toBe(true);
 			expect(stored?.includeMetrics).toBe(true);
@@ -124,7 +124,7 @@ describe('ExportStore with PreferenceService', () => {
 				minifyHTML: true,
 			});
 
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('markdown');
 			expect(stored?.minifyHTML).toBe(true);
 		});
@@ -160,7 +160,7 @@ describe('ExportStore with PreferenceService', () => {
 			exportActions.resetPreferences();
 
 			// Check storage
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('json');
 			expect(stored?.prettyPrint).toBe(true);
 		});
@@ -175,7 +175,7 @@ describe('ExportStore with PreferenceService', () => {
 			});
 
 			// PreferenceService should have persisted the values (it uses localStorage under the hood)
-			const stored = prefService.getPreferenceSync('whisker_export_preferences', null);
+			const stored = prefService.getPreferenceSync<any>('whisker_export_preferences', null);
 			expect(stored?.lastFormat).toBe('html');
 			expect(stored?.includeValidation).toBe(false);
 

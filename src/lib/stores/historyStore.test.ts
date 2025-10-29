@@ -19,9 +19,9 @@ describe('historyStore', () => {
       created: '2024-01-01',
       modified: '2024-01-02',
     },
-    passages: [],
-    variables: [],
-    startPassage: null,
+    passages: {},
+    variables: {},
+    startPassage: '',
   });
 
   beforeEach(() => {
@@ -547,9 +547,9 @@ describe('historyStore', () => {
           created: '',
           modified: '',
         },
-        passages: [],
-        variables: [],
-        startPassage: null,
+        passages: {},
+        variables: {},
+        startPassage: '',
       };
 
       historyActions.pushState(emptyState);

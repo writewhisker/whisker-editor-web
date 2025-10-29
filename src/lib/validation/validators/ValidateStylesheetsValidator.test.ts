@@ -67,10 +67,10 @@ describe('ValidateStylesheetsValidator', () => {
     const issues = validator.validate(story);
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].fix).toBeDefined();
+    expect(issues[0].fixAction).toBeDefined();
 
     // Apply fix
-    issues[0].fix?.apply();
+    issues[0].fixAction?.();
 
     // Empty stylesheet should be removed
     expect(story.stylesheets).toHaveLength(1);

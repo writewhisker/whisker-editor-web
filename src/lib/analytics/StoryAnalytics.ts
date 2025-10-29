@@ -19,7 +19,7 @@ export class StoryAnalytics {
     // Basic counts
     const totalPassages = passages.length;
     const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
-    const totalVariables = variables.length;
+    const totalVariables = variables.size;
 
     // Structure metrics
     const avgChoicesPerPassage = totalPassages > 0 ? totalChoices / totalPassages : 0;
@@ -82,7 +82,7 @@ export class StoryAnalytics {
       maxBreadth = Math.max(maxBreadth, passage.choices.length);
 
       for (const choice of passage.choices) {
-        traverse(choice.targetPassageId, depth + 1);
+        traverse(choice.target, depth + 1);
       }
     };
 
@@ -113,8 +113,8 @@ export class StoryAnalytics {
       const passage = story.passages.get(passageId);
       if (passage) {
         for (const choice of passage.choices) {
-          if (!reachable.has(choice.targetPassageId)) {
-            queue.push(choice.targetPassageId);
+          if (!reachable.has(choice.target)) {
+            queue.push(choice.target);
           }
         }
       }
@@ -130,7 +130,7 @@ export class StoryAnalytics {
     const passages = Array.from(story.passages.values());
     const totalPassages = passages.length;
     const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
-    const totalVariables = story.variables.length;
+    const totalVariables = story.variables.size;
 
     // Factors contributing to complexity
     const passageScore = Math.min(totalPassages / 10, 25); // Max 25 points
@@ -189,7 +189,7 @@ export class StoryAnalytics {
     // Broken links
     for (const passage of passages) {
       for (const choice of passage.choices) {
-        if (!story.passages.has(choice.targetPassageId)) {
+        if (!story.passages.has(choice.target)) {
           issues.push({
             severity: 'error',
             type: 'broken-link',
@@ -205,7 +205,7 @@ export class StoryAnalytics {
     // Circular references (passages that only loop to themselves)
     for (const passage of passages) {
       const allChoicesLoopBack = passage.choices.length > 0 &&
-        passage.choices.every(c => c.targetPassageId === passage.id);
+        passage.choices.every(c => c.target === passage.id);
 
       if (allChoicesLoopBack) {
         issues.push({

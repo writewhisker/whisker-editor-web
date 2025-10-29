@@ -53,8 +53,8 @@ describe('ValidateScriptsValidator', () => {
     const validator = new ValidateScriptsValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fix).toBeDefined();
-    issues[0].fix?.apply();
+    expect(issues[0].fixAction).toBeDefined();
+    issues[0].fixAction?.();
 
     expect(story.scripts).toHaveLength(1);
     expect(story.scripts[0]).toBe('function test() end');

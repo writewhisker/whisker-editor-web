@@ -29,6 +29,7 @@ describe('ValidateAssetsValidator', () => {
     story.addAsset({
       id: 'img1',
       name: 'Test Image',
+      type: 'image',
       path: 'path/to/image.png',
       mimeType: 'image/png',
     });
@@ -49,7 +50,7 @@ describe('ValidateAssetsValidator', () => {
 
   it('should error when asset missing ID', () => {
     const story = createStory();
-    story.addAsset({ id: '', name: 'Test', path: 'path', mimeType: 'image/png' });
+    story.addAsset({ id: '', name: 'Test', type: 'image', path: 'path', mimeType: 'image/png' });
 
     const validator = new ValidateAssetsValidator();
     const issues = validator.validate(story);
@@ -59,7 +60,7 @@ describe('ValidateAssetsValidator', () => {
 
   it('should error when asset missing path', () => {
     const story = createStory();
-    story.addAsset({ id: 'asset1', name: 'Test', path: '', mimeType: 'image/png' });
+    story.addAsset({ id: 'asset1', name: 'Test', type: 'image', path: '', mimeType: 'image/png' });
 
     const validator = new ValidateAssetsValidator();
     const issues = validator.validate(story);
@@ -72,6 +73,7 @@ describe('ValidateAssetsValidator', () => {
     story.addAsset({
       id: 'large',
       name: 'Large Asset',
+      type: 'video',
       path: 'path',
       mimeType: 'video/mp4',
       size: 10 * 1024 * 1024, // 10MB
@@ -113,7 +115,7 @@ describe('ValidateAssetsValidator', () => {
 
   it('should detect unused assets', () => {
     const story = createStory();
-    story.addAsset({ id: 'unused', name: 'Unused', path: 'path', mimeType: 'image/png' });
+    story.addAsset({ id: 'unused', name: 'Unused', type: 'image', path: 'path', mimeType: 'image/png' });
 
     const validator = new ValidateAssetsValidator();
     const issues = validator.validate(story);
@@ -126,20 +128,20 @@ describe('ValidateAssetsValidator', () => {
 
   it('should provide fix for unused assets', () => {
     const story = createStory();
-    story.addAsset({ id: 'unused', name: 'Unused', path: 'path', mimeType: 'image/png' });
+    story.addAsset({ id: 'unused', name: 'Unused', type: 'image', path: 'path', mimeType: 'image/png' });
 
     const validator = new ValidateAssetsValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fix).toBeDefined();
-    issues[0].fix?.apply();
+    expect(issues[0].fixAction).toBeDefined();
+    issues[0].fixAction?.();
 
     expect(story.assets.size).toBe(0);
   });
 
   it('should pass when assets are referenced', () => {
     const story = createStory();
-    story.addAsset({ id: 'used', name: 'Used', path: 'path', mimeType: 'image/png' });
+    story.addAsset({ id: 'used', name: 'Used', type: 'image', path: 'path', mimeType: 'image/png' });
 
     const passage = new Passage({
       title: 'Test',
@@ -156,7 +158,7 @@ describe('ValidateAssetsValidator', () => {
 
   it('should detect references in scripts', () => {
     const story = createStory();
-    story.addAsset({ id: 'used', name: 'Used', path: 'path', mimeType: 'audio/mp3' });
+    story.addAsset({ id: 'used', name: 'Used', type: 'audio', path: 'path', mimeType: 'audio/mp3' });
 
     const passage = new Passage({
       title: 'Test',

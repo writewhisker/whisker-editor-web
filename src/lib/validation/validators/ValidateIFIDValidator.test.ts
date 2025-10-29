@@ -53,11 +53,11 @@ describe('ValidateIFIDValidator', () => {
     const validator = new ValidateIFIDValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fix).toBeDefined();
-    expect(issues[0].fix?.description).toContain('Generate');
+    expect(issues[0].fixAction).toBeDefined();
+    expect(issues[0].fixDescription).toContain('Generate');
 
     // Apply fix
-    issues[0].fix?.apply();
+    issues[0].fixAction?.();
 
     // Verify IFID was generated
     expect(story.metadata.ifid).toBeDefined();
@@ -81,11 +81,11 @@ describe('ValidateIFIDValidator', () => {
     const validator = new ValidateIFIDValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fix).toBeDefined();
+    expect(issues[0].fixAction).toBeDefined();
 
     // Apply fix
     const originalIfid = story.metadata.ifid;
-    issues[0].fix?.apply();
+    issues[0].fixAction?.();
 
     // Verify new valid IFID was generated
     expect(story.metadata.ifid).not.toBe(originalIfid);

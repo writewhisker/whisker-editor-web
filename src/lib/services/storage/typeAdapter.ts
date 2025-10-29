@@ -107,7 +107,7 @@ export function storageToModel(storageData: StoredProject): ModelProjectData {
 				// Use original choiceId if available, otherwise fallback for legacy data
 				id: conn.choiceId || `legacy-choice-${passage.id}-${index}-${hashString(conn.choiceText)}`,
 				text: conn.choiceText,
-				target: conn.targetPassageId,
+				target: conn.target,
 				condition: conn.condition,
 				action: conn.action,
 				metadata: conn.metadata || {}  // Restore choice metadata

@@ -260,7 +260,7 @@ describe('projectStore', () => {
               modified: '2024-01-02',
             },
           ],
-          variables: [],
+          variables: {},
           startPassage: 'p1',
         };
 
@@ -280,9 +280,9 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [],
-          variables: [],
-          startPassage: null,
+          passages: {},
+          variables: {},
+          startPassage: '',
         };
 
         projectActions.loadProject(projectData, '/path/to/file.json');
@@ -300,9 +300,9 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [],
-          variables: [],
-          startPassage: null,
+          passages: {},
+          variables: {},
+          startPassage: '',
         };
 
         projectActions.loadProject(projectData);
@@ -329,7 +329,7 @@ describe('projectStore', () => {
               modified: '2024-01-02',
             },
           ],
-          variables: [],
+          variables: {},
           startPassage: 'start-id',
         };
 
@@ -658,9 +658,9 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [],
-          variables: [],
-          startPassage: null,
+          passages: {},
+          variables: {},
+          startPassage: '',
         };
 
         (historyStore.historyActions.undo as ReturnType<typeof vi.fn>).mockReturnValueOnce(previousState);
@@ -695,9 +695,9 @@ describe('projectStore', () => {
             created: '2024-01-01',
             modified: '2024-01-02',
           },
-          passages: [],
-          variables: [],
-          startPassage: null,
+          passages: {},
+          variables: {},
+          startPassage: '',
         };
 
         vi.mocked(historyStore.historyActions.redo).mockReturnValueOnce(nextState);

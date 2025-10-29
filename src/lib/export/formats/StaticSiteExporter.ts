@@ -416,7 +416,7 @@ export class StaticSiteExporter implements IExporter {
                 this.history.push(this.currentPassageId);
 
                 // Navigate to target
-                this.currentPassageId = choice.targetPassageId;
+                this.currentPassageId = choice.target;
                 this.render();
             }
 

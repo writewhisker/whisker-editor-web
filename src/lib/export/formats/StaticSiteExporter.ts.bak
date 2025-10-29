@@ -6,8 +6,9 @@ import type { ExportContext, ExportResult } from '../types';
  */
 export class StaticSiteExporter implements IExporter {
   readonly name = 'Static Site Exporter';
-  readonly format = 'html-standalone' as const;
-  readonly extension = '.html';
+  readonly format = 'html-standalone';
+  readonly description = 'Exports story as standalone HTML with embedded player';
+  readonly extensions = ['.html'];
   readonly mimeType = 'text/html';
 
   async export(context: ExportContext): Promise<ExportResult> {
@@ -17,6 +18,7 @@ export class StaticSiteExporter implements IExporter {
       if (!story) {
         return {
           success: false,
+          format: this.format,
           error: 'No story provided for export',
         };
       }
@@ -32,14 +34,14 @@ export class StaticSiteExporter implements IExporter {
 
       return {
         success: true,
-        content: html,
+        format: this.format,
+        data: html,
         filename: `${this.sanitizeFilename(story.metadata.title || 'story')}.html`,
-        mimeType: this.mimeType,
-        size: html.length,
       };
     } catch (error) {
       return {
         success: false,
+        format: this.format,
         error: error instanceof Error ? error.message : 'Unknown export error',
       };
     }

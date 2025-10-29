@@ -7,9 +7,8 @@ import { nanoid } from 'nanoid';
  */
 export class TwineExporter implements IExporter {
   readonly name = 'Twine HTML Exporter';
-  readonly format = 'twine';
-  readonly description = 'Exports stories to Twine 2 HTML format (Harlowe 3.x)';
-  readonly extensions = ['.html'];
+  readonly format = 'twine' as const;
+  readonly extension = '.html';
   readonly mimeType = 'text/html';
 
   async export(context: ExportContext): Promise<ExportResult> {
@@ -19,7 +18,6 @@ export class TwineExporter implements IExporter {
       if (!story) {
         return {
           success: false,
-          format: this.format,
           error: 'No story provided for export',
         };
       }
@@ -29,14 +27,14 @@ export class TwineExporter implements IExporter {
 
       return {
         success: true,
-        format: this.format,
-        data: html,
+        content: html,
         filename: `${story.metadata.title || 'story'}.html`,
+        mimeType: this.mimeType,
+        size: html.length,
       };
     } catch (error) {
       return {
         success: false,
-        format: this.format,
         error: error instanceof Error ? error.message : 'Unknown export error',
       };
     }

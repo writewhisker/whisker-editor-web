@@ -50,6 +50,7 @@ export interface VariableUsage {
 }
 
 export interface StoryMetadata {
+  id?: string;              // Story identifier (for storage/tracking)
   title: string;
   author: string;
   version: string;

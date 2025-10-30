@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 export class Choice {
   id: string;
   text: string;
-  target: string;
+  target_passage: string; // PRIMARY: matches whisker-core
   condition?: string;
   action?: string;
   metadata: Record<string, any>;
@@ -12,10 +12,20 @@ export class Choice {
   constructor(data?: Partial<ChoiceData>) {
     this.id = data?.id || nanoid();
     this.text = data?.text || '';
-    this.target = data?.target || '';
+    // Support both 'target_passage' (whisker-core) and 'target' (legacy)
+    this.target_passage = (data as any)?.target_passage || data?.target || '';
     this.condition = data?.condition;
     this.action = data?.action;
     this.metadata = data?.metadata || {};
+  }
+
+  // Getter/setter for 'target' (backward compatibility alias)
+  get target(): string {
+    return this.target_passage;
+  }
+
+  set target(value: string) {
+    this.target_passage = value;
   }
 
   // Metadata methods
@@ -43,7 +53,7 @@ export class Choice {
     const data: ChoiceData = {
       id: this.id,
       text: this.text,
-      target: this.target,
+      target: this.target_passage, // whisker-core compatible
     };
 
     if (this.condition) data.condition = this.condition;

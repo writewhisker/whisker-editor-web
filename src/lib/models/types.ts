@@ -13,7 +13,8 @@ export interface Size {
 export interface ChoiceData {
   id: string;
   text: string;
-  target: string;
+  target: string;            // whisker-core compatible (can also accept target_passage)
+  target_passage?: string;   // Explicit whisker-core field (alias for target)
   condition?: string;
   action?: string;
   metadata?: Record<string, any>;  // Custom choice metadata (whisker-core compat)
@@ -21,8 +22,8 @@ export interface ChoiceData {
 
 export interface PassageData {
   id: string;
-  title: string;
-  name?: string;            // Alias for title (whisker-core uses 'name')
+  name: string;             // PRIMARY: whisker-core compatible
+  title?: string;           // LEGACY: backward compatibility alias
   content: string;
   position: Position;
   size?: Size;              // Visual size in editor (whisker-core compat)

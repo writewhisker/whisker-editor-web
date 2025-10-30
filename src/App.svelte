@@ -76,6 +76,10 @@
   let autoSaveStatus: 'idle' | 'saving' | 'saved' = 'idle';
   let autoSaveTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  // First-time user detection
+  const FIRST_VISIT_KEY = 'whisker-first-visit';
+  let hasSeenTemplates = false;
+
   // Helper to show confirm dialog
   function showConfirm(
     title: string,
@@ -231,6 +235,8 @@
   // Handle Browse Templates
   function handleBrowseTemplates() {
     showTemplateGallery = true;
+    // Mark that user has seen templates
+    localStorage.setItem('whisker-has-seen-templates', 'true');
   }
 
   // Handle Template Selection
@@ -696,6 +702,20 @@
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Check if this is first visit - auto-show template gallery
+    const hasVisited = localStorage.getItem(FIRST_VISIT_KEY);
+    if (!hasVisited && !$currentStory) {
+      hasSeenTemplates = localStorage.getItem('whisker-has-seen-templates') === 'true';
+      if (!hasSeenTemplates) {
+        // Small delay to let welcome screen render first
+        setTimeout(() => {
+          showTemplateGallery = true;
+          localStorage.setItem('whisker-has-seen-templates', 'true');
+        }, 500);
+      }
+      localStorage.setItem(FIRST_VISIT_KEY, 'true');
+    }
 
     // Cleanup auto-save and event listener on unmount
     return () => {

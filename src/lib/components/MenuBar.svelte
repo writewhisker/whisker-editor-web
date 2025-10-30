@@ -37,6 +37,7 @@
   export let onManageStylesheets: (() => void) | undefined = undefined;
   export let onSaveToGitHub: (() => void) | undefined = undefined;
   export let onLoadFromGitHub: (() => void) | undefined = undefined;
+  export let onViewCommitHistory: (() => void) | undefined = undefined;
 
   function toggleFileMenu(event: MouseEvent) {
     event.stopPropagation();
@@ -264,6 +265,16 @@
           >
             <span>Load from GitHub...</span>
             <span class="text-xs text-gray-400">☁️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onViewCommitHistory && onViewCommitHistory()}
+            disabled={!$currentStory}
+          >
+            <span>View Commit History...</span>
+            <span class="text-xs text-gray-400">📜</span>
           </button>
           <div class="border-t border-gray-700 my-1" role="separator"></div>
           <button

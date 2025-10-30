@@ -437,3 +437,102 @@ export async function hasWriteAccess(
     return false;
   }
 }
+
+/**
+ * Get commit history for a file
+ */
+export async function getCommitHistory(
+  owner: string,
+  repo: string,
+  path: string,
+  limit: number = 20
+): Promise<Array<GitHubCommit & { author: { name: string; email: string } }>> {
+  try {
+    const client = getOctokit();
+
+    const response = await client.repos.listCommits({
+      owner,
+      repo,
+      path,
+      per_page: limit,
+    });
+
+    return response.data.map(commit => ({
+      sha: commit.sha,
+      message: commit.commit.message,
+      date: commit.commit.author?.date || new Date().toISOString(),
+      author: {
+        name: commit.commit.author?.name || 'Unknown',
+        email: commit.commit.author?.email || '',
+      },
+    }));
+  } catch (error: any) {
+    console.error('Failed to get commit history:', error);
+
+    if (error instanceof GitHubApiError) {
+      throw error;
+    }
+
+    if (error.status === 404) {
+      throw new GitHubApiError(
+        `File "${path}" not found or has no commit history.`,
+        404,
+        error.response
+      );
+    }
+
+    throw new GitHubApiError(
+      `Failed to load commit history: ${error.message || 'Unknown error'}`,
+      error.status,
+      error.response
+    );
+  }
+}
+
+/**
+ * Get a specific file version from a commit
+ */
+export async function getFileAtCommit(
+  owner: string,
+  repo: string,
+  path: string,
+  sha: string
+): Promise<GitHubFile> {
+  try {
+    const client = getOctokit();
+
+    const response = await client.repos.getContent({
+      owner,
+      repo,
+      path,
+      ref: sha,
+    });
+
+    if (Array.isArray(response.data) || response.data.type !== 'file') {
+      throw new GitHubApiError('Path is not a file', 400);
+    }
+
+    const content = response.data.content
+      ? atob(response.data.content)
+      : '';
+
+    return {
+      path: response.data.path,
+      content,
+      sha: response.data.sha,
+      size: response.data.size,
+    };
+  } catch (error: any) {
+    console.error('Failed to get file at commit:', error);
+
+    if (error instanceof GitHubApiError) {
+      throw error;
+    }
+
+    throw new GitHubApiError(
+      `Failed to load file version: ${error.message || 'Unknown error'}`,
+      error.status,
+      error.response
+    );
+  }
+}

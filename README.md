@@ -99,13 +99,14 @@ npm run preview
 
 ### For Developers
 
-- **[Architecture Overview](ARCHITECTURE.md)** - Technical architecture and patterns
 - **[Testing Guide](TESTING.md)** - How to run and write tests
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 - **[E2E Testing](e2e/README.md)** - End-to-end testing documentation
 
 ### Planning & Design
 
+- **[Architecture Overview](https://github.com/writewhisker/whisker-implementation/blob/main/visual-editor/editor-web/ARCHITECTURE.md)** - Technical architecture and patterns
+- **[Whisker Format Specification](https://github.com/writewhisker/whisker-implementation/blob/main/specifications/WHISKER_FORMAT_SPEC_V2.1.md)** - Story format specification
 - **[Project Roadmap](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/ROADMAP.md)** - Development roadmap and timelines
 - **[Feature Catalog](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/FEATURES.md)** - Complete feature list with status
 - **[Architecture Decisions](https://github.com/writewhisker/whisker-implementation/tree/main/editor-web/decisions)** - Technical decision records
@@ -171,12 +172,11 @@ whisker-editor-web/
 │   ├── App.svelte              # Main app component
 │   └── main.ts                 # Entry point
 ├── e2e/                        # E2E tests
-├── ARCHITECTURE.md             # Architecture overview
 ├── TESTING.md                  # Testing guide
 └── README.md                   # This file
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
+See [ARCHITECTURE.md](https://github.com/writewhisker/whisker-implementation/blob/main/visual-editor/editor-web/ARCHITECTURE.md) in the whisker-implementation repository for detailed architecture documentation.
 
 ## 📝 License
 

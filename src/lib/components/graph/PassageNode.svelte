@@ -461,4 +461,79 @@
     top: -3px;
     cursor: ns-resize;
   }
+
+  /* Mobile & Touch Optimizations */
+  @media (max-width: 768px) {
+    .passage-node {
+      /* Larger touch targets for mobile */
+      min-width: 180px;
+      min-height: 120px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Always show resize handles on touch devices */
+    @media (hover: none) {
+      .resize-handles {
+        opacity: 0.6;
+      }
+    }
+
+    /* Larger resize handles for touch */
+    .resize-handle {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Corner handles */
+    .resize-se,
+    .resize-sw,
+    .resize-ne,
+    .resize-nw {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Larger tap targets for edge handles */
+    .resize-e,
+    .resize-w {
+      width: 12px;
+      height: 50%;
+      top: 25%;
+    }
+
+    .resize-n,
+    .resize-s {
+      height: 12px;
+      width: 50%;
+      left: 25%;
+    }
+
+    /* Increase padding for better readability on small screens */
+    .passage-node :global(.nodrag) {
+      padding: 12px 16px;
+    }
+
+    /* Larger font sizes for mobile */
+    .passage-node :global(.passage-header) {
+      font-size: 16px;
+    }
+
+    .passage-node :global(.passage-content) {
+      font-size: 14px;
+    }
+
+    /* Add visual feedback for touch */
+    .passage-node:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
+
+  /* Landscape mobile adjustments */
+  @media (max-height: 500px) and (max-width: 900px) {
+    .passage-node {
+      min-width: 160px;
+      min-height: 100px;
+    }
+  }
 </style>

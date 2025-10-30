@@ -41,6 +41,7 @@
   import AudioControls from './lib/components/audio/AudioControls.svelte';
   import AnimationControls from './lib/components/animation/AnimationControls.svelte';
   import StylesheetEditor from './lib/components/editor/StylesheetEditor.svelte';
+  import { initMobileDetection } from './lib/utils/mobile';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -699,6 +700,9 @@
 
   onMount(() => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
+
+    // Initialize mobile detection
+    initMobileDetection();
 
     // Initialize theme
     theme.subscribe(t => {

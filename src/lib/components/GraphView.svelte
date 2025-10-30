@@ -27,6 +27,8 @@
   import type { ValidationIssue } from '../validation/types';
   import { prefersReducedMotion } from '../utils/motion';
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
+  import MobileToolbar from './graph/MobileToolbar.svelte';
+  import { isMobile, isTouch } from '../utils/mobile';
 
   // Node types
   const nodeTypes = {
@@ -44,6 +46,10 @@
   let layoutDirection: 'TB' | 'LR' = 'TB';
   let currentZoom = 1; // Track current zoom level
   let zoomControl: GraphViewZoomControl; // Reference to zoom control component
+  let showMiniMap = true; // Track minimap visibility
+
+  // Get Svelte Flow instance for programmatic zoom control
+  const { zoomIn: flowZoomIn, zoomOut: flowZoomOut, fitView: flowFitView } = useSvelteFlow();
 
   // Debounce timer for updateGraph
   let updateGraphTimer: ReturnType<typeof setTimeout> | null = null;
@@ -409,6 +415,27 @@
     }
   }
 
+  // Mobile toolbar event handlers
+  function handleMobileAddPassage() {
+    projectActions.addPassage();
+  }
+
+  function handleMobileFitView() {
+    flowFitView({ duration: $prefersReducedMotion ? 0 : 400 });
+  }
+
+  function handleMobileZoomIn() {
+    flowZoomIn({ duration: $prefersReducedMotion ? 0 : 200 });
+  }
+
+  function handleMobileZoomOut() {
+    flowZoomOut({ duration: $prefersReducedMotion ? 0 : 200 });
+  }
+
+  function handleMobileToggleMiniMap() {
+    showMiniMap = !showMiniMap;
+  }
+
   // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
@@ -539,23 +566,38 @@
       >
         <Background />
         <Controls />
-        <MiniMap
-          nodeColor={(node: Node) => {
-            // Use custom color if set
-            if (node.data?.color) return node.data.color as string;
-            // Otherwise use status-based colors
-            if (node.data?.isStart) return '#10b981';
-            if (node.data?.isDead) return '#ef4444';
-            if (node.data?.isOrphan) return '#f59e0b';
-            return '#3b82f6';
-          }}
-        />
+        {#if showMiniMap}
+          <MiniMap
+            nodeColor={(node: Node) => {
+              // Use custom color if set
+              if (node.data?.color) return node.data.color as string;
+              // Otherwise use status-based colors
+              if (node.data?.isStart) return '#10b981';
+              if (node.data?.isDead) return '#ef4444';
+              if (node.data?.isOrphan) return '#f59e0b';
+              return '#3b82f6';
+            }}
+          />
+        {/if}
         <GraphViewZoomControl
           bind:this={zoomControl}
           nodes={$nodes}
           selectedPassageId={$selectedPassageId}
         />
       </SvelteFlow>
+
+      <!-- Mobile Toolbar (shown only on mobile) -->
+      {#if $isMobile}
+        <MobileToolbar
+          {currentZoom}
+          {showMiniMap}
+          on:addPassage={handleMobileAddPassage}
+          on:fitView={handleMobileFitView}
+          on:zoomIn={handleMobileZoomIn}
+          on:zoomOut={handleMobileZoomOut}
+          on:toggleMiniMap={handleMobileToggleMiniMap}
+        />
+      {/if}
 
       <!-- Zoom Level Indicator -->
       <div class="absolute bottom-4 left-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-1 shadow-md text-sm font-mono">

@@ -4,6 +4,7 @@
   import { getRecentFiles, formatLastOpened, clearRecentFiles, type RecentFile } from '../utils/recentFiles';
   import { theme, themeActions } from '../stores/themeStore';
   import { panelVisibility, viewPreferencesActions } from '../stores/viewPreferencesStore';
+  import GitHubConnect from './github/GitHubConnect.svelte';
 
   export let onNew: () => void;
   export let onOpen: () => void;
@@ -34,8 +35,11 @@
   export let onManageAudio: (() => void) | undefined = undefined;
   export let onManageAnimations: (() => void) | undefined = undefined;
   export let onManageStylesheets: (() => void) | undefined = undefined;
+  export let onSaveToGitHub: (() => void) | undefined = undefined;
+  export let onLoadFromGitHub: (() => void) | undefined = undefined;
 
-  function toggleFileMenu() {
+  function toggleFileMenu(event: MouseEvent) {
+    event.stopPropagation();
     showFileMenu = !showFileMenu;
     showEditMenu = false;
     showViewMenu = false;
@@ -47,7 +51,8 @@
     }
   }
 
-  function toggleEditMenu() {
+  function toggleEditMenu(event: MouseEvent) {
+    event.stopPropagation();
     showEditMenu = !showEditMenu;
     showFileMenu = false;
     showViewMenu = false;
@@ -55,7 +60,8 @@
     showHelpMenu = false;
   }
 
-  function toggleViewMenu() {
+  function toggleViewMenu(event: MouseEvent) {
+    event.stopPropagation();
     showViewMenu = !showViewMenu;
     showFileMenu = false;
     showEditMenu = false;
@@ -63,7 +69,8 @@
     showHelpMenu = false;
   }
 
-  function toggleTestMenu() {
+  function toggleTestMenu(event: MouseEvent) {
+    event.stopPropagation();
     showTestMenu = !showTestMenu;
     showFileMenu = false;
     showEditMenu = false;
@@ -71,7 +78,8 @@
     showHelpMenu = false;
   }
 
-  function toggleHelpMenu() {
+  function toggleHelpMenu(event: MouseEvent) {
+    event.stopPropagation();
     showHelpMenu = !showHelpMenu;
     showFileMenu = false;
     showEditMenu = false;
@@ -175,7 +183,7 @@
           tabindex="-1"
           aria-labelledby="file-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
-          on:click={closeMenus}
+          on:click|stopPropagation={closeMenus}
           on:keydown={(e) => handleMenuKeydown('file', e)}
         >
           <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={onNew}>
@@ -236,6 +244,26 @@
             disabled={!$currentStory}
           >
             Save As...
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onSaveToGitHub && onSaveToGitHub()}
+            disabled={!$currentStory}
+          >
+            <span>Save to GitHub...</span>
+            <span class="text-xs text-gray-400">☁️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onLoadFromGitHub && onLoadFromGitHub()}
+          >
+            <span>Load from GitHub...</span>
+            <span class="text-xs text-gray-400">☁️</span>
           </button>
           <div class="border-t border-gray-700 my-1" role="separator"></div>
           <button
@@ -313,7 +341,7 @@
           tabindex="-1"
           aria-labelledby="edit-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
-          on:click={closeMenus}
+          on:click|stopPropagation={closeMenus}
           on:keydown={(e) => handleMenuKeydown('edit', e)}
         >
           <button
@@ -372,7 +400,7 @@
           tabindex="-1"
           aria-labelledby="view-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
-          on:click={closeMenus}
+          on:click|stopPropagation={closeMenus}
           on:keydown={(e) => handleMenuKeydown('view', e)}
         >
           <!-- Settings -->
@@ -525,7 +553,7 @@
           tabindex="-1"
           aria-labelledby="test-menu-button"
           class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
-          on:click={closeMenus}
+          on:click|stopPropagation={closeMenus}
           on:keydown={(e) => handleMenuKeydown('test', e)}
         >
           <button
@@ -556,8 +584,13 @@
       {/if}
     </div>
 
+    <!-- GitHub Connection -->
+    <div class="ml-auto mr-4">
+      <GitHubConnect />
+    </div>
+
     <!-- Help Menu -->
-    <div class="relative ml-auto">
+    <div class="relative">
       <button
         id="help-menu-button"
         type="button"
@@ -577,7 +610,7 @@
           tabindex="-1"
           aria-labelledby="help-menu-button"
           class="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
-          on:click={closeMenus}
+          on:click|stopPropagation={closeMenus}
           on:keydown={(e) => handleMenuKeydown('help', e)}
         >
           <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={() => window.open('docs/USER_GUIDE.md', '_blank')}>

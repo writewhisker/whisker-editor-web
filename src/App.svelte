@@ -42,12 +42,27 @@
   import AnimationControls from './lib/components/animation/AnimationControls.svelte';
   import StylesheetEditor from './lib/components/editor/StylesheetEditor.svelte';
   import { initMobileDetection, isMobile } from './lib/utils/mobile';
+  import GitHubCallback from './lib/components/github/GitHubCallback.svelte';
+  import GitHubRepositoryPicker from './lib/components/github/GitHubRepositoryPicker.svelte';
+  import { isAuthenticated } from './lib/services/github/githubAuth';
+  import { saveFile, getFile } from './lib/services/github/githubApi';
+  import type { GitHubRepository } from './lib/services/github/types';
 
   let showNewDialog = false;
   let newProjectTitle = '';
   let showExportPanel = false;
   let showImportDialog = false;
   let showTemplateGallery = false;
+
+  // GitHub OAuth callback handling
+  let showGitHubCallback = false;
+  let githubCallbackCode = '';
+  let githubCallbackState = '';
+
+  // GitHub repository picker
+  let showGitHubPicker = false;
+  let githubPickerMode: 'save' | 'load' = 'save';
+
   let showAssetManager = false;
   let showAudioControls = false;
   let showAnimationControls = false;
@@ -239,6 +254,114 @@
     const story = event.detail.story;
     projectActions.loadProject(story, 'Imported Story');
     fileHandle = null; // Clear file handle since this is an imported story
+  }
+
+  // Handle Save to GitHub
+  function handleSaveToGitHub() {
+    if (!$isAuthenticated) {
+      notificationStore.error('Please connect to GitHub first');
+      return;
+    }
+
+    if (!$currentStory) {
+      notificationStore.error('No story to save');
+      return;
+    }
+
+    githubPickerMode = 'save';
+    showGitHubPicker = true;
+  }
+
+  // Handle Load from GitHub
+  function handleLoadFromGitHub() {
+    if (!$isAuthenticated) {
+      notificationStore.error('Please connect to GitHub first');
+      return;
+    }
+
+    githubPickerMode = 'load';
+    showGitHubPicker = true;
+  }
+
+  // Handle repository selection from picker
+  async function handleRepositorySelect(event: CustomEvent<{ repository: GitHubRepository; filename: string }>) {
+    const { repository, filename } = event.detail;
+
+    if (githubPickerMode === 'save') {
+      await handleGitHubSave(repository, filename);
+    } else {
+      await handleGitHubLoad(repository, filename);
+    }
+  }
+
+  // Save story to GitHub
+  async function handleGitHubSave(repository: GitHubRepository, filename: string) {
+    const data = projectActions.saveProject();
+    if (!data) {
+      notificationStore.error('Failed to prepare story data');
+      return;
+    }
+
+    try {
+      isLoading = true;
+      loadingMessage = 'Saving to GitHub...';
+
+      const content = JSON.stringify(data, null, 2);
+      const [owner] = repository.fullName.split('/');
+
+      // Try to get existing file to get its SHA (for updates)
+      let sha: string | undefined;
+      try {
+        const existingFile = await getFile(owner, repository.name, filename);
+        sha = existingFile.sha;
+      } catch (err) {
+        // File doesn't exist yet, that's okay
+      }
+
+      const commitMessage = sha
+        ? `Update ${filename}`
+        : `Create ${filename}`;
+
+      await saveFile(
+        owner,
+        repository.name,
+        filename,
+        content,
+        commitMessage,
+        sha
+      );
+
+      notificationStore.success(`Saved to ${repository.fullName}/${filename}`);
+    } catch (error: any) {
+      console.error('Failed to save to GitHub:', error);
+      notificationStore.error(error.message || 'Failed to save to GitHub');
+    } finally {
+      isLoading = false;
+      loadingMessage = '';
+    }
+  }
+
+  // Load story from GitHub
+  async function handleGitHubLoad(repository: GitHubRepository, filename: string) {
+    try {
+      isLoading = true;
+      loadingMessage = 'Loading from GitHub...';
+
+      const [owner] = repository.fullName.split('/');
+      const file = await getFile(owner, repository.name, filename);
+
+      const data = JSON.parse(file.content);
+      projectActions.loadProject(data, filename);
+      fileHandle = null;
+
+      notificationStore.success(`Loaded from ${repository.fullName}/${filename}`);
+    } catch (error: any) {
+      console.error('Failed to load from GitHub:', error);
+      notificationStore.error(error.message || 'Failed to load from GitHub');
+    } finally {
+      isLoading = false;
+      loadingMessage = '';
+    }
   }
 
   // Handle Browse Templates
@@ -706,6 +829,17 @@
   onMount(() => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
 
+    // Check for GitHub OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code && state) {
+      showGitHubCallback = true;
+      githubCallbackCode = code;
+      githubCallbackState = state;
+    }
+
     // Initialize mobile detection
     initMobileDetection();
 
@@ -778,6 +912,8 @@
       onManageAudio={handleManageAudio}
       onManageAnimations={handleManageAnimations}
       onManageStylesheets={handleManageStylesheets}
+      onSaveToGitHub={handleSaveToGitHub}
+      onLoadFromGitHub={handleLoadFromGitHub}
       onFind={() => showFindReplaceDialog = true}
       onValidate={handleValidation}
       onCheckLinks={handleCheckLinks}
@@ -1271,6 +1407,27 @@
 
 {#if showStylesheetEditor}
   <StylesheetEditor bind:show={showStylesheetEditor} />
+{/if}
+
+{#if showGitHubCallback}
+  <GitHubCallback
+    code={githubCallbackCode}
+    state={githubCallbackState}
+    onComplete={() => {
+      showGitHubCallback = false;
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }}
+  />
+{/if}
+
+{#if showGitHubPicker}
+  <GitHubRepositoryPicker
+    bind:show={showGitHubPicker}
+    mode={githubPickerMode}
+    defaultFilename={$currentStory?.metadata?.title ? `${$currentStory.metadata.title}.json` : 'story.json'}
+    on:select={handleRepositorySelect}
+  />
 {/if}
 
 {#if isLoading}

@@ -20,33 +20,23 @@ export interface GitHubRepository {
   id: number;
   name: string;
   fullName: string;
-  owner: string;
+  description?: string;
   private: boolean;
-  description: string | null;
-  url: string;
   defaultBranch: string;
+  updatedAt: string;
 }
 
 export interface GitHubFile {
-  name: string;
   path: string;
+  content: string;
   sha: string;
   size: number;
-  url: string;
-  content?: string;
-  encoding?: string;
 }
 
 export interface GitHubCommit {
   sha: string;
   message: string;
-  author: {
-    name: string;
-    email: string;
-    date: string;
-  };
-  url: string;
-  parents: { sha: string }[];
+  date: string;
 }
 
 export interface GitHubBranch {

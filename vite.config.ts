@@ -4,7 +4,7 @@ import monacoEditorPlugin from 'vite-plugin-monaco-editor'
 import path from 'path'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     svelte(),
     monacoEditorPlugin.default({
@@ -17,7 +17,8 @@ export default defineConfig({
       ],
     }),
   ],
-  base: '/whisker-editor-web/',
+  // Use root path for dev, /whisker-editor-web/ for production (GitHub Pages)
+  base: mode === 'production' ? '/whisker-editor-web/' : '/',
   resolve: {
     alias: {
       '$lib': path.resolve('./src/lib')
@@ -30,4 +31,4 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
   }
-})
+}))

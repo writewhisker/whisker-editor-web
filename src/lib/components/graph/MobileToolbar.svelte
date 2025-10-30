@@ -171,7 +171,7 @@
     height: 48px;
   }
 
-  .dark .fab.secondary {
+  :global(.dark) .fab.secondary {
     background: #1f2937;
     color: #818cf8;
     border-color: #818cf8;
@@ -187,7 +187,7 @@
     transform: scale(1.05);
   }
 
-  .dark .fab.secondary:hover {
+  :global(.dark) .fab.secondary:hover {
     background: #374151;
   }
 
@@ -231,7 +231,7 @@
     text-align: center;
   }
 
-  .dark .zoom-indicator {
+  :global(.dark) .zoom-indicator {
     background: rgba(255, 255, 255, 0.15);
   }
 

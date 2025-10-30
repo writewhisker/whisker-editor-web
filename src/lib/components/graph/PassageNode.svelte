@@ -1,11 +1,13 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
-  import { currentStory, projectActions } from '../../stores/projectStore';
+  import { currentStory, projectActions, selectedPassageId } from '../../stores/projectStore';
 
   import type { ValidationIssue } from '../../validation/types';
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
+  import { setupLongPress, isTouch } from '../../utils/mobile';
 
   export let data: {
     passage: Passage;
@@ -130,6 +132,80 @@
     playerActions.toggleBreakpoint(passage.id);
   }
 
+  // Context menu for touch devices
+  let showContextMenu = false;
+  let contextMenuX = 0;
+  let contextMenuY = 0;
+  let nodeElement: HTMLDivElement;
+
+  function handleContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    contextMenuX = event.clientX;
+    contextMenuY = event.clientY;
+    showContextMenu = true;
+  }
+
+  function handleLongPress(event: TouchEvent) {
+    const touch = event.touches[0];
+    contextMenuX = touch.clientX;
+    contextMenuY = touch.clientY;
+    showContextMenu = true;
+    // Prevent default to avoid triggering other touch events
+    event.preventDefault();
+  }
+
+  function closeContextMenu() {
+    showContextMenu = false;
+  }
+
+  function handleDelete() {
+    if (!$currentStory) return;
+    const confirmMessage = isStart
+      ? 'This is the start passage. Are you sure you want to delete it?'
+      : `Delete passage "${passage.title}"?`;
+
+    if (confirm(confirmMessage)) {
+      $currentStory.deletePassage(passage.id);
+      projectActions.markChanged();
+    }
+    closeContextMenu();
+  }
+
+  function handleDuplicate() {
+    if (!$currentStory) return;
+    const duplicate = passage.clone();
+    // Offset the duplicate slightly
+    duplicate.position = {
+      x: passage.position.x + 50,
+      y: passage.position.y + 50
+    };
+    $currentStory.addPassage(duplicate);
+    selectedPassageId.set(duplicate.id);
+    projectActions.markChanged();
+    closeContextMenu();
+  }
+
+  function handleSetAsStart() {
+    if (!$currentStory) return;
+    $currentStory.startPassage = passage.id;
+    projectActions.markChanged();
+    closeContextMenu();
+  }
+
+  // Setup long-press detection on touch devices
+  onMount(() => {
+    if (!nodeElement || !$isTouch) return;
+
+    const cleanup = setupLongPress(nodeElement, {
+      onLongPress: handleLongPress,
+      duration: 500,
+      moveThreshold: 10,
+    });
+
+    return cleanup;
+  });
+
   // Generate tooltip for validation issues
   $: validationTooltip = validationIssues.length > 0
     ? validationIssues.map(i => `${i.category}: ${i.message}`).join('\n')
@@ -188,12 +264,14 @@
 </script>
 
 <div
+  bind:this={nodeElement}
   class="passage-node {getNodeColor()} {getNodeOpacity()} border-2 rounded-lg shadow-md hover:shadow-lg transition-all relative"
   style="{getCustomStyle()} width: {passage.size?.width || 200}px; height: {passage.size?.height || 150}px;"
   role="button"
   tabindex="0"
   aria-label={getAccessibleLabel()}
   on:keydown={handleKeydown}
+  on:contextmenu={handleContextMenu}
 >
   <!-- Breakpoint Indicator -->
   {#if $debugMode}
@@ -347,6 +425,53 @@
     />
   </div>
 </div>
+
+<!-- Context Menu -->
+{#if showContextMenu}
+  <div
+    class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
+    style="left: {contextMenuX}px; top: {contextMenuY}px;"
+    on:click|stopPropagation
+    on:touchend|stopPropagation
+    role="menu"
+    tabindex="-1"
+  >
+    <button
+      class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2"
+      on:click={handleSetAsStart}
+      role="menuitem"
+    >
+      <span>⭐</span>
+      <span>Set as Start</span>
+    </button>
+
+    <button
+      class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2"
+      on:click={handleDuplicate}
+      role="menuitem"
+    >
+      <span>📋</span>
+      <span>Duplicate</span>
+    </button>
+
+    <button
+      class="w-full text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900 text-red-600 dark:text-red-400 flex items-center gap-2"
+      on:click={handleDelete}
+      role="menuitem"
+    >
+      <span>🗑️</span>
+      <span>Delete</span>
+    </button>
+  </div>
+
+  <!-- Overlay to close menu when clicking outside -->
+  <div
+    class="fixed inset-0 z-40"
+    on:click={closeContextMenu}
+    on:touchend={closeContextMenu}
+    role="presentation"
+  ></div>
+{/if}
 
 <style>
   .passage-node {

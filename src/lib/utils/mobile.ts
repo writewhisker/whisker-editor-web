@@ -96,3 +96,185 @@ export function getSafeAreaInsets() {
     left: parseInt(style.getPropertyValue('env(safe-area-inset-left)') || '0'),
   };
 }
+
+/**
+ * Long-press detection utility for touch devices
+ * Returns a cleanup function to remove event listeners
+ */
+export interface LongPressOptions {
+  /** Duration in ms to trigger long press (default: 500) */
+  duration?: number;
+  /** Movement threshold in px before canceling (default: 10) */
+  moveThreshold?: number;
+  /** Callback when long press is triggered */
+  onLongPress: (event: TouchEvent) => void;
+  /** Optional callback when touch starts */
+  onTouchStart?: (event: TouchEvent) => void;
+  /** Optional callback when touch ends normally */
+  onTouchEnd?: (event: TouchEvent) => void;
+}
+
+export function setupLongPress(element: HTMLElement, options: LongPressOptions): () => void {
+  const {
+    duration = 500,
+    moveThreshold = 10,
+    onLongPress,
+    onTouchStart,
+    onTouchEnd,
+  } = options;
+
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let longPressTriggered = false;
+
+  const handleTouchStart = (event: TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    longPressTriggered = false;
+
+    // Start long press timer
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      hapticFeedback(20); // Medium vibration for long press
+      onLongPress(event);
+    }, duration);
+
+    onTouchStart?.(event);
+  };
+
+  const handleTouchMove = (event: TouchEvent) => {
+    if (!longPressTimer) return;
+
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartX);
+    const deltaY = Math.abs(touch.clientY - touchStartY);
+
+    // Cancel long press if touch moved too far
+    if (deltaX > moveThreshold || deltaY > moveThreshold) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = (event: TouchEvent) => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    if (!longPressTriggered) {
+      onTouchEnd?.(event);
+    }
+  };
+
+  const handleTouchCancel = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  };
+
+  // Add event listeners
+  element.addEventListener('touchstart', handleTouchStart, { passive: false });
+  element.addEventListener('touchmove', handleTouchMove, { passive: false });
+  element.addEventListener('touchend', handleTouchEnd);
+  element.addEventListener('touchcancel', handleTouchCancel);
+
+  // Return cleanup function
+  return () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+    }
+    element.removeEventListener('touchstart', handleTouchStart);
+    element.removeEventListener('touchmove', handleTouchMove);
+    element.removeEventListener('touchend', handleTouchEnd);
+    element.removeEventListener('touchcancel', handleTouchCancel);
+  };
+}
+
+/**
+ * Pinch-to-zoom gesture detection for touch devices
+ * Returns a cleanup function to remove event listeners
+ */
+export interface PinchZoomOptions {
+  /** Callback when pinch zoom occurs */
+  onPinchZoom: (scale: number, centerX: number, centerY: number) => void;
+  /** Callback when pinch starts */
+  onPinchStart?: () => void;
+  /** Callback when pinch ends */
+  onPinchEnd?: () => void;
+  /** Minimum scale threshold to trigger zoom (default: 0.1) */
+  scaleThreshold?: number;
+}
+
+export function setupPinchZoom(element: HTMLElement, options: PinchZoomOptions): () => void {
+  const { onPinchZoom, onPinchStart, onPinchEnd, scaleThreshold = 0.1 } = options;
+
+  let initialDistance = 0;
+  let currentDistance = 0;
+  let isPinching = false;
+
+  function getTouchDistance(touch1: Touch, touch2: Touch): number {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function getTouchCenter(touch1: Touch, touch2: Touch): { x: number; y: number } {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2,
+    };
+  }
+
+  const handleTouchStart = (event: TouchEvent) => {
+    if (event.touches.length === 2) {
+      isPinching = true;
+      initialDistance = getTouchDistance(event.touches[0], event.touches[1]);
+      currentDistance = initialDistance;
+      onPinchStart?.();
+      event.preventDefault();
+    }
+  };
+
+  const handleTouchMove = (event: TouchEvent) => {
+    if (!isPinching || event.touches.length !== 2) return;
+
+    const newDistance = getTouchDistance(event.touches[0], event.touches[1]);
+    const scale = newDistance / initialDistance;
+
+    // Only trigger if scale changed significantly
+    if (Math.abs(newDistance - currentDistance) > scaleThreshold) {
+      const center = getTouchCenter(event.touches[0], event.touches[1]);
+      onPinchZoom(scale, center.x, center.y);
+      currentDistance = newDistance;
+    }
+
+    event.preventDefault();
+  };
+
+  const handleTouchEnd = (event: TouchEvent) => {
+    if (isPinching && event.touches.length < 2) {
+      isPinching = false;
+      onPinchEnd?.();
+    }
+  };
+
+  // Add event listeners with { passive: false } to allow preventDefault
+  element.addEventListener('touchstart', handleTouchStart, { passive: false });
+  element.addEventListener('touchmove', handleTouchMove, { passive: false });
+  element.addEventListener('touchend', handleTouchEnd);
+  element.addEventListener('touchcancel', handleTouchEnd);
+
+  // Return cleanup function
+  return () => {
+    element.removeEventListener('touchstart', handleTouchStart);
+    element.removeEventListener('touchmove', handleTouchMove);
+    element.removeEventListener('touchend', handleTouchEnd);
+    element.removeEventListener('touchcancel', handleTouchEnd);
+  };
+}

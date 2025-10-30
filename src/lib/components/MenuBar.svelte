@@ -30,6 +30,10 @@
   export let onFind: (() => void) | undefined = undefined;
   export let onValidate: (() => void) | undefined = undefined;
   export let onCheckLinks: (() => void) | undefined = undefined;
+  export let onManageAssets: (() => void) | undefined = undefined;
+  export let onManageAudio: (() => void) | undefined = undefined;
+  export let onManageAnimations: (() => void) | undefined = undefined;
+  export let onManageStylesheets: (() => void) | undefined = undefined;
 
   function toggleFileMenu() {
     showFileMenu = !showFileMenu;
@@ -242,6 +246,47 @@
             disabled={!$currentStory}
           >
             Story Info...
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAssets && onManageAssets()}
+            disabled={!$currentStory}
+          >
+            <span>Manage Assets...</span>
+            <span class="text-xs text-gray-400 ml-2">🖼️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAudio && onManageAudio()}
+            disabled={!$currentStory}
+          >
+            <span>Audio Settings...</span>
+            <span class="text-xs text-gray-400 ml-2">🔊</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAnimations && onManageAnimations()}
+            disabled={!$currentStory}
+          >
+            <span>Animation Settings...</span>
+            <span class="text-xs text-gray-400 ml-2">✨</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageStylesheets && onManageStylesheets()}
+            disabled={!$currentStory}
+          >
+            <span>Custom Stylesheets...</span>
+            <span class="text-xs text-gray-400 ml-2">🎨</span>
           </button>
         </div>
       {/if}

@@ -37,12 +37,20 @@
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
   import { notificationStore } from './lib/stores/notificationStore';
   import TemplateGallery from './lib/components/onboarding/TemplateGallery.svelte';
+  import AssetManager from './lib/components/editor/AssetManager.svelte';
+  import AudioControls from './lib/components/audio/AudioControls.svelte';
+  import AnimationControls from './lib/components/animation/AnimationControls.svelte';
+  import StylesheetEditor from './lib/components/editor/StylesheetEditor.svelte';
 
   let showNewDialog = false;
   let newProjectTitle = '';
   let showExportPanel = false;
   let showImportDialog = false;
   let showTemplateGallery = false;
+  let showAssetManager = false;
+  let showAudioControls = false;
+  let showAnimationControls = false;
+  let showStylesheetEditor = false;
   let fileHandle: FileHandle | null = null;
   let isLoading = false;
   let loadingMessage = '';
@@ -277,6 +285,26 @@
   function handleStartBlankFromGallery() {
     showTemplateGallery = false;
     handleNewProject();
+  }
+
+  // Handle Manage Assets
+  function handleManageAssets() {
+    showAssetManager = true;
+  }
+
+  // Handle Manage Audio
+  function handleManageAudio() {
+    showAudioControls = true;
+  }
+
+  // Handle Manage Animations
+  function handleManageAnimations() {
+    showAnimationControls = true;
+  }
+
+  // Handle Manage Stylesheets
+  function handleManageStylesheets() {
+    showStylesheetEditor = true;
   }
 
   // Handle Find & Replace
@@ -737,6 +765,10 @@
       onOpenRecent={handleOpenRecent}
       onStoryInfo={() => showMetadataEditor = true}
       onSettings={() => showSettings = true}
+      onManageAssets={handleManageAssets}
+      onManageAudio={handleManageAudio}
+      onManageAnimations={handleManageAnimations}
+      onManageStylesheets={handleManageStylesheets}
       onFind={() => showFindReplaceDialog = true}
       onValidate={handleValidation}
       onCheckLinks={handleCheckLinks}
@@ -1214,6 +1246,22 @@
     on:startBlank={handleStartBlankFromGallery}
     on:close={() => showTemplateGallery = false}
   />
+{/if}
+
+{#if showAssetManager}
+  <AssetManager bind:show={showAssetManager} />
+{/if}
+
+{#if showAudioControls}
+  <AudioControls bind:show={showAudioControls} />
+{/if}
+
+{#if showAnimationControls}
+  <AnimationControls bind:show={showAnimationControls} />
+{/if}
+
+{#if showStylesheetEditor}
+  <StylesheetEditor bind:show={showStylesheetEditor} />
 {/if}
 
 {#if isLoading}

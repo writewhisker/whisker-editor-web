@@ -44,6 +44,9 @@
   import { initMobileDetection, isMobile } from './lib/utils/mobile';
   import GitHubCallback from './lib/components/github/GitHubCallback.svelte';
   import GitHubRepositoryPicker from './lib/components/github/GitHubRepositoryPicker.svelte';
+  import GitHubSyncStatus from './lib/components/github/GitHubSyncStatus.svelte';
+  import GitHubCommitHistory from './lib/components/github/GitHubCommitHistory.svelte';
+  import GitHubConflictResolver from './lib/components/github/GitHubConflictResolver.svelte';
   import { isAuthenticated } from './lib/services/github/githubAuth';
   import { saveFile, getFile } from './lib/services/github/githubApi';
   import type { GitHubRepository } from './lib/services/github/types';
@@ -62,6 +65,25 @@
   // GitHub repository picker
   let showGitHubPicker = false;
   let githubPickerMode: 'save' | 'load' = 'save';
+
+  // GitHub sync status
+  let githubSyncStatus: 'idle' | 'syncing' | 'synced' | 'error' = 'idle';
+  let githubLastSyncTime: Date | null = null;
+  let githubSyncError: string | null = null;
+  let githubRepositoryName: string | null = null;
+
+  // GitHub commit history
+  let showCommitHistory = false;
+  let commitHistoryOwner = '';
+  let commitHistoryRepo = '';
+  let commitHistoryPath = '';
+
+  // GitHub conflict resolver
+  let showConflictResolver = false;
+  let conflictLocalVersion: any = null;
+  let conflictRemoteVersion: any = null;
+  let conflictLocalModified: Date | null = null;
+  let conflictRemoteModified: Date | null = null;
 
   let showAssetManager = false;
   let showAudioControls = false;
@@ -305,6 +327,7 @@
     try {
       isLoading = true;
       loadingMessage = 'Saving to GitHub...';
+      githubSyncStatus = 'syncing';
 
       const content = JSON.stringify(data, null, 2);
       const [owner] = repository.fullName.split('/');
@@ -331,9 +354,17 @@
         sha
       );
 
+      // Update GitHub status
+      githubRepositoryName = repository.fullName;
+      githubSyncStatus = 'synced';
+      githubLastSyncTime = new Date();
+      githubSyncError = null;
+
       notificationStore.success(`Saved to ${repository.fullName}/${filename}`);
     } catch (error: any) {
       console.error('Failed to save to GitHub:', error);
+      githubSyncStatus = 'error';
+      githubSyncError = error.message || 'Failed to save to GitHub';
       notificationStore.error(error.message || 'Failed to save to GitHub');
     } finally {
       isLoading = false;
@@ -354,6 +385,11 @@
       projectActions.loadProject(data, filename);
       fileHandle = null;
 
+      // Update GitHub status
+      githubRepositoryName = repository.fullName;
+      githubSyncStatus = 'synced';
+      githubLastSyncTime = new Date();
+
       notificationStore.success(`Loaded from ${repository.fullName}/${filename}`);
     } catch (error: any) {
       console.error('Failed to load from GitHub:', error);
@@ -362,6 +398,75 @@
       isLoading = false;
       loadingMessage = '';
     }
+  }
+
+  // Handle viewing commit history
+  function handleViewCommitHistory() {
+    if (!$isAuthenticated) {
+      notificationStore.error('Please connect to GitHub first');
+      return;
+    }
+
+    if (!githubRepositoryName) {
+      notificationStore.error('No GitHub repository linked to this story');
+      return;
+    }
+
+    // Parse repository name (format: owner/repo)
+    const [owner, repo] = githubRepositoryName.split('/');
+    if (!owner || !repo) {
+      notificationStore.error('Invalid repository name');
+      return;
+    }
+
+    // For now, assume story.json - in the future, track the actual filename
+    const filename = $currentStory?.metadata?.title ? `${$currentStory.metadata.title}.json` : 'story.json';
+
+    commitHistoryOwner = owner;
+    commitHistoryRepo = repo;
+    commitHistoryPath = filename;
+    showCommitHistory = true;
+  }
+
+  // Handle commit history revert
+  async function handleCommitRevert(event: CustomEvent<{ commit: any; content: string }>) {
+    const { commit, content } = event.detail;
+
+    try {
+      const data = JSON.parse(content);
+      projectActions.loadProject(data, `Reverted to ${commit.sha.substring(0, 7)}`);
+      fileHandle = null;
+
+      notificationStore.success(`Reverted to commit: ${commit.message}`);
+    } catch (error: any) {
+      console.error('Failed to revert to commit:', error);
+      notificationStore.error(error.message || 'Failed to revert to commit');
+    }
+  }
+
+  // Handle conflict resolution
+  function handleConflictResolve(event: CustomEvent<{ resolution: 'local' | 'remote' | 'manual'; localVersion: any; remoteVersion: any }>) {
+    const { resolution, localVersion, remoteVersion } = event.detail;
+
+    switch (resolution) {
+      case 'local':
+        // Keep local version - do nothing, just close
+        notificationStore.success('Keeping local version');
+        break;
+      case 'remote':
+        // Use remote version - load it
+        projectActions.loadProject(remoteVersion, 'Remote version from GitHub');
+        fileHandle = null;
+        notificationStore.success('Loaded remote version from GitHub');
+        break;
+      case 'manual':
+        // Manual merge - show both versions for user to merge manually
+        notificationStore.info('Manual merge selected - please review both versions');
+        // In the future, this could open a diff editor
+        break;
+    }
+
+    showConflictResolver = false;
   }
 
   // Handle Browse Templates
@@ -914,6 +1019,7 @@
       onManageStylesheets={handleManageStylesheets}
       onSaveToGitHub={handleSaveToGitHub}
       onLoadFromGitHub={handleLoadFromGitHub}
+      onViewCommitHistory={handleViewCommitHistory}
       onFind={() => showFindReplaceDialog = true}
       onValidate={handleValidation}
       onCheckLinks={handleCheckLinks}
@@ -1427,6 +1533,27 @@
     mode={githubPickerMode}
     defaultFilename={$currentStory?.metadata?.title ? `${$currentStory.metadata.title}.json` : 'story.json'}
     on:select={handleRepositorySelect}
+  />
+{/if}
+
+{#if showCommitHistory}
+  <GitHubCommitHistory
+    bind:show={showCommitHistory}
+    owner={commitHistoryOwner}
+    repo={commitHistoryRepo}
+    path={commitHistoryPath}
+    on:revert={handleCommitRevert}
+  />
+{/if}
+
+{#if showConflictResolver}
+  <GitHubConflictResolver
+    bind:show={showConflictResolver}
+    localVersion={conflictLocalVersion}
+    remoteVersion={conflictRemoteVersion}
+    localModified={conflictLocalModified}
+    remoteModified={conflictRemoteModified}
+    on:resolve={handleConflictResolve}
   />
 {/if}
 

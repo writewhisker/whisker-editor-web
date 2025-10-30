@@ -36,11 +36,13 @@
   import { validationActions } from './lib/stores/validationStore';
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
   import { notificationStore } from './lib/stores/notificationStore';
+  import TemplateGallery from './lib/components/onboarding/TemplateGallery.svelte';
 
   let showNewDialog = false;
   let newProjectTitle = '';
   let showExportPanel = false;
   let showImportDialog = false;
+  let showTemplateGallery = false;
   let fileHandle: FileHandle | null = null;
   let isLoading = false;
   let loadingMessage = '';
@@ -226,26 +228,49 @@
     fileHandle = null; // Clear file handle since this is an imported story
   }
 
-  // Handle Load Example
-  async function handleLoadExample() {
+  // Handle Browse Templates
+  function handleBrowseTemplates() {
+    showTemplateGallery = true;
+  }
+
+  // Handle Template Selection
+  async function handleTemplateSelect(event: CustomEvent<{ templateId: string; templateName: string }>) {
+    const { templateId, templateName } = event.detail;
+
     try {
       isLoading = true;
-      loadingMessage = 'Loading example story...';
+      loadingMessage = `Loading ${templateName}...`;
+      showTemplateGallery = false;
 
-      const response = await fetch('/examples/the-cave.json');
+      const response = await fetch(`/examples/${templateId}.json`);
       if (!response.ok) {
-        throw new Error('Failed to load example story');
+        throw new Error('Failed to load template');
       }
       const data = await response.json();
-      projectActions.loadProject(data, 'The Cave (Example)');
-      fileHandle = null; // Clear file handle since this is an example
+      projectActions.loadProject(data, `${templateName} (Template)`);
+      fileHandle = null; // Clear file handle since this is a template
+
+      notificationStore.add({
+        message: `Loaded ${templateName} template - now customize it to make it your own!`,
+        type: 'success',
+        duration: 5000
+      });
     } catch (error) {
-      console.error('Error loading example:', error);
-      alert('Failed to load example story. Please try again.');
+      console.error('Error loading template:', error);
+      notificationStore.add({
+        message: 'Failed to load template. Please try again.',
+        type: 'error'
+      });
     } finally {
       isLoading = false;
       loadingMessage = '';
     }
+  }
+
+  // Handle Start Blank from Template Gallery
+  function handleStartBlankFromGallery() {
+    showTemplateGallery = false;
+    handleNewProject();
   }
 
   // Handle Find & Replace
@@ -552,7 +577,7 @@
       case 'view': viewPreferencesActions.setViewMode(detail.mode); break;
       case 'focus': viewPreferencesActions.toggleFocusMode(); break;
       case 'shortcuts': showShortcutsHelp = true; break;
-      case 'example': handleLoadExample(); break;
+      case 'example': handleBrowseTemplates(); break;
     }
   }
 
@@ -991,13 +1016,13 @@
               </button>
             </div>
 
-            <!-- Example Story -->
+            <!-- Browse Templates Button -->
             <button
-              class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline inline-flex items-center gap-2"
-              on:click={handleLoadExample}
+              class="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 dark:from-purple-700 dark:to-blue-700 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 dark:hover:from-purple-800 dark:hover:to-blue-800 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 font-semibold inline-flex items-center gap-2"
+              on:click={handleBrowseTemplates}
             >
-              <span>📚</span>
-              <span>Try the interactive example: "The Cave"</span>
+              <span class="text-xl">🎨</span>
+              <span>Browse Templates & Examples</span>
             </button>
           </div>
 
@@ -1162,6 +1187,14 @@
 <SettingsDialog bind:show={showSettings} />
 
 <NotificationToast />
+
+{#if showTemplateGallery}
+  <TemplateGallery
+    on:selectTemplate={handleTemplateSelect}
+    on:startBlank={handleStartBlankFromGallery}
+    on:close={() => showTemplateGallery = false}
+  />
+{/if}
 
 {#if isLoading}
   <div class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

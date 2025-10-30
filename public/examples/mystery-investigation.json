@@ -1,0 +1,373 @@
+{
+  "metadata": {
+    "title": "Mystery Investigation Template",
+    "description": "Detective story with clue gathering, deduction, and multiple suspects",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "crime-scene",
+  "passages": [
+    {
+      "id": "crime-scene",
+      "title": "The Crime Scene",
+      "content": "**Detective's Office - 9:00 AM**\n\nYou arrive at the Blackwood Manor. The owner, **Marcus Blackwood**, was found dead in his study this morning. The door was locked from the inside.\n\nOfficer Torres briefs you: \"Three people were in the house last night:\n- **Elena**, the business partner\n- **James**, the butler\n- **Dr. Sarah Chen**, the family physician\n\nAll three claim they were in their rooms when it happened.\"\n\nYou have **3 investigation opportunities** before making your accusation. Choose wisely.\n\n*Clues Found: 0/6*",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "Examine the study",
+          "target": "examine-study",
+          "conditions": []
+        },
+        {
+          "id": "choice-2",
+          "text": "Interview Elena",
+          "target": "interview-elena",
+          "conditions": []
+        },
+        {
+          "id": "choice-3",
+          "text": "Interview James",
+          "target": "interview-james",
+          "conditions": []
+        },
+        {
+          "id": "choice-4",
+          "text": "Interview Dr. Chen",
+          "target": "interview-chen",
+          "conditions": []
+        }
+      ],
+      "tags": ["opening"],
+      "onEnter": "investigations_remaining = 3\nclues_found = 0",
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "examine-study",
+      "title": "The Study",
+      "content": "You examine the study carefully.\n\n**Findings:**\n- A wine glass on the desk, half-empty\n- The window is slightly ajar\n- A medical journal lies open on the coffee table\n- Strange scuff marks near the window\n\n*Clues found: Window, Wine Glass, Medical Journal*\n\nYou note these observations in your notebook.",
+      "choices": [
+        {
+          "id": "choice-5",
+          "text": "Continue investigation",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "investigations_remaining = investigations_remaining - 1\nclues_found = clues_found + 3\nfound_window = true\nfound_wine = true\nfound_journal = true",
+      "position": { "x": 400, "y": 0 }
+    },
+    {
+      "id": "interview-elena",
+      "title": "Interview: Elena",
+      "content": "Elena sits composed but tense.\n\n\"Marcus and I were partners for ten years,\" she says. \"Yes, we had disagreements about the company direction, but I would never...\"\n\nShe pauses. \"I was in my room all evening. I heard nothing unusual.\"\n\nYou notice she's wearing an expensive watch - the same brand as the one Marcus owned.\n\n**Question her about:**",
+      "choices": [
+        {
+          "id": "choice-6",
+          "text": "Ask about the business disagreements",
+          "target": "elena-business",
+          "conditions": []
+        },
+        {
+          "id": "choice-7",
+          "text": "Ask about the watch",
+          "target": "elena-watch",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "investigations_remaining = investigations_remaining - 1\ninterviewed_elena = true",
+      "position": { "x": 400, "y": 150 }
+    },
+    {
+      "id": "interview-james",
+      "title": "Interview: James",
+      "content": "James, the butler, maintains perfect posture.\n\n\"I've served Mr. Blackwood for fifteen years,\" he states formally. \"Last night, I served him dinner at 7 PM, then retired to my quarters.\"\n\n\"Did you hear anything unusual?\"\n\n\"Only the doctor arriving around 8 PM. Mr. Blackwood had been experiencing headaches lately.\"\n\n*Clue found: Doctor's Visit*",
+      "choices": [
+        {
+          "id": "choice-8",
+          "text": "Ask about the headaches",
+          "target": "james-headaches",
+          "conditions": []
+        },
+        {
+          "id": "choice-9",
+          "text": "Ask what time the doctor left",
+          "target": "james-timing",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "investigations_remaining = investigations_remaining - 1\ninterviewed_james = true\nclues_found = clues_found + 1\nfound_doctor_visit = true",
+      "position": { "x": 400, "y": 300 }
+    },
+    {
+      "id": "interview-chen",
+      "title": "Interview: Dr. Chen",
+      "content": "Dr. Chen looks exhausted.\n\n\"I came by around 8 PM,\" she explains. \"Marcus called complaining of severe headaches. I examined him, recommended some medication, and left around 8:30.\"\n\n\"He seemed fine when I left. Just stressed about work.\"\n\nShe fidgets with her medical bag.\n\n*Clue found: Doctor's Timeline*",
+      "choices": [
+        {
+          "id": "choice-10",
+          "text": "Ask about the medication",
+          "target": "chen-medication",
+          "conditions": []
+        },
+        {
+          "id": "choice-11",
+          "text": "Ask about the work stress",
+          "target": "chen-stress",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "investigations_remaining = investigations_remaining - 1\ninterviewed_chen = true\nclues_found = clues_found + 1\nfound_timeline = true",
+      "position": { "x": 400, "y": 450 }
+    },
+    {
+      "id": "elena-business",
+      "title": "Elena's Motive",
+      "content": "Elena's composure cracks slightly.\n\n\"Fine. Marcus wanted to sell the company. I built that business from nothing with him. Selling would have been a betrayal of everything we worked for.\"\n\n\"But that doesn't mean I killed him!\"\n\n*Strong motive discovered*",
+      "choices": [
+        {
+          "id": "choice-12",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "clues_found = clues_found + 1\nfound_elena_motive = true",
+      "position": { "x": 700, "y": 100 }
+    },
+    {
+      "id": "elena-watch",
+      "title": "The Watch",
+      "content": "Elena looks at her wrist. \"This? Marcus gave it to me last week. Said it was a thank you for all the years of partnership.\"\n\nShe seems genuine. The watch appears to be a gift, not stolen.",
+      "choices": [
+        {
+          "id": "choice-13",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "position": { "x": 700, "y": 200 }
+    },
+    {
+      "id": "james-headaches",
+      "title": "The Headaches",
+      "content": "\"Mr. Blackwood had been suffering from headaches for about two weeks,\" James explains. \"He attributed them to work stress. Dr. Chen had been visiting regularly.\"\n\n\"Did he take any medication?\"\n\n\"Yes, the doctor prescribed something. He took it with wine every evening.\"",
+      "choices": [
+        {
+          "id": "choice-14",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "position": { "x": 700, "y": 250 }
+    },
+    {
+      "id": "james-timing",
+      "title": "The Timeline",
+      "content": "James thinks carefully. \"The doctor arrived at 8 PM and left around 8:30. I saw her out myself.\"\n\n\"And Mr. Blackwood?\"\n\n\"He was alive when she left. I checked on him around 9 PM - he was reading in his study. That was the last time I saw him alive.\"",
+      "choices": [
+        {
+          "id": "choice-15",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "position": { "x": 700, "y": 350 }
+    },
+    {
+      "id": "chen-medication",
+      "title": "The Medication",
+      "content": "Dr. Chen opens her bag and shows you the prescription bottle.\n\n\"Standard migraine medication. Nothing dangerous. He was supposed to take one pill daily.\"\n\nSomething about her explanation seems rehearsed.\n\n*Suspicious behavior noted*",
+      "choices": [
+        {
+          "id": "choice-16",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "onEnter": "clues_found = clues_found + 1\nfound_medication = true",
+      "position": { "x": 700, "y": 400 }
+    },
+    {
+      "id": "chen-stress",
+      "title": "Work Stress",
+      "content": "\"Marcus mentioned he was under pressure about a business decision,\" Dr. Chen says. \"Something about selling the company. His partner wasn't happy about it.\"\n\nShe glances toward where Elena was interviewed.",
+      "choices": [
+        {
+          "id": "choice-17",
+          "text": "Continue",
+          "target": "investigation-hub",
+          "conditions": []
+        }
+      ],
+      "tags": ["investigation"],
+      "position": { "x": 700, "y": 500 }
+    },
+    {
+      "id": "investigation-hub",
+      "title": "Continue Investigation",
+      "content": "**Investigation Progress**\n\nYou review your notes.\n\n*Clues found: [varies]*\n*Investigations remaining: [varies]*\n\n---\n\nWhat do you do next?",
+      "choices": [
+        {
+          "id": "choice-18",
+          "text": "Examine the study",
+          "target": "examine-study",
+          "conditions": ["not found_window"]
+        },
+        {
+          "id": "choice-19",
+          "text": "Interview Elena",
+          "target": "interview-elena",
+          "conditions": ["not interviewed_elena"]
+        },
+        {
+          "id": "choice-20",
+          "text": "Interview James",
+          "target": "interview-james",
+          "conditions": ["not interviewed_james"]
+        },
+        {
+          "id": "choice-21",
+          "text": "Interview Dr. Chen",
+          "target": "interview-chen",
+          "conditions": ["not interviewed_chen"]
+        },
+        {
+          "id": "choice-22",
+          "text": "Make your accusation",
+          "target": "make-accusation",
+          "conditions": []
+        }
+      ],
+      "tags": ["hub"],
+      "position": { "x": 100, "y": 300 }
+    },
+    {
+      "id": "make-accusation",
+      "title": "The Accusation",
+      "content": "You've gathered your evidence. Time to make your accusation.\n\nWho do you believe is responsible for Marcus Blackwood's death?",
+      "choices": [
+        {
+          "id": "choice-23",
+          "text": "Accuse Elena",
+          "target": "accuse-elena",
+          "conditions": []
+        },
+        {
+          "id": "choice-24",
+          "text": "Accuse James",
+          "target": "accuse-james",
+          "conditions": []
+        },
+        {
+          "id": "choice-25",
+          "text": "Accuse Dr. Chen",
+          "target": "accuse-chen",
+          "conditions": []
+        }
+      ],
+      "tags": ["critical"],
+      "position": { "x": 1000, "y": 200 }
+    },
+    {
+      "id": "accuse-elena",
+      "title": "Wrong Accusation - Elena",
+      "content": "\"Elena Davis, you're under arrest for the murder of Marcus Blackwood.\"\n\nElena looks shocked. \"What? No! I didn't... I couldn't...\"\n\nLater evidence proves she was indeed in her room all night. The real killer remains free.\n\n**Case Failed**\n\n---\n\n*The correct solution: Dr. Chen had been slowly poisoning Marcus with tainted medication. The medical journal and her suspicious behavior were key clues.*",
+      "choices": [],
+      "tags": ["ending", "wrong"],
+      "position": { "x": 1300, "y": 100 }
+    },
+    {
+      "id": "accuse-james",
+      "title": "Wrong Accusation - James",
+      "content": "\"James, you're under arrest for the murder of Marcus Blackwood.\"\n\nJames maintains his composure. \"I'm afraid you're mistaken, detective.\"\n\nHis alibi holds up under scrutiny. The real killer remains free.\n\n**Case Failed**\n\n---\n\n*The correct solution: Dr. Chen had been slowly poisoning Marcus with tainted medication. The medical journal and her suspicious behavior were key clues.*",
+      "choices": [],
+      "tags": ["ending", "wrong"],
+      "position": { "x": 1300, "y": 200 }
+    },
+    {
+      "id": "accuse-chen",
+      "title": "Correct Accusation - Dr. Chen",
+      "content": "\"Dr. Sarah Chen, you're under arrest for the murder of Marcus Blackwood.\"\n\nDr. Chen's face goes pale. \"How did you...\"\n\n\"The evidence was clear,\" you explain. \"The medical journal in his study, the tainted medication, your rehearsed explanation. You'd been slowly poisoning him for weeks.\"\n\nShe breaks down. \"He was going to sell the company to developers. They'd shut down the free clinic I run. I couldn't let that happen...\"\n\n**Case Solved!**\n\n---\n\n**Mystery Template Features:**\n- Clue gathering system\n- Multiple suspects with motives\n- Deduction mechanics\n- Conditional choices based on evidence\n- Multiple outcomes\n\n**Try editing:**\n- Add more clues and red herrings\n- Create additional suspects\n- Implement evidence combination system\n- Add forensic analysis passages",
+      "choices": [],
+      "tags": ["ending", "correct"],
+      "position": { "x": 1300, "y": 300 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "investigations_remaining",
+      "value": 3,
+      "description": "Number of investigations left"
+    },
+    {
+      "name": "clues_found",
+      "value": 0,
+      "description": "Total clues discovered"
+    },
+    {
+      "name": "interviewed_elena",
+      "value": false,
+      "description": "Has interviewed Elena"
+    },
+    {
+      "name": "interviewed_james",
+      "value": false,
+      "description": "Has interviewed James"
+    },
+    {
+      "name": "interviewed_chen",
+      "value": false,
+      "description": "Has interviewed Dr. Chen"
+    },
+    {
+      "name": "found_window",
+      "value": false,
+      "description": "Found window clue"
+    },
+    {
+      "name": "found_wine",
+      "value": false,
+      "description": "Found wine glass"
+    },
+    {
+      "name": "found_journal",
+      "value": false,
+      "description": "Found medical journal"
+    },
+    {
+      "name": "found_doctor_visit",
+      "value": false,
+      "description": "Learned about doctor's visit"
+    },
+    {
+      "name": "found_timeline",
+      "value": false,
+      "description": "Established timeline"
+    },
+    {
+      "name": "found_elena_motive",
+      "value": false,
+      "description": "Discovered Elena's motive"
+    },
+    {
+      "name": "found_medication",
+      "value": false,
+      "description": "Examined the medication"
+    }
+  ]
+}

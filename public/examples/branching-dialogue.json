@@ -1,0 +1,356 @@
+{
+  "metadata": {
+    "title": "Branching Dialogue Template",
+    "description": "Conversation-focused story with personality tracking and reputation system",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "negotiation-start",
+  "passages": [
+    {
+      "id": "negotiation-start",
+      "title": "The Negotiation",
+      "content": "**Conference Room - Summit Industries**\n\nYou're here to negotiate a critical business deal with **Victoria Sterling**, CEO of Sterling Corp. This merger could save your struggling company, but Victoria is known for being shrewd.\n\nShe sits across from you, perfectly composed.\n\n\"Thank you for meeting with me,\" she begins. \"I've reviewed your proposal. It's... interesting.\"\n\nHer tone is neutral, giving nothing away.\n\n**Your Approach:** Undecided  \n**Victoria's Impression:** Neutral  \n**Deal Status:** Pending",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "\"I appreciate your time. I believe this merger benefits both our companies.\"",
+          "target": "diplomatic-1",
+          "conditions": []
+        },
+        {
+          "id": "choice-2",
+          "text": "\"'Interesting'? Our proposal is solid. Let's talk specifics.\"",
+          "target": "direct-1",
+          "conditions": []
+        },
+        {
+          "id": "choice-3",
+          "text": "\"I'm sure you can see the value. What concerns do you have?\"",
+          "target": "empathetic-1",
+          "conditions": []
+        }
+      ],
+      "tags": ["opening"],
+      "onEnter": "reputation = 0\ndiplomatic_score = 0\ndirect_score = 0\nempathetic_score = 0",
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "diplomatic-1",
+      "title": "Diplomatic Approach",
+      "content": "Victoria nods slightly. \"A diplomatic start. I appreciate that.\"\n\nShe leans forward. \"However, I need more than pleasantries. Your company's recent quarterly reports show declining revenue. Why should Sterling Corp take on that risk?\"\n\nHer question is pointed but fair.\n\n**Your Approach:** Diplomatic (+1)  \n**Victoria's Impression:** Cautiously Positive",
+      "choices": [
+        {
+          "id": "choice-4",
+          "text": "\"You're right to be concerned. Here's our recovery plan...\"",
+          "target": "honest-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-5",
+          "text": "\"Those reports don't show the full picture of our potential.\"",
+          "target": "deflect-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-6",
+          "text": "\"What if we adjusted the merger terms to account for that risk?\"",
+          "target": "compromise-path",
+          "conditions": []
+        }
+      ],
+      "tags": ["diplomatic"],
+      "onEnter": "diplomatic_score = diplomatic_score + 1\nreputation = reputation + 1",
+      "position": { "x": 400, "y": 0 }
+    },
+    {
+      "id": "direct-1",
+      "title": "Direct Approach",
+      "content": "Victoria's eyebrow raises slightly. \"Direct. I can work with that.\"\n\n\"Fine. Let's talk specifics. Your company wants a 60-40 split in your favor. That's aggressive given your current market position.\"\n\nShe slides a document across the table. \"Here's our counter-offer: 45-55, in our favor.\"\n\n**Your Approach:** Direct (+1)  \n**Victoria's Impression:** Intrigued",
+      "choices": [
+        {
+          "id": "choice-7",
+          "text": "\"That's too low. 55-45, final offer.\"",
+          "target": "aggressive-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-8",
+          "text": "\"Let's find middle ground. 50-50?\"",
+          "target": "compromise-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-9",
+          "text": "\"Walk me through how you arrived at those numbers.\"",
+          "target": "analytical-path",
+          "conditions": []
+        }
+      ],
+      "tags": ["direct"],
+      "onEnter": "direct_score = direct_score + 1\nreputation = reputation + 1",
+      "position": { "x": 400, "y": 200 }
+    },
+    {
+      "id": "empathetic-1",
+      "title": "Empathetic Approach",
+      "content": "Victoria seems surprised by the question, then relaxes slightly.\n\n\"Honestly? I'm concerned about cultural fit. My company has a specific way of doing things. Mergers often fail because companies can't integrate.\"\n\nShe sighs. \"I don't want to absorb your company just to gut it for parts. But I need assurance this will work.\"\n\n**Your Approach:** Empathetic (+1)  \n**Victoria's Impression:** Open",
+      "choices": [
+        {
+          "id": "choice-10",
+          "text": "\"I understand completely. What if we created a cultural integration plan?\"",
+          "target": "collaborative-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-11",
+          "text": "\"Our teams have more in common than you think. Let me explain.\"",
+          "target": "bridge-building-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-12",
+          "text": "\"What would make you feel confident about the integration?\"",
+          "target": "deep-empathy-path",
+          "conditions": []
+        }
+      ],
+      "tags": ["empathetic"],
+      "onEnter": "empathetic_score = empathetic_score + 1\nreputation = reputation + 2",
+      "position": { "x": 400, "y": 400 }
+    },
+    {
+      "id": "honest-path",
+      "title": "Honesty Pays Off",
+      "content": "You lay out your recovery plan with complete transparency - the challenges, the timeline, the risks.\n\nVictoria listens intently, occasionally asking sharp questions. You answer each one honestly.\n\nFinally, she leans back. \"I appreciate the candor. Most people try to hide their weaknesses. You've shown me you understand your situation and have a plan.\"\n\n**Victoria's Trust: High**",
+      "choices": [
+        {
+          "id": "choice-13",
+          "text": "Continue negotiation",
+          "target": "final-terms",
+          "conditions": []
+        }
+      ],
+      "tags": ["key-moment"],
+      "onEnter": "reputation = reputation + 3\ntrust_level = 'high'",
+      "position": { "x": 700, "y": 0 }
+    },
+    {
+      "id": "deflect-path",
+      "title": "Deflection Noticed",
+      "content": "Victoria's expression hardens slightly.\n\n\"With respect, financial reports are exactly how we evaluate potential. If there's context I'm missing, I need you to share it - not deflect.\"\n\nYou've lost some credibility.\n\n**Victoria's Trust: Lowered**",
+      "choices": [
+        {
+          "id": "choice-14",
+          "text": "Backtrack and be honest",
+          "target": "recovery-path",
+          "conditions": []
+        },
+        {
+          "id": "choice-15",
+          "text": "Push forward anyway",
+          "target": "damaged-relationship",
+          "conditions": []
+        }
+      ],
+      "tags": ["mistake"],
+      "onEnter": "reputation = reputation - 2",
+      "position": { "x": 700, "y": 100 }
+    },
+    {
+      "id": "compromise-path",
+      "title": "Finding Common Ground",
+      "content": "Victoria considers your proposal.\n\n\"A reasonable approach,\" she admits. \"Most people come in demanding everything. You're willing to negotiate fairly.\"\n\nShe pulls out a tablet and starts sketching terms. \"Let's see what we can work out.\"\n\n**Victoria's Respect: Increased**",
+      "choices": [
+        {
+          "id": "choice-16",
+          "text": "Work through the details together",
+          "target": "final-terms",
+          "conditions": []
+        }
+      ],
+      "tags": ["key-moment"],
+      "onEnter": "reputation = reputation + 2\ntrust_level = 'medium'",
+      "position": { "x": 700, "y": 200 }
+    },
+    {
+      "id": "aggressive-path",
+      "title": "Too Aggressive",
+      "content": "Victoria's expression becomes cold.\n\n\"'Final offer'? We've barely started negotiating.\" She stands up. \"I think we're done here. If you're not interested in an actual dialogue, Sterling Corp will look elsewhere.\"\n\nShe heads for the door.\n\n**Negotiation Failed**",
+      "choices": [
+        {
+          "id": "choice-17",
+          "text": "Try to salvage the situation",
+          "target": "desperate-recovery",
+          "conditions": []
+        },
+        {
+          "id": "choice-18",
+          "text": "Let her leave",
+          "target": "end-failure",
+          "conditions": []
+        }
+      ],
+      "tags": ["critical-failure"],
+      "onEnter": "reputation = reputation - 5",
+      "position": { "x": 700, "y": 300 }
+    },
+    {
+      "id": "analytical-path",
+      "title": "Data-Driven Discussion",
+      "content": "Victoria's eyes light up. \"Finally, someone who wants to look at the numbers.\"\n\nShe walks you through her analysis. You counter with your own data. The conversation becomes a genuine exchange of ideas rather than a confrontation.\n\nTwo hours pass in what feels like minutes.\n\n**Victoria's Respect: High**",
+      "choices": [
+        {
+          "id": "choice-19",
+          "text": "Reach agreement",
+          "target": "final-terms",
+          "conditions": []
+        }
+      ],
+      "tags": ["key-moment"],
+      "onEnter": "reputation = reputation + 3\ntrust_level = 'high'",
+      "position": { "x": 700, "y": 400 }
+    },
+    {
+      "id": "collaborative-path",
+      "title": "Collaboration",
+      "content": "\"A cultural integration plan,\" Victoria muses. \"That shows foresight.\"\n\nYou spend the next hour outlining how the teams could work together, respecting both company cultures while building something new.\n\nVictoria seems genuinely impressed. \"You've thought about this beyond just the numbers. That matters.\"\n\n**Victoria's Trust: Very High**",
+      "choices": [
+        {
+          "id": "choice-20",
+          "text": "Finalize the deal",
+          "target": "final-terms-excellent",
+          "conditions": []
+        }
+      ],
+      "tags": ["best-path"],
+      "onEnter": "reputation = reputation + 4\ntrust_level = 'very_high'",
+      "position": { "x": 700, "y": 500 }
+    },
+    {
+      "id": "bridge-building-path",
+      "title": "Building Bridges",
+      "content": "You share stories about both teams, finding genuine connections and shared values.\n\nVictoria relaxes as the conversation shifts from formal negotiation to genuine dialogue about building something meaningful together.\n\n**Victoria's Trust: High**",
+      "choices": [
+        {
+          "id": "choice-21",
+          "text": "Discuss terms",
+          "target": "final-terms",
+          "conditions": []
+        }
+      ],
+      "tags": ["key-moment"],
+      "onEnter": "reputation = reputation + 3\ntrust_level = 'high'",
+      "position": { "x": 700, "y": 600 }
+    },
+    {
+      "id": "deep-empathy-path",
+      "title": "Deep Understanding",
+      "content": "Victoria pauses, studying you.\n\n\"You're asking the right questions,\" she says quietly. \"Most people don't care about what I actually need.\"\n\nShe opens up about past mergers that failed, the stress of trying to do right by her employees. You listen, truly listen.\n\nThe conversation transforms into something more than business.\n\n**Victoria's Trust: Maximum**",
+      "choices": [
+        {
+          "id": "choice-22",
+          "text": "Build the partnership together",
+          "target": "final-terms-excellent",
+          "conditions": []
+        }
+      ],
+      "tags": ["best-path"],
+      "onEnter": "reputation = reputation + 5\ntrust_level = 'maximum'",
+      "position": { "x": 700, "y": 700 }
+    },
+    {
+      "id": "final-terms",
+      "title": "Successful Deal",
+      "content": "**Three Hours Later**\n\nVictoria extends her hand. \"We have a deal. 52-48 split, with cultural integration oversight. Fair?\"\n\nYou shake her hand. The merger will move forward.\n\n**Negotiation Successful**\n\n---\n\n**Branching Dialogue Features:**\n- Personality tracking (Diplomatic/Direct/Empathetic)\n- Reputation system\n- Consequence-based branching\n- Relationship building\n- Multiple successful paths\n\n**Try editing:**\n- Add more dialogue branches\n- Implement personality-locked choices\n- Create longer conversation chains\n- Add relationship meters\n- Develop character-specific responses",
+      "choices": [],
+      "tags": ["ending", "success"],
+      "position": { "x": 1000, "y": 300 }
+    },
+    {
+      "id": "final-terms-excellent",
+      "title": "Excellent Deal",
+      "content": "**Three Hours Later**\n\nVictoria extends her hand with a genuine smile. \"I'm impressed. Not just with the terms - 55-45 in your favor, by the way - but with how you approached this.\"\n\n\"I think we're going to build something special together.\"\n\n**Outstanding Success**\n\n---\n\n**Branching Dialogue Features:**\n- Personality tracking (Diplomatic/Direct/Empathetic)\n- Reputation system\n- Consequence-based branching\n- Relationship building\n- Multiple successful paths\n\n**Best outcome achieved through empathy and understanding!**",
+      "choices": [],
+      "tags": ["ending", "excellent"],
+      "position": { "x": 1000, "y": 600 }
+    },
+    {
+      "id": "recovery-path",
+      "title": "Recovering Trust",
+      "content": "You take a breath and start over with complete honesty.\n\nVictoria nods slowly. \"Thank you. That's what I needed to hear.\"\n\nThe negotiation continues, though you've lost some ground.\n\n**Trust Partially Restored**",
+      "choices": [
+        {
+          "id": "choice-23",
+          "text": "Continue",
+          "target": "final-terms",
+          "conditions": []
+        }
+      ],
+      "tags": ["recovery"],
+      "onEnter": "reputation = reputation + 1\ntrust_level = 'medium'",
+      "position": { "x": 1000, "y": 100 }
+    },
+    {
+      "id": "damaged-relationship",
+      "title": "Damaged Trust",
+      "content": "The negotiation continues, but Victoria remains guarded. You eventually reach an agreement, but the terms are unfavorable.\n\n**Deal Completed - Poor Terms**\n\nYou got the merger, but at a cost.",
+      "choices": [],
+      "tags": ["ending", "poor"],
+      "position": { "x": 1000, "y": 150 }
+    },
+    {
+      "id": "desperate-recovery",
+      "title": "Desperate Plea",
+      "content": "\"Wait! I apologize. That was unprofessional. Can we start over?\"\n\nVictoria pauses at the door, then returns to her seat.\n\n\"One more chance. Don't waste it.\"\n\nYou've barely salvaged the negotiation.",
+      "choices": [
+        {
+          "id": "choice-24",
+          "text": "Negotiate carefully",
+          "target": "compromise-path",
+          "conditions": []
+        }
+      ],
+      "tags": ["recovery"],
+      "onEnter": "reputation = reputation - 1",
+      "position": { "x": 1000, "y": 350 }
+    },
+    {
+      "id": "end-failure",
+      "title": "Negotiation Failed",
+      "content": "Victoria leaves. The deal is dead.\n\nYour company will have to find another path forward.\n\n**Negotiation Failed**\n\n---\n\n**Lesson learned:** Aggressive tactics can backfire. Consider the other person's perspective.",
+      "choices": [],
+      "tags": ["ending", "failure"],
+      "position": { "x": 1000, "y": 400 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "reputation",
+      "value": 0,
+      "description": "Overall reputation score"
+    },
+    {
+      "name": "diplomatic_score",
+      "value": 0,
+      "description": "Diplomatic approach score"
+    },
+    {
+      "name": "direct_score",
+      "value": 0,
+      "description": "Direct approach score"
+    },
+    {
+      "name": "empathetic_score",
+      "value": 0,
+      "description": "Empathetic approach score"
+    },
+    {
+      "name": "trust_level",
+      "value": "neutral",
+      "description": "Victoria's trust level"
+    }
+  ]
+}

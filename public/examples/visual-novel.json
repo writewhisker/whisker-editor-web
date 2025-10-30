@@ -1,0 +1,232 @@
+{
+  "metadata": {
+    "title": "Visual Novel Template",
+    "description": "A romance-focused template with character relationships and meaningful choices",
+    "author": "Whisker Team",
+    "version": "1.0.0",
+    "created": 1730000000000,
+    "modified": 1730000000000
+  },
+  "startPassage": "morning",
+  "passages": [
+    {
+      "id": "morning",
+      "title": "Morning at School",
+      "content": "The morning sun streams through the classroom windows. You're early today, and only a few students have arrived.\n\nYou notice **Alex** sitting by the window, reading a book. You've been wanting to talk to them for weeks.\n\n**Chris** waves at you from across the room. They're always friendly and cheerful.\n\nWhat do you do?",
+      "choices": [
+        {
+          "id": "choice-1",
+          "text": "Approach Alex by the window",
+          "target": "talk-alex",
+          "conditions": []
+        },
+        {
+          "id": "choice-2",
+          "text": "Join Chris across the room",
+          "target": "talk-chris",
+          "conditions": []
+        },
+        {
+          "id": "choice-3",
+          "text": "Take your seat and wait for class",
+          "target": "wait-class",
+          "conditions": []
+        }
+      ],
+      "tags": ["opening"],
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "talk-alex",
+      "title": "Talking with Alex",
+      "content": "You walk over to Alex's desk. They look up from their book with a slight smile.\n\n\"Morning,\" Alex says softly. \"I didn't expect anyone else to be here this early.\"\n\nYou notice they're reading a fantasy novel.\n\nWhat do you say?",
+      "choices": [
+        {
+          "id": "choice-4",
+          "text": "\"Is that book any good?\"",
+          "target": "alex-book",
+          "conditions": []
+        },
+        {
+          "id": "choice-5",
+          "text": "\"I like getting here early too. It's peaceful.\"",
+          "target": "alex-peaceful",
+          "conditions": []
+        }
+      ],
+      "tags": ["alex-route"],
+      "onEnter": "relationship_alex = (relationship_alex or 0) + 1",
+      "position": { "x": 400, "y": 0 }
+    },
+    {
+      "id": "talk-chris",
+      "title": "Talking with Chris",
+      "content": "Chris grins as you approach. \"Hey! Perfect timing. I was just about to show someone this hilarious video I found last night.\"\n\nThey pull out their phone, already queuing up the video.\n\n\"Want to see it? Or should we talk about something else? I know you're not always into my random internet finds.\"",
+      "choices": [
+        {
+          "id": "choice-6",
+          "text": "\"Sure, let's see it!\"",
+          "target": "chris-video",
+          "conditions": []
+        },
+        {
+          "id": "choice-7",
+          "text": "\"Maybe later. How was your weekend?\"",
+          "target": "chris-weekend",
+          "conditions": []
+        }
+      ],
+      "tags": ["chris-route"],
+      "onEnter": "relationship_chris = (relationship_chris or 0) + 1",
+      "position": { "x": 400, "y": 200 }
+    },
+    {
+      "id": "wait-class",
+      "title": "Waiting for Class",
+      "content": "You sit at your desk and pull out your homework. More students filter in as the bell approaches.\n\nThe day passes like any other. Maybe tomorrow you'll be more social.",
+      "choices": [
+        {
+          "id": "choice-8",
+          "text": "Continue",
+          "target": "end-neutral",
+          "conditions": []
+        }
+      ],
+      "tags": ["neutral-route"],
+      "position": { "x": 400, "y": 400 }
+    },
+    {
+      "id": "alex-book",
+      "title": "Book Discussion",
+      "content": "Alex's eyes light up. \"Oh! It's amazing so far. It's about a world where people can share dreams. The protagonist just discovered their ability to...\"\n\nThey trail off, looking embarrassed. \"Sorry, I get carried away.\"\n\n\"No, keep going!\" you encourage them.\n\nYou spend the next fifteen minutes in deep conversation about fantasy worlds and storytelling. Alex seems genuinely happy to have found someone who shares their interest.\n\n*Alex's affection increased significantly*",
+      "choices": [
+        {
+          "id": "choice-9",
+          "text": "Continue to class",
+          "target": "end-alex-good",
+          "conditions": []
+        }
+      ],
+      "tags": ["alex-route", "good-choice"],
+      "onEnter": "relationship_alex = (relationship_alex or 0) + 2\nlearned_alex_likes_books = true",
+      "position": { "x": 700, "y": -50 }
+    },
+    {
+      "id": "alex-peaceful",
+      "title": "Peaceful Morning",
+      "content": "Alex nods. \"Yeah, the quiet is nice. Everyone's so loud once school actually starts.\"\n\nYou sit together in comfortable silence for a moment, then Alex says, \"Thanks for not making small talk. I appreciate that.\"\n\n*Alex's affection increased*",
+      "choices": [
+        {
+          "id": "choice-10",
+          "text": "Continue to class",
+          "target": "end-alex-okay",
+          "conditions": []
+        }
+      ],
+      "tags": ["alex-route"],
+      "onEnter": "relationship_alex = (relationship_alex or 0) + 1",
+      "position": { "x": 700, "y": 50 }
+    },
+    {
+      "id": "chris-video",
+      "title": "Funny Video",
+      "content": "The video is actually pretty funny. You both laugh, and Chris seems pleased that you enjoyed it.\n\n\"See? I have good taste!\" they joke. \"Anyway, want to hang out after school? There's this new cafe that opened downtown.\"\n\n*Chris's affection increased*",
+      "choices": [
+        {
+          "id": "choice-11",
+          "text": "\"I'd love to!\"",
+          "target": "end-chris-good",
+          "conditions": []
+        },
+        {
+          "id": "choice-12",
+          "text": "\"Maybe another time?\"",
+          "target": "end-chris-okay",
+          "conditions": []
+        }
+      ],
+      "tags": ["chris-route"],
+      "onEnter": "relationship_chris = (relationship_chris or 0) + 1",
+      "position": { "x": 700, "y": 150 }
+    },
+    {
+      "id": "chris-weekend",
+      "title": "Weekend Chat",
+      "content": "\"Oh, pretty good! I went hiking with my family. Found this amazing viewpoint where you can see the whole valley.\"\n\nChris pulls up photos on their phone. \"See? I'd love to take you there sometime. The sunset from up there is incredible.\"\n\nThey seem sincere about the invitation.\n\n*Chris's affection increased*",
+      "choices": [
+        {
+          "id": "choice-13",
+          "text": "\"That sounds amazing. I'd really like that.\"",
+          "target": "end-chris-good",
+          "conditions": []
+        },
+        {
+          "id": "choice-14",
+          "text": "\"Nice photos!\"",
+          "target": "end-chris-okay",
+          "conditions": []
+        }
+      ],
+      "tags": ["chris-route"],
+      "onEnter": "relationship_chris = (relationship_chris or 0) + 1",
+      "position": { "x": 700, "y": 250 }
+    },
+    {
+      "id": "end-neutral",
+      "title": "End - Neutral Path",
+      "content": "**End of Demo**\n\n*Sometimes the quiet path is fine too.*\n\n---\n\n**Visual Novel Template Features:**\n- Character relationship tracking\n- Multiple romance routes\n- Meaningful dialogue choices\n- Relationship variables\n\n**Try editing:**\n- Add more dialogue options\n- Create additional character routes\n- Implement relationship thresholds\n- Add CG unlock scenes",
+      "choices": [],
+      "tags": ["ending"],
+      "position": { "x": 700, "y": 400 }
+    },
+    {
+      "id": "end-alex-good",
+      "title": "End - Alex Route (Good)",
+      "content": "**End of Demo - Alex Route**\n\n*You've made a strong connection with Alex. They seem genuinely interested in getting to know you better.*\n\n**Relationship:** Alex ❤️❤️❤️\n\n---\n\n**Visual Novel Template Features:**\n- Character relationship tracking\n- Multiple romance routes\n- Meaningful dialogue choices\n- Relationship variables\n\n**Try editing:**\n- Continue Alex's story arc\n- Add relationship milestone scenes\n- Create confession scene\n- Implement multiple endings",
+      "choices": [],
+      "tags": ["ending", "alex-good"],
+      "position": { "x": 1000, "y": -50 }
+    },
+    {
+      "id": "end-alex-okay",
+      "title": "End - Alex Route (Okay)",
+      "content": "**End of Demo - Alex Route**\n\n*You've started to build a connection with Alex, though it's still early.*\n\n**Relationship:** Alex ❤️\n\n---\n\n**Visual Novel Template Features:**\n- Character relationship tracking\n- Multiple romance routes\n- Meaningful dialogue choices\n- Relationship variables",
+      "choices": [],
+      "tags": ["ending", "alex-okay"],
+      "position": { "x": 1000, "y": 50 }
+    },
+    {
+      "id": "end-chris-good",
+      "title": "End - Chris Route (Good)",
+      "content": "**End of Demo - Chris Route**\n\n*Chris clearly enjoys your company. You have plans to meet up outside of school!*\n\n**Relationship:** Chris ❤️❤️❤️\n\n---\n\n**Visual Novel Template Features:**\n- Character relationship tracking\n- Multiple romance routes\n- Meaningful dialogue choices\n- Relationship variables",
+      "choices": [],
+      "tags": ["ending", "chris-good"],
+      "position": { "x": 1000, "y": 150 }
+    },
+    {
+      "id": "end-chris-okay",
+      "title": "End - Chris Route (Okay)",
+      "content": "**End of Demo - Chris Route**\n\n*You've had a nice conversation with Chris. Maybe you'll grow closer over time.*\n\n**Relationship:** Chris ❤️\n\n---\n\n**Visual Novel Template Features:**\n- Character relationship tracking\n- Multiple romance routes\n- Meaningful dialogue choices\n- Relationship variables",
+      "choices": [],
+      "tags": ["ending", "chris-okay"],
+      "position": { "x": 1000, "y": 250 }
+    }
+  ],
+  "variables": [
+    {
+      "name": "relationship_alex",
+      "value": 0,
+      "description": "Relationship level with Alex"
+    },
+    {
+      "name": "relationship_chris",
+      "value": 0,
+      "description": "Relationship level with Chris"
+    },
+    {
+      "name": "learned_alex_likes_books",
+      "value": false,
+      "description": "Discovered Alex's interest in books"
+    }
+  ]
+}

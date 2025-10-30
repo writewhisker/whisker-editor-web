@@ -1,9 +1,19 @@
-import type { StoryData, StoryMetadata, ProjectData, PassageData, VariableData, WhiskerCoreFormat, AssetReference, VariableUsage } from './types';
+import type {
+  StoryData,
+  StoryMetadata,
+  ProjectData,
+  PassageData,
+  VariableData,
+  WhiskerCoreFormat,
+  WhiskerFormatV21,
+  AssetReference,
+  VariableUsage
+} from './types';
 import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from './LuaFunction';
 import { nanoid } from 'nanoid';
-import { generateIfid, toWhiskerCoreFormat } from '../utils/whiskerCoreAdapter';
+import { generateIfid, toWhiskerCoreFormat, toWhiskerFormatV21 } from '../utils/whiskerCoreAdapter';
 
 export class Story {
   metadata: StoryMetadata;
@@ -376,7 +386,7 @@ export class Story {
   }
 
   /**
-   * Serializes to whisker-core compatible format
+   * Serializes to whisker-core compatible format (v1.0 or v2.0)
    */
   serializeWhiskerCore(options?: {
     formatVersion?: '1.0' | '2.0';
@@ -384,6 +394,17 @@ export class Story {
   }): WhiskerCoreFormat {
     const storyData = this.serialize();
     return toWhiskerCoreFormat(storyData, options);
+  }
+
+  /**
+   * Serializes to Whisker Format v2.1 with editorData namespace
+   */
+  serializeWhiskerV21(options?: {
+    stripExtensions?: boolean;
+    toolVersion?: string;
+  }): WhiskerFormatV21 {
+    const storyData = this.serialize();
+    return toWhiskerFormatV21(storyData, options);
   }
 
   static deserialize(data: StoryData): Story {

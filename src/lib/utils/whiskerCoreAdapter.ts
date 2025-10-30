@@ -2,7 +2,16 @@
  * Format adapter for converting between whisker-editor-web and whisker-core formats
  */
 
-import type { StoryData, ProjectData, WhiskerCoreFormat, PassageData, VariableData } from '../models/types';
+import type {
+  StoryData,
+  ProjectData,
+  WhiskerCoreFormat,
+  WhiskerFormatV21,
+  PassageData,
+  VariableData,
+  EditorData,
+  LuaFunctionData
+} from '../models/types';
 import { nanoid } from 'nanoid';
 
 /**
@@ -109,6 +118,108 @@ export function toWhiskerCoreFormat(
 }
 
 /**
+ * Converts editor format to Whisker Format v2.1 with editorData namespace
+ *
+ * Transformations:
+ * - Uses formatVersion "2.1"
+ * - Moves luaFunctions into editorData namespace
+ * - Adds tool metadata to editorData
+ * - Preserves all v2.0 core features
+ */
+export function toWhiskerFormatV21(
+  data: ProjectData | StoryData,
+  options: {
+    stripExtensions?: boolean;
+    preserveIfid?: boolean;
+    toolVersion?: string;
+  } = {}
+): WhiskerFormatV21 {
+  const {
+    stripExtensions = false,
+    preserveIfid = true,
+    toolVersion = '1.0.0'
+  } = options;
+
+  // Ensure ifid exists
+  const ifid = preserveIfid && data.metadata.ifid
+    ? data.metadata.ifid
+    : generateIfid();
+
+  // Convert passages Record to Array and map title -> name
+  const passagesArray: PassageData[] = Object.values(data.passages).map(p => {
+    const passage = { ...p };
+    // whisker-core uses 'name' instead of 'title'
+    passage.name = p.title;
+    return passage;
+  });
+
+  // Optionally strip editor-specific extensions
+  const passages = stripExtensions
+    ? passagesArray.map(p => {
+        const { color, created, modified, onEnterScript, onExitScript, ...corePassage } = p;
+        return corePassage;
+      })
+    : passagesArray;
+
+  // Convert variables to v2.1 typed format
+  const variables: Record<string, { type: string; default: any }> = {};
+  Object.entries(data.variables).forEach(([name, varData]) => {
+    variables[name] = {
+      type: varData.type,
+      default: varData.initial
+    };
+  });
+
+  // Build v2.1 format
+  const result: WhiskerFormatV21 = {
+    format: 'whisker',
+    formatVersion: '2.1',
+    metadata: {
+      ...data.metadata,
+      ifid
+    },
+    settings: {
+      startPassage: data.startPassage,
+      scriptingLanguage: 'lua'
+    },
+    startPassage: data.startPassage,
+    passages,
+    variables
+  };
+
+  // Include optional core fields if present
+  if (data.stylesheets && data.stylesheets.length > 0) {
+    result.stylesheets = [...data.stylesheets];
+  }
+  if (data.scripts && data.scripts.length > 0) {
+    result.scripts = [...data.scripts];
+  }
+  if (data.assets && data.assets.length > 0) {
+    result.assets = [...data.assets];
+  }
+
+  // Build editorData namespace
+  const editorData: EditorData = {
+    tool: {
+      name: 'whisker-editor-web',
+      version: toolVersion,
+      url: 'https://github.com/writewhisker/whisker-editor-web'
+    },
+    modified: new Date().toISOString()
+  };
+
+  // Move luaFunctions into editorData
+  if (data.luaFunctions && Object.keys(data.luaFunctions).length > 0) {
+    editorData.luaFunctions = data.luaFunctions as Record<string, LuaFunctionData>;
+  }
+
+  // Add editorData if it has content beyond the required fields
+  result.editorData = editorData;
+
+  return result;
+}
+
+/**
  * Converts whisker-core format to editor format
  *
  * Transformations:
@@ -119,9 +230,10 @@ export function toWhiskerCoreFormat(
  * - Extracts startPassage from settings
  * - Imports stylesheets, scripts, and assets
  * - Preserves ifid
+ * - Imports editorData.luaFunctions if present (v2.1)
  */
 export function fromWhiskerCoreFormat(
-  coreData: WhiskerCoreFormat | (Partial<WhiskerCoreFormat> & { passages: PassageData[] })
+  coreData: WhiskerCoreFormat | WhiskerFormatV21 | (Partial<WhiskerCoreFormat> & { passages: PassageData[] })
 ): StoryData {
   // Convert passages Array to Record and map name -> title
   const passages: Record<string, PassageData> = {};
@@ -196,18 +308,24 @@ export function fromWhiskerCoreFormat(
     result.assets = [...coreData.assets];
   }
 
+  // Import luaFunctions from editorData if v2.1 format
+  const v21Data = coreData as WhiskerFormatV21;
+  if (v21Data.editorData?.luaFunctions) {
+    result.luaFunctions = v21Data.editorData.luaFunctions;
+  }
+
   return result;
 }
 
 /**
- * Detects if data is in whisker-core format
+ * Detects if data is in whisker-core format (v1.0, v2.0, or v2.1)
  */
-export function isWhiskerCoreFormat(data: any): data is WhiskerCoreFormat {
+export function isWhiskerCoreFormat(data: any): data is WhiskerCoreFormat | WhiskerFormatV21 {
   return (
     data &&
     typeof data === 'object' &&
     data.format === 'whisker' &&
-    (data.formatVersion === '1.0' || data.formatVersion === '2.0') &&
+    (data.formatVersion === '1.0' || data.formatVersion === '2.0' || data.formatVersion === '2.1') &&
     Array.isArray(data.passages)
   );
 }

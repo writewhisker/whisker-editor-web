@@ -6,12 +6,13 @@ import { describe, it, expect } from 'vitest';
 import {
   generateIfid,
   toWhiskerCoreFormat,
+  toWhiskerFormatV21,
   fromWhiskerCoreFormat,
   isWhiskerCoreFormat,
   isEditorFormat,
   importWhiskerFile
 } from './whiskerCoreAdapter';
-import type { StoryData, WhiskerCoreFormat } from '../models/types';
+import type { StoryData, WhiskerCoreFormat, WhiskerFormatV21, LuaFunctionData } from '../models/types';
 
 describe('whiskerCoreAdapter', () => {
   describe('generateIfid', () => {
@@ -592,6 +593,305 @@ describe('whiskerCoreAdapter', () => {
       // Verify types are preserved
       expect(backToEditor.variables.health.type).toBe('number');
       expect(backToEditor.variables.name.type).toBe('string');
+    });
+  });
+
+  describe('toWhiskerFormatV21', () => {
+    const editorDataWithLua: StoryData = {
+      metadata: {
+        title: 'Test Story V2.1',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: '2025-10-29T00:00:00.000Z',
+        modified: '2025-10-29T00:00:00.000Z',
+        ifid: '12345678-1234-4234-8234-123456789012'
+      },
+      startPassage: 'passage1',
+      passages: {
+        passage1: {
+          id: 'passage1',
+          title: 'Start',
+          content: '{{ greet(playerName) }}',
+          position: { x: 0, y: 0 },
+          choices: []
+        }
+      },
+      variables: {
+        playerName: {
+          name: 'playerName',
+          type: 'string',
+          initial: 'Hero'
+        }
+      },
+      luaFunctions: {
+        greet: {
+          id: 'greet',
+          name: 'greet',
+          description: 'Greets the player',
+          params: ['name'],
+          body: 'return "Hello, " .. name',
+          tags: ['utility'],
+          created: '2025-10-29T00:00:00.000Z',
+          modified: '2025-10-29T00:00:00.000Z'
+        }
+      }
+    };
+
+    it('should convert to v2.1 format with editorData', () => {
+      const v21Data = toWhiskerFormatV21(editorDataWithLua);
+
+      expect(v21Data.format).toBe('whisker');
+      expect(v21Data.formatVersion).toBe('2.1');
+      expect(v21Data.metadata.ifid).toBe('12345678-1234-4234-8234-123456789012');
+      expect(v21Data.startPassage).toBe('passage1');
+      expect(Array.isArray(v21Data.passages)).toBe(true);
+      expect(v21Data.passages).toHaveLength(1);
+    });
+
+    it('should move luaFunctions to editorData namespace', () => {
+      const v21Data = toWhiskerFormatV21(editorDataWithLua);
+
+      // luaFunctions should NOT be at root level
+      expect((v21Data as any).luaFunctions).toBeUndefined();
+
+      // luaFunctions should be in editorData
+      expect(v21Data.editorData).toBeDefined();
+      expect(v21Data.editorData?.luaFunctions).toBeDefined();
+      expect(v21Data.editorData?.luaFunctions?.greet).toEqual({
+        id: 'greet',
+        name: 'greet',
+        description: 'Greets the player',
+        params: ['name'],
+        body: 'return "Hello, " .. name',
+        tags: ['utility'],
+        created: '2025-10-29T00:00:00.000Z',
+        modified: '2025-10-29T00:00:00.000Z'
+      });
+    });
+
+    it('should include tool metadata in editorData', () => {
+      const v21Data = toWhiskerFormatV21(editorDataWithLua, { toolVersion: '1.2.3' });
+
+      expect(v21Data.editorData?.tool).toEqual({
+        name: 'whisker-editor-web',
+        version: '1.2.3',
+        url: 'https://github.com/writewhisker/whisker-editor-web'
+      });
+      expect(v21Data.editorData?.modified).toBeDefined();
+    });
+
+    it('should create editorData even without luaFunctions', () => {
+      const dataWithoutLua: StoryData = {
+        ...editorDataWithLua,
+        luaFunctions: undefined
+      };
+
+      const v21Data = toWhiskerFormatV21(dataWithoutLua);
+
+      expect(v21Data.editorData).toBeDefined();
+      expect(v21Data.editorData?.tool).toBeDefined();
+      expect(v21Data.editorData?.luaFunctions).toBeUndefined();
+    });
+
+    it('should convert variables to typed format', () => {
+      const v21Data = toWhiskerFormatV21(editorDataWithLua);
+
+      expect(v21Data.variables.playerName).toEqual({
+        type: 'string',
+        default: 'Hero'
+      });
+    });
+  });
+
+  describe('fromWhiskerCoreFormat (v2.1)', () => {
+    const v21Data: WhiskerFormatV21 = {
+      format: 'whisker',
+      formatVersion: '2.1',
+      metadata: {
+        title: 'V2.1 Story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: '2025-10-29T00:00:00.000Z',
+        modified: '2025-10-29T00:00:00.000Z',
+        ifid: '12345678-1234-4234-8234-123456789012'
+      },
+      settings: {
+        startPassage: 'start',
+        scriptingLanguage: 'lua'
+      },
+      startPassage: 'start',
+      passages: [
+        {
+          id: 'start',
+          title: 'Start',
+          content: 'Welcome!',
+          position: { x: 0, y: 0 },
+          choices: []
+        }
+      ],
+      variables: {
+        health: { type: 'number', default: 100 }
+      },
+      editorData: {
+        tool: {
+          name: 'whisker-editor-web',
+          version: '1.0.0',
+          url: 'https://github.com/writewhisker/whisker-editor-web'
+        },
+        modified: '2025-10-29T00:00:00.000Z',
+        luaFunctions: {
+          greet: {
+            id: 'greet',
+            name: 'greet',
+            description: 'Greets player',
+            params: ['name'],
+            body: 'return "Hello"',
+            tags: [],
+            created: '2025-10-29T00:00:00.000Z',
+            modified: '2025-10-29T00:00:00.000Z'
+          }
+        }
+      }
+    };
+
+    it('should import v2.1 format', () => {
+      const editorData = fromWhiskerCoreFormat(v21Data);
+
+      expect(editorData.metadata.title).toBe('V2.1 Story');
+      expect(editorData.startPassage).toBe('start');
+      expect(editorData.variables.health).toEqual({
+        name: 'health',
+        type: 'number',
+        initial: 100
+      });
+    });
+
+    it('should import luaFunctions from editorData', () => {
+      const editorData = fromWhiskerCoreFormat(v21Data);
+
+      expect(editorData.luaFunctions).toBeDefined();
+      expect(editorData.luaFunctions?.greet).toEqual({
+        id: 'greet',
+        name: 'greet',
+        description: 'Greets player',
+        params: ['name'],
+        body: 'return "Hello"',
+        tags: [],
+        created: '2025-10-29T00:00:00.000Z',
+        modified: '2025-10-29T00:00:00.000Z'
+      });
+    });
+
+    it('should handle v2.1 format without editorData', () => {
+      const v21WithoutEditor: WhiskerFormatV21 = {
+        ...v21Data,
+        editorData: undefined
+      };
+
+      const editorData = fromWhiskerCoreFormat(v21WithoutEditor);
+
+      expect(editorData.metadata.title).toBe('V2.1 Story');
+      expect(editorData.luaFunctions).toBeUndefined();
+    });
+  });
+
+  describe('isWhiskerCoreFormat (v2.1)', () => {
+    it('should detect v2.1 format', () => {
+      const v21Data = {
+        format: 'whisker',
+        formatVersion: '2.1',
+        metadata: {},
+        settings: {},
+        startPassage: 'start',
+        passages: [],
+        variables: {}
+      };
+
+      expect(isWhiskerCoreFormat(v21Data)).toBe(true);
+    });
+
+    it('should accept v2.1 with editorData', () => {
+      const v21Data = {
+        format: 'whisker',
+        formatVersion: '2.1',
+        metadata: {},
+        settings: {},
+        startPassage: 'start',
+        passages: [],
+        variables: {},
+        editorData: {
+          tool: { name: 'test', version: '1.0.0' },
+          modified: '2025-10-29T00:00:00.000Z'
+        }
+      };
+
+      expect(isWhiskerCoreFormat(v21Data)).toBe(true);
+    });
+  });
+
+  describe('v2.1 round-trip conversion', () => {
+    it('should preserve luaFunctions through round-trip', () => {
+      const originalData: StoryData = {
+        metadata: {
+          title: 'Round Trip V2.1',
+          author: 'Tester',
+          version: '1.0.0',
+          created: '2025-10-29T00:00:00.000Z',
+          modified: '2025-10-29T00:00:00.000Z',
+          ifid: '12345678-1234-4234-8234-123456789012'
+        },
+        startPassage: 'start',
+        passages: {
+          start: {
+            id: 'start',
+            title: 'Start',
+            content: 'Begin',
+            position: { x: 0, y: 0 },
+            choices: []
+          }
+        },
+        variables: {
+          health: {
+            name: 'health',
+            type: 'number',
+            initial: 100
+          }
+        },
+        luaFunctions: {
+          testFunc: {
+            id: 'testFunc',
+            name: 'testFunc',
+            description: 'Test function',
+            params: ['x'],
+            body: 'return x + 1',
+            tags: ['math'],
+            created: '2025-10-29T00:00:00.000Z',
+            modified: '2025-10-29T00:00:00.000Z'
+          }
+        }
+      };
+
+      // Convert to v2.1 and back
+      const v21Data = toWhiskerFormatV21(originalData);
+      const backToEditor = fromWhiskerCoreFormat(v21Data);
+
+      // Verify luaFunctions are preserved
+      expect(backToEditor.luaFunctions).toBeDefined();
+      expect(backToEditor.luaFunctions?.testFunc).toEqual({
+        id: 'testFunc',
+        name: 'testFunc',
+        description: 'Test function',
+        params: ['x'],
+        body: 'return x + 1',
+        tags: ['math'],
+        created: '2025-10-29T00:00:00.000Z',
+        modified: '2025-10-29T00:00:00.000Z'
+      });
+
+      // Verify other data is preserved
+      expect(backToEditor.metadata.title).toBe(originalData.metadata.title);
+      expect(backToEditor.startPassage).toBe(originalData.startPassage);
+      expect(backToEditor.variables.health.initial).toBe(100);
     });
   });
 });

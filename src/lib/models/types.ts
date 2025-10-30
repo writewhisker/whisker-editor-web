@@ -94,7 +94,7 @@ export interface StoryData {
   luaFunctions?: Record<string, any>;  // Reusable Lua function library
 }
 
-// whisker-core compatible format
+// whisker-core compatible format (v2.0)
 export interface WhiskerCoreFormat {
   format: 'whisker';
   formatVersion: '1.0' | '2.0';
@@ -106,6 +106,159 @@ export interface WhiskerCoreFormat {
   stylesheets?: string[];   // CSS code blocks
   scripts?: string[];       // Story-wide Lua scripts
   assets?: AssetReference[];  // Media references
+}
+
+// ============================================================================
+// Whisker Format v2.1 - EditorData Namespace
+// ============================================================================
+
+/**
+ * Lua function definition for reusable story logic
+ */
+export interface LuaFunctionData {
+  id: string;
+  name: string;
+  description?: string;
+  params: string[];         // Parameter names
+  body: string;             // Lua code
+  tags?: string[];          // For categorization
+  created: string;          // ISO 8601
+  modified: string;         // ISO 8601
+}
+
+/**
+ * Recorded playthrough session for analytics
+ */
+export interface PlaythroughData {
+  id: string;
+  startedAt: string;        // ISO 8601
+  completedAt?: string;     // ISO 8601 (if completed)
+  duration?: number;        // Milliseconds
+  passageVisits: {
+    passageId: string;
+    timestamp: string;
+    choiceId?: string;      // Which choice was taken
+    variables?: Record<string, any>;  // Variable state snapshot
+  }[];
+  metadata?: {
+    platform?: string;      // "web", "mobile", etc.
+    userAgent?: string;
+    version?: string;       // Story version when played
+  };
+}
+
+/**
+ * Test scenario for automated testing
+ */
+export interface TestScenarioData {
+  id: string;
+  name: string;
+  description?: string;
+  steps: TestStepData[];
+  created: string;
+  modified: string;
+  tags?: string[];
+}
+
+export interface TestStepData {
+  type: 'navigate' | 'check' | 'setVariable' | 'wait';
+  data: any;  // Step-specific data
+}
+
+/**
+ * Visual script builder block data
+ */
+export interface VisualScriptData {
+  id: string;
+  name: string;
+  blocks: {
+    id: string;
+    type: string;           // "if", "while", "setVariable", etc.
+    params: Record<string, any>;
+    children?: string[];    // Child block IDs
+  }[];
+  generatedLua?: string;    // Generated Lua code
+}
+
+/**
+ * Editor UI state for persistence
+ */
+export interface EditorUIState {
+  graph?: {
+    zoom?: number;
+    pan?: { x: number; y: number };
+    selectedNodeIds?: string[];
+  };
+  openPanels?: string[];
+  theme?: string;
+  lastView?: string;        // e.g., "graph", "passage-editor"
+}
+
+/**
+ * Editor-specific data namespace (v2.1)
+ * Allows authoring tools to store tool-specific data without polluting core format
+ */
+export interface EditorData {
+  /**
+   * Tool identification
+   */
+  tool: {
+    name: string;           // e.g., "whisker-editor-web"
+    version: string;        // e.g., "1.0.0"
+    url?: string;           // e.g., "https://github.com/writewhisker/whisker-editor-web"
+  };
+
+  /**
+   * Last modification timestamp for editor data
+   */
+  modified: string;         // ISO 8601
+
+  /**
+   * Lua Function Library
+   */
+  luaFunctions?: Record<string, LuaFunctionData>;
+
+  /**
+   * Playthrough Analytics
+   */
+  playthroughs?: PlaythroughData[];
+
+  /**
+   * Test Scenarios
+   */
+  testScenarios?: TestScenarioData[];
+
+  /**
+   * Visual Script Builder Data
+   */
+  visualScripts?: Record<string, VisualScriptData>;
+
+  /**
+   * Editor UI State
+   */
+  uiState?: EditorUIState;
+
+  /**
+   * Custom Extensions
+   */
+  extensions?: Record<string, any>;
+}
+
+/**
+ * Whisker Format v2.1 with editorData namespace
+ */
+export interface WhiskerFormatV21 {
+  format: 'whisker';
+  formatVersion: '2.1';
+  metadata: StoryMetadata;
+  settings: StorySettings;
+  startPassage: string;
+  passages: PassageData[];
+  variables: Record<string, { type: string; default: any }>;
+  stylesheets?: string[];
+  scripts?: string[];
+  assets?: AssetReference[];
+  editorData?: EditorData;  // ✨ NEW in v2.1
 }
 
 export interface ProjectData extends StoryData {

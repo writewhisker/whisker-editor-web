@@ -99,6 +99,7 @@ npm run preview
 
 ### For Developers
 
+- **[Ecosystem Architecture](ECOSYSTEM_ARCHITECTURE.md)** - How whisker-core and whisker-editor-web work together
 - **[Architecture Overview](ARCHITECTURE.md)** - Technical architecture and patterns
 - **[Testing Guide](TESTING.md)** - How to run and write tests
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project

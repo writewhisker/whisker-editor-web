@@ -8,12 +8,20 @@
     zoomIn: void;
     zoomOut: void;
     toggleMiniMap: void;
+    openMenu: void;
+    newStory: void;
+    openStory: void;
+    saveStory: void;
+    exportStory: void;
+    importStory: void;
+    openSettings: void;
   }>();
 
   export let currentZoom = 1;
   export let showMiniMap = true;
 
   let expanded = false;
+  let showMenu = false;
 
   function handleAction(action: string, handler: () => void) {
     hapticFeedback(10); // Short vibration
@@ -23,6 +31,20 @@
   function toggleExpand() {
     hapticFeedback(15);
     expanded = !expanded;
+  }
+
+  function toggleMenu() {
+    hapticFeedback(15);
+    showMenu = !showMenu;
+    if (showMenu) {
+      expanded = false; // Close FAB menu when opening hamburger menu
+    }
+  }
+
+  function handleMenuAction(action: keyof typeof dispatch, label: string) {
+    hapticFeedback(10);
+    dispatch(action);
+    showMenu = false;
   }
 </script>
 
@@ -106,6 +128,17 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
         </svg>
       </button>
+
+      <button
+        class="fab secondary"
+        on:click={toggleMenu}
+        aria-label="Open menu"
+        title="Menu"
+      >
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </div>
   {/if}
 
@@ -116,6 +149,73 @@
     </div>
   {/if}
 </div>
+
+<!-- Slide-in Menu -->
+{#if showMenu}
+  <!-- Overlay -->
+  <div class="menu-overlay" on:click={toggleMenu}></div>
+
+  <!-- Menu Drawer -->
+  <div class="menu-drawer">
+    <div class="menu-header">
+      <h3>Menu</h3>
+      <button class="close-button" on:click={toggleMenu} aria-label="Close menu">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="menu-items">
+      <button class="menu-item" on:click={() => handleMenuAction('newStory', 'New Story')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>New Story</span>
+      </button>
+
+      <button class="menu-item" on:click={() => handleMenuAction('openStory', 'Open Story')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+        <span>Open Story</span>
+      </button>
+
+      <button class="menu-item" on:click={() => handleMenuAction('saveStory', 'Save Story')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg>
+        <span>Save</span>
+      </button>
+
+      <div class="menu-divider"></div>
+
+      <button class="menu-item" on:click={() => handleMenuAction('exportStory', 'Export')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span>Export</span>
+      </button>
+
+      <button class="menu-item" on:click={() => handleMenuAction('importStory', 'Import')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span>Import</span>
+      </button>
+
+      <div class="menu-divider"></div>
+
+      <button class="menu-item" on:click={() => handleMenuAction('openSettings', 'Settings')}>
+        <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>Settings</span>
+      </button>
+    </div>
+  </div>
+{/if}
 
 <style>
   .mobile-toolbar {
@@ -271,6 +371,170 @@
     .icon {
       width: 20px;
       height: 20px;
+    }
+  }
+
+  /* Menu Overlay */
+  .menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1100;
+    animation: fadeIn 0.3s ease;
+  }
+
+  /* Menu Drawer */
+  .menu-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 80vw;
+    background: white;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
+    z-index: 1200;
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s ease;
+  }
+
+  :global(.dark) .menu-drawer {
+    background: #1f2937;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  /* Support for iOS safe area */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    .menu-drawer {
+      padding-top: env(safe-area-inset-top);
+      padding-right: env(safe-area-inset-right);
+    }
+  }
+
+  /* Menu Header */
+  .menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  :global(.dark) .menu-header {
+    border-bottom-color: #374151;
+  }
+
+  .menu-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  :global(.dark) .menu-header h3 {
+    color: #f9fafb;
+  }
+
+  .close-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #f3f4f6;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :global(.dark) .close-button {
+    background: #374151;
+    color: #9ca3af;
+  }
+
+  .close-button:active {
+    transform: scale(0.95);
+  }
+
+  .close-button .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Menu Items */
+  .menu-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+  }
+
+  .menu-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border: none;
+    background: transparent;
+    color: #374151;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 56px;
+  }
+
+  :global(.dark) .menu-item {
+    color: #d1d5db;
+  }
+
+  .menu-item:active {
+    background: #f3f4f6;
+  }
+
+  :global(.dark) .menu-item:active {
+    background: #374151;
+  }
+
+  .menu-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    color: #6b7280;
+  }
+
+  :global(.dark) .menu-icon {
+    color: #9ca3af;
+  }
+
+  .menu-divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 20px;
+  }
+
+  :global(.dark) .menu-divider {
+    background: #374151;
+  }
+
+  /* Hide on desktop */
+  @media (min-width: 768px) {
+    .menu-overlay,
+    .menu-drawer {
+      display: none;
     }
   }
 </style>

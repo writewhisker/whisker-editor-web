@@ -1,0 +1,107 @@
+{
+  "format": "whisker",
+  "formatVersion": "2.0",
+  "metadata": {
+    "title": "Complex Scripts Test",
+    "author": "Test Suite",
+    "version": "1.0.0",
+    "created": "2025-10-29T00:00:00.000Z",
+    "modified": "2025-10-29T00:00:00.000Z",
+    "ifid": "00000000-0000-4000-8000-000000000003",
+    "description": "Story with complex Lua scripts for compatibility testing"
+  },
+  "settings": {
+    "startPassage": "start",
+    "scriptingLanguage": "lua"
+  },
+  "passages": [
+    {
+      "id": "start",
+      "name": "Start",
+      "content": "Counter: {{ counter }}, Score: {{ score }}",
+      "position": { "x": 0, "y": 0 },
+      "onEnterScript": "counter = counter + 1\nif counter > 5 then\n  score = score + 10\nend",
+      "choices": [
+        {
+          "id": "choice1",
+          "text": "Test conditionals",
+          "target": "conditionals"
+        },
+        {
+          "id": "choice2",
+          "text": "Test loops",
+          "target": "loops"
+        },
+        {
+          "id": "choice3",
+          "text": "Test tables",
+          "target": "tables"
+        }
+      ]
+    },
+    {
+      "id": "conditionals",
+      "name": "Conditionals",
+      "content": "Testing if/else: {{ result }}",
+      "position": { "x": -150, "y": 150 },
+      "onEnterScript": "if score > 50 then\n  result = \"high\"\nelseif score > 20 then\n  result = \"medium\"\nelse\n  result = \"low\"\nend",
+      "choices": [
+        {
+          "id": "choice4",
+          "text": "Back",
+          "target": "start"
+        }
+      ]
+    },
+    {
+      "id": "loops",
+      "name": "Loops",
+      "content": "Loop result: {{ loopSum }}",
+      "position": { "x": 0, "y": 150 },
+      "onEnterScript": "loopSum = 0\nfor i = 1, 5 do\n  loopSum = loopSum + i\nend",
+      "choices": [
+        {
+          "id": "choice5",
+          "text": "Back",
+          "target": "start"
+        }
+      ]
+    },
+    {
+      "id": "tables",
+      "name": "Tables",
+      "content": "Inventory items: {{ itemCount }}",
+      "position": { "x": 150, "y": 150 },
+      "onEnterScript": "inventory = {}\ninventory[\"sword\"] = 1\ninventory[\"potion\"] = 3\nitemCount = 0\nfor k, v in pairs(inventory) do\n  itemCount = itemCount + v\nend",
+      "choices": [
+        {
+          "id": "choice6",
+          "text": "Back",
+          "target": "start"
+        }
+      ]
+    }
+  ],
+  "variables": {
+    "counter": {
+      "type": "number",
+      "default": 0
+    },
+    "score": {
+      "type": "number",
+      "default": 0
+    },
+    "result": {
+      "type": "string",
+      "default": "unknown"
+    },
+    "loopSum": {
+      "type": "number",
+      "default": 0
+    },
+    "itemCount": {
+      "type": "number",
+      "default": 0
+    }
+  }
+}

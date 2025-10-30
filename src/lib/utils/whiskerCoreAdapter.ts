@@ -213,6 +213,11 @@ export function toWhiskerFormatV21(
     editorData.luaFunctions = data.luaFunctions as Record<string, LuaFunctionData>;
   }
 
+  // Move visualScripts into editorData
+  if (data.visualScripts && Object.keys(data.visualScripts).length > 0) {
+    editorData.visualScripts = data.visualScripts;
+  }
+
   // Add editorData if it has content beyond the required fields
   result.editorData = editorData;
 
@@ -312,6 +317,11 @@ export function fromWhiskerCoreFormat(
   const v21Data = coreData as WhiskerFormatV21;
   if (v21Data.editorData?.luaFunctions) {
     result.luaFunctions = v21Data.editorData.luaFunctions;
+  }
+
+  // Import visualScripts from editorData if v2.1 format
+  if (v21Data.editorData?.visualScripts) {
+    result.visualScripts = v21Data.editorData.visualScripts;
   }
 
   return result;

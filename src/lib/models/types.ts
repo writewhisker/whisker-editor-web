@@ -93,6 +93,7 @@ export interface StoryData {
   scripts?: string[];       // Story-wide Lua/JS scripts (whisker-core compat)
   assets?: AssetReference[];  // Media references (whisker-core compat)
   luaFunctions?: Record<string, any>;  // Reusable Lua function library
+  visualScripts?: Record<string, VisualScriptData>;  // Visual script blocks (editorData)
 }
 
 // whisker-core compatible format (v2.0)
@@ -168,18 +169,9 @@ export interface TestStepData {
 
 /**
  * Visual script builder block data
+ * @see VisualScript.ts for full implementation
  */
-export interface VisualScriptData {
-  id: string;
-  name: string;
-  blocks: {
-    id: string;
-    type: string;           // "if", "while", "setVariable", etc.
-    params: Record<string, any>;
-    children?: string[];    // Child block IDs
-  }[];
-  generatedLua?: string;    // Generated Lua code
-}
+export type { VisualScriptData } from './VisualScript';
 
 /**
  * Editor UI state for persistence

@@ -58,9 +58,36 @@ body {
   overflow: hidden;
 }
 
+/*
+ * Safari Mobile Fix: Use CSS custom property for viewport height
+ * Updated via JavaScript to handle dynamic address bar
+ */
+:root {
+  --app-height: 100vh;
+}
+
 #app {
   width: 100vw;
-  height: 100vh;
+  height: 100vh; /* Fallback */
+  height: var(--app-height); /* Safari mobile fix */
+
+  /* Prevent content overflow on mobile */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Additional mobile Safari fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific fixes */
+  #app {
+    /* Disable bounce scrolling */
+    overscroll-behavior: none;
+    /* Improve touch response */
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Hardware acceleration hints for frequently animated elements */

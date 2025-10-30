@@ -3,8 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>visual</title>
+
+    <!-- Enhanced mobile viewport for Safari iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- iOS web app configuration for better full-screen experience -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Prevent Safari from auto-detecting phone numbers -->
+    <meta name="format-detection" content="telephone=no" />
+
+    <title>Whisker Visual Editor</title>
   </head>
   <body>
     <div id="app"></div>

@@ -96,13 +96,22 @@ npm run preview
 - **[Getting Started Guide](docs/GETTING_STARTED.md)** - 10-minute tutorial to create your first interactive story
 - **[User Guide](docs/USER_GUIDE.md)** - Complete feature documentation (15 sections, 11,000 words)
 - **[Keyboard Shortcuts](docs/KEYBOARD_SHORTCUTS.md)** - Quick reference for all 23 keyboard shortcuts
+- **[Importing from Twine](docs/IMPORTING_TWINE.md)** - Import your Twine stories to Whisker format
+- **[Migration Guide](docs/MIGRATION_GUIDE.md)** - Migrate between formats (Twine ↔ Whisker, v2.0 ↔ v2.1, Core ↔ Editor)
 
 ### For Developers
 
-- **[Architecture Overview](ARCHITECTURE.md)** - Technical architecture and patterns
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - System architecture and component overview
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation for all modules and classes
 - **[Testing Guide](TESTING.md)** - How to run and write tests
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 - **[E2E Testing](e2e/README.md)** - End-to-end testing documentation
+
+### Format & Integration
+
+- **[Whisker Format Specification v2.1](WHISKER_FORMAT_SPEC_V2.1.md)** - Complete format specification
+- **[Gap Analysis](WHISKER_ALIGNMENT_GAP_ANALYSIS.md)** - whisker-core ↔ whisker-editor-web alignment
+- **[Strategic Alignment](WHISKER_STRATEGIC_ALIGNMENT.md)** - Ecosystem governance and coordination
 
 ### Planning & Design
 

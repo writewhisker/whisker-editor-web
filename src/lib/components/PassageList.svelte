@@ -8,6 +8,8 @@
   import { tagActions } from '../stores/tagStore';
   import VirtualList from 'svelte-virtual-list';
   import PassagePreview from './PassagePreview.svelte';
+  import { onMount } from 'svelte';
+  import { setupLongPress, isMobile, isTouch } from '../utils/mobile';
 
   export let onAddPassage: () => void;
   export let onDeletePassage: (id: string) => void;
@@ -27,11 +29,19 @@
   // Compact view mode
   let compactView = false;
 
-  // Load compact view preference from localStorage
+  // Load compact view preference from localStorage or default to true on mobile
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('passageList.compactView');
     if (saved !== null) {
       compactView = saved === 'true';
+    }
+  }
+
+  // Auto-enable compact view on mobile (unless explicitly set)
+  $: if (typeof window !== 'undefined' && $isMobile) {
+    const saved = localStorage.getItem('passageList.compactView');
+    if (saved === null) {
+      compactView = true;
     }
   }
 
@@ -49,6 +59,9 @@
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
   function handleMouseEnter(passage: Passage, event: MouseEvent) {
+    // Disable hover previews on touch devices
+    if ($isTouch) return;
+
     // Clear any existing timeout
     if (hoverTimeout) {
       clearTimeout(hoverTimeout);
@@ -70,6 +83,30 @@
       hoverTimeout = null;
     }
     hoveredPassage = null;
+  }
+
+  // Long-press support for mobile context menu
+  function handleLongPress(event: TouchEvent, passageId: string) {
+    const touch = event.touches[0];
+    contextMenuX = touch.clientX;
+    contextMenuY = touch.clientY;
+    contextMenuPassageId = passageId;
+    showContextMenu = true;
+    selectedMenuItemIndex = 0;
+    event.preventDefault();
+  }
+
+  // Setup long-press for passage list items
+  function setupPassageListeners(element: HTMLElement, passageId: string): { destroy: () => void } {
+    if (!$isTouch) return { destroy: () => {} };
+
+    const cleanup = setupLongPress(element, {
+      onLongPress: (event) => handleLongPress(event, passageId),
+      duration: 500,
+      moveThreshold: 10,
+    });
+
+    return { destroy: cleanup };
   }
 
   function selectPassage(id: string, event?: MouseEvent) {
@@ -293,7 +330,8 @@
     <div class="flex items-center justify-between mb-2">
       <h3 class="font-semibold text-gray-800">Passages</h3>
       <button
-        class="px-2 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+        class="px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 active:scale-95 transition-transform touch-manipulation"
+        style="min-height: {$isMobile ? '44px' : 'auto'}"
         on:click={onAddPassage}
         title="Add new passage"
       >
@@ -302,7 +340,8 @@
     </div>
     <div class="flex items-center gap-2">
       <button
-        class="flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors {compactView ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}"
+        class="flex items-center gap-1 px-3 py-2 text-xs rounded border transition-colors touch-manipulation {compactView ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}"
+        style="min-height: {$isMobile ? '44px' : 'auto'}"
         on:click={toggleCompactView}
         title="Toggle compact view"
       >
@@ -323,21 +362,24 @@
       </div>
       <div class="flex gap-2">
         <button
-          class="px-2 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600"
+          class="px-3 py-2 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 active:scale-95 transition-transform touch-manipulation"
+          style="min-height: {$isMobile ? '44px' : 'auto'}"
           on:click={bulkAddTag}
           title="Add tag to selected passages"
         >
           Add Tag
         </button>
         <button
-          class="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+          class="px-3 py-2 text-xs bg-red-500 text-white rounded hover:bg-red-600 active:scale-95 transition-transform touch-manipulation"
+          style="min-height: {$isMobile ? '44px' : 'auto'}"
           on:click={bulkDelete}
           title="Delete selected passages"
         >
           Delete
         </button>
         <button
-          class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+          class="px-3 py-2 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 active:scale-95 transition-transform touch-manipulation"
+          style="min-height: {$isMobile ? '44px' : 'auto'}"
           on:click={clearSelection}
           title="Clear selection"
         >
@@ -359,9 +401,11 @@
         {#each $filteredPassages as passage}
           {@const validationSeverity = getPassageValidationSeverity(passage.id)}
           {@const validationCount = getPassageValidationCount(passage.id)}
+          {@const mobilePadding = $isMobile ? 'px-3 py-3' : (compactView ? 'px-2 py-1' : 'px-3 py-2')}
           <button
             type="button"
-            class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
+            class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 touch-manipulation active:scale-[0.98] {mobilePadding}"
+            style="min-height: {$isMobile ? '56px' : 'auto'}"
             class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
             class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
             class:border-l-blue-500={$selectedPassageId === passage.id}
@@ -371,6 +415,7 @@
             on:keydown={(e) => handlePassageKeydown(e, passage.id)}
             on:mouseenter={(e) => handleMouseEnter(passage, e)}
             on:mouseleave={handleMouseLeave}
+            use:setupPassageListeners={passage.id}
             aria-label="Passage: {passage.title}"
           >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
@@ -434,7 +479,7 @@
             </div>
 
             <!-- Statistics -->
-            {#if !compactView}
+            {#if !compactView && !$isMobile}
               {@const wordCount = passage.content.trim().split(/\s+/).filter((w: string) => w.length > 0).length}
               {@const incomingLinks = $currentStory ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.choices.some((c: Choice) => c.target === passage.id)).length : 0}
               <div class="flex flex-col gap-0.5 text-xs text-gray-400 dark:text-gray-500">
@@ -442,7 +487,7 @@
                 <div title="Outgoing choices">→ {passage.choices.length}</div>
                 <div title="Incoming links">← {incomingLinks}</div>
               </div>
-            {:else}
+            {:else if compactView || $isMobile}
               <div class="flex items-center gap-1 text-[10px] text-gray-400">
                 <span title="Outgoing choices">→{passage.choices.length}</span>
               </div>
@@ -456,9 +501,11 @@
       <VirtualList items={$filteredPassages} let:item={passage} height="100%">
         {@const validationSeverity = getPassageValidationSeverity(passage.id)}
         {@const validationCount = getPassageValidationCount(passage.id)}
+        {@const mobilePadding = $isMobile ? 'px-3 py-3' : (compactView ? 'px-2 py-1' : 'px-3 py-2')}
         <button
           type="button"
-          class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 {compactView ? 'px-2 py-1' : 'px-3 py-2'}"
+          class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 touch-manipulation active:scale-[0.98] {mobilePadding}"
+          style="min-height: {$isMobile ? '56px' : 'auto'}"
           class:bg-blue-50={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
           class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
           class:border-l-blue-500={$selectedPassageId === passage.id}
@@ -469,6 +516,7 @@
           aria-label="Passage: {passage.title}"
           on:mouseenter={(e) => handleMouseEnter(passage, e)}
           on:mouseleave={handleMouseLeave}
+          use:setupPassageListeners={passage.id}
         >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
             <!-- Color Indicator -->
@@ -531,7 +579,7 @@
             </div>
 
             <!-- Statistics -->
-            {#if !compactView}
+            {#if !compactView && !$isMobile}
               {@const wordCount = passage.content.trim().split(/\s+/).filter((w: string) => w.length > 0).length}
               {@const incomingLinks = $currentStory ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.choices.some((c: Choice) => c.target === passage.id)).length : 0}
               <div class="flex flex-col gap-0.5 text-xs text-gray-400 dark:text-gray-500">
@@ -539,7 +587,7 @@
                 <div title="Outgoing choices">→ {passage.choices.length}</div>
                 <div title="Incoming links">← {incomingLinks}</div>
               </div>
-            {:else}
+            {:else if compactView || $isMobile}
               <div class="flex items-center gap-1 text-[10px] text-gray-400">
                 <span title="Outgoing choices">→{passage.choices.length}</span>
               </div>
@@ -560,12 +608,14 @@
     class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
     on:click|stopPropagation
+    on:touchend|stopPropagation
     on:keydown={handleMenuKeydown}
   >
     <button
       type="button"
       role="menuitem"
-      class="w-full text-left px-3 py-1 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+      class="w-full text-left px-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 touch-manipulation active:scale-95"
+      style="min-height: {$isMobile ? '44px' : 'auto'}; padding-top: {$isMobile ? '0.75rem' : '0.25rem'}; padding-bottom: {$isMobile ? '0.75rem' : '0.25rem'}"
       on:click={handleSetAsStart}
       aria-label="Make this the starting passage"
     >
@@ -574,7 +624,8 @@
     <button
       type="button"
       role="menuitem"
-      class="w-full text-left px-3 py-1 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+      class="w-full text-left px-3 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 touch-manipulation active:scale-95"
+      style="min-height: {$isMobile ? '44px' : 'auto'}; padding-top: {$isMobile ? '0.75rem' : '0.25rem'}; padding-bottom: {$isMobile ? '0.75rem' : '0.25rem'}"
       on:click={handleDuplicate}
       aria-label="Create a copy of this passage"
     >
@@ -584,7 +635,8 @@
     <button
       type="button"
       role="menuitem"
-      class="w-full text-left px-3 py-1 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900"
+      class="w-full text-left px-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 touch-manipulation active:scale-95"
+      style="min-height: {$isMobile ? '44px' : 'auto'}; padding-top: {$isMobile ? '0.75rem' : '0.25rem'}; padding-bottom: {$isMobile ? '0.75rem' : '0.25rem'}"
       on:click={handleDelete}
       aria-label="Delete this passage"
     >

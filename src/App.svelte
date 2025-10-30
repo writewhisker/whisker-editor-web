@@ -41,7 +41,7 @@
   import AudioControls from './lib/components/audio/AudioControls.svelte';
   import AnimationControls from './lib/components/animation/AnimationControls.svelte';
   import StylesheetEditor from './lib/components/editor/StylesheetEditor.svelte';
-  import { initMobileDetection } from './lib/utils/mobile';
+  import { initMobileDetection, isMobile } from './lib/utils/mobile';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -698,6 +698,11 @@
     // Just close the modal, localStorage already cleared by component
   }
 
+  // Force graph view and hide panels on mobile
+  $: if ($isMobile && $viewMode !== 'graph') {
+    viewPreferencesActions.setViewMode('graph');
+  }
+
   onMount(() => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
 
@@ -760,7 +765,7 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="flex flex-col h-screen bg-white dark:bg-gray-900">
-  {#if !$focusMode}
+  {#if !$focusMode && !$isMobile}
     <MenuBar
       onNew={handleNewProject}
       onOpen={handleOpenProject}
@@ -789,8 +794,8 @@
     />
   {/if}
 
-  <!-- View Mode Switcher & Panel Controls -->
-  {#if $currentStory}
+  <!-- View Mode Switcher & Panel Controls (hidden on mobile) -->
+  {#if $currentStory && !$isMobile}
     <div class="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 px-4 py-2 flex items-center gap-4">
       <!-- View Mode Buttons -->
       <div class="flex items-center gap-2">
@@ -914,8 +919,8 @@
     </div>
   {/if}
 
-  <!-- Breadcrumb Navigation (show when not in focus mode) -->
-  {#if $currentStory && !$focusMode}
+  <!-- Breadcrumb Navigation (show when not in focus mode or mobile) -->
+  {#if $currentStory && !$focusMode && !$isMobile}
     <Breadcrumb />
   {/if}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { writable, get } from 'svelte/store';
   import {
     SvelteFlow,
@@ -28,7 +29,7 @@
   import { prefersReducedMotion } from '../utils/motion';
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
   import MobileToolbar from './graph/MobileToolbar.svelte';
-  import { isMobile, isTouch } from '../utils/mobile';
+  import { isMobile, isTouch, setupPinchZoom } from '../utils/mobile';
 
   // Node types
   const nodeTypes = {
@@ -47,9 +48,10 @@
   let currentZoom = 1; // Track current zoom level
   let zoomControl: GraphViewZoomControl; // Reference to zoom control component
   let showMiniMap = true; // Track minimap visibility
+  let flowContainer: HTMLElement; // Reference to flow container for pinch zoom
 
   // Get Svelte Flow instance for programmatic zoom control
-  const { zoomIn: flowZoomIn, zoomOut: flowZoomOut, fitView: flowFitView } = useSvelteFlow();
+  const { zoomIn: flowZoomIn, zoomOut: flowZoomOut, fitView: flowFitView, zoomTo, getViewport } = useSvelteFlow();
 
   // Debounce timer for updateGraph
   let updateGraphTimer: ReturnType<typeof setTimeout> | null = null;
@@ -436,6 +438,46 @@
     showMiniMap = !showMiniMap;
   }
 
+  // Pinch-to-zoom support for touch devices
+  let initialPinchZoom = 1;
+
+  function handlePinchZoom(scale: number, centerX: number, centerY: number) {
+    // Get current viewport
+    const viewport = getViewport();
+
+    // Calculate new zoom level relative to initial pinch
+    const newZoom = Math.max(0.5, Math.min(2, viewport.zoom * scale / initialPinchZoom));
+
+    // Apply zoom
+    zoomTo(newZoom, { duration: 0 });
+
+    // Update current zoom display
+    currentZoom = newZoom;
+  }
+
+  function handlePinchStart() {
+    const viewport = getViewport();
+    initialPinchZoom = 1; // Reset scale reference
+  }
+
+  function handlePinchEnd() {
+    // Optional: Add any cleanup or final adjustments
+  }
+
+  // Setup pinch-to-zoom on mount
+  onMount(() => {
+    if (!flowContainer || !$isTouch) return;
+
+    const cleanup = setupPinchZoom(flowContainer, {
+      onPinchZoom: handlePinchZoom,
+      onPinchStart: handlePinchStart,
+      onPinchEnd: handlePinchEnd,
+      scaleThreshold: 5, // Slightly higher threshold for smoother experience
+    });
+
+    return cleanup;
+  });
+
   // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
@@ -547,7 +589,7 @@
   </div>
 
   <!-- Graph -->
-  <div class="flex-1 relative">
+  <div bind:this={flowContainer} class="flex-1 relative">
     {#if $currentStory}
       <SvelteFlow
         nodes={$nodes}

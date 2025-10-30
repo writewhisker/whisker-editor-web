@@ -13,7 +13,8 @@ export interface Size {
 export interface ChoiceData {
   id: string;
   text: string;
-  target: string;
+  target: string;            // whisker-core compatible (can also accept target_passage)
+  target_passage?: string;   // Explicit whisker-core field (alias for target)
   condition?: string;
   action?: string;
   metadata?: Record<string, any>;  // Custom choice metadata (whisker-core compat)
@@ -21,8 +22,8 @@ export interface ChoiceData {
 
 export interface PassageData {
   id: string;
-  title: string;
-  name?: string;            // Alias for title (whisker-core uses 'name')
+  name: string;             // PRIMARY: whisker-core compatible
+  title?: string;           // LEGACY: backward compatibility alias
   content: string;
   position: Position;
   size?: Size;              // Visual size in editor (whisker-core compat)
@@ -92,6 +93,7 @@ export interface StoryData {
   scripts?: string[];       // Story-wide Lua/JS scripts (whisker-core compat)
   assets?: AssetReference[];  // Media references (whisker-core compat)
   luaFunctions?: Record<string, any>;  // Reusable Lua function library
+  visualScripts?: Record<string, VisualScriptData>;  // Visual script blocks (editorData)
 }
 
 // whisker-core compatible format (v2.0)
@@ -167,18 +169,9 @@ export interface TestStepData {
 
 /**
  * Visual script builder block data
+ * @see VisualScript.ts for full implementation
  */
-export interface VisualScriptData {
-  id: string;
-  name: string;
-  blocks: {
-    id: string;
-    type: string;           // "if", "while", "setVariable", etc.
-    params: Record<string, any>;
-    children?: string[];    // Child block IDs
-  }[];
-  generatedLua?: string;    // Generated Lua code
-}
+export type { VisualScriptData } from './VisualScript';
 
 /**
  * Editor UI state for persistence

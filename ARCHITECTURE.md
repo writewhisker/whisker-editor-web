@@ -2,6 +2,8 @@
 
 This document provides a technical overview of the whisker-editor-web architecture, design patterns, and implementation decisions.
 
+> **Note**: This document focuses on whisker-editor-web's internal architecture. For how whisker-editor-web integrates with whisker-core and the broader ecosystem, see [ECOSYSTEM_ARCHITECTURE.md](./ECOSYSTEM_ARCHITECTURE.md).
+
 ## System Architecture
 
 ### Component Hierarchy
@@ -501,10 +503,12 @@ export default defineConfig({
 
 ## Related Documentation
 
+- **[ECOSYSTEM_ARCHITECTURE.md](ECOSYSTEM_ARCHITECTURE.md)** - How whisker-core and whisker-editor-web integrate
 - **[TESTING.md](TESTING.md)** - Testing strategy and guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development workflow
 - **[e2e/README.md](e2e/README.md)** - E2E testing details
 - **[whisker-implementation](https://github.com/writewhisker/whisker-implementation)** - Planning and design docs
+- **[whisker-core](https://github.com/writewhisker/whisker-core)** - Runtime engine repository
 
 ---
 

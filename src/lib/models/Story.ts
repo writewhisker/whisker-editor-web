@@ -12,6 +12,7 @@ import type {
 import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from './LuaFunction';
+import { VisualScriptCollection } from './VisualScript';
 import { nanoid } from 'nanoid';
 import { generateIfid, toWhiskerCoreFormat, toWhiskerFormatV21 } from '../utils/whiskerCoreAdapter';
 
@@ -25,6 +26,7 @@ export class Story {
   scripts: string[];
   assets: Map<string, AssetReference>;
   luaFunctions: Map<string, LuaFunction>;  // Function library
+  visualScripts: VisualScriptCollection;  // Visual script blocks (editorData)
 
   constructor(data?: Partial<StoryData>) {
     const now = new Date().toISOString();
@@ -49,6 +51,7 @@ export class Story {
     this.scripts = data?.scripts || [];
     this.assets = new Map();
     this.luaFunctions = new Map();
+    this.visualScripts = new VisualScriptCollection();
 
     // Deserialize passages
     if (data?.passages) {
@@ -76,6 +79,11 @@ export class Story {
       Object.entries(data.luaFunctions).forEach(([id, funcData]) => {
         this.luaFunctions.set(id, LuaFunction.deserialize(funcData as LuaFunctionData));
       });
+    }
+
+    // Deserialize visual scripts
+    if (data?.visualScripts) {
+      this.visualScripts = VisualScriptCollection.deserialize(data.visualScripts);
     }
 
     // If no passages, create a default start passage
@@ -373,6 +381,9 @@ export class Story {
     }
     if (Object.keys(luaFunctions).length > 0) {
       data.luaFunctions = luaFunctions;
+    }
+    if (this.visualScripts.size > 0) {
+      data.visualScripts = this.visualScripts.serialize();
     }
 
     return data;

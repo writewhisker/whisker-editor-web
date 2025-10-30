@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 
 export class Passage {
   id: string;
-  title: string;
+  name: string; // PRIMARY: matches whisker-core
   content: string;
   position: Position;
   size: Size;
@@ -20,8 +20,8 @@ export class Passage {
   constructor(data?: Partial<PassageData>) {
     const now = new Date().toISOString();
     this.id = data?.id || nanoid();
-    // Support both 'title' (editor) and 'name' (whisker-core) fields
-    this.title = data?.title || data?.name || 'Untitled Passage';
+    // Support both 'name' (whisker-core) and 'title' (legacy) fields
+    this.name = data?.name || data?.title || 'Untitled Passage';
     this.content = data?.content || '';
     this.position = data?.position || { x: 0, y: 0 };
     this.size = data?.size || { width: 200, height: 150 };
@@ -50,13 +50,13 @@ export class Passage {
     return false;
   }
 
-  // Getter/setter for 'name' (whisker-core compatibility)
-  get name(): string {
-    return this.title;
+  // Getter/setter for 'title' (backward compatibility alias)
+  get title(): string {
+    return this.name;
   }
 
-  set name(value: string) {
-    this.title = value;
+  set title(value: string) {
+    this.name = value;
   }
 
   // Metadata methods
@@ -83,7 +83,7 @@ export class Passage {
   serialize(): PassageData {
     const data: PassageData = {
       id: this.id,
-      title: this.title,
+      name: this.name, // whisker-core compatible
       content: this.content,
       position: { ...this.position },
       size: { ...this.size },
@@ -111,7 +111,7 @@ export class Passage {
     return new Passage({
       ...this.serialize(),
       id: nanoid(), // New ID for clone
-      title: `${this.title} (copy)`,
+      name: `${this.name} (copy)`,
     });
   }
 }

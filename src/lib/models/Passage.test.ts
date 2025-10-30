@@ -86,7 +86,7 @@ describe('Passage', () => {
 
       const data = passage.serialize();
       expect(data.id).toBe(passage.id);
-      expect(data.title).toBe('Test Passage');
+      expect(data.name).toBe('Test Passage'); // whisker-core compatible
       expect(data.content).toBe('This is test content');
       expect(data.position).toEqual({ x: 100, y: 200 });
       expect(data.tags).toEqual(['tag1', 'tag2']);
@@ -294,13 +294,14 @@ describe('Passage', () => {
       expect(namedPassage.name).toBe('Named Passage');
     });
 
-    it('should prioritize title over name in constructor', () => {
+    it('should prioritize name over title in constructor (whisker-core compat)', () => {
       const passage = new Passage({
         title: 'Title Value',
         name: 'Name Value',
       });
-      expect(passage.title).toBe('Title Value');
-      expect(passage.name).toBe('Title Value');
+      // name is now primary, title is legacy alias
+      expect(passage.name).toBe('Name Value');
+      expect(passage.title).toBe('Name Value');
     });
   });
 });

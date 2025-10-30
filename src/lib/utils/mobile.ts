@@ -96,3 +96,102 @@ export function getSafeAreaInsets() {
     left: parseInt(style.getPropertyValue('env(safe-area-inset-left)') || '0'),
   };
 }
+
+/**
+ * Long-press detection utility for touch devices
+ * Returns a cleanup function to remove event listeners
+ */
+export interface LongPressOptions {
+  /** Duration in ms to trigger long press (default: 500) */
+  duration?: number;
+  /** Movement threshold in px before canceling (default: 10) */
+  moveThreshold?: number;
+  /** Callback when long press is triggered */
+  onLongPress: (event: TouchEvent) => void;
+  /** Optional callback when touch starts */
+  onTouchStart?: (event: TouchEvent) => void;
+  /** Optional callback when touch ends normally */
+  onTouchEnd?: (event: TouchEvent) => void;
+}
+
+export function setupLongPress(element: HTMLElement, options: LongPressOptions): () => void {
+  const {
+    duration = 500,
+    moveThreshold = 10,
+    onLongPress,
+    onTouchStart,
+    onTouchEnd,
+  } = options;
+
+  let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let longPressTriggered = false;
+
+  const handleTouchStart = (event: TouchEvent) => {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    longPressTriggered = false;
+
+    // Start long press timer
+    longPressTimer = setTimeout(() => {
+      longPressTriggered = true;
+      hapticFeedback(20); // Medium vibration for long press
+      onLongPress(event);
+    }, duration);
+
+    onTouchStart?.(event);
+  };
+
+  const handleTouchMove = (event: TouchEvent) => {
+    if (!longPressTimer) return;
+
+    const touch = event.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartX);
+    const deltaY = Math.abs(touch.clientY - touchStartY);
+
+    // Cancel long press if touch moved too far
+    if (deltaX > moveThreshold || deltaY > moveThreshold) {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = (event: TouchEvent) => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+
+    if (!longPressTriggered) {
+      onTouchEnd?.(event);
+    }
+  };
+
+  const handleTouchCancel = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  };
+
+  // Add event listeners
+  element.addEventListener('touchstart', handleTouchStart, { passive: false });
+  element.addEventListener('touchmove', handleTouchMove, { passive: false });
+  element.addEventListener('touchend', handleTouchEnd);
+  element.addEventListener('touchcancel', handleTouchCancel);
+
+  // Return cleanup function
+  return () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+    }
+    element.removeEventListener('touchstart', handleTouchStart);
+    element.removeEventListener('touchmove', handleTouchMove);
+    element.removeEventListener('touchend', handleTouchEnd);
+    element.removeEventListener('touchcancel', handleTouchCancel);
+  };
+}

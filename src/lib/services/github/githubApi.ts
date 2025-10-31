@@ -20,6 +20,7 @@ import {
   ErrorCategory,
   isOnline,
 } from '../../utils/errorHandling';
+import { withLoading } from '../../stores/loadingStore';
 
 let octokit: Octokit | null = null;
 
@@ -52,7 +53,7 @@ function getOctokit(): Octokit {
  * List all repositories for the authenticated user
  */
 export async function listRepositories(): Promise<GitHubRepository[]> {
-  return withRetry(async () => {
+  return withLoading('github:list-repos', () => withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -84,7 +85,7 @@ export async function listRepositories(): Promise<GitHubRepository[]> {
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  });
+  }));
 }
 
 /**
@@ -95,6 +96,7 @@ export async function createRepository(
   description?: string,
   isPrivate: boolean = true
 ): Promise<GitHubRepository> {
+  return withLoading('github:create-repo', async () => {
   try {
     const client = getOctokit();
 
@@ -147,6 +149,7 @@ export async function createRepository(
       error.response
     );
   }
+  });
 }
 
 /**
@@ -158,7 +161,7 @@ export async function getFile(
   path: string,
   branch?: string
 ): Promise<GitHubFile> {
-  return withRetry(async () => {
+  return withLoading('github:load-file', () => withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -216,7 +219,7 @@ export async function getFile(
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  });
+  }));
 }
 
 /**
@@ -278,7 +281,7 @@ export async function saveFile(
   sha?: string,
   branch?: string
 ): Promise<GitHubCommit> {
-  return withRetry(async () => {
+  return withLoading('github:save-file', () => withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -373,7 +376,7 @@ export async function saveFile(
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  });
+  }));
 }
 
 /**

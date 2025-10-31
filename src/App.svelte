@@ -50,6 +50,9 @@
   import { isAuthenticated } from './lib/services/github/githubAuth';
   import { saveFile, getFile } from './lib/services/github/githubApi';
   import type { GitHubRepository } from './lib/services/github/types';
+  import { backgroundSync } from './lib/services/storage/backgroundSync';
+  import { syncQueue } from './lib/services/storage/syncQueue';
+  import { IndexedDBAdapter } from './lib/services/storage/IndexedDBAdapter';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -71,6 +74,9 @@
   let githubLastSyncTime: Date | null = null;
   let githubSyncError: string | null = null;
   let githubRepositoryName: string | null = null;
+
+  // IndexedDB adapter for local storage
+  const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
 
   // GitHub commit history
   let showCommitHistory = false;
@@ -381,8 +387,41 @@
       const [owner] = repository.fullName.split('/');
       const file = await getFile(owner, repository.name, filename);
 
-      const data = JSON.parse(file.content);
-      projectActions.loadProject(data, filename);
+      const remoteData = JSON.parse(file.content);
+
+      // Check for local version in IndexedDB
+      let hasConflict = false;
+      if (remoteData.metadata?.id) {
+        try {
+          const localData = await db.loadStory(remoteData.metadata.id);
+          if (localData && $currentStory) {
+            // Compare versions - check if they differ
+            const localUpdated = new Date(localData.updatedAt || 0);
+            const remoteUpdated = new Date(remoteData.metadata?.lastModified || 0);
+
+            // If local has changes and is different from remote, show conflict resolver
+            if (Math.abs(localUpdated.getTime() - remoteUpdated.getTime()) > 1000) {
+              hasConflict = true;
+              conflictLocalVersion = $currentStory;
+              conflictRemoteVersion = remoteData;
+              conflictLocalModified = localUpdated;
+              conflictRemoteModified = remoteUpdated;
+              showConflictResolver = true;
+
+              // Update GitHub info but don't auto-load
+              githubRepositoryName = repository.fullName;
+
+              notificationStore.info('Conflict detected between local and remote versions');
+              return;
+            }
+          }
+        } catch (error) {
+          console.error('Failed to check for conflicts:', error);
+        }
+      }
+
+      // No conflict, proceed with load
+      projectActions.loadProject(remoteData, filename);
       fileHandle = null;
 
       // Update GitHub status
@@ -867,7 +906,7 @@
 
   // Auto-save: Start/stop based on story existence
   $: if ($currentStory) {
-    autoSaveManager.start(() => {
+    autoSaveManager.start(async () => {
       if ($currentStory) {
         // Show saving status
         autoSaveStatus = 'saving';
@@ -876,6 +915,43 @@
         const result = saveToLocalStorage($currentStory);
 
         if (result.success) {
+          // Also save to IndexedDB
+          try {
+            const data = projectActions.saveProject();
+            if (data && data.metadata?.id) {
+              await db.saveStory(data);
+            }
+          } catch (error) {
+            console.error('Failed to save to IndexedDB:', error);
+          }
+
+          // Queue sync operation if GitHub repository is linked
+          if (githubRepositoryName && $isAuthenticated) {
+            try {
+              const data = projectActions.saveProject();
+              if (data) {
+                const [owner, repoName] = githubRepositoryName.split('/');
+                const filename = $currentStory.metadata?.title
+                  ? `${$currentStory.metadata.title}.json`
+                  : 'story.json';
+
+                await syncQueue.enqueue({
+                  storyId: data.metadata?.id || 'default',
+                  operation: 'update',
+                  data: {
+                    story: data,
+                    githubInfo: {
+                      repo: githubRepositoryName,
+                      filename: filename,
+                    }
+                  }
+                });
+              }
+            } catch (error) {
+              console.error('Failed to queue sync operation:', error);
+            }
+          }
+
           // Show saved status
           autoSaveStatus = 'saved';
 
@@ -948,6 +1024,37 @@
     // Initialize mobile detection
     initMobileDetection();
 
+    // Initialize IndexedDB
+    db.initialize().then(() => {
+      console.log('IndexedDB initialized');
+    }).catch(error => {
+      console.error('Failed to initialize IndexedDB:', error);
+    });
+
+    // Initialize background sync service if authenticated
+    if ($isAuthenticated) {
+      backgroundSync.start(30000); // Sync every 30 seconds
+      console.log('Background sync service started');
+    }
+
+    // Subscribe to background sync status
+    const unsubscribeSync = backgroundSync.status.subscribe(status => {
+      githubSyncStatus = status.state;
+      githubLastSyncTime = status.lastSyncTime;
+      githubSyncError = status.error;
+    });
+
+    // Watch for authentication changes to start/stop background sync
+    const unsubscribeAuth = isAuthenticated.subscribe(auth => {
+      if (auth && !backgroundSync.isSyncInProgress()) {
+        backgroundSync.start(30000);
+        console.log('Background sync service started (auth changed)');
+      } else if (!auth) {
+        backgroundSync.stop();
+        console.log('Background sync service stopped (auth changed)');
+      }
+    });
+
     // Initialize theme
     theme.subscribe(t => {
       applyTheme(t);
@@ -993,9 +1100,12 @@
       localStorage.setItem(FIRST_VISIT_KEY, 'true');
     }
 
-    // Cleanup auto-save and event listener on unmount
+    // Cleanup auto-save, background sync, and event listener on unmount
     return () => {
       autoSaveManager.stop();
+      backgroundSync.stop();
+      unsubscribeSync();
+      unsubscribeAuth();
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   });
@@ -1401,6 +1511,18 @@
   </main>
 
   <StatusBar />
+
+  <!-- GitHub Sync Status -->
+  {#if $isAuthenticated && githubRepositoryName}
+    <div class="fixed bottom-4 left-4 z-10">
+      <GitHubSyncStatus
+        repositoryName={githubRepositoryName}
+        syncStatus={githubSyncStatus}
+        lastSyncTime={githubLastSyncTime}
+        errorMessage={githubSyncError}
+      />
+    </div>
+  {/if}
 
   <!-- Auto-save indicator -->
   {#if autoSaveStatus !== 'idle' && $currentStory}

@@ -147,15 +147,20 @@ class BackgroundSyncService {
           // Increment retry count with user-friendly error message
           await syncQueue.incrementRetry(entry.id, appError.userMessage || appError.message);
 
+          // Get updated entry to check retry count
+          const updatedQueue = await syncQueue.getQueue();
+          const updatedEntry = updatedQueue.find(e => e.id === entry.id);
+          const currentRetryCount = updatedEntry?.retryCount || entry.retryCount + 1;
+
           // If max retries exceeded (5), remove from queue
-          if (entry.retryCount >= 5) {
+          if (currentRetryCount >= 5) {
             console.warn(`Max retries exceeded for entry ${entry.id}, removing from queue`);
             await syncQueue.dequeue(entry.id);
 
             // Update status with persistent error
             this.updateStatus({
               state: 'error',
-              error: `Failed to sync after ${entry.retryCount + 1} attempts: ${appError.userMessage}`,
+              error: `Failed to sync after ${currentRetryCount + 1} attempts: ${appError.userMessage}`,
             });
           }
         }

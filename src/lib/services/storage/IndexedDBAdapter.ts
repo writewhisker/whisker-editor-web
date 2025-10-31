@@ -68,6 +68,19 @@ export class IndexedDBAdapter {
           const storyStore = db.createObjectStore('stories', { keyPath: 'id' });
           storyStore.createIndex('title', 'title', { unique: false });
           storyStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+          storyStore.createIndex('syncStatus', 'syncStatus', { unique: false });
+        }
+
+        // Sync queue for background sync
+        if (!db.objectStoreNames.contains('syncQueue')) {
+          const syncStore = db.createObjectStore('syncQueue', { keyPath: 'id' });
+          syncStore.createIndex('storyId', 'storyId', { unique: false });
+          syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        // GitHub tokens
+        if (!db.objectStoreNames.contains('githubTokens')) {
+          db.createObjectStore('githubTokens', { keyPath: 'id' });
         }
       };
     });
@@ -303,16 +316,159 @@ export class IndexedDBAdapter {
     }
 
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(['preferences', 'stories'], 'readwrite');
+      const storeNames = ['preferences', 'stories', 'syncQueue', 'githubTokens'];
+      const transaction = this.db!.transaction(storeNames, 'readwrite');
 
-      const prefStore = transaction.objectStore('preferences');
-      const storyStore = transaction.objectStore('stories');
-
-      const prefRequest = prefStore.clear();
-      const storyRequest = storyStore.clear();
+      storeNames.forEach(storeName => {
+        if (this.db!.objectStoreNames.contains(storeName)) {
+          transaction.objectStore(storeName).clear();
+        }
+      });
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(new Error(`Failed to clear IndexedDB: ${transaction.error}`));
+    });
+  }
+
+  // ===== Sync Queue Methods =====
+
+  /**
+   * Add an entry to the sync queue
+   */
+  async addToSyncQueue(entry: any): Promise<void> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['syncQueue'], 'readwrite');
+      const store = transaction.objectStore('syncQueue');
+
+      const data = {
+        ...entry,
+        timestamp: entry.timestamp || new Date().toISOString(),
+      };
+
+      const request = store.put(data);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(`Failed to add to sync queue: ${request.error}`));
+    });
+  }
+
+  /**
+   * Get all entries from sync queue
+   */
+  async getSyncQueue(): Promise<any[]> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['syncQueue'], 'readonly');
+      const store = transaction.objectStore('syncQueue');
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(new Error(`Failed to get sync queue: ${request.error}`));
+    });
+  }
+
+  /**
+   * Remove an entry from sync queue
+   */
+  async removeFromSyncQueue(id: string): Promise<void> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['syncQueue'], 'readwrite');
+      const store = transaction.objectStore('syncQueue');
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(`Failed to remove from sync queue: ${request.error}`));
+    });
+  }
+
+  /**
+   * Clear the entire sync queue
+   */
+  async clearSyncQueue(): Promise<void> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['syncQueue'], 'readwrite');
+      const store = transaction.objectStore('syncQueue');
+      const request = store.clear();
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(`Failed to clear sync queue: ${request.error}`));
+    });
+  }
+
+  // ===== GitHub Token Methods =====
+
+  /**
+   * Save GitHub token
+   */
+  async saveGitHubToken(token: any): Promise<void> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['githubTokens'], 'readwrite');
+      const store = transaction.objectStore('githubTokens');
+
+      const data = {
+        ...token,
+        id: 'current', // Always use 'current' as the key
+      };
+
+      const request = store.put(data);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(`Failed to save GitHub token: ${request.error}`));
+    });
+  }
+
+  /**
+   * Load GitHub token
+   */
+  async loadGitHubToken(): Promise<any | null> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['githubTokens'], 'readonly');
+      const store = transaction.objectStore('githubTokens');
+      const request = store.get('current');
+
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(new Error(`Failed to load GitHub token: ${request.error}`));
+    });
+  }
+
+  /**
+   * Delete GitHub token
+   */
+  async deleteGitHubToken(): Promise<void> {
+    if (!this.isReady()) {
+      await this.initialize();
+    }
+
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['githubTokens'], 'readwrite');
+      const store = transaction.objectStore('githubTokens');
+      const request = store.delete('current');
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(new Error(`Failed to delete GitHub token: ${request.error}`));
     });
   }
 

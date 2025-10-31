@@ -7,6 +7,7 @@
 import { writable, get } from 'svelte/store';
 import type { GitHubAuthToken, GitHubUser } from './types';
 import { GitHubApiError } from './types';
+import { IndexedDBAdapter } from '../storage/IndexedDBAdapter';
 
 // Store for authentication state
 export const githubToken = writable<GitHubAuthToken | null>(null);
@@ -22,28 +23,61 @@ const GITHUB_SCOPES = 'repo user';
 const TOKEN_STORAGE_KEY = 'github_access_token';
 const USER_STORAGE_KEY = 'github_user';
 
+// IndexedDB adapter for persistent storage
+const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
+
 /**
  * Initialize auth service - restore token from storage if available
  */
-export function initializeGitHubAuth(): void {
+export async function initializeGitHubAuth(): Promise<void> {
   try {
-    // Try to restore token from localStorage
-    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+    // Initialize IndexedDB
+    await db.initialize();
 
-    if (storedToken) {
-      const token: GitHubAuthToken = JSON.parse(storedToken);
+    // Try to restore token from IndexedDB first
+    const storedData = await db.loadGitHubToken();
+
+    if (storedData) {
+      const token: GitHubAuthToken = {
+        accessToken: storedData.accessToken,
+        tokenType: storedData.tokenType,
+        scope: storedData.scope,
+      };
+
       githubToken.set(token);
       isAuthenticated.set(true);
 
-      if (storedUser) {
-        const user: GitHubUser = JSON.parse(storedUser);
+      if (storedData.user) {
+        const user: GitHubUser = storedData.user;
         githubUser.set(user);
+      }
+    } else {
+      // Fallback to localStorage for migration
+      const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+
+      if (storedToken) {
+        const token: GitHubAuthToken = JSON.parse(storedToken);
+        githubToken.set(token);
+        isAuthenticated.set(true);
+
+        let user: GitHubUser | null = null;
+        if (storedUser) {
+          user = JSON.parse(storedUser);
+          githubUser.set(user);
+        }
+
+        // Migrate to IndexedDB
+        await storeToken(token, user);
+
+        // Clear localStorage after migration
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(USER_STORAGE_KEY);
       }
     }
   } catch (error) {
     console.error('Failed to restore GitHub authentication:', error);
-    clearAuth();
+    await clearAuth();
   }
 }
 
@@ -90,12 +124,11 @@ export async function handleGitHubCallback(code: string, state: string): Promise
     // For now, we'll use the GitHub OAuth Device Flow or a proxy endpoint
     const token = await exchangeCodeForToken(code);
 
-    // Store token
-    storeToken(token);
-
     // Fetch user info
     const user = await fetchUserInfo(token.accessToken);
-    storeUser(user);
+
+    // Store token and user together
+    await storeToken(token, user);
 
     // Update stores
     githubToken.set(token);
@@ -165,17 +198,30 @@ async function fetchUserInfo(accessToken: string): Promise<GitHubUser> {
 }
 
 /**
- * Store token in localStorage
+ * Store token and user in IndexedDB
  */
-function storeToken(token: GitHubAuthToken): void {
-  localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token));
-}
+async function storeToken(token: GitHubAuthToken, user: GitHubUser | null = null): Promise<void> {
+  try {
+    await db.saveGitHubToken({
+      accessToken: token.accessToken,
+      tokenType: token.tokenType,
+      scope: token.scope,
+      user: user || undefined,
+    });
 
-/**
- * Store user in localStorage
- */
-function storeUser(user: GitHubUser): void {
-  localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    // Also store in localStorage as fallback
+    localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token));
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    }
+  } catch (error) {
+    console.error('Failed to store token:', error);
+    // Fall back to localStorage only
+    localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(token));
+    if (user) {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    }
+  }
 }
 
 /**
@@ -196,16 +242,26 @@ export function checkAuthenticated(): boolean {
 /**
  * Sign out and clear authentication
  */
-export function signOut(): void {
-  clearAuth();
+export async function signOut(): Promise<void> {
+  await clearAuth();
 }
 
 /**
  * Clear all authentication data
  */
-function clearAuth(): void {
+async function clearAuth(): Promise<void> {
+  try {
+    // Clear from IndexedDB
+    await db.deleteGitHubToken();
+  } catch (error) {
+    console.error('Failed to clear token from IndexedDB:', error);
+  }
+
+  // Clear from localStorage
   localStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(USER_STORAGE_KEY);
+
+  // Clear stores
   githubToken.set(null);
   githubUser.set(null);
   isAuthenticated.set(false);

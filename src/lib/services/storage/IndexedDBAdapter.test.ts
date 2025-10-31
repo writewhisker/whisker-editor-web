@@ -302,4 +302,264 @@ describe('IndexedDBAdapter', () => {
       expect(loaded).toBeUndefined();
     });
   });
+
+  describe('Sync Queue Operations (Phase 3)', () => {
+    beforeEach(async () => {
+      await adapter.initialize();
+    });
+
+    it('should add entry to sync queue', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: { story: { id: 'story-1' } },
+        retryCount: 0,
+      };
+
+      await adapter.addToSyncQueue(entry);
+      // Should not throw
+    });
+
+    it('should get all sync queue entries', async () => {
+      const entry1 = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'create' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      };
+
+      const entry2 = {
+        id: 'sync-2',
+        storyId: 'story-2',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      };
+
+      await adapter.addToSyncQueue(entry1);
+      await adapter.addToSyncQueue(entry2);
+
+      const queue = await adapter.getSyncQueue();
+      expect(queue).toHaveLength(2);
+      expect(queue.map(e => e.id)).toContain('sync-1');
+      expect(queue.map(e => e.id)).toContain('sync-2');
+    });
+
+    it('should remove entry from sync queue', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      };
+
+      await adapter.addToSyncQueue(entry);
+      await adapter.removeFromSyncQueue('sync-1');
+
+      const queue = await adapter.getSyncQueue();
+      expect(queue).toHaveLength(0);
+    });
+
+    it('should update existing sync queue entry', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      };
+
+      await adapter.addToSyncQueue(entry);
+
+      // Update with higher retry count
+      entry.retryCount = 2;
+      entry.lastError = 'Network error';
+      await adapter.addToSyncQueue(entry);
+
+      const queue = await adapter.getSyncQueue();
+      expect(queue).toHaveLength(1);
+      expect(queue[0].retryCount).toBe(2);
+      expect(queue[0].lastError).toBe('Network error');
+    });
+
+    it('should clear sync queue', async () => {
+      await adapter.addToSyncQueue({
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      });
+
+      await adapter.addToSyncQueue({
+        id: 'sync-2',
+        storyId: 'story-2',
+        operation: 'update' as const,
+        timestamp: new Date(),
+        data: {},
+        retryCount: 0,
+      });
+
+      await adapter.clearSyncQueue();
+
+      const queue = await adapter.getSyncQueue();
+      expect(queue).toHaveLength(0);
+    });
+
+    it('should persist sync queue data', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date('2024-01-01T00:00:00Z'),
+        data: {
+          story: { id: 'story-1', title: 'Test' },
+          githubInfo: { repo: 'owner/repo', filename: 'test.json' },
+        },
+        retryCount: 3,
+        lastError: 'Some error',
+      };
+
+      await adapter.addToSyncQueue(entry);
+
+      const queue = await adapter.getSyncQueue();
+      expect(queue[0]).toMatchObject({
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update',
+        retryCount: 3,
+        lastError: 'Some error',
+      });
+      expect(queue[0].data).toEqual(entry.data);
+    });
+  });
+
+  describe('GitHub Token Operations (Phase 3)', () => {
+    beforeEach(async () => {
+      await adapter.initialize();
+    });
+
+    it('should save GitHub token', async () => {
+      const token = {
+        accessToken: 'ghp_test123',
+        tokenType: 'bearer',
+        scope: 'repo user',
+      };
+
+      await adapter.saveGitHubToken(token);
+      // Should not throw
+    });
+
+    it('should load saved GitHub token', async () => {
+      const token = {
+        accessToken: 'ghp_test456',
+        tokenType: 'bearer',
+        scope: 'repo user',
+      };
+
+      await adapter.saveGitHubToken(token);
+      const loaded = await adapter.loadGitHubToken();
+
+      expect(loaded).toBeDefined();
+      expect(loaded.accessToken).toBe('ghp_test456');
+      expect(loaded.tokenType).toBe('bearer');
+      expect(loaded.scope).toBe('repo user');
+    });
+
+    it('should return null for non-existent token', async () => {
+      const loaded = await adapter.loadGitHubToken();
+      expect(loaded).toBeNull();
+    });
+
+    it('should save token with user info', async () => {
+      const token = {
+        accessToken: 'ghp_test789',
+        tokenType: 'bearer',
+        scope: 'repo user',
+        user: {
+          login: 'testuser',
+          id: 12345,
+          name: 'Test User',
+          email: 'test@example.com',
+          avatarUrl: 'https://github.com/avatar.jpg',
+        },
+      };
+
+      await adapter.saveGitHubToken(token);
+      const loaded = await adapter.loadGitHubToken();
+
+      expect(loaded.user).toBeDefined();
+      expect(loaded.user!.login).toBe('testuser');
+      expect(loaded.user!.id).toBe(12345);
+    });
+
+    it('should update existing token', async () => {
+      const token1 = {
+        accessToken: 'ghp_old',
+        tokenType: 'bearer',
+        scope: 'repo',
+      };
+
+      await adapter.saveGitHubToken(token1);
+
+      const token2 = {
+        accessToken: 'ghp_new',
+        tokenType: 'bearer',
+        scope: 'repo user',
+      };
+
+      await adapter.saveGitHubToken(token2);
+
+      const loaded = await adapter.loadGitHubToken();
+      expect(loaded.accessToken).toBe('ghp_new');
+      expect(loaded.scope).toBe('repo user');
+    });
+
+    it('should delete GitHub token', async () => {
+      const token = {
+        accessToken: 'ghp_test',
+        tokenType: 'bearer',
+        scope: 'repo',
+      };
+
+      await adapter.saveGitHubToken(token);
+      await adapter.deleteGitHubToken();
+
+      const loaded = await adapter.loadGitHubToken();
+      expect(loaded).toBeNull();
+    });
+
+    it('should handle deleting non-existent token', async () => {
+      await adapter.deleteGitHubToken();
+      // Should not throw
+    });
+
+    it('should use "current" as key for token storage', async () => {
+      // Save multiple times - should overwrite same key
+      await adapter.saveGitHubToken({
+        accessToken: 'token1',
+        tokenType: 'bearer',
+        scope: 'repo',
+      });
+
+      await adapter.saveGitHubToken({
+        accessToken: 'token2',
+        tokenType: 'bearer',
+        scope: 'repo',
+      });
+
+      // Should only have one token (the latest)
+      const loaded = await adapter.loadGitHubToken();
+      expect(loaded.accessToken).toBe('token2');
+    });
+  });
 });

@@ -16,8 +16,15 @@ export const isAuthenticated = writable(false);
 
 // GitHub OAuth Configuration
 // These should be set via environment variables or config
-const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || '';
-const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI || `${window.location.origin}/auth/github/callback`;
+// Read dynamically to allow testing
+function getGitHubClientId(): string {
+  return import.meta.env.VITE_GITHUB_CLIENT_ID || '';
+}
+
+function getGitHubRedirectUri(): string {
+  return import.meta.env.VITE_GITHUB_REDIRECT_URI || `${window.location.origin}/auth/github/callback`;
+}
+
 const GITHUB_SCOPES = 'repo user';
 
 const TOKEN_STORAGE_KEY = 'github_access_token';
@@ -85,7 +92,8 @@ export async function initializeGitHubAuth(): Promise<void> {
  * Start GitHub OAuth flow
  */
 export function startGitHubAuth(): void {
-  if (!GITHUB_CLIENT_ID) {
+  const clientId = getGitHubClientId();
+  if (!clientId) {
     throw new Error('GitHub Client ID not configured. Set VITE_GITHUB_CLIENT_ID environment variable.');
   }
 
@@ -95,8 +103,8 @@ export function startGitHubAuth(): void {
 
   // Build OAuth URL
   const authUrl = new URL('https://github.com/login/oauth/authorize');
-  authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
-  authUrl.searchParams.set('redirect_uri', GITHUB_REDIRECT_URI);
+  authUrl.searchParams.set('client_id', clientId);
+  authUrl.searchParams.set('redirect_uri', getGitHubRedirectUri());
   authUrl.searchParams.set('scope', GITHUB_SCOPES);
   authUrl.searchParams.set('state', state);
 
@@ -293,7 +301,7 @@ export async function validateToken(): Promise<boolean> {
 
     if (!response.ok) {
       // Token is invalid, clear auth
-      clearAuth();
+      await clearAuth();
       return false;
     }
 

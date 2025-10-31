@@ -2,6 +2,9 @@
  * Tests for GitHub OAuth Authentication Service
  */
 
+// Mock IndexedDB - MUST be imported first before any modules that use IndexedDB
+import 'fake-indexeddb/auto';
+
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import {
@@ -17,9 +20,6 @@ import {
   isAuthenticated,
 } from './githubAuth';
 import { IndexedDBAdapter } from '../storage/IndexedDBAdapter';
-
-// Mock IndexedDB
-import 'fake-indexeddb/auto';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -55,11 +55,19 @@ Object.defineProperty(window, 'sessionStorage', {
 });
 
 describe('GitHub Auth Service', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     localStorage.clear();
     sessionStorageMock.clear();
     vi.mocked(fetch).mockClear();
+
+    // Reset auth state
+    await signOut();
+
+    // Clear IndexedDB
+    const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
+    await db.initialize();
+    await db.deleteGitHubToken();
   });
 
   describe('Initialization', () => {

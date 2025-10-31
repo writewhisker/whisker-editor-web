@@ -26,21 +26,36 @@ describe('EPUBExporter', () => {
     story.metadata.author = 'Test Author';
     story.metadata.description = 'A test story for EPUB export';
 
+    // Clear default passages
+    story.passages.clear();
+
     // Add passages
-    const passage1 = new Passage('start', 'Beginning', 100, 100);
-    passage1.content = '# Welcome\n\nThis is the **beginning** of your adventure.';
-    passage1.choices.push(new Choice('Go left', 'left'));
-    passage1.choices.push(new Choice('Go right', 'right'));
+    const passage1 = new Passage({
+      id: 'start',
+      title: 'Beginning',
+      content: '# Welcome\n\nThis is the **beginning** of your adventure.',
+      position: { x: 100, y: 100 }
+    });
+    passage1.choices.push(new Choice({ text: 'Go left', target: 'left' }));
+    passage1.choices.push(new Choice({ text: 'Go right', target: 'right' }));
 
-    const passage2 = new Passage('left', 'Left Path', 100, 200);
-    passage2.content = 'You went *left*. Here is a list:\n\n- Item 1\n- Item 2\n- Item 3';
+    const passage2 = new Passage({
+      id: 'left',
+      title: 'Left Path',
+      content: 'You went *left*. Here is a list:\n\n- Item 1\n- Item 2\n- Item 3',
+      position: { x: 100, y: 200 }
+    });
 
-    const passage3 = new Passage('right', 'Right Path', 200, 200);
-    passage3.content = 'You went **right**.\n\n> This is a quote.';
+    const passage3 = new Passage({
+      id: 'right',
+      title: 'Right Path',
+      content: 'You went **right**.\n\n> This is a quote.',
+      position: { x: 200, y: 200 }
+    });
 
-    story.passages.set(passage1.id, passage1);
-    story.passages.set(passage2.id, passage2);
-    story.passages.set(passage3.id, passage3);
+    story.addPassage(passage1);
+    story.addPassage(passage2);
+    story.addPassage(passage3);
 
     story.startPassage = 'start';
 
@@ -198,13 +213,17 @@ describe('EPUBExporter', () => {
       if (!passage) {
         throw new Error('Start passage not found');
       }
-      const conditionalChoice = new Choice('Secret path', 'secret');
+      const conditionalChoice = new Choice({ text: 'Secret path', target: 'secret' });
       conditionalChoice.conditions = ['has_key', 'health > 50'];
       passage.choices.push(conditionalChoice);
 
-      const secretPassage = new Passage('secret', 'Secret', 300, 300);
-      secretPassage.content = 'You found the secret!';
-      story.passages.set(secretPassage.id, secretPassage);
+      const secretPassage = new Passage({
+        id: 'secret',
+        title: 'Secret',
+        content: 'You found the secret!',
+        position: { x: 300, y: 300 }
+      });
+      story.addPassage(secretPassage);
 
       const result = await exporter.export(context);
       const zip = await JSZip.loadAsync(result.content as Blob);
@@ -416,10 +435,14 @@ describe('EPUBExporter', () => {
     it('should export large stories in reasonable time', async () => {
       // Add 50 passages
       for (let i = 0; i < 50; i++) {
-        const passage = new Passage(`passage_${i}`, `Passage ${i}`, i * 100, i * 100);
-        passage.content = `# Chapter ${i}\n\nThis is content for passage ${i}.\n\n**Bold** and *italic* text.`;
-        passage.choices.push(new Choice(`Next`, `passage_${i + 1}`));
-        story.passages.set(passage.id, passage);
+        const passage = new Passage({
+          id: `passage_${i}`,
+          title: `Passage ${i}`,
+          content: `# Chapter ${i}\n\nThis is content for passage ${i}.\n\n**Bold** and *italic* text.`,
+          position: { x: i * 100, y: i * 100 }
+        });
+        passage.choices.push(new Choice({ text: `Next`, target: `passage_${i + 1}` }));
+        story.addPassage(passage);
       }
 
       const startTime = Date.now();

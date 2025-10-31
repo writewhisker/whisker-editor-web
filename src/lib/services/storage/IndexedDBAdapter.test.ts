@@ -13,6 +13,12 @@ describe('IndexedDBAdapter', () => {
 
   beforeEach(async () => {
     adapter = new IndexedDBAdapter({ dbName: 'test-db', version: 1 });
+    await adapter.initialize();
+
+    // Clear all data from previous tests
+    await adapter.clearAll();
+    await adapter.clearSyncQueue();
+    await adapter.deleteGitHubToken();
   });
 
   afterEach(() => {
@@ -46,9 +52,6 @@ describe('IndexedDBAdapter', () => {
   });
 
   describe('Preference Operations', () => {
-    beforeEach(async () => {
-      await adapter.initialize();
-    });
 
     it('should save a preference', async () => {
       await adapter.savePreference('test-key', { value: 'test' });
@@ -124,9 +127,6 @@ describe('IndexedDBAdapter', () => {
   });
 
   describe('Story Operations', () => {
-    beforeEach(async () => {
-      await adapter.initialize();
-    });
 
     it('should save a story', async () => {
       const story = {
@@ -243,9 +243,6 @@ describe('IndexedDBAdapter', () => {
   });
 
   describe('Clear Operations', () => {
-    beforeEach(async () => {
-      await adapter.initialize();
-    });
 
     it('should clear all data', async () => {
       // Add some data
@@ -304,9 +301,6 @@ describe('IndexedDBAdapter', () => {
   });
 
   describe('Sync Queue Operations (Phase 3)', () => {
-    beforeEach(async () => {
-      await adapter.initialize();
-    });
 
     it('should add entry to sync queue', async () => {
       const entry = {
@@ -444,9 +438,6 @@ describe('IndexedDBAdapter', () => {
   });
 
   describe('GitHub Token Operations (Phase 3)', () => {
-    beforeEach(async () => {
-      await adapter.initialize();
-    });
 
     it('should save GitHub token', async () => {
       const token = {

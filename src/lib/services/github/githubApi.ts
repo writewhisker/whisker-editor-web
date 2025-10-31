@@ -14,6 +14,12 @@ import { githubToken } from './githubAuth';
 import type { GitHubRepository, GitHubFile, GitHubCommit } from './types';
 import { GitHubApiError } from './types';
 import { get } from 'svelte/store';
+import {
+  withRetry,
+  classifyError,
+  ErrorCategory,
+  isOnline,
+} from '../../utils/errorHandling';
 
 let octokit: Octokit | null = null;
 
@@ -21,6 +27,11 @@ let octokit: Octokit | null = null;
  * Initialize Octokit with current access token
  */
 function getOctokit(): Octokit {
+  // Check online status first
+  if (!isOnline()) {
+    throw new GitHubApiError('No internet connection', 0);
+  }
+
   const token = get(githubToken);
 
   if (!token) {
@@ -41,34 +52,39 @@ function getOctokit(): Octokit {
  * List all repositories for the authenticated user
  */
 export async function listRepositories(): Promise<GitHubRepository[]> {
-  try {
-    const client = getOctokit();
+  return withRetry(async () => {
+    try {
+      const client = getOctokit();
 
-    const response = await client.repos.listForAuthenticatedUser({
-      sort: 'updated',
-      per_page: 100,
-    });
+      const response = await client.repos.listForAuthenticatedUser({
+        sort: 'updated',
+        per_page: 100,
+      });
 
-    // Filter out archived repositories
-    return response.data
-      .filter(repo => !repo.archived)
-      .map(repo => ({
-        id: repo.id,
-        name: repo.name,
-        fullName: repo.full_name,
-        description: repo.description || undefined,
-        private: repo.private,
-        defaultBranch: repo.default_branch,
-        updatedAt: repo.updated_at,
-      }));
-  } catch (error: any) {
-    console.error('Failed to list repositories:', error);
-    throw new GitHubApiError(
-      'Failed to list repositories',
-      error.status,
-      error.response
-    );
-  }
+      // Filter out archived repositories
+      return response.data
+        .filter(repo => !repo.archived)
+        .map(repo => ({
+          id: repo.id,
+          name: repo.name,
+          fullName: repo.full_name,
+          description: repo.description || undefined,
+          private: repo.private,
+          defaultBranch: repo.default_branch,
+          updatedAt: repo.updated_at,
+        }));
+    } catch (error: any) {
+      console.error('Failed to list repositories:', error);
+      throw new GitHubApiError(
+        'Failed to list repositories',
+        error.status,
+        error.response
+      );
+    }
+  }, {
+    maxRetries: 2,
+    initialDelay: 1000,
+  });
 }
 
 /**
@@ -142,60 +158,65 @@ export async function getFile(
   path: string,
   branch?: string
 ): Promise<GitHubFile> {
-  try {
-    const client = getOctokit();
+  return withRetry(async () => {
+    try {
+      const client = getOctokit();
 
-    const response = await client.repos.getContent({
-      owner,
-      repo,
-      path,
-      ref: branch,
-    });
+      const response = await client.repos.getContent({
+        owner,
+        repo,
+        path,
+        ref: branch,
+      });
 
-    // Check if it's a file (not a directory)
-    if (Array.isArray(response.data) || response.data.type !== 'file') {
-      throw new GitHubApiError('Path is not a file', 400);
-    }
+      // Check if it's a file (not a directory)
+      if (Array.isArray(response.data) || response.data.type !== 'file') {
+        throw new GitHubApiError('Path is not a file', 400);
+      }
 
-    const content = response.data.content
-      ? atob(response.data.content)
-      : '';
+      const content = response.data.content
+        ? atob(response.data.content)
+        : '';
 
-    return {
-      path: response.data.path,
-      content,
-      sha: response.data.sha,
-      size: response.data.size,
-    };
-  } catch (error: any) {
-    console.error('Failed to get file:', error);
+      return {
+        path: response.data.path,
+        content,
+        sha: response.data.sha,
+        size: response.data.size,
+      };
+    } catch (error: any) {
+      console.error('Failed to get file:', error);
 
-    if (error instanceof GitHubApiError) {
-      throw error;
-    }
+      if (error instanceof GitHubApiError) {
+        throw error;
+      }
 
-    if (error.status === 404) {
+      if (error.status === 404) {
+        throw new GitHubApiError(
+          `File "${path}" not found in this repository. Make sure the file exists.`,
+          404,
+          error.response
+        );
+      }
+
+      if (error.status === 403) {
+        throw new GitHubApiError(
+          'You do not have permission to read this repository.',
+          error.status,
+          error.response
+        );
+      }
+
       throw new GitHubApiError(
-        `File "${path}" not found in this repository. Make sure the file exists.`,
-        404,
-        error.response
-      );
-    }
-
-    if (error.status === 403) {
-      throw new GitHubApiError(
-        'You do not have permission to read this repository.',
+        `Failed to load file: ${error.message || 'Unknown error'}`,
         error.status,
         error.response
       );
     }
-
-    throw new GitHubApiError(
-      `Failed to load file: ${error.message || 'Unknown error'}`,
-      error.status,
-      error.response
-    );
-  }
+  }, {
+    maxRetries: 2,
+    initialDelay: 1000,
+  });
 }
 
 /**
@@ -257,97 +278,102 @@ export async function saveFile(
   sha?: string,
   branch?: string
 ): Promise<GitHubCommit> {
-  try {
-    const client = getOctokit();
-
-    // Check if repository is archived
+  return withRetry(async () => {
     try {
-      const repoInfo = await client.repos.get({ owner, repo });
-      if (repoInfo.data.archived) {
-        throw new GitHubApiError(
-          'This repository is archived and cannot be modified. Please unarchive it on GitHub or choose a different repository.',
-          403
-        );
+      const client = getOctokit();
+
+      // Check if repository is archived
+      try {
+        const repoInfo = await client.repos.get({ owner, repo });
+        if (repoInfo.data.archived) {
+          throw new GitHubApiError(
+            'This repository is archived and cannot be modified. Please unarchive it on GitHub or choose a different repository.',
+            403
+          );
+        }
+      } catch (err: any) {
+        // If we can't check repo status, continue anyway (might be a permissions issue)
+        if (err instanceof GitHubApiError) {
+          throw err;
+        }
       }
-    } catch (err: any) {
-      // If we can't check repo status, continue anyway (might be a permissions issue)
-      if (err instanceof GitHubApiError) {
-        throw err;
+
+      // Convert content to base64
+      const contentBase64 = btoa(unescape(encodeURIComponent(content)));
+
+      const response = await client.repos.createOrUpdateFileContents({
+        owner,
+        repo,
+        path,
+        message,
+        content: contentBase64,
+        sha, // Required for updates, omit for new files
+        branch,
+      });
+
+      return {
+        sha: response.data.commit.sha,
+        message: response.data.commit.message || message,
+        date: response.data.commit.author?.date || new Date().toISOString(),
+      };
+    } catch (error: any) {
+      console.error('Failed to save file:', error);
+
+      // Check for specific error conditions
+      if (error instanceof GitHubApiError) {
+        throw error;
       }
-    }
 
-    // Convert content to base64
-    const contentBase64 = btoa(unescape(encodeURIComponent(content)));
-
-    const response = await client.repos.createOrUpdateFileContents({
-      owner,
-      repo,
-      path,
-      message,
-      content: contentBase64,
-      sha, // Required for updates, omit for new files
-      branch,
-    });
-
-    return {
-      sha: response.data.commit.sha,
-      message: response.data.commit.message || message,
-      date: response.data.commit.author?.date || new Date().toISOString(),
-    };
-  } catch (error: any) {
-    console.error('Failed to save file:', error);
-
-    // Check for specific error conditions
-    if (error instanceof GitHubApiError) {
-      throw error;
-    }
-
-    if (error.status === 403) {
-      const errorMessage = error.response?.data?.message || '';
-      if (errorMessage.includes('archived')) {
+      if (error.status === 403) {
+        const errorMessage = error.response?.data?.message || '';
+        if (errorMessage.includes('archived')) {
+          throw new GitHubApiError(
+            'This repository is archived and cannot be modified. Please unarchive it on GitHub or choose a different repository.',
+            error.status,
+            error.response
+          );
+        }
         throw new GitHubApiError(
-          'This repository is archived and cannot be modified. Please unarchive it on GitHub or choose a different repository.',
+          'You do not have permission to write to this repository. Make sure you have write access.',
           error.status,
           error.response
         );
       }
+
+      if (error.status === 404) {
+        throw new GitHubApiError(
+          'Repository not found. It may have been deleted or you may not have access to it.',
+          error.status,
+          error.response
+        );
+      }
+
+      if (error.status === 409) {
+        throw new GitHubApiError(
+          'File was modified by someone else. Please reload the story and try again.',
+          error.status,
+          error.response
+        );
+      }
+
+      if (error.status === 422) {
+        throw new GitHubApiError(
+          'Invalid file content or path. Make sure the filename is valid.',
+          error.status,
+          error.response
+        );
+      }
+
       throw new GitHubApiError(
-        'You do not have permission to write to this repository. Make sure you have write access.',
+        `Failed to save file: ${error.message || 'Unknown error'}`,
         error.status,
         error.response
       );
     }
-
-    if (error.status === 404) {
-      throw new GitHubApiError(
-        'Repository not found. It may have been deleted or you may not have access to it.',
-        error.status,
-        error.response
-      );
-    }
-
-    if (error.status === 409) {
-      throw new GitHubApiError(
-        'File was modified by someone else. Please reload the story and try again.',
-        error.status,
-        error.response
-      );
-    }
-
-    if (error.status === 422) {
-      throw new GitHubApiError(
-        'Invalid file content or path. Make sure the filename is valid.',
-        error.status,
-        error.response
-      );
-    }
-
-    throw new GitHubApiError(
-      `Failed to save file: ${error.message || 'Unknown error'}`,
-      error.status,
-      error.response
-    );
-  }
+  }, {
+    maxRetries: 2,
+    initialDelay: 1000,
+  });
 }
 
 /**

@@ -8,6 +8,15 @@ import { writable, get } from 'svelte/store';
 import { syncQueue, type SyncQueueEntry } from './syncQueue';
 import { saveFile, getFile } from '../github/githubApi';
 import { isAuthenticated } from '../github/githubAuth';
+import {
+  handleError,
+  classifyError,
+  ErrorSeverity,
+  ErrorCategory,
+  withRetry,
+  isOnline,
+  whenOnline,
+} from '../../utils/errorHandling';
 
 export type SyncState = 'idle' | 'syncing' | 'error';
 
@@ -85,9 +94,12 @@ class BackgroundSyncService {
     }
 
     // Check if online
-    if (!navigator.onLine) {
+    if (!isOnline()) {
       console.log('Offline, skipping sync');
-      this.updateStatus({ state: 'idle' });
+      this.updateStatus({
+        state: 'idle',
+        error: 'Offline - will sync when connection restored',
+      });
       return;
     }
 
@@ -114,18 +126,37 @@ class BackgroundSyncService {
       // Process queue entries one by one
       for (const entry of queue) {
         try {
-          await this.processSyncEntry(entry);
+          // Use retry logic with exponential backoff
+          await withRetry(
+            () => this.processSyncEntry(entry),
+            {
+              maxRetries: 2, // Will be retried 2 times before incrementing queue retry count
+              initialDelay: 1000,
+              maxDelay: 10000,
+              onRetry: (attempt, error) => {
+                console.log(`Retry attempt ${attempt} for sync entry ${entry.id}:`, error.message);
+              },
+            }
+          );
+
+          // Success - remove from queue
           await syncQueue.dequeue(entry.id);
         } catch (error: any) {
-          console.error('Failed to process sync entry:', error);
-          
-          // Increment retry count
-          await syncQueue.incrementRetry(entry.id, error.message);
-          
+          const appError = handleError(error, 'BackgroundSync.processSyncEntry', { silent: false });
+
+          // Increment retry count with user-friendly error message
+          await syncQueue.incrementRetry(entry.id, appError.userMessage || appError.message);
+
           // If max retries exceeded (5), remove from queue
           if (entry.retryCount >= 5) {
-            console.warn('Max retries exceeded, removing from queue');
+            console.warn(`Max retries exceeded for entry ${entry.id}, removing from queue`);
             await syncQueue.dequeue(entry.id);
+
+            // Update status with persistent error
+            this.updateStatus({
+              state: 'error',
+              error: `Failed to sync after ${entry.retryCount + 1} attempts: ${appError.userMessage}`,
+            });
           }
         }
       }
@@ -141,10 +172,11 @@ class BackgroundSyncService {
 
       console.log('Sync completed successfully');
     } catch (error: any) {
-      console.error('Sync error:', error);
+      const appError = handleError(error, 'BackgroundSync.syncNow', { silent: false });
+
       this.updateStatus({
         state: 'error',
-        error: error.message || 'Sync failed',
+        error: appError.userMessage || 'Sync failed',
       });
     } finally {
       this.isSyncing = false;
@@ -177,7 +209,7 @@ class BackgroundSyncService {
    */
   private async syncStoryToGitHub(storyId: string, storyData: any): Promise<void> {
     const { repo, filename } = storyData.githubInfo;
-    
+
     if (!repo || !filename) {
       throw new Error('Missing GitHub repository or filename information');
     }
@@ -192,16 +224,27 @@ class BackgroundSyncService {
     try {
       const existingFile = await getFile(owner, repoName, filename);
       sha = existingFile.sha;
-    } catch (err) {
-      // File doesn't exist yet, that's okay
+    } catch (err: any) {
+      // File doesn't exist yet, that's okay (404 is expected for new files)
+      if (err.status !== 404) {
+        // Log other errors but continue with creation
+        console.warn('Error checking for existing file:', err.message);
+      }
     }
 
     const content = JSON.stringify(storyData.story, null, 2);
-    const commitMessage = sha 
-      ? 'Update ' + filename + ' (auto-sync)'
-      : 'Create ' + filename + ' (auto-sync)';
+    const commitMessage = sha
+      ? `Update ${filename} (auto-sync)`
+      : `Create ${filename} (auto-sync)`;
 
-    await saveFile(owner, repoName, filename, content, commitMessage, sha);
+    // Execute save with whenOnline wrapper to ensure connectivity
+    await whenOnline(
+      () => saveFile(owner, repoName, filename, content, commitMessage, sha),
+      {
+        waitTimeout: 30000, // Wait up to 30 seconds for connection
+        offlineMessage: 'Cannot sync - device is offline',
+      }
+    );
   }
 
   /**

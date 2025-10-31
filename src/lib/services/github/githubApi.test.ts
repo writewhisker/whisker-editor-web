@@ -33,6 +33,12 @@ vi.mock('@octokit/rest', () => {
 // Mock githubAuth
 vi.mock('./githubAuth', () => ({
   getAccessToken: vi.fn(() => 'mock-token'),
+  githubToken: {
+    subscribe: vi.fn((callback) => {
+      callback({ accessToken: 'mock-token', tokenType: 'bearer', scope: 'repo user' });
+      return () => {};
+    }),
+  },
 }));
 
 describe('GitHub API Service', () => {

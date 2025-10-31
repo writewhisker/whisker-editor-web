@@ -5,6 +5,7 @@
  */
 
 import { IndexedDBAdapter } from './IndexedDBAdapter';
+import { handleError } from '../../utils/errorHandling';
 
 export interface SyncQueueEntry {
   id: string;
@@ -26,8 +27,14 @@ class SyncQueueService {
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
-    await this.db.initialize();
-    this.initialized = true;
+
+    try {
+      await this.db.initialize();
+      this.initialized = true;
+    } catch (error: any) {
+      const appError = handleError(error, 'SyncQueue.initialize', { silent: false });
+      throw new Error(`Failed to initialize sync queue: ${appError.userMessage}`);
+    }
   }
 
   /**
@@ -36,14 +43,19 @@ class SyncQueueService {
   async enqueue(entry: Omit<SyncQueueEntry, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
     await this.initialize();
 
-    const queueEntry: SyncQueueEntry = {
-      ...entry,
-      id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-      timestamp: new Date(),
-      retryCount: 0,
-    };
+    try {
+      const queueEntry: SyncQueueEntry = {
+        ...entry,
+        id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        timestamp: new Date(),
+        retryCount: 0,
+      };
 
-    await this.db.addToSyncQueue(queueEntry);
+      await this.db.addToSyncQueue(queueEntry);
+    } catch (error: any) {
+      const appError = handleError(error, 'SyncQueue.enqueue', { silent: false });
+      throw new Error(`Failed to enqueue sync operation: ${appError.userMessage}`);
+    }
   }
 
   /**
@@ -51,12 +63,19 @@ class SyncQueueService {
    */
   async getQueue(): Promise<SyncQueueEntry[]> {
     await this.initialize();
-    const queue = await this.db.getSyncQueue();
-    
-    // Sort by timestamp (oldest first)
-    return queue.sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+
+    try {
+      const queue = await this.db.getSyncQueue();
+
+      // Sort by timestamp (oldest first)
+      return queue.sort((a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      );
+    } catch (error: any) {
+      const appError = handleError(error, 'SyncQueue.getQueue', { silent: false });
+      console.error('Failed to get sync queue:', appError.message);
+      return []; // Return empty array on error to prevent UI breakage
+    }
   }
 
   /**

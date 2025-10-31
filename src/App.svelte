@@ -27,6 +27,7 @@
   import SettingsDialog from './lib/components/SettingsDialog.svelte';
   import ResizeHandle from './lib/components/ResizeHandle.svelte';
   import NotificationToast from './lib/components/NotificationToast.svelte';
+  import TemplateSelectionDialog from './lib/components/TemplateSelectionDialog.svelte';
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
@@ -123,6 +124,9 @@
 
   // Settings dialog state
   let showSettings = false;
+
+  // Template selection dialog state
+  let showTemplateSelection = false;
 
   // Auto-save status
   let autoSaveStatus: 'idle' | 'saving' | 'saved' = 'idle';
@@ -697,38 +701,27 @@
     }
   }
 
-  // Passage templates
-  const passageTemplates = {
-    blank: { title: 'New Passage', content: '' },
-    choice: {
-      title: 'Choice Passage',
-      content: 'What do you do?\n\n[[Option 1]]\n[[Option 2]]\n[[Option 3]]'
-    },
-    conversation: {
-      title: 'Conversation',
-      content: '"Hello there," says the stranger.\n\n[[Ask who they are]]\n[[Say hello back]]\n[[Walk away]]'
-    },
-    description: {
-      title: 'Description',
-      content: 'You find yourself in a new location. [Describe the setting here]\n\n[[Continue]]'
-    },
-    checkpoint: {
-      title: 'Checkpoint',
-      content: '<<set $chapter = 2>>\n\nChapter 2: [Title]\n\n[Story continues...]\n\n[[Next]]'
-    },
-    ending: {
-      title: 'Ending',
-      content: 'THE END\n\n[Describe how the story concludes]\n\n[[Start Over->Start]]'
-    }
-  };
-
   // Handle Add Passage
   function handleAddPassage() {
     if (!$currentStory) return;
 
-    // Create a new passage with default title
-    // TODO: Add a proper modal UI for template selection instead of prompt()
-    projectActions.addPassage();
+    // Show template selection dialog
+    showTemplateSelection = true;
+  }
+
+  // Handle passage template selection
+  function handlePassageTemplateSelect(event: CustomEvent<{ title: string; content: string }>) {
+    const { title, content } = event.detail;
+
+    // Create a new passage with the selected template
+    const passage = projectActions.addPassage();
+    if (passage) {
+      // Update the passage with template content
+      projectActions.updatePassage(passage.id, {
+        title,
+        content
+      });
+    }
   }
 
   // Handle Delete Passage
@@ -1579,6 +1572,11 @@
   message={confirmDialogMessage}
   variant={confirmDialogVariant}
   on:confirm={handleConfirmDialogConfirm}
+/>
+
+<TemplateSelectionDialog
+  bind:show={showTemplateSelection}
+  on:select={handlePassageTemplateSelect}
 />
 
 <CommandPalette

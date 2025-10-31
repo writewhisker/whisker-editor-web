@@ -94,7 +94,7 @@ export async function listRepositories(): Promise<GitHubRepository[]> {
 export async function createRepository(
   name: string,
   description?: string,
-  isPrivate: boolean = true
+  isPrivate: boolean = false
 ): Promise<GitHubRepository> {
   return withLoading('github:create-repo', async () => {
   try {

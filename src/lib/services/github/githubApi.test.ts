@@ -60,6 +60,8 @@ describe('GitHub API Service', () => {
             full_name: 'user/repo1',
             description: 'Test repository 1',
             private: false,
+            default_branch: 'main',
+            updated_at: '2024-01-01T00:00:00Z',
             html_url: 'https://github.com/user/repo1',
           },
           {
@@ -68,6 +70,8 @@ describe('GitHub API Service', () => {
             full_name: 'user/repo2',
             description: 'Test repository 2',
             private: true,
+            default_branch: 'main',
+            updated_at: '2024-01-01T00:00:00Z',
             html_url: 'https://github.com/user/repo2',
           },
         ],
@@ -81,16 +85,18 @@ describe('GitHub API Service', () => {
         name: 'repo1',
         fullName: 'user/repo1',
         description: 'Test repository 1',
-        isPrivate: false,
-        url: 'https://github.com/user/repo1',
+        private: false,
+        defaultBranch: 'main',
+        updatedAt: '2024-01-01T00:00:00Z',
       });
       expect(repos[1]).toEqual({
         id: 2,
         name: 'repo2',
         fullName: 'user/repo2',
         description: 'Test repository 2',
-        isPrivate: true,
-        url: 'https://github.com/user/repo2',
+        private: true,
+        defaultBranch: 'main',
+        updatedAt: '2024-01-01T00:00:00Z',
       });
     });
 
@@ -131,6 +137,8 @@ describe('GitHub API Service', () => {
           full_name: 'user/new-repo',
           description: 'A new repository',
           private: true,
+          default_branch: 'main',
+          updated_at: '2024-01-01T00:00:00Z',
           html_url: 'https://github.com/user/new-repo',
         },
       });
@@ -142,8 +150,9 @@ describe('GitHub API Service', () => {
         name: 'new-repo',
         fullName: 'user/new-repo',
         description: 'A new repository',
-        isPrivate: true,
-        url: 'https://github.com/user/new-repo',
+        private: true,
+        defaultBranch: 'main',
+        updatedAt: '2024-01-01T00:00:00Z',
       });
 
       expect(mockOctokit.repos.createForAuthenticatedUser).toHaveBeenCalledWith({
@@ -161,6 +170,8 @@ describe('GitHub API Service', () => {
           name: 'public-repo',
           full_name: 'user/public-repo',
           private: false,
+          default_branch: 'main',
+          updated_at: '2024-01-01T00:00:00Z',
           html_url: 'https://github.com/user/public-repo',
         },
       });
@@ -249,7 +260,8 @@ describe('GitHub API Service', () => {
         'Create new story'
       );
 
-      expect(result.content.sha).toBe('new-sha');
+      expect(result.sha).toBe('commit-sha');
+      expect(result.message).toBe('Create new story');
       expect(mockOctokit.repos.createOrUpdateFileContents).toHaveBeenCalledWith({
         owner: 'user',
         repo: 'repo',

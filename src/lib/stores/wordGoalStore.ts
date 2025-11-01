@@ -56,8 +56,8 @@ const createWordGoalStore = () => {
      * Load goals and sessions from story metadata
      */
     loadGoals: (story: Story) => {
-      const savedGoals = story.getMetadata('wordGoals');
-      const savedSessions = story.getMetadata('writingSessions');
+      const savedGoals = story.settings.wordGoals;
+      const savedSessions = story.settings.writingSessions;
 
       if (savedGoals && Array.isArray(savedGoals)) {
         update(state => ({
@@ -89,8 +89,8 @@ const createWordGoalStore = () => {
      */
     saveGoals: (story: Story) => {
       const state = get({ subscribe });
-      story.setMetadata('wordGoals', state.goals);
-      story.setMetadata('writingSessions', state.sessions);
+      story.settings.wordGoals = state.goals;
+      story.settings.writingSessions = state.sessions;
     },
 
     /**

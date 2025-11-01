@@ -12,6 +12,7 @@
   import ValidationPanel from './lib/components/editor/ValidationPanel.svelte';
   import StoryStatisticsPanel from './lib/components/StoryStatisticsPanel.svelte';
   import TagManager from './lib/components/TagManager.svelte';
+  import SnippetsPanel from './lib/components/SnippetsPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
@@ -1349,8 +1350,8 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager, Validation, Tag Manager & Statistics -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics) && !$focusMode}
+          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics & Snippets -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
@@ -1367,13 +1368,18 @@
                 </div>
               {/if}
               {#if $panelVisibility.tagManager}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.snippets ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <StoryStatisticsPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.snippets}
+                <div class="flex-1 min-h-0">
+                  <SnippetsPanel />
                 </div>
               {/if}
             </div>

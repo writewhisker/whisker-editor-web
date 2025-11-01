@@ -222,3 +222,104 @@ export function getCircularLayoutElements(
 
   return { nodes: layoutedNodes, edges };
 }
+
+/**
+ * Radial tree layout - arranges nodes in concentric circles based on depth from root
+ */
+export function getRadialTreeLayoutElements(
+  nodes: Node[],
+  edges: Edge[],
+  rootId?: string
+): { nodes: Node[]; edges: Edge[] } {
+  if (nodes.length === 0) {
+    return { nodes, edges };
+  }
+
+  // Find root node (use provided rootId or first node)
+  const root = rootId ? nodes.find(n => n.id === rootId) : nodes[0];
+  if (!root) {
+    return { nodes, edges };
+  }
+
+  // Build adjacency list
+  const adjacency = new Map<string, string[]>();
+  nodes.forEach(node => adjacency.set(node.id, []));
+  edges.forEach(edge => {
+    const targets = adjacency.get(edge.source) || [];
+    targets.push(edge.target);
+    adjacency.set(edge.source, targets);
+  });
+
+  // Calculate depth for each node using BFS
+  const depths = new Map<string, number>();
+  const visited = new Set<string>();
+  const queue: { id: string; depth: number }[] = [{ id: root.id, depth: 0 }];
+
+  while (queue.length > 0) {
+    const { id, depth } = queue.shift()!;
+    if (visited.has(id)) continue;
+
+    visited.add(id);
+    depths.set(id, depth);
+
+    const children = adjacency.get(id) || [];
+    children.forEach(childId => {
+      if (!visited.has(childId)) {
+        queue.push({ id: childId, depth: depth + 1 });
+      }
+    });
+  }
+
+  // Assign depths to unvisited nodes
+  nodes.forEach(node => {
+    if (!depths.has(node.id)) {
+      depths.set(node.id, 0);
+    }
+  });
+
+  // Group nodes by depth
+  const nodesByDepth = new Map<number, Node[]>();
+  nodes.forEach(node => {
+    const depth = depths.get(node.id)!;
+    if (!nodesByDepth.has(depth)) {
+      nodesByDepth.set(depth, []);
+    }
+    nodesByDepth.get(depth)!.push(node);
+  });
+
+  // Layout parameters
+  const centerX = 600;
+  const centerY = 400;
+  const radiusStep = 200;
+  const minRadius = 100;
+
+  // Position nodes
+  const layoutedNodes = nodes.map(node => {
+    const depth = depths.get(node.id)!;
+    const nodesAtDepth = nodesByDepth.get(depth)!;
+    const indexAtDepth = nodesAtDepth.indexOf(node);
+
+    // Root node at center
+    if (depth === 0) {
+      return {
+        ...node,
+        position: { x: centerX, y: centerY },
+      };
+    }
+
+    // Other nodes in concentric circles
+    const radius = minRadius + depth * radiusStep;
+    const angleStep = (2 * Math.PI) / nodesAtDepth.length;
+    const angle = indexAtDepth * angleStep - Math.PI / 2; // Start from top
+
+    return {
+      ...node,
+      position: {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle),
+      },
+    };
+  });
+
+  return { nodes: layoutedNodes, edges };
+}

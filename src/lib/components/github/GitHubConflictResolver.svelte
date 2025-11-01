@@ -26,13 +26,13 @@
     const changes: string[] = [];
 
     // Check passages
-    if (local.passages.length !== remote.passages.length) {
-      changes.push(`Passages: ${local.passages.length} local vs ${remote.passages.length} remote`);
+    if (local.passages.size !== remote.passages.size) {
+      changes.push(`Passages: ${local.passages.size} local vs ${remote.passages.size} remote`);
     }
 
     // Check variables
-    const localVars = local.variables?.length || 0;
-    const remoteVars = remote.variables?.length || 0;
+    const localVars = local.variables?.size || 0;
+    const remoteVars = remote.variables?.size || 0;
     if (localVars !== remoteVars) {
       changes.push(`Variables: ${localVars} local vs ${remoteVars} remote`);
     }
@@ -144,10 +144,10 @@
               </div>
               {#if localVersion}
                 <div>
-                  <span class="font-medium">Passages:</span> {localVersion.passages.length}
+                  <span class="font-medium">Passages:</span> {localVersion.passages.size}
                 </div>
                 <div>
-                  <span class="font-medium">Variables:</span> {localVersion.variables?.length || 0}
+                  <span class="font-medium">Variables:</span> {localVersion.variables?.size || 0}
                 </div>
                 <div>
                   <span class="font-medium">Tags:</span> {localVersion.tags?.length || 0}
@@ -170,10 +170,10 @@
               </div>
               {#if remoteVersion}
                 <div>
-                  <span class="font-medium">Passages:</span> {remoteVersion.passages.length}
+                  <span class="font-medium">Passages:</span> {remoteVersion.passages.size}
                 </div>
                 <div>
-                  <span class="font-medium">Variables:</span> {remoteVersion.variables?.length || 0}
+                  <span class="font-medium">Variables:</span> {remoteVersion.variables?.size || 0}
                 </div>
                 <div>
                   <span class="font-medium">Tags:</span> {remoteVersion.tags?.length || 0}

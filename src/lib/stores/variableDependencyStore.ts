@@ -118,7 +118,12 @@ function analyzeStory(story: Story): DependencyGraph {
   const dependencyMap = new Map<string, Set<string>>();
 
   // Initialize nodes from story variables
-  for (const variable of story.variables) {
+  // Handle both Map (runtime) and array (test) formats
+  const variables = story.variables instanceof Map
+    ? Array.from(story.variables.values())
+    : (story.variables as any) || [];
+
+  for (const variable of variables) {
     nodes.set(variable.name, {
       name: variable.name,
       type: variable.type as any,

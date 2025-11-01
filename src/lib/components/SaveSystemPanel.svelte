@@ -345,13 +345,13 @@ ${generatedCode.utilities}
           {/if}
         </div>
 
-        {#if $currentStory.variables.length === 0}
+        {#if $currentStory.variables.size === 0}
           <div class="text-center py-8 text-gray-500 dark:text-gray-400">
             <p class="text-sm">No variables defined in story</p>
           </div>
         {:else}
           <div class="space-y-1">
-            {#each $currentStory.variables as variable}
+            {#each $currentStory.variables as [, variable]}
               <label class="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded">
                 <input
                   type="checkbox"

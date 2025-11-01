@@ -36,6 +36,7 @@ export interface PanelVisibility {
   adaptiveDifficulty: boolean;
   versionDiff: boolean;
   mobileExport: boolean;
+  aiWriting: boolean;
 }
 
 export interface PanelSizes {
@@ -86,6 +87,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     adaptiveDifficulty: false,
     versionDiff: false,
     mobileExport: false,
+    aiWriting: false,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

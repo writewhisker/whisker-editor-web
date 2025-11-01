@@ -479,7 +479,7 @@
 <!-- Context Menu -->
 {#if showContextMenu}
   <div
-    class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
+    class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 w-auto min-w-[120px] sm:min-w-[150px] max-w-[90vw]"
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
     on:click|stopPropagation
     on:touchend|stopPropagation

@@ -1299,7 +1299,7 @@
   <!-- Edge Context Menu -->
   {#if edgeContextMenu.show}
     <div
-      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[180px]"
+      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 w-auto min-w-[140px] sm:min-w-[180px] max-w-[90vw]"
       style="left: {edgeContextMenu.x}px; top: {edgeContextMenu.y}px;"
       on:click|stopPropagation
       role="menu"
@@ -1326,7 +1326,7 @@
   <!-- Graph Context Menu (right-click on empty space) -->
   {#if graphContextMenu.show}
     <div
-      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[200px]"
+      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 w-auto min-w-[160px] sm:min-w-[200px] max-w-[90vw]"
       style="left: {graphContextMenu.x}px; top: {graphContextMenu.y}px;"
       on:click|stopPropagation
       role="menu"

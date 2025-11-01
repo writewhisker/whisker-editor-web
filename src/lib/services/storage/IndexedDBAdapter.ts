@@ -243,9 +243,49 @@ export class IndexedDBAdapter {
       const store = transaction.objectStore('stories');
       const request = store.get(id);
 
-      request.onsuccess = () => resolve(request.result || null);
+      request.onsuccess = () => {
+        const data = request.result;
+        if (data) {
+          // Convert ISO string dates back to Date objects
+          this.restoreDateFields(data);
+        }
+        resolve(data || null);
+      };
       request.onerror = () => reject(new Error(`Failed to load story: ${request.error}`));
     });
+  }
+
+  /**
+   * Recursively restore Date objects from ISO string fields
+   */
+  private restoreDateFields(obj: any): void {
+    if (!obj || typeof obj !== 'object') return;
+
+    // Common date field names to check
+    const dateFields = ['created', 'modified', 'createdAt', 'updatedAt', 'timestamp'];
+
+    for (const key of Object.keys(obj)) {
+      const value = obj[key];
+
+      // Check if this is a date field with a string value
+      if (dateFields.includes(key) && typeof value === 'string') {
+        try {
+          obj[key] = new Date(value);
+        } catch (e) {
+          // If conversion fails, leave as-is
+          console.warn(`Failed to convert ${key} to Date:`, value);
+        }
+      }
+
+      // Recursively process nested objects and arrays
+      if (value && typeof value === 'object') {
+        if (Array.isArray(value)) {
+          value.forEach(item => this.restoreDateFields(item));
+        } else {
+          this.restoreDateFields(value);
+        }
+      }
+    }
   }
 
   /**

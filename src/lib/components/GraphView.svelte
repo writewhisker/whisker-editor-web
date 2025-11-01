@@ -439,6 +439,76 @@
     closeGraphContextMenu();
   }
 
+  // Double-click detection for pane
+  let paneClickTimer: ReturnType<typeof setTimeout> | null = null;
+  let paneClickCount = 0;
+  const DOUBLE_CLICK_DELAY = 300; // ms
+
+  // Handle pane click - detect double-click for quick passage creation
+  function handlePaneClick(event: any) {
+    paneClickCount++;
+
+    if (paneClickCount === 1) {
+      // First click - start timer
+      paneClickTimer = setTimeout(() => {
+        // Single click - do nothing special
+        paneClickCount = 0;
+      }, DOUBLE_CLICK_DELAY);
+    } else if (paneClickCount === 2) {
+      // Second click - this is a double-click!
+      if (paneClickTimer) {
+        clearTimeout(paneClickTimer);
+        paneClickTimer = null;
+      }
+      paneClickCount = 0;
+
+      // Create passage at double-click location
+      createPassageAtClick(event);
+    }
+  }
+
+  function createPassageAtClick(event: any) {
+    if (!$currentStory) return;
+
+    // Get the mouse position from the event
+    const mouseX = event.clientX || event.detail?.event?.clientX || event.detail?.clientX || 0;
+    const mouseY = event.clientY || event.detail?.event?.clientY || event.detail?.clientY || 0;
+
+    // Get the flow viewport position (for placing the passage)
+    const viewport = getViewport();
+    const flowX = (mouseX - viewport.x) / viewport.zoom;
+    const flowY = (mouseY - viewport.y) / viewport.zoom;
+
+    // Create a new blank passage at the double-clicked position
+    const passage = new Passage({
+      title: 'New Passage',
+      content: '',
+      position: { x: flowX, y: flowY },
+    });
+
+    currentStory.update(story => {
+      if (story) {
+        story.addPassage(passage);
+        selectedPassageId.set(passage.id);
+        unsavedChanges.set(true);
+      }
+      return story;
+    });
+
+    // Save new state to history
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
+
+    // Auto-switch to split view to show passage editor
+    if (get(viewMode) === 'graph') {
+      viewPreferencesActions.setViewMode('split');
+    }
+
+    updateGraph();
+  }
+
   function deleteEdge(edgeId: string) {
     if (!$currentStory) return;
 
@@ -956,6 +1026,7 @@
         onnodedragstop={(e: any) => handleNodeDragStop(e)}
         onnodeclick={(e: any) => handleNodeClick(e)}
         onconnect={(e: any) => handleConnect(e)}
+        onpaneclick={(e: any) => handlePaneClick(e)}
         onpanecontextmenu={(e: any) => {
           e.preventDefault();
           handlePaneContextMenu(e);

@@ -30,6 +30,7 @@ export interface PanelVisibility {
   pacing: boolean;
   accessibility: boolean;
   playtest: boolean;
+  dependencies: boolean;
 }
 
 export interface PanelSizes {
@@ -74,6 +75,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     pacing: false,
     accessibility: false,
     playtest: false,
+    dependencies: false,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

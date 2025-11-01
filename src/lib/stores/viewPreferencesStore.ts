@@ -25,6 +25,7 @@ export interface PanelVisibility {
   tagManager: boolean;
   snippets: boolean;
   characters: boolean;
+  wordGoals: boolean;
 }
 
 export interface PanelSizes {
@@ -64,6 +65,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     tagManager: false,
     snippets: false,
     characters: false,
+    wordGoals: false,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

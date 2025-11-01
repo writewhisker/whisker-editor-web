@@ -21,6 +21,7 @@
   import PlaytestPanel from './lib/components/PlaytestPanel.svelte';
   import VariableDependencyPanel from './lib/components/VariableDependencyPanel.svelte';
   import SaveSystemPanel from './lib/components/SaveSystemPanel.svelte';
+  import AchievementPanel from './lib/components/AchievementPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
@@ -1371,6 +1372,16 @@
           >
             💾 Save System
           </button>
+          <button
+            type="button"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.achievements ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => viewPreferencesActions.togglePanel('achievements')}
+            aria-label="Toggle achievements panel"
+            aria-pressed={$panelVisibility.achievements}
+            title="Toggle Achievements Panel"
+          >
+            🏆 Achievements
+          </button>
         </div>
 
         <!-- Divider -->
@@ -1439,7 +1450,7 @@
           {/if}
 
           <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets, Characters, Word Goals, Collaboration, Pacing & Accessibility -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility || $panelVisibility.playtest || $panelVisibility.dependencies || $panelVisibility.saveSystem) && !$focusMode}
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility || $panelVisibility.playtest || $panelVisibility.dependencies || $panelVisibility.saveSystem || $panelVisibility.achievements) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
@@ -1451,7 +1462,7 @@
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility || $panelVisibility.playtest || $panelVisibility.dependencies || $panelVisibility.saveSystem) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility || $panelVisibility.playtest || $panelVisibility.dependencies || $panelVisibility.saveSystem || $panelVisibility.achievements) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
                 </div>
               {/if}
@@ -1501,13 +1512,18 @@
                 </div>
               {/if}
               {#if $panelVisibility.dependencies}
-                <div class="flex-1 min-h-0 {$panelVisibility.saveSystem ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.saveSystem || $panelVisibility.achievements ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <VariableDependencyPanel />
                 </div>
               {/if}
               {#if $panelVisibility.saveSystem}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.achievements ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <SaveSystemPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.achievements}
+                <div class="flex-1 min-h-0">
+                  <AchievementPanel />
                 </div>
               {/if}
             </div>

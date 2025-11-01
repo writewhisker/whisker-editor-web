@@ -32,6 +32,7 @@ export interface PanelVisibility {
   playtest: boolean;
   dependencies: boolean;
   saveSystem: boolean;
+  achievements: boolean;
 }
 
 export interface PanelSizes {
@@ -78,6 +79,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     playtest: false,
     dependencies: false,
     saveSystem: false,
+    achievements: false,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

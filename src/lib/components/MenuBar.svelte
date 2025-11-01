@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { currentStory } from '../stores/projectStore';
-  import { getRecentFiles, formatLastOpened, clearRecentFiles, type RecentFile } from '../utils/recentFiles';
+  import { getRecentFiles, formatLastOpened, clearRecentFiles, getFileIcon, truncatePath, type RecentFile } from '../utils/recentFiles';
   import { theme, themeActions } from '../stores/themeStore';
   import { panelVisibility, viewPreferencesActions } from '../stores/viewPreferencesStore';
   import GitHubConnect from './github/GitHubConnect.svelte';
@@ -16,6 +16,7 @@
   export let onSettings: (() => void) | undefined = undefined;
 
   let showFileMenu = false;
+  let showRecentMenu = false;
   let showEditMenu = false;
   let showViewMenu = false;
   let showTestMenu = false;
@@ -23,6 +24,7 @@
   let recentFiles: RecentFile[] = [];
 
   let fileMenuElement: HTMLElement | null = null;
+  let recentMenuElement: HTMLElement | null = null;
   let editMenuElement: HTMLElement | null = null;
   let viewMenuElement: HTMLElement | null = null;
   let testMenuElement: HTMLElement | null = null;
@@ -42,6 +44,7 @@
   function toggleFileMenu(event: MouseEvent) {
     event.stopPropagation();
     showFileMenu = !showFileMenu;
+    showRecentMenu = false;
     showEditMenu = false;
     showViewMenu = false;
     showTestMenu = false;
@@ -52,10 +55,25 @@
     }
   }
 
+  function toggleRecentMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showRecentMenu = !showRecentMenu;
+    showFileMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+    if (showRecentMenu) {
+      // Reload recent files when opening menu
+      recentFiles = getRecentFiles();
+    }
+  }
+
   function toggleEditMenu(event: MouseEvent) {
     event.stopPropagation();
     showEditMenu = !showEditMenu;
     showFileMenu = false;
+    showRecentMenu = false;
     showViewMenu = false;
     showTestMenu = false;
     showHelpMenu = false;
@@ -65,6 +83,7 @@
     event.stopPropagation();
     showViewMenu = !showViewMenu;
     showFileMenu = false;
+    showRecentMenu = false;
     showEditMenu = false;
     showTestMenu = false;
     showHelpMenu = false;
@@ -74,6 +93,7 @@
     event.stopPropagation();
     showTestMenu = !showTestMenu;
     showFileMenu = false;
+    showRecentMenu = false;
     showEditMenu = false;
     showViewMenu = false;
     showHelpMenu = false;
@@ -83,6 +103,7 @@
     event.stopPropagation();
     showHelpMenu = !showHelpMenu;
     showFileMenu = false;
+    showRecentMenu = false;
     showEditMenu = false;
     showViewMenu = false;
     showTestMenu = false;
@@ -90,6 +111,7 @@
 
   function closeMenus() {
     showFileMenu = false;
+    showRecentMenu = false;
     showEditMenu = false;
     showViewMenu = false;
     showTestMenu = false;
@@ -109,8 +131,9 @@
     closeMenus();
   }
 
-  function handleMenuKeydown(menuType: 'file' | 'edit' | 'view' | 'test' | 'help', event: KeyboardEvent) {
+  function handleMenuKeydown(menuType: 'file' | 'recent' | 'edit' | 'view' | 'test' | 'help', event: KeyboardEvent) {
     const menuElement = menuType === 'file' ? fileMenuElement :
+                       menuType === 'recent' ? recentMenuElement :
                        menuType === 'edit' ? editMenuElement :
                        menuType === 'view' ? viewMenuElement :
                        menuType === 'test' ? testMenuElement :
@@ -154,6 +177,13 @@
         menuItems[menuItems.length - 1]?.focus();
         break;
     }
+  }
+
+  function getKeyboardShortcut(index: number): string {
+    if (index >= 9) return '';
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const modifier = isMac ? '\u2318' : 'Ctrl+';
+    return `${modifier}${index + 1}`;
   }
 
   onMount(() => {
@@ -327,6 +357,93 @@
             <span>Custom Stylesheets...</span>
             <span class="text-xs text-gray-400 ml-2">🎨</span>
           </button>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Recent Menu -->
+    <div class="relative">
+      <button
+        id="recent-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleRecentMenu}
+        aria-expanded={showRecentMenu}
+        aria-controls="recent-menu"
+        aria-haspopup="true"
+      >
+        Recent
+      </button>
+      {#if showRecentMenu}
+        <div
+          id="recent-menu"
+          bind:this={recentMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="recent-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[300px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('recent', e)}
+        >
+          {#if recentFiles.length > 0}
+            <!-- Recent Files List -->
+            {#each recentFiles as file, index}
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-start gap-3 border-b border-gray-700/50 last:border-b-0"
+                on:click={() => handleOpenRecent(file)}
+              >
+                <!-- File Icon -->
+                <span class="text-lg flex-shrink-0 mt-0.5">{getFileIcon(file.name)}</span>
+
+                <!-- File Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium truncate">{file.name}</span>
+                    {#if index < 9}
+                      <span class="text-xs text-gray-500 flex-shrink-0">{getKeyboardShortcut(index)}</span>
+                    {/if}
+                  </div>
+
+                  {#if file.path}
+                    <div class="text-xs text-gray-400 truncate" title={file.path}>
+                      {truncatePath(file.path, 50)}
+                    </div>
+                  {/if}
+
+                  {#if file.storyTitle && file.storyTitle !== file.name}
+                    <div class="text-xs text-gray-500 truncate">
+                      {file.storyTitle}
+                    </div>
+                  {/if}
+
+                  <div class="text-xs text-gray-500 mt-0.5">
+                    {formatLastOpened(file.lastOpened)}
+                  </div>
+                </div>
+              </button>
+            {/each}
+
+            <!-- Clear Recent -->
+            <div class="border-t border-gray-700 my-1" role="separator"></div>
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm text-gray-400 flex items-center gap-2"
+              on:click={handleClearRecent}
+            >
+              <span>🗑️</span>
+              <span>Clear Recent Files</span>
+            </button>
+          {:else}
+            <!-- No Recent Files -->
+            <div class="px-4 py-6 text-center">
+              <div class="text-4xl mb-2">📂</div>
+              <div class="text-sm text-gray-400">No recent files</div>
+              <div class="text-xs text-gray-500 mt-1">Open a file to see it here</div>
+            </div>
+          {/if}
         </div>
       {/if}
     </div>

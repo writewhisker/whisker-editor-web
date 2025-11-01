@@ -56,7 +56,8 @@ describe('VariableManager', () => {
       const { getByText, container } = render(VariableManager);
 
       expect(getByText('score')).toBeTruthy();
-      expect(getByText('number')).toBeTruthy();
+      // Type "number" is now in a select dropdown, not standalone text
+      expect(container.textContent).toContain('Number');
       expect(container.querySelector('input[type="number"]')).toBeTruthy();
     });
 
@@ -282,10 +283,10 @@ describe('VariableManager', () => {
 
       const { container } = render(VariableManager);
 
-      const typeBadge = Array.from(container.querySelectorAll('.bg-gray-200')).find(
-        el => el.textContent === 'number'
-      );
-      expect(typeBadge).toBeTruthy();
+      // Type is now in a select dropdown, not a badge
+      const typeSelect = container.querySelector('select');
+      expect(typeSelect).toBeTruthy();
+      expect(typeSelect?.value).toBe('number');
     });
 
     it('should display text input for string variables', () => {
@@ -316,9 +317,14 @@ describe('VariableManager', () => {
 
       const { container } = render(VariableManager);
 
-      const select = container.querySelector('select') as HTMLSelectElement;
-      expect(select).toBeTruthy();
-      expect(select.value).toBe('true');
+      // There are multiple selects: one for type, one for boolean value
+      const selects = container.querySelectorAll('select');
+      const booleanSelect = Array.from(selects).find(s => {
+        const options = Array.from(s.querySelectorAll('option'));
+        return options.some(o => o.value === 'true' || o.value === 'false');
+      }) as HTMLSelectElement;
+      expect(booleanSelect).toBeTruthy();
+      expect(booleanSelect.value).toBe('true');
     });
 
     it('should display copy and delete buttons', () => {
@@ -374,8 +380,14 @@ describe('VariableManager', () => {
 
       const { container } = render(VariableManager);
 
-      const select = container.querySelector('select') as HTMLSelectElement;
-      await fireEvent.change(select, { target: { value: 'true' } });
+      // Find the boolean value select (not the type select)
+      const selects = container.querySelectorAll('select');
+      const booleanSelect = Array.from(selects).find(s => {
+        const options = Array.from(s.querySelectorAll('option'));
+        return options.some(o => o.value === 'true' || o.value === 'false');
+      }) as HTMLSelectElement;
+
+      await fireEvent.change(booleanSelect, { target: { value: 'true' } });
 
       await waitFor(() => {
         const variable = get(currentStory)?.getVariable('flag');

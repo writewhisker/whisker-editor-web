@@ -69,26 +69,33 @@
 
   <div class="border-l border-gray-300 h-8 mx-2"></div>
 
+  <!-- Undo/Redo Controls -->
   <button
-    class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+    class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
     on:click={() => projectActions.undo()}
     disabled={!$canUndo}
-    title="Undo (Ctrl+Z)"
+    title="Undo ({navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Z)"
+    aria-label="Undo last action"
   >
-    ↶
+    <span class="text-xl" aria-hidden="true">⟲</span>
   </button>
 
   <button
-    class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+    class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
     on:click={() => projectActions.redo()}
     disabled={!$canRedo}
-    title="Redo (Ctrl+Shift+Z)"
+    title="Redo ({navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+Z)"
+    aria-label="Redo last undone action"
   >
-    ↷
+    <span class="text-xl" aria-hidden="true">⟳</span>
   </button>
 
   {#if $historyCount > 0}
-    <div class="text-xs text-gray-500" title="History depth">
+    <div
+      class="text-xs text-gray-600 font-medium px-2 py-1 bg-gray-200 rounded"
+      title="History depth: {$historyCount} state{$historyCount === 1 ? '' : 's'} available"
+      aria-label="History depth: {$historyCount}"
+    >
       {$historyCount}
     </div>
   {/if}

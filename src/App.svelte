@@ -17,6 +17,7 @@
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
   import PreviewPanel from './lib/components/PreviewPanel.svelte';
   import KeyboardShortcutsHelp from './lib/components/help/KeyboardShortcutsHelp.svelte';
+  import QuickShortcutsOverlay from './lib/components/help/QuickShortcutsOverlay.svelte';
   import AutoSaveRecovery from './lib/components/AutoSaveRecovery.svelte';
   import LoadingSpinner from './lib/components/LoadingSpinner.svelte';
   import ConfirmDialog from './lib/components/ConfirmDialog.svelte';
@@ -47,6 +48,7 @@
   import GitHubSyncStatus from './lib/components/github/GitHubSyncStatus.svelte';
   import GitHubCommitHistory from './lib/components/github/GitHubCommitHistory.svelte';
   import GitHubConflictResolver from './lib/components/github/GitHubConflictResolver.svelte';
+  import StoryStatsWidget from './lib/components/StoryStatsWidget.svelte';
   import { isAuthenticated } from './lib/services/github/githubAuth';
   import { saveFile, getFile } from './lib/services/github/githubApi';
   import type { GitHubRepository } from './lib/services/github/types';
@@ -112,6 +114,9 @@
   // Shortcuts help state
   let showShortcutsHelp = false;
 
+  // Quick shortcuts overlay state
+  let showQuickShortcuts = false;
+
   // About dialog state
   let showAboutDialog = false;
 
@@ -123,6 +128,9 @@
 
   // Settings dialog state
   let showSettings = false;
+
+  // Story stats widget state
+  let showStatsWidget = true;
 
   // Auto-save status
   let autoSaveStatus: 'idle' | 'saving' | 'saved' = 'idle';
@@ -752,6 +760,16 @@
     );
   }
 
+  // Handle Duplicate Passage
+  function handleDuplicatePassage() {
+    if (!$currentStory || !$selectedPassageId) return;
+
+    const duplicated = projectActions.duplicatePassage($selectedPassageId);
+    if (duplicated) {
+      notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
+    }
+  }
+
   // Navigate to next/previous passage
   function navigatePassage(direction: 'next' | 'prev' | 'up' | 'down') {
     if (!$currentStory) return;
@@ -783,6 +801,14 @@
 
     // Don't intercept arrow keys if user is typing in an input/textarea
     const isTyping = ['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName);
+
+    // Quick shortcuts overlay (?)
+    // Only show if not already showing another dialog
+    if (e.key === '?' && !showCommandPalette && !showShortcutsHelp && !showQuickShortcuts) {
+      e.preventDefault();
+      showQuickShortcuts = true;
+      return;
+    }
 
     // Command palette (Ctrl+K)
     if (ctrlKey && e.key.toLowerCase() === 'k') {
@@ -833,6 +859,9 @@
       if ($currentStory) {
         showFindReplaceDialog = true;
       }
+    } else if (ctrlKey && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      handleDuplicatePassage();
     } else if (ctrlKey && e.shiftKey && e.key.toLowerCase() === 'm') {
       e.preventDefault();
       viewPreferencesActions.toggleFocusMode();
@@ -1250,6 +1279,23 @@
             🏷️ Tags
           </button>
         </div>
+
+        <!-- Divider -->
+        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+        <!-- Stats Widget Toggle -->
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="px-2 py-1 text-xs rounded {showStatsWidget ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => showStatsWidget = !showStatsWidget}
+            aria-label="Toggle stats widget"
+            aria-pressed={showStatsWidget}
+            title="Toggle Stats Widget"
+          >
+            📊 Widget
+          </button>
+        </div>
       {/if}
 
       <!-- Divider -->
@@ -1545,6 +1591,11 @@
       {/if}
     </div>
   {/if}
+
+  <!-- Story Stats Widget -->
+  {#if $currentStory && !$focusMode && !$isMobile}
+    <StoryStatsWidget bind:show={showStatsWidget} />
+  {/if}
 </div>
 
 <FileDialog
@@ -1567,6 +1618,8 @@
 />
 
 <KeyboardShortcutsHelp />
+
+<QuickShortcutsOverlay bind:show={showQuickShortcuts} />
 
 <AutoSaveRecovery
   onRecover={handleAutoSaveRecover}

@@ -3,11 +3,20 @@
   import { Choice } from '../models/Choice';
   import { tagActions } from '../stores/tagStore';
   import TagInput from './TagInput.svelte';
+  import { notificationStore } from '../stores/notificationStore';
+  import PassageLinkAutocomplete from './PassageLinkAutocomplete.svelte';
+  import CommentPanel from './collaboration/CommentPanel.svelte';
+  import { commentsByPassage } from '../stores/commentStore';
 
   $: passage = $selectedPassage;
 
   let titleWarning = '';
   let originalTitle = '';
+  let commentsCollapsed = false;
+
+  // Comment state
+  $: passageComments = passage ? ($commentsByPassage.get(passage.id) || []) : [];
+  $: unresolvedCommentCount = passageComments.filter(c => !c.resolved).length;
 
   // Track original title when passage changes
   $: if (passage) {
@@ -50,6 +59,112 @@
     const target = event.target as HTMLTextAreaElement;
     if (passage) {
       projectActions.updatePassage(passage.id, { content: target.value });
+    }
+  }
+
+  // Autocomplete state
+  let autocompleteVisible = false;
+  let autocompleteQuery = '';
+  let autocompletePosition = { top: 0, left: 0 };
+  let linkStartPos = 0;
+
+  function handleContentInput(event: Event) {
+    updatePassageContent(event);
+    checkForAutocomplete(event);
+  }
+
+  function checkForAutocomplete(event: Event) {
+    if (!contentTextarea || !passage) return;
+
+    const textarea = contentTextarea;
+    const cursorPos = textarea.selectionStart;
+    const content = textarea.value;
+
+    // Look backwards from cursor to find [[
+    let searchPos = cursorPos - 1;
+    let foundOpen = false;
+    let openPos = -1;
+
+    while (searchPos >= 0 && searchPos >= cursorPos - 100) {
+      if (content[searchPos] === '[' && searchPos > 0 && content[searchPos - 1] === '[') {
+        foundOpen = true;
+        openPos = searchPos - 1;
+        break;
+      }
+      // If we hit a closing ]] or newline, stop searching
+      if (content[searchPos] === ']' || content[searchPos] === '\n') {
+        break;
+      }
+      searchPos--;
+    }
+
+    if (foundOpen) {
+      // Extract the query between [[ and cursor
+      const query = content.substring(openPos + 2, cursorPos);
+
+      // Check if there's already a closing ]] or -> before cursor
+      if (query.includes(']]') || query.includes('->')) {
+        autocompleteVisible = false;
+        return;
+      }
+
+      // Show autocomplete
+      linkStartPos = openPos;
+      autocompleteQuery = query;
+      autocompleteVisible = true;
+
+      // Calculate position for dropdown
+      const rect = textarea.getBoundingClientRect();
+      const lines = content.substring(0, openPos).split('\n');
+      const lineHeight = 20; // Approximate line height
+      const currentLine = lines.length - 1;
+
+      autocompletePosition = {
+        top: rect.top + (currentLine + 1) * lineHeight + 25,
+        left: rect.left + 10
+      };
+    } else {
+      autocompleteVisible = false;
+    }
+  }
+
+  function handleAutocompleteSelect(event: CustomEvent<{ title: string }>) {
+    if (!contentTextarea || !passage) return;
+
+    const title = event.detail.title;
+    const content = passage.content;
+    const cursorPos = contentTextarea.selectionStart;
+
+    // Replace from [[ to cursor with [[title]]
+    const before = content.substring(0, linkStartPos);
+    const after = content.substring(cursorPos);
+    const newContent = before + `[[${title}]]` + after;
+
+    projectActions.updatePassage(passage.id, { content: newContent });
+
+    // Close autocomplete
+    autocompleteVisible = false;
+
+    // Set cursor position after the inserted link
+    setTimeout(() => {
+      if (contentTextarea) {
+        const newCursorPos = linkStartPos + `[[${title}]]`.length;
+        contentTextarea.focus();
+        contentTextarea.selectionStart = newCursorPos;
+        contentTextarea.selectionEnd = newCursorPos;
+      }
+    }, 0);
+  }
+
+  function handleAutocompleteClose() {
+    autocompleteVisible = false;
+  }
+
+  function handleContentKeydown(event: KeyboardEvent) {
+    // Pass through navigation keys to autocomplete when it's visible
+    if (autocompleteVisible && ['ArrowDown', 'ArrowUp', 'Enter', 'Tab', 'Escape'].includes(event.key)) {
+      // Let the autocomplete component handle these
+      return;
     }
   }
 
@@ -152,6 +267,15 @@
     }
   }
 
+  function duplicatePassage() {
+    if (passage) {
+      const duplicated = projectActions.duplicatePassage(passage.id);
+      if (duplicated) {
+        notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
+      }
+    }
+  }
+
   // Predefined color palette
   const colorPalette = [
     '#EF4444', // red
@@ -175,6 +299,11 @@
   $: availablePassages = $currentStory
     ? Array.from($currentStory.passages.values()).filter(p => p.id !== passage?.id)
     : [];
+
+  // All passages for autocomplete (including current passage)
+  $: allPassages = $currentStory
+    ? Array.from($currentStory.passages.values())
+    : [];
 </script>
 
 <div class="flex flex-col h-full bg-white border-l border-gray-300">
@@ -188,7 +317,16 @@
   {:else}
     <!-- Header -->
     <div class="p-3 border-b border-gray-300">
-      <h3 class="font-semibold text-gray-800">Properties</h3>
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-gray-800">Properties</h3>
+        <button
+          class="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          on:click={duplicatePassage}
+          title="Duplicate this passage (Ctrl+D)"
+        >
+          Duplicate
+        </button>
+      </div>
     </div>
 
     <!-- Content -->
@@ -365,7 +503,8 @@
           id="passage-content"
           bind:this={contentTextarea}
           value={passage.content}
-          on:input={updatePassageContent}
+          on:input={handleContentInput}
+          on:keydown={handleContentKeydown}
           rows="10"
           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           placeholder="Write your passage content here..."
@@ -457,6 +596,45 @@
           {/each}
         </div>
       </div>
+
+      <!-- Comments -->
+      <div>
+        <button
+          type="button"
+          class="w-full flex items-center justify-between text-sm font-medium text-gray-700 mb-2 hover:text-gray-900 transition-colors"
+          on:click={() => commentsCollapsed = !commentsCollapsed}
+        >
+          <div class="flex items-center gap-2">
+            <span>{commentsCollapsed ? '▶' : '▼'}</span>
+            <span>Comments</span>
+            {#if unresolvedCommentCount > 0}
+              <span class="text-xs px-1.5 py-0.5 bg-blue-200 text-blue-700 rounded font-medium">
+                {unresolvedCommentCount} unresolved
+              </span>
+            {:else if passageComments.length > 0}
+              <span class="text-xs px-1.5 py-0.5 bg-green-200 text-green-700 rounded font-medium">
+                All resolved
+              </span>
+            {/if}
+          </div>
+        </button>
+
+        {#if !commentsCollapsed}
+          <div class="border border-gray-300 rounded overflow-hidden" style="height: 400px;">
+            <CommentPanel passageId={passage.id} showResolved={true} />
+          </div>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>
+
+<!-- Passage Link Autocomplete -->
+<PassageLinkAutocomplete
+  passages={allPassages}
+  query={autocompleteQuery}
+  position={autocompletePosition}
+  visible={autocompleteVisible}
+  on:select={handleAutocompleteSelect}
+  on:close={handleAutocompleteClose}
+/>

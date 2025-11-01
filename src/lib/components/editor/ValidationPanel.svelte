@@ -27,6 +27,13 @@
   let activeTab: 'issues' | 'metrics' | 'history' = 'issues';
   let selectedHistoryIndex: number | null = null;
 
+  // Fix All state
+  let isFixingAll = false;
+  let fixAllProgress = { current: 0, total: 0 };
+  let showFixAllConfirmation = false;
+  let showFixAllSummary = false;
+  let fixAllResult: any = null;
+
   // Filtered issues
   $: filteredIssues = ($validationResult && Array.isArray($validationResult.issues))
     ? $validationResult.issues.filter((issue) => {
@@ -201,6 +208,60 @@
       }
     }
   }
+
+  // Handle Fix All button click
+  function handleFixAllClick() {
+    const fixableIssues = validationActions.getFixableIssues();
+    if (fixableIssues.length === 0) {
+      return;
+    }
+    showFixAllConfirmation = true;
+  }
+
+  // Confirm and execute Fix All
+  async function confirmFixAll() {
+    showFixAllConfirmation = false;
+    isFixingAll = true;
+
+    const fixableIssues = validationActions.getFixableIssues();
+    fixAllProgress = { current: 0, total: fixableIssues.length };
+
+    try {
+      // Apply all fixes at once using the autoFix method
+      const result = validationActions.autoFix();
+
+      if (result) {
+        fixAllResult = result;
+        fixAllProgress.current = fixAllProgress.total;
+
+        // Show summary after a brief delay to show completion
+        setTimeout(() => {
+          isFixingAll = false;
+          showFixAllSummary = true;
+        }, 500);
+      } else {
+        isFixingAll = false;
+        alert('Failed to apply fixes. Please try again.');
+      }
+    } catch (error) {
+      isFixingAll = false;
+      alert(`Error during auto-fix: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Cancel Fix All confirmation
+  function cancelFixAll() {
+    showFixAllConfirmation = false;
+  }
+
+  // Close Fix All summary
+  function closeFixAllSummary() {
+    showFixAllSummary = false;
+    fixAllResult = null;
+  }
+
+  // Get fixable issues count
+  $: fixableIssuesCount = validationActions.getFixableIssues().length;
 </script>
 
 <div class="validation-panel h-full flex flex-col bg-white">
@@ -213,6 +274,16 @@
       </h3>
 
       <div class="flex items-center gap-2">
+        {#if fixableIssuesCount > 0}
+          <button
+            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300 text-sm font-medium"
+            on:click={handleFixAllClick}
+            disabled={isFixingAll || $isValidating}
+          >
+            Fix All ({fixableIssuesCount})
+          </button>
+        {/if}
+
         <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
           <input
             type="checkbox"
@@ -694,6 +765,200 @@
       {/if}
     {/if}
   </div>
+
+  <!-- Fix All Confirmation Dialog -->
+  {#if showFixAllConfirmation}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      on:click={cancelFixAll}
+      on:keydown={(e) => e.key === 'Escape' && cancelFixAll()}
+      role="presentation"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
+        on:click|stopPropagation
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fix-all-confirm-title"
+        tabindex="-1"
+      >
+        <div class="p-6">
+          <h3 id="fix-all-confirm-title" class="text-xl font-bold text-gray-900 mb-4">Confirm Fix All</h3>
+
+          <div class="mb-4">
+            <p class="text-gray-700 mb-3">
+              {validationActions.getAutoFixDescription()}
+            </p>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded p-3">
+              <p class="text-sm text-yellow-800">
+                <strong>Warning:</strong> This action will modify your story by:
+              </p>
+              <ul class="text-sm text-yellow-800 mt-2 ml-4 list-disc">
+                <li>Deleting unreachable passages</li>
+                <li>Removing dead links</li>
+                <li>Adding undefined variables</li>
+                <li>Removing unused variables</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <button
+              class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+              on:click={cancelFixAll}
+            >
+              Cancel
+            </button>
+            <button
+              class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
+              on:click={confirmFixAll}
+            >
+              Apply Fixes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Fix All Progress Dialog -->
+  {#if isFixingAll}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+          <h3 class="text-xl font-bold text-gray-900 mb-4">Applying Fixes...</h3>
+
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-sm text-gray-600">Progress</span>
+              <span class="text-sm font-medium text-gray-900">
+                {fixAllProgress.current} / {fixAllProgress.total}
+              </span>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-green-500 h-2 rounded-full transition-all duration-300"
+                style="width: {fixAllProgress.total > 0 ? (fixAllProgress.current / fixAllProgress.total) * 100 : 0}%"
+              ></div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Fix All Summary Dialog -->
+  {#if showFixAllSummary && fixAllResult}
+    <div
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      on:click={closeFixAllSummary}
+      on:keydown={(e) => e.key === 'Escape' && closeFixAllSummary()}
+      role="presentation"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
+        on:click|stopPropagation
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="fix-all-summary-title"
+        tabindex="-1"
+      >
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 id="fix-all-summary-title" class="text-xl font-bold text-gray-900">Fix All Summary</h3>
+            <button
+              class="text-gray-400 hover:text-gray-600"
+              on:click={closeFixAllSummary}
+            >
+              <span class="text-2xl">&times;</span>
+            </button>
+          </div>
+
+          <div class="mb-4">
+            {#if fixAllResult.success}
+              <div class="bg-green-50 border border-green-200 rounded p-4 mb-4">
+                <div class="flex items-center gap-2 text-green-800">
+                  <span class="text-2xl">✓</span>
+                  <span class="font-semibold">Successfully fixed {fixAllResult.issuesFixed} issue(s)</span>
+                </div>
+              </div>
+            {:else}
+              <div class="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
+                <div class="flex items-center gap-2 text-yellow-800">
+                  <span class="text-2xl">⚠</span>
+                  <div>
+                    <div class="font-semibold">Fixed {fixAllResult.issuesFixed} issue(s)</div>
+                    <div class="text-sm">Failed to fix {fixAllResult.issuesFailed} issue(s)</div>
+                  </div>
+                </div>
+              </div>
+            {/if}
+
+            <!-- Details -->
+            <div class="space-y-3">
+              {#if fixAllResult.passagesDeleted && fixAllResult.passagesDeleted.length > 0}
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="font-medium text-gray-700 mb-1">Passages Deleted</div>
+                  <div class="text-sm text-gray-600">{fixAllResult.passagesDeleted.length} unreachable passage(s) removed</div>
+                </div>
+              {/if}
+
+              {#if fixAllResult.choicesDeleted && fixAllResult.choicesDeleted.length > 0}
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="font-medium text-gray-700 mb-1">Dead Links Removed</div>
+                  <div class="text-sm text-gray-600">{fixAllResult.choicesDeleted.length} dead link(s) removed</div>
+                </div>
+              {/if}
+
+              {#if fixAllResult.variablesAdded && fixAllResult.variablesAdded.length > 0}
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="font-medium text-gray-700 mb-1">Variables Added</div>
+                  <div class="text-sm text-gray-600">
+                    {fixAllResult.variablesAdded.join(', ')}
+                  </div>
+                </div>
+              {/if}
+
+              {#if fixAllResult.variablesDeleted && fixAllResult.variablesDeleted.length > 0}
+                <div class="bg-gray-50 rounded p-3">
+                  <div class="font-medium text-gray-700 mb-1">Variables Removed</div>
+                  <div class="text-sm text-gray-600">
+                    {fixAllResult.variablesDeleted.join(', ')}
+                  </div>
+                </div>
+              {/if}
+
+              {#if fixAllResult.errors && fixAllResult.errors.length > 0}
+                <div class="bg-red-50 rounded p-3">
+                  <div class="font-medium text-red-700 mb-1">Errors</div>
+                  <ul class="text-sm text-red-600 space-y-1">
+                    {#each fixAllResult.errors as error}
+                      <li>{error}</li>
+                    {/each}
+                  </ul>
+                </div>
+              {/if}
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <button
+              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              on:click={closeFixAllSummary}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
 </div>
 
 <style>

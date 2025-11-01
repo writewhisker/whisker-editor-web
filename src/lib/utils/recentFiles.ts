@@ -105,3 +105,45 @@ export function formatLastOpened(timestamp: number): string {
   if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
   return 'just now';
 }
+
+/**
+ * Get file type icon based on file extension
+ */
+export function getFileIcon(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  switch (ext) {
+    case 'html':
+    case 'htm':
+      return '📄';
+    case 'twee':
+    case 'tw':
+      return '📝';
+    case 'json':
+      return '📋';
+    default:
+      return '📁';
+  }
+}
+
+/**
+ * Truncate path intelligently, keeping filename and showing relevant parent dirs
+ */
+export function truncatePath(path: string | undefined, maxLength: number = 40): string {
+  if (!path) return '';
+  if (path.length <= maxLength) return path;
+
+  // Split path into parts
+  const parts = path.split(/[/\\]/);
+  if (parts.length <= 2) return path;
+
+  // Always keep filename and try to show some parent context
+  const fileName = parts[parts.length - 1];
+  const parentDir = parts[parts.length - 2];
+
+  // If just filename + parent fits, return that
+  const shortPath = `.../${parentDir}/${fileName}`;
+  if (shortPath.length <= maxLength) return shortPath;
+
+  // Otherwise just show filename with ellipsis
+  return `.../${fileName}`;
+}

@@ -159,6 +159,14 @@
     tagActions.resetTagColor(tagName);
     showColorPicker = null;
   }
+
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    // Check if click is outside the color picker
+    if (!target.closest('.color-picker-container') && !target.closest('.color-swatch-button')) {
+      showColorPicker = null;
+    }
+  }
 </script>
 
 <div class="tag-manager flex flex-col h-full bg-white">
@@ -260,14 +268,15 @@
             <!-- Color Indicator -->
             <div class="relative">
               <button
-                class="w-6 h-6 rounded border-2 border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                class="color-swatch-button w-6 h-6 rounded border-2 border-gray-300 cursor-pointer hover:scale-110 transition-transform"
                 style="background-color: {tag.color}"
                 on:click={() => showColorPicker = showColorPicker === tag.name ? null : tag.name}
                 title="Click to change color"
               ></button>
 
               {#if showColorPicker === tag.name}
-                <div class="absolute z-10 left-0 top-8 bg-white border border-gray-300 rounded shadow-lg p-2">
+                <div class="color-picker-container absolute z-10 left-0 top-8 bg-white border border-gray-300 rounded shadow-lg p-3 min-w-[200px]">
+                  <div class="text-xs font-medium text-gray-600 mb-2">Select Color</div>
                   <div class="grid grid-cols-4 gap-1 mb-2">
                     {#each [
                       '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
@@ -275,15 +284,41 @@
                       '#84cc16', '#6366f1', '#14b8a6', '#a855f7'
                     ] as color}
                       <button
-                        class="w-6 h-6 rounded border border-gray-300 hover:scale-110"
+                        class="w-7 h-7 rounded border-2 border-gray-300 hover:scale-110 transition-transform"
                         style="background-color: {color}"
                         on:click={() => setTagColor(tag.name, color)}
                         aria-label="Set tag color to {color}"
                       ></button>
                     {/each}
                   </div>
+                  <div class="border-t border-gray-200 pt-2 mt-2">
+                    <div class="text-xs font-medium text-gray-600 mb-1">Custom Color</div>
+                    <div class="flex gap-1">
+                      <input
+                        type="color"
+                        value={tag.color}
+                        on:change={(e) => setTagColor(tag.name, e.currentTarget.value)}
+                        class="w-10 h-8 rounded border border-gray-300 cursor-pointer"
+                        aria-label="Pick custom color"
+                      />
+                      <input
+                        type="text"
+                        value={tag.color}
+                        on:change={(e) => {
+                          const value = e.currentTarget.value;
+                          if (/^#[0-9A-F]{6}$/i.test(value)) {
+                            setTagColor(tag.name, value);
+                          }
+                        }}
+                        placeholder="#000000"
+                        maxlength="7"
+                        class="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                        aria-label="Enter custom color hex code"
+                      />
+                    </div>
+                  </div>
                   <button
-                    class="w-full text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                    class="w-full text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300 mt-2"
                     on:click={() => resetTagColor(tag.name)}
                   >
                     Reset to Default
@@ -409,6 +444,8 @@
     </div>
   </div>
 {/if}
+
+<svelte:window on:click={handleClickOutside} />
 
 <style>
   .tag-manager {

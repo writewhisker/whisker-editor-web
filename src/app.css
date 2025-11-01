@@ -96,6 +96,16 @@ body {
   transform: translateZ(0); /* Force GPU layer */
 }
 
+/* Drag and drop styles */
+[draggable="true"] {
+  cursor: move;
+  cursor: grab;
+}
+
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
 .hw-accel-opacity {
   will-change: opacity;
 }

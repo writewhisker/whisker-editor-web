@@ -8,6 +8,8 @@
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
   import { setupLongPress, isTouch } from '../../utils/mobile';
+  import { notificationStore } from '../../stores/notificationStore';
+  import { commentsByPassage } from '../../stores/commentStore';
 
   export let data: {
     passage: Passage;
@@ -35,6 +37,11 @@
   $: hasBreakpoint = $breakpoints.has(passage.id);
   $: isCurrentPreview = $currentPreviewPassage?.id === passage.id;
   $: wasVisitedInPreview = ($visitedPassages.get(passage.id) || 0) > 0;
+
+  // Comment state
+  $: passageComments = $commentsByPassage.get(passage.id) || [];
+  $: unresolvedCommentCount = passageComments.filter(c => !c.resolved).length;
+  $: hasComments = passageComments.length > 0;
 
   // Resize functionality
   let isResizing = false;
@@ -173,16 +180,10 @@
   }
 
   function handleDuplicate() {
-    if (!$currentStory) return;
-    const duplicate = passage.clone();
-    // Offset the duplicate slightly
-    duplicate.position = {
-      x: passage.position.x + 50,
-      y: passage.position.y + 50
-    };
-    $currentStory.addPassage(duplicate);
-    selectedPassageId.set(duplicate.id);
-    projectActions.markChanged();
+    const duplicated = projectActions.duplicatePassage(passage.id);
+    if (duplicated) {
+      notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
+    }
     closeContextMenu();
   }
 
@@ -315,6 +316,15 @@
         <h3 class="font-semibold text-sm truncate">{passage.title}</h3>
       </div>
       <div class="flex items-center gap-1">
+        {#if unresolvedCommentCount > 0}
+          <span class="text-xs px-1 py-0.5 bg-blue-200 text-blue-700 rounded" title="{unresolvedCommentCount} unresolved comment{unresolvedCommentCount !== 1 ? 's' : ''}" aria-label="{unresolvedCommentCount} unresolved comment{unresolvedCommentCount !== 1 ? 's' : ''}">
+            💬{unresolvedCommentCount}
+          </span>
+        {:else if hasComments}
+          <span class="text-xs px-1 py-0.5 bg-green-200 text-green-700 rounded" title="All comments resolved" aria-label="All comments resolved">
+            ✓💬
+          </span>
+        {/if}
         {#if hasErrors}
           <span class="text-xs px-1 py-0.5 bg-red-200 text-red-700 rounded" title={validationTooltip} aria-label="{errorCount} validation error{errorCount !== 1 ? 's' : ''}">
             {errorCount}❌

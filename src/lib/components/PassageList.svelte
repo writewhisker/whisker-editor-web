@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { currentStory, selectedPassageId } from '../stores/projectStore';
+  import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
   import { filteredPassages, isStartPassage, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { validationResult } from '../stores/validationStore';
+  import { passageOrderState, passageOrderActions, type SortOrder } from '../stores/passageOrderStore';
   import type { Passage } from '../models/Passage';
   import type { Choice } from '../models/Choice';
   import SearchBar from './SearchBar.svelte';
@@ -10,6 +11,8 @@
   import PassagePreview from './PassagePreview.svelte';
   import { onMount } from 'svelte';
   import { setupLongPress, isMobile, isTouch } from '../utils/mobile';
+  import { notificationStore } from '../stores/notificationStore';
+  import { commentsByPassage } from '../stores/commentStore';
 
   export let onAddPassage: () => void;
   export let onDeletePassage: (id: string) => void;
@@ -25,6 +28,7 @@
   // Multi-select state
   let selectedPassages = new Set<string>();
   let lastSelectedIndex = -1;
+  let selectMode = false;
 
   // Compact view mode
   let compactView = false;
@@ -36,6 +40,14 @@
       compactView = saved === 'true';
     }
   }
+
+  // Drag-and-drop state
+  let draggedIndex: number | null = null;
+  let dragOverIndex: number | null = null;
+  let isDragging = false;
+
+  // Keyboard reordering state
+  let focusedIndex: number = -1;
 
   // Auto-enable compact view on mobile (unless explicitly set)
   $: if (typeof window !== 'undefined' && $isMobile) {
@@ -112,16 +124,26 @@
   function selectPassage(id: string, event?: MouseEvent) {
     if (!event) {
       // Simple click - clear multi-select and select single passage
-      selectedPassages.clear();
-      selectedPassageId.set(id);
+      if (!selectMode) {
+        selectedPassages.clear();
+        selectedPassageId.set(id);
+      } else {
+        // In select mode, toggle selection
+        if (selectedPassages.has(id)) {
+          selectedPassages.delete(id);
+        } else {
+          selectedPassages.add(id);
+        }
+        selectedPassages = selectedPassages;
+      }
       lastSelectedIndex = $filteredPassages.findIndex(p => p.id === id);
       return;
     }
 
     const currentIndex = $filteredPassages.findIndex(p => p.id === id);
 
-    if (event.ctrlKey || event.metaKey) {
-      // Ctrl/Cmd+Click: Toggle selection
+    if (selectMode || event.ctrlKey || event.metaKey) {
+      // Select mode or Ctrl/Cmd+Click: Toggle selection
       if (selectedPassages.has(id)) {
         selectedPassages.delete(id);
       } else {
@@ -152,6 +174,21 @@
     lastSelectedIndex = -1;
   }
 
+  function toggleSelectMode() {
+    selectMode = !selectMode;
+    if (!selectMode) {
+      clearSelection();
+    }
+  }
+
+  function selectAll() {
+    selectedPassages.clear();
+    $filteredPassages.forEach(p => {
+      selectedPassages.add(p.id);
+    });
+    selectedPassages = selectedPassages;
+  }
+
   function bulkDelete() {
     if (selectedPassages.size === 0) return;
 
@@ -175,6 +212,23 @@
       const passage = $currentStory.getPassage(id);
       if (passage && !passage.tags.includes(trimmedTag)) {
         passage.tags.push(trimmedTag);
+      }
+    });
+    currentStory.set($currentStory);
+    clearSelection();
+  }
+
+  function bulkRemoveTag() {
+    if (selectedPassages.size === 0 || !$currentStory) return;
+
+    const tagName = prompt('Enter tag name to remove from selected passages:');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmedTag = tagName.trim();
+    selectedPassages.forEach(id => {
+      const passage = $currentStory.getPassage(id);
+      if (passage) {
+        passage.tags = passage.tags.filter(t => t !== trimmedTag);
       }
     });
     currentStory.set($currentStory);
@@ -209,6 +263,12 @@
   function getPassageValidationCount(passageId: string): number {
     if (!$validationResult || !Array.isArray($validationResult.issues)) return 0;
     return $validationResult.issues.filter(i => i.passageId === passageId).length;
+  }
+
+  function getPassageCommentInfo(passageId: string): { total: number; unresolved: number } {
+    const comments = $commentsByPassage.get(passageId) || [];
+    const unresolved = comments.filter(c => !c.resolved).length;
+    return { total: comments.length, unresolved };
   }
 
   function handleContextMenu(event: MouseEvent, passageId: string) {
@@ -301,13 +361,10 @@
   }
 
   function handleDuplicate() {
-    if (contextMenuPassageId && $currentStory) {
-      const passage = $currentStory.getPassage(contextMenuPassageId);
-      if (passage) {
-        const duplicate = passage.clone();
-        $currentStory.addPassage(duplicate);
-        currentStory.set($currentStory);
-        selectedPassageId.set(duplicate.id);
+    if (contextMenuPassageId) {
+      const duplicated = projectActions.duplicatePassage(contextMenuPassageId);
+      if (duplicated) {
+        notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
       }
     }
     closeContextMenu();
@@ -319,6 +376,102 @@
       currentStory.set($currentStory);
     }
     closeContextMenu();
+  }
+
+  // Drag-and-drop handlers
+  function handleDragStart(event: DragEvent, index: number) {
+    if (selectMode || $passageOrderState.sortOrder !== 'custom') return;
+
+    draggedIndex = index;
+    isDragging = true;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', index.toString());
+    }
+  }
+
+  function handleDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    if (draggedIndex === null || $passageOrderState.sortOrder !== 'custom') return;
+
+    dragOverIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  function handleDragLeave() {
+    dragOverIndex = null;
+  }
+
+  function handleDrop(event: DragEvent, toIndex: number) {
+    event.preventDefault();
+    if (draggedIndex === null || draggedIndex === toIndex) {
+      resetDragState();
+      return;
+    }
+
+    // Perform the move
+    passageOrderActions.movePassage(draggedIndex, toIndex, $filteredPassages);
+
+    resetDragState();
+  }
+
+  function handleDragEnd() {
+    resetDragState();
+  }
+
+  function resetDragState() {
+    draggedIndex = null;
+    dragOverIndex = null;
+    isDragging = false;
+  }
+
+  // Initialize custom order when component mounts or passages change
+  $: if ($filteredPassages.length > 0 && $passageOrderState.customOrder.length === 0) {
+    passageOrderActions.initializeCustomOrder($filteredPassages);
+  }
+
+  // Reload passage order when story changes
+  $: if ($currentStory) {
+    passageOrderActions.reloadFromStory();
+  }
+
+  // Sort order selection
+  function handleSortOrderChange(event: Event) {
+    const target = event.target as HTMLSelectElement;
+    passageOrderActions.setSortOrder(target.value as SortOrder);
+  }
+
+  // Keyboard navigation for reordering
+  function handleListKeydown(event: KeyboardEvent) {
+    if ($passageOrderState.sortOrder !== 'custom' || selectMode) return;
+
+    const target = event.target as HTMLElement;
+    const passageButton = target.closest('[data-passage-index]');
+    if (!passageButton) return;
+
+    const index = parseInt(passageButton.getAttribute('data-passage-index') || '-1');
+    if (index < 0) return;
+
+    // Alt/Option + Arrow keys to move passages
+    if ((event.altKey || event.metaKey) && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault();
+
+      if (event.key === 'ArrowUp' && index > 0) {
+        passageOrderActions.movePassage(index, index - 1, $filteredPassages);
+        focusedIndex = index - 1;
+      } else if (event.key === 'ArrowDown' && index < $filteredPassages.length - 1) {
+        passageOrderActions.movePassage(index, index + 1, $filteredPassages);
+        focusedIndex = index + 1;
+      }
+
+      // Refocus the moved passage
+      setTimeout(() => {
+        const buttons = document.querySelectorAll('[data-passage-index]');
+        (buttons[focusedIndex] as HTMLElement)?.focus();
+      }, 10);
+    }
   }
 </script>
 
@@ -338,7 +491,16 @@
         + Add
       </button>
     </div>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 mb-2">
+      <button
+        class="flex items-center gap-1 px-3 py-2 text-xs rounded border transition-colors touch-manipulation {selectMode ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}"
+        style="min-height: {$isMobile ? '44px' : 'auto'}"
+        on:click={toggleSelectMode}
+        title="Toggle select mode"
+      >
+        <span>{selectMode ? '☑' : '☐'}</span>
+        <span>Select</span>
+      </button>
       <button
         class="flex items-center gap-1 px-3 py-2 text-xs rounded border transition-colors touch-manipulation {compactView ? 'bg-blue-50 border-blue-300 text-blue-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}"
         style="min-height: {$isMobile ? '44px' : 'auto'}"
@@ -349,43 +511,84 @@
         <span>Compact</span>
       </button>
     </div>
+
+    <!-- Sort Order Selector -->
+    <div class="flex items-center gap-2">
+      <label for="sort-order" class="text-xs text-gray-600 font-medium">Sort:</label>
+      <select
+        id="sort-order"
+        class="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
+        style="min-height: {$isMobile ? '44px' : 'auto'}"
+        value={$passageOrderState.sortOrder}
+        on:change={handleSortOrderChange}
+        aria-label="Sort passages by"
+      >
+        <option value="custom">Custom Order</option>
+        <option value="title-asc">Title (A-Z)</option>
+        <option value="title-desc">Title (Z-A)</option>
+        <option value="modified">Date Modified</option>
+        <option value="created">Date Created</option>
+      </select>
+    </div>
   </div>
 
   <!-- Search and Filter Bar -->
   <SearchBar />
 
   <!-- Bulk Actions Toolbar -->
-  {#if selectedPassages.size > 0}
-    <div class="bg-purple-100 border-b border-purple-300 px-3 py-2 flex items-center justify-between">
-      <div class="text-sm font-semibold text-purple-800">
-        {selectedPassages.size} passage{selectedPassages.size !== 1 ? 's' : ''} selected
+  {#if selectMode || selectedPassages.size > 0}
+    <div class="bg-purple-100 border-b border-purple-300 px-3 py-2">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm font-semibold text-purple-800">
+          {selectedPassages.size} passage{selectedPassages.size !== 1 ? 's' : ''} selected
+        </div>
+        <div class="flex gap-2">
+          <button
+            class="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 active:scale-95 transition-transform touch-manipulation"
+            style="min-height: {$isMobile ? '44px' : 'auto'}"
+            on:click={selectAll}
+            title="Select all passages"
+          >
+            Select All
+          </button>
+          <button
+            class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 active:scale-95 transition-transform touch-manipulation"
+            style="min-height: {$isMobile ? '44px' : 'auto'}"
+            on:click={clearSelection}
+            title="Clear selection"
+          >
+            Clear
+          </button>
+        </div>
       </div>
-      <div class="flex gap-2">
-        <button
-          class="px-3 py-2 text-xs bg-purple-500 text-white rounded hover:bg-purple-600 active:scale-95 transition-transform touch-manipulation"
-          style="min-height: {$isMobile ? '44px' : 'auto'}"
-          on:click={bulkAddTag}
-          title="Add tag to selected passages"
-        >
-          Add Tag
-        </button>
-        <button
-          class="px-3 py-2 text-xs bg-red-500 text-white rounded hover:bg-red-600 active:scale-95 transition-transform touch-manipulation"
-          style="min-height: {$isMobile ? '44px' : 'auto'}"
-          on:click={bulkDelete}
-          title="Delete selected passages"
-        >
-          Delete
-        </button>
-        <button
-          class="px-3 py-2 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 active:scale-95 transition-transform touch-manipulation"
-          style="min-height: {$isMobile ? '44px' : 'auto'}"
-          on:click={clearSelection}
-          title="Clear selection"
-        >
-          Clear
-        </button>
-      </div>
+      {#if selectedPassages.size > 0}
+        <div class="flex gap-2 flex-wrap">
+          <button
+            class="px-3 py-2 text-xs bg-green-500 text-white rounded hover:bg-green-600 active:scale-95 transition-transform touch-manipulation"
+            style="min-height: {$isMobile ? '44px' : 'auto'}"
+            on:click={bulkAddTag}
+            title="Add tag to selected passages"
+          >
+            + Add Tag
+          </button>
+          <button
+            class="px-3 py-2 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 active:scale-95 transition-transform touch-manipulation"
+            style="min-height: {$isMobile ? '44px' : 'auto'}"
+            on:click={bulkRemoveTag}
+            title="Remove tag from selected passages"
+          >
+            - Remove Tag
+          </button>
+          <button
+            class="px-3 py-2 text-xs bg-red-500 text-white rounded hover:bg-red-600 active:scale-95 transition-transform touch-manipulation"
+            style="min-height: {$isMobile ? '44px' : 'auto'}"
+            on:click={bulkDelete}
+            title="Delete selected passages"
+          >
+            Delete
+          </button>
+        </div>
+      {/if}
     </div>
   {/if}
 
@@ -397,11 +600,15 @@
       </div>
     {:else if $filteredPassages.length < 50}
       <!-- Regular rendering for small lists (avoids VirtualList mount issues) -->
-      <div class="overflow-y-auto h-full">
-        {#each $filteredPassages as passage}
+      <div class="overflow-y-auto h-full" on:keydown={handleListKeydown}>
+        {#each $filteredPassages as passage, i}
           {@const validationSeverity = getPassageValidationSeverity(passage.id)}
           {@const validationCount = getPassageValidationCount(passage.id)}
+          {@const commentInfo = getPassageCommentInfo(passage.id)}
           {@const mobilePadding = $isMobile ? 'px-3 py-3' : (compactView ? 'px-2 py-1' : 'px-3 py-2')}
+          {@const isDraggedOver = dragOverIndex === i}
+          {@const isBeingDragged = draggedIndex === i}
+          {@const canDrag = $passageOrderState.sortOrder === 'custom' && !selectMode}
           <button
             type="button"
             class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 touch-manipulation active:scale-[0.98] {mobilePadding}"
@@ -410,15 +617,54 @@
             class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
             class:border-l-blue-500={$selectedPassageId === passage.id}
             class:border-l-purple-500={selectedPassages.has(passage.id)}
+            class:opacity-50={isBeingDragged}
+            class:border-t-2={isDraggedOver}
+            class:border-t-blue-500={isDraggedOver}
+            draggable={canDrag}
+            data-passage-index={i}
             on:click={(e) => selectPassage(passage.id, e)}
             on:contextmenu={(e) => handleContextMenu(e, passage.id)}
             on:keydown={(e) => handlePassageKeydown(e, passage.id)}
             on:mouseenter={(e) => handleMouseEnter(passage, e)}
             on:mouseleave={handleMouseLeave}
+            on:dragstart={(e) => handleDragStart(e, i)}
+            on:dragover={(e) => handleDragOver(e, i)}
+            on:dragleave={handleDragLeave}
+            on:drop={(e) => handleDrop(e, i)}
+            on:dragend={handleDragEnd}
             use:setupPassageListeners={passage.id}
             aria-label="Passage: {passage.title}"
           >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
+            <!-- Drag Handle (only in custom sort mode) -->
+            {#if canDrag && !$isMobile}
+              <span
+                class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                title="Drag to reorder"
+                aria-label="Drag handle"
+              >
+                ☰
+              </span>
+            {/if}
+            <!-- Checkbox in select mode -->
+            {#if selectMode}
+              <input
+                type="checkbox"
+                checked={selectedPassages.has(passage.id)}
+                on:click|stopPropagation
+                on:change={() => {
+                  if (selectedPassages.has(passage.id)) {
+                    selectedPassages.delete(passage.id);
+                  } else {
+                    selectedPassages.add(passage.id);
+                  }
+                  selectedPassages = selectedPassages;
+                }}
+                class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 flex-shrink-0"
+                aria-label="Select passage"
+              />
+            {/if}
+
             <!-- Color Indicator -->
             {#if passage.color}
               <div
@@ -438,6 +684,23 @@
               {/if}
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
+              {/if}
+              {#if commentInfo.unresolved > 0}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded bg-blue-100 text-blue-700"
+                  title="{commentInfo.unresolved} unresolved comment{commentInfo.unresolved !== 1 ? 's' : ''}"
+                  aria-label="{commentInfo.unresolved} unresolved comment{commentInfo.unresolved !== 1 ? 's' : ''}"
+                >
+                  💬{commentInfo.unresolved}
+                </span>
+              {:else if commentInfo.total > 0}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded bg-green-100 text-green-700"
+                  title="All comments resolved"
+                  aria-label="All comments resolved"
+                >
+                  ✓💬
+                </span>
               {/if}
               {#if validationSeverity}
                 <span
@@ -498,10 +761,14 @@
       </div>
     {:else}
       <!-- Virtual scrolling for large lists (50+ passages) -->
-      <VirtualList items={$filteredPassages} let:item={passage} height="100%">
+      <VirtualList items={$filteredPassages} let:item={passage} let:index={i} height="100%">
         {@const validationSeverity = getPassageValidationSeverity(passage.id)}
         {@const validationCount = getPassageValidationCount(passage.id)}
+        {@const commentInfo = getPassageCommentInfo(passage.id)}
         {@const mobilePadding = $isMobile ? 'px-3 py-3' : (compactView ? 'px-2 py-1' : 'px-3 py-2')}
+        {@const isDraggedOver = dragOverIndex === i}
+        {@const isBeingDragged = draggedIndex === i}
+        {@const canDrag = $passageOrderState.sortOrder === 'custom' && !selectMode}
         <button
           type="button"
           class="w-full text-left border-b border-gray-200 hover:bg-gray-50 motion-safe:transition-colors motion-safe:duration-150 touch-manipulation active:scale-[0.98] {mobilePadding}"
@@ -510,15 +777,54 @@
           class:border-l-4={$selectedPassageId === passage.id || selectedPassages.has(passage.id)}
           class:border-l-blue-500={$selectedPassageId === passage.id}
           class:border-l-purple-500={selectedPassages.has(passage.id)}
+          class:opacity-50={isBeingDragged}
+          class:border-t-2={isDraggedOver}
+          class:border-t-blue-500={isDraggedOver}
+          draggable={canDrag}
+          data-passage-index={i}
           on:click={(e) => selectPassage(passage.id, e)}
           on:contextmenu={(e) => handleContextMenu(e, passage.id)}
           on:keydown={(e) => handlePassageKeydown(e, passage.id)}
+          on:dragstart={(e) => handleDragStart(e, i)}
+          on:dragover={(e) => handleDragOver(e, i)}
+          on:dragleave={handleDragLeave}
+          on:drop={(e) => handleDrop(e, i)}
+          on:dragend={handleDragEnd}
           aria-label="Passage: {passage.title}"
           on:mouseenter={(e) => handleMouseEnter(passage, e)}
           on:mouseleave={handleMouseLeave}
           use:setupPassageListeners={passage.id}
         >
           <div class="flex items-center {compactView ? 'gap-1' : 'gap-2'}">
+            <!-- Drag Handle (only in custom sort mode) -->
+            {#if canDrag && !$isMobile}
+              <span
+                class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex-shrink-0"
+                title="Drag to reorder"
+                aria-label="Drag handle"
+              >
+                ☰
+              </span>
+            {/if}
+            <!-- Checkbox in select mode -->
+            {#if selectMode}
+              <input
+                type="checkbox"
+                checked={selectedPassages.has(passage.id)}
+                on:click|stopPropagation
+                on:change={() => {
+                  if (selectedPassages.has(passage.id)) {
+                    selectedPassages.delete(passage.id);
+                  } else {
+                    selectedPassages.add(passage.id);
+                  }
+                  selectedPassages = selectedPassages;
+                }}
+                class="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 flex-shrink-0"
+                aria-label="Select passage"
+              />
+            {/if}
+
             <!-- Color Indicator -->
             {#if passage.color}
               <div
@@ -538,6 +844,23 @@
               {/if}
               {#if hasNoChoices(passage)}
                 <span class="text-gray-400" title="Dead end">⏹</span>
+              {/if}
+              {#if commentInfo.unresolved > 0}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded bg-blue-100 text-blue-700"
+                  title="{commentInfo.unresolved} unresolved comment{commentInfo.unresolved !== 1 ? 's' : ''}"
+                  aria-label="{commentInfo.unresolved} unresolved comment{commentInfo.unresolved !== 1 ? 's' : ''}"
+                >
+                  💬{commentInfo.unresolved}
+                </span>
+              {:else if commentInfo.total > 0}
+                <span
+                  class="{compactView ? 'text-[10px]' : 'text-xs'} font-medium px-1 rounded bg-green-100 text-green-700"
+                  title="All comments resolved"
+                  aria-label="All comments resolved"
+                >
+                  ✓💬
+                </span>
               {/if}
               {#if validationSeverity}
                 <span

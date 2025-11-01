@@ -17,6 +17,7 @@
   import WordGoalsPanel from './lib/components/WordGoalsPanel.svelte';
   import CollaborationPanel from './lib/components/CollaborationPanel.svelte';
   import PacingAnalyzerPanel from './lib/components/PacingAnalyzerPanel.svelte';
+  import AccessibilityPanel from './lib/components/AccessibilityPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
@@ -1327,6 +1328,16 @@
           >
             📊 Pacing
           </button>
+          <button
+            type="button"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.accessibility ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => viewPreferencesActions.togglePanel('accessibility')}
+            aria-label="Toggle accessibility checker panel"
+            aria-pressed={$panelVisibility.accessibility}
+            title="Toggle Accessibility Checker Panel"
+          >
+            ♿ A11y
+          </button>
         </div>
 
         <!-- Divider -->
@@ -1394,56 +1405,61 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets, Characters, Word Goals, Collaboration & Pacing -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.pacing) && !$focusMode}
+          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets, Characters, Word Goals, Collaboration, Pacing & Accessibility -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
                 <div style="height: {$panelSizes.variablesHeight}px;" class="border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
-                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing}
+                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility}
                   <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
                 </div>
               {/if}
               {#if $panelVisibility.tagManager}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}
-                <div class="flex-1 min-h-0 {$panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <StoryStatisticsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.snippets}
-                <div class="flex-1 min-h-0 {$panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <SnippetsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.characters}
-                <div class="flex-1 min-h-0 {$panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.wordGoals || $panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <CharacterManager />
                 </div>
               {/if}
               {#if $panelVisibility.wordGoals}
-                <div class="flex-1 min-h-0 {$panelVisibility.collaboration || $panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.collaboration || $panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <WordGoalsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.collaboration}
-                <div class="flex-1 min-h-0 {$panelVisibility.pacing ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.pacing || $panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <CollaborationPanel />
                 </div>
               {/if}
               {#if $panelVisibility.pacing}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.accessibility ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <PacingAnalyzerPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.accessibility}
+                <div class="flex-1 min-h-0">
+                  <AccessibilityPanel />
                 </div>
               {/if}
             </div>

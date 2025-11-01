@@ -28,6 +28,7 @@ export interface PanelVisibility {
   wordGoals: boolean;
   collaboration: boolean;
   pacing: boolean;
+  accessibility: boolean;
 }
 
 export interface PanelSizes {
@@ -70,6 +71,7 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     wordGoals: false,
     collaboration: false,
     pacing: false,
+    accessibility: false,
   },
   panelSizes: {
     passageListWidth: 256, // 64 * 4 (w-64)

@@ -21,16 +21,25 @@ describe('ItchPublisher', () => {
 
     // Setup mock story
     mockStory = {
-      id: 'test-story-1',
-      title: 'Test Story',
-      description: 'A test interactive story',
-      author: 'Test Author',
-      version: '1.0.0',
-      passages: [],
-      tags: [],
-      variables: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      metadata: {
+        ifid: 'test-story-1',
+        title: 'Test Story',
+        description: 'A test interactive story',
+        author: 'Test Author',
+        version: '1.0.0',
+        tags: [],
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        createdBy: 'test',
+      },
+      startPassage: '',
+      passages: new Map(),
+      variables: new Map(),
+      settings: {},
+      stylesheets: [],
+      scripts: [],
+      assets: new Map(),
+      luaFunctions: new Map(),
     } as Story;
 
     // Mock StaticSiteExporter

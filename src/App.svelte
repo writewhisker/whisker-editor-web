@@ -13,6 +13,7 @@
   import StoryStatisticsPanel from './lib/components/StoryStatisticsPanel.svelte';
   import TagManager from './lib/components/TagManager.svelte';
   import SnippetsPanel from './lib/components/SnippetsPanel.svelte';
+  import CharacterManager from './lib/components/CharacterManager.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
@@ -1283,6 +1284,16 @@
           >
             🏷️ Tags
           </button>
+          <button
+            type="button"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.characters ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => viewPreferencesActions.togglePanel('characters')}
+            aria-label="Toggle character manager panel"
+            aria-pressed={$panelVisibility.characters}
+            title="Toggle Character Manager Panel"
+          >
+            👥 Characters
+          </button>
         </div>
 
         <!-- Divider -->
@@ -1350,36 +1361,41 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics & Snippets -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets) && !$focusMode}
+          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets & Characters -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
                 <div style="height: {$panelSizes.variablesHeight}px;" class="border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
-                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics}
+                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters}
                   <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
                 </div>
               {/if}
               {#if $panelVisibility.tagManager}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}
-                <div class="flex-1 min-h-0 {$panelVisibility.snippets ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.snippets || $panelVisibility.characters ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <StoryStatisticsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.snippets}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.characters ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <SnippetsPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.characters}
+                <div class="flex-1 min-h-0">
+                  <CharacterManager />
                 </div>
               {/if}
             </div>

@@ -273,9 +273,13 @@ describe('SyncQueueService', () => {
       });
 
       const queue = await syncQueue.getQueue();
-      const firstId = queue[0].id;
+      expect(queue).toHaveLength(2);
 
-      await syncQueue.dequeue(firstId);
+      // Find the entry with story-1 and dequeue it
+      const story1Entry = queue.find(e => e.storyId === 'story-1');
+      expect(story1Entry).toBeDefined();
+
+      await syncQueue.dequeue(story1Entry!.id);
 
       const updatedQueue = await syncQueue.getQueue();
       expect(updatedQueue).toHaveLength(1);

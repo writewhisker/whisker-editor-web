@@ -196,7 +196,7 @@ export class ItchPublisher implements IPublisher {
         story,
         options: {
           format: 'html-standalone',
-          filename: options.filename || story.title,
+          filename: options.filename || story.metadata.title,
           theme: options.defaultTheme,
         },
       });
@@ -211,8 +211,8 @@ export class ItchPublisher implements IPublisher {
 
       // Prepare game metadata
       const metadata: ItchGameMetadata = {
-        title: story.title,
-        short_text: options.description || story.description || undefined,
+        title: story.metadata.title,
+        short_text: options.description || story.metadata.description || undefined,
         type: 'html',
         classification: 'game',
         visibility: options.visibility || 'draft',

@@ -46,10 +46,10 @@
   // Load version history when story changes
   $effect(() => {
     if (story) {
-      versionHistory = versionManager.getVersions(story.id);
+      versionHistory = versionManager.getVersions(story.metadata.ifid);
       // Suggest next version
       if (!version) {
-        version = versionManager.suggestNextVersion(story.id, 'patch');
+        version = versionManager.suggestNextVersion(story.metadata.ifid, 'patch');
       }
     }
   });
@@ -115,7 +115,7 @@
       if (result.success) {
         // Save version to history
         versionManager.addVersion(
-          story.id,
+          story.metadata.ifid,
           story.metadata.title,
           version,
           platform,
@@ -124,7 +124,7 @@
         );
 
         // Refresh version history
-        versionHistory = versionManager.getVersions(story.id);
+        versionHistory = versionManager.getVersions(story.metadata.ifid);
 
         dispatch('published', result);
         open = false;
@@ -304,7 +304,7 @@
             {/if}
           </div>
           <p class="help-text">
-            Semantic version (e.g., 1.0.0). Suggested: {versionManager.suggestNextVersion(story?.id || '', 'patch')}
+            Semantic version (e.g., 1.0.0). Suggested: {versionManager.suggestNextVersion(story?.metadata.ifid || '', 'patch')}
           </p>
         </div>
 

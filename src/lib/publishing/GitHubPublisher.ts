@@ -338,7 +338,7 @@ export class GitHubPublisher implements IPublisher {
       }
 
       // Determine repository name
-      const repoName = options.githubRepo || this.sanitizeRepoName(options.filename || story.title);
+      const repoName = options.githubRepo || this.sanitizeRepoName(options.filename || story.metadata.title);
       const branch = options.githubBranch || 'gh-pages';
 
       // Check if repository exists
@@ -349,7 +349,7 @@ export class GitHubPublisher implements IPublisher {
 
       if (!repoExists) {
         // Create repository
-        const created = await this.createRepository(repoName, options.description || story.description);
+        const created = await this.createRepository(repoName, options.description || story.metadata.description);
         if (!created) {
           return {
             success: false,
@@ -414,7 +414,7 @@ export class GitHubPublisher implements IPublisher {
         branch,
         'index.html',
         exportResult.content as string,
-        `Update story: ${story.title}`
+        `Update story: ${story.metadata.title}`
       );
 
       if (!uploadSuccess) {

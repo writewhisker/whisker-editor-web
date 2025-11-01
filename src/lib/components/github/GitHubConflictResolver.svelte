@@ -38,8 +38,8 @@
     }
 
     // Check tags
-    const localTags = local.tags?.length || 0;
-    const remoteTags = remote.tags?.length || 0;
+    const localTags = local.metadata?.tags?.length || 0;
+    const remoteTags = remote.metadata?.tags?.length || 0;
     if (localTags !== remoteTags) {
       changes.push(`Tags: ${localTags} local vs ${remoteTags} remote`);
     }
@@ -150,7 +150,7 @@
                   <span class="font-medium">Variables:</span> {localVersion.variables?.size || 0}
                 </div>
                 <div>
-                  <span class="font-medium">Tags:</span> {localVersion.tags?.length || 0}
+                  <span class="font-medium">Tags:</span> {localVersion.metadata?.tags?.length || 0}
                 </div>
               {/if}
             </div>
@@ -176,7 +176,7 @@
                   <span class="font-medium">Variables:</span> {remoteVersion.variables?.size || 0}
                 </div>
                 <div>
-                  <span class="font-medium">Tags:</span> {remoteVersion.tags?.length || 0}
+                  <span class="font-medium">Tags:</span> {remoteVersion.metadata?.tags?.length || 0}
                 </div>
               {/if}
             </div>

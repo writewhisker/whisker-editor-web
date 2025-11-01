@@ -13,6 +13,7 @@ export class Passage {
   onExitScript?: string;
   tags: string[];
   color?: string;
+  notes?: string;
   created: string;
   modified: string;
   metadata: Record<string, any>;
@@ -30,6 +31,7 @@ export class Passage {
     this.onExitScript = data?.onExitScript;
     this.tags = data?.tags || [];
     this.color = data?.color;
+    this.notes = data?.notes;
     this.created = data?.created || now;
     this.modified = data?.modified || now;
     this.metadata = data?.metadata || {};
@@ -96,6 +98,7 @@ export class Passage {
     if (this.onExitScript) data.onExitScript = this.onExitScript;
     if (this.tags.length > 0) data.tags = [...this.tags];
     if (this.color) data.color = this.color;
+    if (this.notes) data.notes = this.notes;
     if (Object.keys(this.metadata).length > 0) {
       data.metadata = { ...this.metadata };
     }

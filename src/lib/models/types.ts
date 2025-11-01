@@ -31,6 +31,7 @@ export interface PassageData {
   onExitScript?: string;
   tags?: string[];
   color?: string;           // Hex color code for organizational purposes (editor-specific)
+  notes?: string;           // Notes/comments for passage (editor-specific)
   created?: string;         // ISO timestamp (editor-specific)
   modified?: string;        // ISO timestamp (editor-specific)
   metadata?: Record<string, any>;  // Custom passage metadata (whisker-core compat)

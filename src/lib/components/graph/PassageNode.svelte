@@ -384,8 +384,9 @@
     type="source"
     position={Position.Right}
     id="new-connection"
-    class="!bg-blue-400 !w-4 !h-4 !border-2 !border-white"
+    class="!bg-blue-400 !w-4 !h-4 !border-2 !border-white connection-handle"
     title="Drag to create new connection"
+    aria-label="Drag to create new connection to another passage"
   />
 
   <!-- Resize Handles -->
@@ -595,6 +596,26 @@
   .resize-n {
     top: -3px;
     cursor: ns-resize;
+  }
+
+  /* Connection Handle Animation */
+  :global(.connection-handle) {
+    transition: all 0.3s ease;
+  }
+
+  .passage-node:hover :global(.connection-handle) {
+    animation: pulse-connection 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-connection {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.2);
+    }
   }
 
   /* Mobile & Touch Optimizations */

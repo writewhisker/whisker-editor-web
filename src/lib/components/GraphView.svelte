@@ -601,9 +601,10 @@
         return;
       }
 
-      // Create new choice
+      // Create new choice with default text
+      const defaultText = `Go to ${targetPassage.title}`;
       const newChoice = new Choice({
-        text: `Go to ${targetPassage.title}`,
+        text: defaultText,
         target: targetId,
       });
 
@@ -611,6 +612,17 @@
       currentStory.update(s => s);
       projectActions.markChanged();
       updateGraph();
+
+      // Prompt user to customize the choice text
+      setTimeout(() => {
+        const customText = prompt('Enter choice text:', defaultText);
+        if (customText !== null && customText.trim() !== '') {
+          newChoice.text = customText.trim();
+          currentStory.update(s => s);
+          projectActions.markChanged();
+          updateGraph();
+        }
+      }, 100); // Small delay to ensure graph is updated first
     }
   }
 

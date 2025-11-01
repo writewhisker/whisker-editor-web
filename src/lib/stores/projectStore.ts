@@ -215,7 +215,7 @@ export const projectActions = {
     return addedPassage;
   },
 
-  updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number }; color?: string }>) {
+  updatePassage(passageId: string, updates: Partial<{ title: string; content: string; tags: string[]; position: { x: number; y: number }; color?: string; notes?: string }>) {
     let changeMade = false;
 
     currentStory.update(story => {
@@ -248,6 +248,8 @@ export const projectActions = {
         if (updates.content !== undefined) passage.content = updates.content;
         if (updates.tags !== undefined) passage.tags = updates.tags;
         if (updates.position !== undefined) passage.position = updates.position;
+        if (updates.color !== undefined) passage.color = updates.color;
+        if (updates.notes !== undefined) passage.notes = updates.notes;
 
         // Update modified timestamp
         passage.modified = new Date().toISOString();

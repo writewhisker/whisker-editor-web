@@ -970,6 +970,8 @@
         <Controls />
         {#if showMiniMap}
           <MiniMap
+            pannable={true}
+            zoomable={true}
             nodeColor={(node: Node) => {
               // Use custom color if set
               if (node.data?.color) return node.data.color as string;

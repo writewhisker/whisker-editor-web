@@ -384,13 +384,15 @@
                         {/if}
                       </div>
 
-                      <button
-                        on:click={() => selectAllPassages(diff.status)}
-                        class="text-xs px-2 py-1 rounded hover:bg-black hover:bg-opacity-10"
-                        title="Select all {diff.status} passages"
-                      >
-                        Select all {diff.status}
-                      </button>
+                      {#if diff.status !== 'unchanged'}
+                        <button
+                          on:click={() => selectAllPassages(diff.status as 'modified' | 'added' | 'removed')}
+                          class="text-xs px-2 py-1 rounded hover:bg-black hover:bg-opacity-10"
+                          title="Select all {diff.status} passages"
+                        >
+                          Select all {diff.status}
+                        </button>
+                      {/if}
                     </div>
                   </div>
                 </div>

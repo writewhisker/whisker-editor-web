@@ -1192,7 +1192,8 @@ export class LuaEngine {
   /**
    * Arithmetic operations
    */
-  private add(a: LuaValue, b: LuaValue): LuaValue {
+  private add(a: LuaValue | undefined, b: LuaValue): LuaValue {
+    if (!a) a = { type: 'number', value: 0 };
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value + b.value };
     }
@@ -1210,14 +1211,16 @@ export class LuaEngine {
     throw new Error('Cannot subtract non-numbers');
   }
 
-  private multiply(a: LuaValue, b: LuaValue): LuaValue {
+  private multiply(a: LuaValue | undefined, b: LuaValue): LuaValue {
+    if (!a) a = { type: 'number', value: 0 };
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value * b.value };
     }
     throw new Error('Cannot multiply non-numbers');
   }
 
-  private divide(a: LuaValue, b: LuaValue): LuaValue {
+  private divide(a: LuaValue | undefined, b: LuaValue): LuaValue {
+    if (!a) a = { type: 'number', value: 0 };
     if (a.type === 'number' && b.type === 'number') {
       if (b.value === 0) return { type: 'number', value: 0 }; // Safely return 0 for division by zero
       return { type: 'number', value: a.value / b.value };

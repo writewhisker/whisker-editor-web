@@ -9,12 +9,15 @@
   } from '../../stores/exportStore';
   import type { ImportResult, ConversionOptions } from '../../import/types';
   import ImportPreviewPanel from './ImportPreviewPanel.svelte';
+  import StoryComparisonView from '../comparison/StoryComparisonView.svelte';
+  import { currentStory } from '../../stores/projectStore';
 
   export let show = false;
+  export let showComparison = true; // Whether to show comparison view
 
   const dispatch = createEventDispatcher();
 
-  type DialogStep = 'file-selection' | 'preview' | 'importing';
+  type DialogStep = 'file-selection' | 'preview' | 'comparison' | 'importing';
 
   let fileInput: HTMLInputElement;
   let selectedFile: File | null = null;
@@ -41,6 +44,14 @@
       strictMode: false,
       convertMacros: true,
     };
+  }
+
+  function proceedToComparison() {
+    if (showComparison && $currentStory && previewResult?.story) {
+      currentStep = 'comparison';
+    } else {
+      confirmImport();
+    }
   }
 
   function handleFileSelect(event: Event) {
@@ -109,6 +120,23 @@
     previewResult = null;
   }
 
+  function backToPreview() {
+    currentStep = 'preview';
+  }
+
+  function handleComparisonAccept(event: CustomEvent) {
+    const { source, story } = event.detail;
+
+    if (source === 'right' && story) {
+      // Accept the imported story
+      dispatch('import', { story });
+      close();
+    } else {
+      // Keep current story (cancel import)
+      close();
+    }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') {
       close();
@@ -140,7 +168,7 @@
       tabindex="-1"
     >
       <h2 id="import-title" class="text-2xl font-bold mb-6">
-        {currentStep === 'preview' ? 'Import Preview' : 'Import Story'}
+        {currentStep === 'preview' ? 'Import Preview' : currentStep === 'comparison' ? 'Compare Versions' : 'Import Story'}
       </h2>
 
       {#if $importError && currentStep === 'file-selection'}
@@ -150,11 +178,38 @@
         </div>
       {/if}
 
-      {#if currentStep === 'preview' && previewResult}
+      {#if currentStep === 'comparison' && previewResult && $currentStory}
+        <!-- Comparison Step -->
+        <div class="h-[600px]">
+          <StoryComparisonView
+            leftStory={$currentStory}
+            rightStory={previewResult.story}
+            leftLabel="Current Story"
+            rightLabel="Imported Story"
+            leftDate={$currentStory.metadata.modified ? new Date($currentStory.metadata.modified) : null}
+            rightDate={previewResult.story?.metadata.modified ? new Date(previewResult.story.metadata.modified) : null}
+            on:accept={handleComparisonAccept}
+          />
+        </div>
+        <div class="flex justify-between items-center mt-4">
+          <button
+            class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors"
+            on:click={backToPreview}
+          >
+            Back to Preview
+          </button>
+          <button
+            class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors"
+            on:click={close}
+          >
+            Cancel
+          </button>
+        </div>
+      {:else if currentStep === 'preview' && previewResult}
         <!-- Preview Step -->
         <ImportPreviewPanel
           result={previewResult}
-          onConfirm={confirmImport}
+          onConfirm={proceedToComparison}
           onCancel={backToFileSelection}
         />
       {:else if currentStep === 'importing'}

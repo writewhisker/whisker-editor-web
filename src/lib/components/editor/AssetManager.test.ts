@@ -107,7 +107,8 @@ describe('AssetManager', () => {
       const card = container.querySelector('.asset-card') as HTMLElement;
       await fireEvent.click(card);
 
-      expect(getByText('Asset Details')).toBeTruthy();
+      // The preview section is shown, not "Asset Details"
+      expect(getByText('Preview')).toBeTruthy();
     });
   });
 

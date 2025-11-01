@@ -1,9 +1,11 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { currentStory, passageList } from './projectStore';
+import { passageOrderState, sortPassages } from './passageOrderStore';
 import type { Passage } from '../models/Passage';
 import type { Story } from '../models/Story';
+import { commentsByPassage } from './commentStore';
 
-export type PassageTypeFilter = 'start' | 'orphan' | 'dead' | 'normal';
+export type PassageTypeFilter = 'start' | 'orphan' | 'dead' | 'normal' | 'with-comments';
 
 export interface FilterState {
   searchQuery: string;
@@ -134,6 +136,9 @@ function matchesPassageTypeFilter(passage: Passage, types: PassageTypeFilter[], 
         return isDeadEndPassage(passage, story);
       case 'normal':
         return isNormalPassage(passage, story);
+      case 'with-comments':
+        const comments = get(commentsByPassage).get(passage.id) || [];
+        return comments.some(c => !c.resolved);
       default:
         return false;
     }
@@ -174,11 +179,12 @@ function matchesSearchQuery(passage: Passage, query: string, includeChoices: boo
 }
 
 // Filtered passages (main derived store)
-// Now depends on currentStory to enable metadata caching
+// Now depends on currentStory to enable metadata caching, passageOrderState for sorting, and commentsByPassage for comment filtering
 export const filteredPassages = derived(
-  [passageList, filterState, currentStory],
-  ([$passages, $filter, $story]) => {
-    return $passages.filter((passage) => {
+  [passageList, filterState, currentStory, passageOrderState, commentsByPassage],
+  ([$passages, $filter, $story, $orderState, $comments]) => {
+    // First, filter the passages
+    const filtered = $passages.filter((passage) => {
       // Must match search query
       if (!matchesSearchQuery(passage, $filter.searchQuery, $filter.includeChoiceText)) {
         return false;
@@ -196,6 +202,9 @@ export const filteredPassages = derived(
 
       return true;
     });
+
+    // Then, sort the filtered passages
+    return sortPassages(filtered, $orderState);
   }
 );
 

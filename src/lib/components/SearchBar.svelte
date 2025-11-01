@@ -11,6 +11,7 @@
 
   let showTagDropdown = false;
   let showTypeDropdown = false;
+  let searchInput: HTMLInputElement;
 
   function handleSearchInput(e: Event) {
     const target = e.target as HTMLInputElement;
@@ -21,9 +22,18 @@
     showTagDropdown = false;
     showTypeDropdown = false;
   }
+
+  function handleKeydown(e: KeyboardEvent) {
+    // Ctrl/Cmd+F to focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      searchInput?.focus();
+      searchInput?.select();
+    }
+  }
 </script>
 
-<svelte:window on:click={closeDropdowns} />
+<svelte:window on:click={closeDropdowns} on:keydown={handleKeydown} />
 
 <div class="bg-white border-b border-gray-300 p-3">
   <!-- Search Input -->
@@ -31,6 +41,7 @@
     <div class="flex-1 relative">
       <label for="passage-search" class="sr-only">Search passages by title or content</label>
       <input
+        bind:this={searchInput}
         id="passage-search"
         type="text"
         placeholder="Search passages..."
@@ -192,6 +203,16 @@
               <span class="text-blue-500">●</span>
               <span class="text-sm">Normal</span>
             </label>
+            <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">
+              <input
+                type="checkbox"
+                checked={$filterState.passageTypes.includes('with-comments')}
+                on:change={() => filterActions.togglePassageType('with-comments')}
+                class="rounded"
+              />
+              <span class="text-blue-600">💬</span>
+              <span class="text-sm">With Unresolved Comments</span>
+            </label>
           </div>
           {#if $filterState.passageTypes.length > 0}
             <div class="border-t border-gray-200 p-2">
@@ -269,6 +290,7 @@
           {:else if type === 'orphan'}⚠ Orphaned
           {:else if type === 'dead'}⏹ Dead End
           {:else if type === 'normal'}● Normal
+          {:else if type === 'with-comments'}💬 With Unresolved Comments
           {/if}
           <button
             type="button"

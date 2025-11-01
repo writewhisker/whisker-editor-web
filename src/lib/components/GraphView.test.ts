@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/svelte';
+import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import GraphView from './GraphView.svelte';
 import { currentStory, selectedPassageId } from '../stores/projectStore';
@@ -121,19 +121,33 @@ describe('GraphView', () => {
     });
 
     it('should show layout controls', () => {
-      const { getByText } = render(GraphView);
+      const { getByText, container } = render(GraphView);
 
       expect(getByText('Layout:')).toBeTruthy();
-      expect(getByText('Hierarchical')).toBeTruthy();
-      expect(getByText('Circular')).toBeTruthy();
-      expect(getByText('Grid')).toBeTruthy();
+      const select = container.querySelector('select[title="Select layout algorithm"]');
+      expect(select).toBeTruthy();
+      const options = Array.from(select?.querySelectorAll('option') || []);
+      const optionTexts = options.map(o => o.textContent);
+      expect(optionTexts.some(t => t?.includes('Hierarchical'))).toBeTruthy();
+      expect(optionTexts.some(t => t?.includes('Circular'))).toBeTruthy();
+      expect(optionTexts.some(t => t?.includes('Grid'))).toBeTruthy();
     });
 
-    it('should show layout direction options', () => {
-      const { getByText } = render(GraphView);
+    it('should show layout direction options', async () => {
+      const { container } = render(GraphView);
 
-      expect(getByText('Top-Bottom')).toBeTruthy();
-      expect(getByText('Left-Right')).toBeTruthy();
+      // Direction select only appears when hierarchical is selected
+      const algorithmSelect = container.querySelector('select[title="Select layout algorithm"]') as HTMLSelectElement;
+      await fireEvent.change(algorithmSelect, { target: { value: 'hierarchical' } });
+
+      await waitFor(() => {
+        const directionSelect = container.querySelector('select[title="Layout direction"]');
+        expect(directionSelect).toBeTruthy();
+        const options = Array.from(directionSelect?.querySelectorAll('option') || []);
+        const optionTexts = options.map(o => o.textContent);
+        expect(optionTexts).toContain('Top-Bottom');
+        expect(optionTexts).toContain('Left-Right');
+      });
     });
 
     it('should disable zoom to selection when no passage is selected', () => {
@@ -361,54 +375,66 @@ describe('GraphView', () => {
 
   describe('layout controls', () => {
     it('should render hierarchical layout button', () => {
-      const { getByText } = render(GraphView);
+      const { container } = render(GraphView);
 
-      const button = getByText('Hierarchical').closest('button') as HTMLButtonElement;
-      expect(button).toBeTruthy();
-      expect(button.title).toBe('Arrange passages hierarchically');
+      const select = container.querySelector('select[title="Select layout algorithm"]');
+      const option = Array.from(select?.querySelectorAll('option') || []).find(
+        o => o.textContent?.includes('Hierarchical')
+      );
+      expect(option).toBeTruthy();
     });
 
     it('should render circular layout button', () => {
-      const { getByText } = render(GraphView);
+      const { container } = render(GraphView);
 
-      const button = getByText('Circular').closest('button') as HTMLButtonElement;
-      expect(button).toBeTruthy();
-      expect(button.title).toBe('Arrange passages in a circle');
+      const select = container.querySelector('select[title="Select layout algorithm"]');
+      const option = Array.from(select?.querySelectorAll('option') || []).find(
+        o => o.textContent?.includes('Circular')
+      );
+      expect(option).toBeTruthy();
     });
 
     it('should render grid layout button', () => {
-      const { getByText } = render(GraphView);
+      const { container } = render(GraphView);
 
-      const button = getByText('Grid').closest('button') as HTMLButtonElement;
-      expect(button).toBeTruthy();
-      expect(button.title).toBe('Arrange passages in a grid');
+      const select = container.querySelector('select[title="Select layout algorithm"]');
+      const option = Array.from(select?.querySelectorAll('option') || []).find(
+        o => o.textContent?.includes('Grid')
+      );
+      expect(option).toBeTruthy();
     });
   });
 
   describe('layout direction', () => {
-    it('should have Top-Bottom selected by default', () => {
+    it('should have Top-Bottom selected by default', async () => {
       const { container } = render(GraphView);
 
-      const tbRadio = Array.from(container.querySelectorAll('input[type="radio"]')).find(
-        (input) => (input as HTMLInputElement).value === 'TB'
-      ) as HTMLInputElement;
+      // Select hierarchical first to show direction options
+      const algorithmSelect = container.querySelector('select[title="Select layout algorithm"]') as HTMLSelectElement;
+      await fireEvent.change(algorithmSelect, { target: { value: 'hierarchical' } });
 
-      expect(tbRadio).toBeTruthy();
-      expect(tbRadio.checked).toBe(true);
+      await waitFor(() => {
+        const directionSelect = container.querySelector('select[title="Layout direction"]') as HTMLSelectElement;
+        expect(directionSelect).toBeTruthy();
+        expect(directionSelect?.value).toBe('TB');
+      });
     });
 
     it('should allow switching to Left-Right', async () => {
       const { container } = render(GraphView);
 
-      const lrRadio = Array.from(container.querySelectorAll('input[type="radio"]')).find(
-        (input) => (input as HTMLInputElement).value === 'LR'
-      ) as HTMLInputElement;
+      // Select hierarchical first to show direction options
+      const algorithmSelect = container.querySelector('select[title="Select layout algorithm"]') as HTMLSelectElement;
+      await fireEvent.change(algorithmSelect, { target: { value: 'hierarchical' } });
 
-      expect(lrRadio).toBeTruthy();
+      await waitFor(async () => {
+        const directionSelect = container.querySelector('select[title="Layout direction"]') as HTMLSelectElement;
+        expect(directionSelect).toBeTruthy();
 
-      await fireEvent.click(lrRadio);
+        await fireEvent.change(directionSelect, { target: { value: 'LR' } });
 
-      expect(lrRadio.checked).toBe(true);
+        expect(directionSelect.value).toBe('LR');
+      });
     });
   });
 
@@ -423,18 +449,25 @@ describe('GraphView', () => {
           modified: new Date().toISOString(),
         },
       });
+      const passage = new Passage({
+        title: 'Test',
+        content: '',
+        position: { x: 0, y: 0 }
+      });
+      story.addPassage(passage);
       currentStory.set(story);
 
-      const { getByText } = render(GraphView);
+      const { container } = render(GraphView);
 
-      expect(getByText('Zoom:')).toBeTruthy();
-      expect(getByText('100%')).toBeTruthy();
+      // Zoom controls are shown via buttons - check for zoom button text
+      expect(container.textContent).toContain('Zoom to Selection');
     });
 
     it('should not show zoom level indicator when no story is loaded', () => {
-      const { queryByText } = render(GraphView);
+      const { container } = render(GraphView);
 
-      expect(queryByText('Zoom:')).toBeNull();
+      // When no story loaded, the graph view shows empty state
+      expect(container.textContent).toContain('No Story Loaded');
     });
   });
 

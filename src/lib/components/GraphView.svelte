@@ -12,15 +12,18 @@
     type Connection,
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
-  import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
+  import { currentStory, selectedPassageId, projectActions, unsavedChanges } from '../stores/projectStore';
   import { filteredPassages, hasActiveFilters, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
   import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
   import { Choice } from '../models/Choice';
+  import { Passage } from '../models/Passage';
+  import { historyActions } from '../stores/historyStore';
   import {
     getLayoutedElements,
     getForceLayoutElements,
+    getGridLayoutElements,
     getCircularLayoutElements,
     type LayoutOptions,
   } from '../utils/graphLayout';
@@ -30,6 +33,7 @@
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
   import MobileToolbar from './graph/MobileToolbar.svelte';
   import { isMobile, isTouch, setupPinchZoom } from '../utils/mobile';
+  import { graphLayout, viewPreferencesActions, type LayoutAlgorithm } from '../stores/viewPreferencesStore';
 
   // Node types
   const nodeTypes = {
@@ -44,14 +48,20 @@
   // Flow state
   const nodes = writable<Node[]>([]);
   const edges = writable<Edge[]>([]);
-  let layoutDirection: 'TB' | 'LR' = 'TB';
   let currentZoom = 1; // Track current zoom level
   let zoomControl: GraphViewZoomControl; // Reference to zoom control component
   let showMiniMap = true; // Track minimap visibility
   let flowContainer: HTMLElement; // Reference to flow container for pinch zoom
 
+  // Track if positions have been manually adjusted (to show warning before applying layout)
+  let hasManualPositions = false;
+
+  // Multi-select state
+  let selectMode = false;
+  let selectedNodes = new Set<string>();
+
   // Get Svelte Flow instance for programmatic zoom control
-  const { zoomIn: flowZoomIn, zoomOut: flowZoomOut, fitView: flowFitView, zoomTo, getViewport } = useSvelteFlow();
+  const { zoomIn: flowZoomIn, zoomOut: flowZoomOut, fitView: flowFitView, getViewport } = useSvelteFlow();
 
   // Debounce timer for updateGraph
   let updateGraphTimer: ReturnType<typeof setTimeout> | null = null;
@@ -152,25 +162,47 @@
     edges.set(flowEdges);
   }
 
-  // Apply auto-layout
-  function handleAutoLayout(type: 'hierarchical' | 'force' | 'circular' = 'hierarchical') {
+  // Apply layout algorithm
+  function applyLayout(algorithm?: LayoutAlgorithm) {
+    const layoutType = algorithm || $graphLayout.algorithm;
+
+    // Don't apply if manual mode
+    if (layoutType === 'manual') {
+      return;
+    }
+
     const currentNodes = $nodes;
     const currentEdges = $edges;
 
+    if (currentNodes.length === 0) return;
+
     let layouted;
-    if (type === 'hierarchical') {
-      const options: LayoutOptions = {
-        direction: layoutDirection,
-        nodeWidth: 250,
-        nodeHeight: 150,
-      };
-      layouted = getLayoutedElements(currentNodes, currentEdges, options);
-    } else if (type === 'circular') {
-      layouted = getCircularLayoutElements(currentNodes, currentEdges);
-    } else {
-      layouted = getForceLayoutElements(currentNodes, currentEdges);
+    switch (layoutType) {
+      case 'hierarchical':
+        const options: LayoutOptions = {
+          direction: $graphLayout.direction,
+          nodeWidth: 250,
+          nodeHeight: 150,
+        };
+        layouted = getLayoutedElements(currentNodes, currentEdges, options);
+        break;
+      case 'circular':
+        layouted = getCircularLayoutElements(currentNodes, currentEdges);
+        break;
+      case 'grid':
+        layouted = getGridLayoutElements(currentNodes, currentEdges);
+        break;
+      case 'force':
+        layouted = getForceLayoutElements(currentNodes, currentEdges);
+        break;
+      default:
+        return;
     }
 
+    // Animate the layout change if motion is enabled
+    const duration = $prefersReducedMotion ? 0 : 300;
+
+    // Update nodes with animation
     nodes.set(layouted.nodes);
 
     // Update passage positions in the story
@@ -183,7 +215,18 @@
       });
       currentStory.update(s => s);
       projectActions.markChanged();
+      hasManualPositions = false; // Reset manual position flag after applying layout
     }
+
+    // Fit view after layout with animation
+    setTimeout(() => {
+      flowFitView({ duration, padding: 0.1 });
+    }, duration);
+  }
+
+  // Reset to manual mode
+  function resetToManual() {
+    viewPreferencesActions.setGraphLayoutAlgorithm('manual');
   }
 
   // Handle node drag end - save position
@@ -225,13 +268,25 @@
 
       currentStory.update(s => s);
       projectActions.markChanged();
+      hasManualPositions = true; // Mark that manual adjustments have been made
     }
   }
 
   // Handle node click - select passage
   function handleNodeClick(event: any) {
     const node = event?.detail?.node || event?.node;
-    if (node) {
+    if (!node) return;
+
+    // In select mode, toggle node selection
+    if (selectMode) {
+      if (selectedNodes.has(node.id)) {
+        selectedNodes.delete(node.id);
+      } else {
+        selectedNodes.add(node.id);
+      }
+      selectedNodes = selectedNodes;
+    } else {
+      // Normal mode - select single passage
       selectedPassageId.set(node.id);
     }
   }
@@ -264,12 +319,46 @@
     }
   }
 
+  // Passage templates
+  const passageTemplates = {
+    blank: { title: 'New Passage', content: '' },
+    choice: {
+      title: 'Choice Passage',
+      content: 'What do you do?\n\n[[Option 1]]\n[[Option 2]]\n[[Option 3]]'
+    },
+    conversation: {
+      title: 'Conversation',
+      content: '"Hello there," says the stranger.\n\n[[Ask who they are]]\n[[Say hello back]]\n[[Walk away]]'
+    },
+    description: {
+      title: 'Description',
+      content: 'You find yourself in a new location. [Describe the setting here]\n\n[[Continue]]'
+    },
+    checkpoint: {
+      title: 'Checkpoint',
+      content: '<<set $chapter = 2>>\n\nChapter 2: [Title]\n\n[Story continues...]\n\n[[Next]]'
+    },
+    ending: {
+      title: 'Ending',
+      content: 'THE END\n\n[Describe how the story concludes]\n\n[[Start Over->Start]]'
+    }
+  };
+
   // Handle edge context menu
   let edgeContextMenu = {
     show: false,
     x: 0,
     y: 0,
     edgeId: '',
+  };
+
+  // Handle graph context menu (right-click on empty space)
+  let graphContextMenu = {
+    show: false,
+    x: 0,
+    y: 0,
+    clickPosition: { x: 0, y: 0 },
+    showSubmenu: false,
   };
 
   function handleEdgeContextMenu(edgeId: string, x: number, y: number) {
@@ -283,6 +372,66 @@
 
   function closeEdgeContextMenu() {
     edgeContextMenu.show = false;
+  }
+
+  function handlePaneContextMenu(event: any) {
+    // Get the mouse position from the event
+    const mouseX = event.clientX || event.detail?.clientX || 0;
+    const mouseY = event.clientY || event.detail?.clientY || 0;
+
+    // Get the flow viewport position (for placing the passage)
+    const viewport = getViewport();
+    const flowX = (mouseX - viewport.x) / viewport.zoom;
+    const flowY = (mouseY - viewport.y) / viewport.zoom;
+
+    graphContextMenu = {
+      show: true,
+      x: mouseX,
+      y: mouseY,
+      clickPosition: { x: flowX, y: flowY },
+      showSubmenu: false,
+    };
+  }
+
+  function closeGraphContextMenu() {
+    graphContextMenu.show = false;
+    graphContextMenu.showSubmenu = false;
+  }
+
+  function toggleTemplateSubmenu() {
+    graphContextMenu.showSubmenu = !graphContextMenu.showSubmenu;
+  }
+
+  function addPassageWithTemplate(templateKey: string) {
+    if (!$currentStory) return;
+
+    const template = passageTemplates[templateKey as keyof typeof passageTemplates];
+    if (!template) return;
+
+    // Create passage with template content at the clicked position
+    const passage = new Passage({
+      title: template.title,
+      content: template.content,
+      position: graphContextMenu.clickPosition,
+    });
+
+    currentStory.update(story => {
+      if (story) {
+        story.addPassage(passage);
+        selectedPassageId.set(passage.id);
+        unsavedChanges.set(true);
+      }
+      return story;
+    });
+
+    // Save new state to history
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
+
+    updateGraph();
+    closeGraphContextMenu();
   }
 
   function deleteEdge(edgeId: string) {
@@ -445,14 +594,18 @@
     // Get current viewport
     const viewport = getViewport();
 
-    // Calculate new zoom level relative to initial pinch
-    const newZoom = Math.max(0.5, Math.min(2, viewport.zoom * scale / initialPinchZoom));
+    // Calculate zoom direction based on scale change
+    if (scale > initialPinchZoom) {
+      flowZoomIn({ duration: 0 });
+    } else if (scale < initialPinchZoom) {
+      flowZoomOut({ duration: 0 });
+    }
 
-    // Apply zoom
-    zoomTo(newZoom, { duration: 0 });
+    // Update initial pinch zoom for next comparison
+    initialPinchZoom = scale;
 
     // Update current zoom display
-    currentZoom = newZoom;
+    currentZoom = viewport.zoom;
   }
 
   function handlePinchStart() {
@@ -478,6 +631,110 @@
     return cleanup;
   });
 
+  // Multi-select functions
+  function toggleSelectMode() {
+    selectMode = !selectMode;
+    if (!selectMode) {
+      clearSelection();
+    }
+  }
+
+  function clearSelection() {
+    selectedNodes.clear();
+    selectedNodes = selectedNodes;
+  }
+
+  function selectAll() {
+    selectedNodes.clear();
+    $nodes.filter(n => !n.hidden).forEach(n => {
+      selectedNodes.add(n.id);
+    });
+    selectedNodes = selectedNodes;
+  }
+
+  function bulkDelete() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const count = selectedNodes.size;
+    if (confirm(`Delete ${count} selected passage${count !== 1 ? 's' : ''}?`)) {
+      selectedNodes.forEach(id => {
+        $currentStory.deletePassage(id);
+      });
+      currentStory.update(s => s);
+      projectActions.markChanged();
+      clearSelection();
+      updateGraph();
+    }
+  }
+
+  function bulkAddTag() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const tagName = prompt('Enter tag name to add to selected passages:');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmedTag = tagName.trim();
+    selectedNodes.forEach(id => {
+      const passage = $currentStory.getPassage(id);
+      if (passage && !passage.tags.includes(trimmedTag)) {
+        passage.tags.push(trimmedTag);
+      }
+    });
+    currentStory.update(s => s);
+    projectActions.markChanged();
+    clearSelection();
+  }
+
+  function bulkRemoveTag() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const tagName = prompt('Enter tag name to remove from selected passages:');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmedTag = tagName.trim();
+    selectedNodes.forEach(id => {
+      const passage = $currentStory.getPassage(id);
+      if (passage) {
+        passage.tags = passage.tags.filter(t => t !== trimmedTag);
+      }
+    });
+    currentStory.update(s => s);
+    projectActions.markChanged();
+    clearSelection();
+  }
+
+  function bulkMove() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const deltaXStr = prompt('Enter horizontal offset (pixels):');
+    const deltaYStr = prompt('Enter vertical offset (pixels):');
+
+    if (!deltaXStr || !deltaYStr) return;
+
+    const deltaX = parseFloat(deltaXStr);
+    const deltaY = parseFloat(deltaYStr);
+
+    if (isNaN(deltaX) || isNaN(deltaY)) {
+      alert('Invalid offset values');
+      return;
+    }
+
+    selectedNodes.forEach(id => {
+      const passage = $currentStory.getPassage(id);
+      if (passage && passage.position) {
+        passage.position = {
+          x: passage.position.x + deltaX,
+          y: passage.position.y + deltaY,
+        };
+      }
+    });
+
+    currentStory.update(s => s);
+    projectActions.markChanged();
+    updateGraph();
+    clearSelection();
+  }
+
   // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
@@ -496,6 +753,26 @@
           }
           return node;
         })
+      );
+    }
+  }
+
+  // Update node styling based on multi-select
+  $: {
+    if (selectMode && selectedNodes.size > 0) {
+      nodes.update(nodes =>
+        nodes.map((node) => ({
+          ...node,
+          className: selectedNodes.has(node.id) ? 'selected-node' : '',
+        }))
+      );
+    } else if (!selectMode) {
+      // Clear multi-select styling
+      nodes.update(nodes =>
+        nodes.map((node) => ({
+          ...node,
+          className: '',
+        }))
       );
     }
   }
@@ -531,50 +808,65 @@
   {/if}
 
   <!-- Toolbar -->
-  <div class="bg-white border-b border-gray-300 p-2 flex items-center gap-2 z-10">
-    <span class="text-sm font-medium text-gray-700">Layout:</span>
+  <div class="bg-white border-b border-gray-300 p-2 flex items-center gap-2 z-10 flex-wrap">
     <button
-      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-      on:click={() => handleAutoLayout('hierarchical')}
-      title="Arrange passages hierarchically"
+      class="px-3 py-1 text-sm rounded border transition-colors {selectMode ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-50'}"
+      on:click={toggleSelectMode}
+      title="Toggle select mode"
     >
-      Hierarchical
-    </button>
-    <button
-      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-      on:click={() => handleAutoLayout('circular')}
-      title="Arrange passages in a circle"
-    >
-      Circular
-    </button>
-    <button
-      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-      on:click={() => handleAutoLayout('force')}
-      title="Arrange passages in a grid"
-    >
-      Grid
+      {selectMode ? '☑' : '☐'} Select
     </button>
 
     <div class="border-l border-gray-300 h-6 mx-2"></div>
 
-    <label class="flex items-center gap-2 text-sm text-gray-700">
-      <input
-        type="radio"
-        bind:group={layoutDirection}
-        value="TB"
-        on:change={() => handleAutoLayout('hierarchical')}
-      />
-      Top-Bottom
-    </label>
-    <label class="flex items-center gap-2 text-sm text-gray-700">
-      <input
-        type="radio"
-        bind:group={layoutDirection}
-        value="LR"
-        on:change={() => handleAutoLayout('hierarchical')}
-      />
-      Left-Right
-    </label>
+    <!-- Layout Algorithm Selector -->
+    <span class="text-sm font-medium text-gray-700">Layout:</span>
+    <select
+      class="px-3 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer"
+      bind:value={$graphLayout.algorithm}
+      on:change={(e) => viewPreferencesActions.setGraphLayoutAlgorithm(e.currentTarget.value as LayoutAlgorithm)}
+      title="Select layout algorithm"
+    >
+      <option value="manual">Manual (User Positioned)</option>
+      <option value="hierarchical">Hierarchical (Tree)</option>
+      <option value="force">Force-Directed (Auto-Spacing)</option>
+      <option value="circular">Circular (Circle)</option>
+      <option value="grid">Grid (Square Grid)</option>
+    </select>
+
+    <!-- Direction selector (only for hierarchical) -->
+    {#if $graphLayout.algorithm === 'hierarchical'}
+      <select
+        class="px-3 py-1 text-sm border border-gray-300 rounded bg-white hover:bg-gray-50 cursor-pointer"
+        bind:value={$graphLayout.direction}
+        on:change={(e) => viewPreferencesActions.setGraphLayoutDirection(e.currentTarget.value as 'TB' | 'LR')}
+        title="Layout direction"
+      >
+        <option value="TB">Top-Bottom</option>
+        <option value="LR">Left-Right</option>
+      </select>
+    {/if}
+
+    <!-- Apply Layout Button -->
+    <button
+      class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+      on:click={() => applyLayout()}
+      disabled={$graphLayout.algorithm === 'manual' || $nodes.length === 0}
+      title="Apply the selected layout algorithm"
+    >
+      Apply Layout
+    </button>
+
+    <!-- Reset to Manual Button -->
+    {#if $graphLayout.algorithm !== 'manual'}
+      <button
+        class="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+        on:click={resetToManual}
+        title="Switch back to manual positioning"
+      >
+        Reset to Manual
+      </button>
+    {/if}
 
     <div class="border-l border-gray-300 h-6 mx-2"></div>
 
@@ -588,6 +880,65 @@
     </button>
   </div>
 
+  <!-- Bulk Actions Toolbar -->
+  {#if selectMode || selectedNodes.size > 0}
+    <div class="bg-purple-100 border-b border-purple-300 px-3 py-2">
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-sm font-semibold text-purple-800">
+          {selectedNodes.size} node{selectedNodes.size !== 1 ? 's' : ''} selected
+        </div>
+        <div class="flex gap-2">
+          <button
+            class="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
+            on:click={selectAll}
+            title="Select all visible nodes"
+          >
+            Select All
+          </button>
+          <button
+            class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+            on:click={clearSelection}
+            title="Clear selection"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+      {#if selectedNodes.size > 0}
+        <div class="flex gap-2 flex-wrap">
+          <button
+            class="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+            on:click={bulkMove}
+            title="Move selected nodes"
+          >
+            Move
+          </button>
+          <button
+            class="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+            on:click={bulkAddTag}
+            title="Add tag to selected passages"
+          >
+            + Add Tag
+          </button>
+          <button
+            class="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
+            on:click={bulkRemoveTag}
+            title="Remove tag from selected passages"
+          >
+            - Remove Tag
+          </button>
+          <button
+            class="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600"
+            on:click={bulkDelete}
+            title="Delete selected passages"
+          >
+            Delete
+          </button>
+        </div>
+      {/if}
+    </div>
+  {/if}
+
   <!-- Graph -->
   <div bind:this={flowContainer} class="flex-1 relative">
     {#if $currentStory}
@@ -600,6 +951,10 @@
         onnodedragstop={(e: any) => handleNodeDragStop(e)}
         onnodeclick={(e: any) => handleNodeClick(e)}
         onconnect={(e: any) => handleConnect(e)}
+        onpanecontextmenu={(e: any) => {
+          e.preventDefault();
+          handlePaneContextMenu(e);
+        }}
         onmove={(e: any) => {
           if (e?.detail?.viewport) {
             currentZoom = e.detail.viewport.zoom;
@@ -640,12 +995,6 @@
           on:toggleMiniMap={handleMobileToggleMiniMap}
         />
       {/if}
-
-      <!-- Zoom Level Indicator -->
-      <div class="absolute bottom-4 left-4 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-3 py-1 shadow-md text-sm font-mono">
-        <span class="text-gray-600 dark:text-gray-400">Zoom:</span>
-        <span class="ml-1 font-semibold text-gray-900 dark:text-gray-100">{Math.round(currentZoom * 100)}%</span>
-      </div>
     {:else}
       <div class="flex items-center justify-center h-full text-gray-400">
         <div class="text-center">
@@ -683,6 +1032,139 @@
       </button>
     </div>
   {/if}
+
+  <!-- Graph Context Menu (right-click on empty space) -->
+  {#if graphContextMenu.show}
+    <div
+      class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[200px]"
+      style="left: {graphContextMenu.x}px; top: {graphContextMenu.y}px;"
+      on:click|stopPropagation
+      role="menu"
+      tabindex="0"
+      on:keydown={(e) => {
+        if (e.key === 'Escape') closeGraphContextMenu();
+        else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleTemplateSubmenu();
+        }
+      }}
+    >
+      <button
+        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex items-center justify-between gap-2"
+        on:click={toggleTemplateSubmenu}
+        on:keydown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleTemplateSubmenu();
+          } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            graphContextMenu.showSubmenu = true;
+          }
+        }}
+      >
+        <span class="flex items-center gap-2">
+          <span>➕</span>
+          Add Passage Here
+        </span>
+        <span class="text-gray-400">{graphContextMenu.showSubmenu ? '▼' : '▶'}</span>
+      </button>
+
+      <!-- Template Submenu -->
+      {#if graphContextMenu.showSubmenu}
+        <div class="ml-4 border-l-2 border-gray-200 pl-2 mt-1">
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('blank')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('blank');
+              }
+            }}
+          >
+            <span>📄</span>
+            Blank Passage
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('choice')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('choice');
+              }
+            }}
+          >
+            <span>🔀</span>
+            Choice Passage
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('conversation')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('conversation');
+              }
+            }}
+          >
+            <span>💬</span>
+            Conversation
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('description')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('description');
+              }
+            }}
+          >
+            <span>📝</span>
+            Description
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('checkpoint')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('checkpoint');
+              }
+            }}
+          >
+            <span>🚩</span>
+            Checkpoint
+          </button>
+          <button
+            class="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 flex items-center gap-2"
+            on:click={() => addPassageWithTemplate('ending')}
+            on:keydown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                addPassageWithTemplate('ending');
+              }
+            }}
+          >
+            <span>🏁</span>
+            Ending
+          </button>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>
 
-<svelte:window on:click={closeEdgeContextMenu} />
+<svelte:window on:click={() => {
+  closeEdgeContextMenu();
+  closeGraphContextMenu();
+}} />
+
+<style>
+  :global(.selected-node) {
+    outline: 3px solid #9333ea !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.2) !important;
+  }
+</style>

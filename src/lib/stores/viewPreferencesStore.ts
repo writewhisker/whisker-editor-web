@@ -14,6 +14,7 @@ import { getPreferenceService } from '../services/storage/PreferenceService';
 const prefService = getPreferenceService();
 
 export type ViewMode = 'list' | 'graph' | 'split' | 'preview';
+export type LayoutAlgorithm = 'manual' | 'hierarchical' | 'force' | 'circular' | 'grid';
 
 export interface PanelVisibility {
   passageList: boolean;
@@ -31,11 +32,18 @@ export interface PanelSizes {
   variablesHeight: number; // For split view
 }
 
+export interface GraphLayoutPreferences {
+  algorithm: LayoutAlgorithm;
+  direction: 'TB' | 'LR';
+  autoApply: boolean; // Whether to auto-apply layout when adding nodes
+}
+
 export interface ViewPreferences {
   viewMode: ViewMode;
   panelVisibility: PanelVisibility;
   panelSizes: PanelSizes;
   focusMode: boolean;
+  graphLayout?: GraphLayoutPreferences;
 }
 
 interface ProjectViewPreferences {
@@ -60,6 +68,11 @@ const DEFAULT_PREFERENCES: ViewPreferences = {
     variablesHeight: 256, // 64 * 4 (h-64)
   },
   focusMode: false,
+  graphLayout: {
+    algorithm: 'manual',
+    direction: 'TB',
+    autoApply: false,
+  },
 };
 
 const STORAGE_KEY = 'whisker-view-preferences';
@@ -131,6 +144,10 @@ export const currentPreferences = derived(
           ...(savedPrefs.panelSizes && typeof savedPrefs.panelSizes === 'object' ? savedPrefs.panelSizes : {})
         },
         focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
+        graphLayout: {
+          ...DEFAULT_PREFERENCES.graphLayout!,
+          ...(savedPrefs.graphLayout && typeof savedPrefs.graphLayout === 'object' ? savedPrefs.graphLayout : {})
+        },
       };
     } catch (error) {
       console.error('Failed to derive current preferences, using defaults:', error);
@@ -144,6 +161,7 @@ export const viewMode = writable<ViewMode>(loadGlobalViewMode());
 export const panelVisibility = writable<PanelVisibility>(DEFAULT_PREFERENCES.panelVisibility);
 export const panelSizes = writable<PanelSizes>(DEFAULT_PREFERENCES.panelSizes);
 export const focusMode = writable<boolean>(false);
+export const graphLayout = writable<GraphLayoutPreferences>(DEFAULT_PREFERENCES.graphLayout!);
 
 // Update current preferences when project changes
 currentProjectKey.subscribe($key => {
@@ -164,12 +182,17 @@ currentProjectKey.subscribe($key => {
           ...(savedPrefs.panelSizes && typeof savedPrefs.panelSizes === 'object' ? savedPrefs.panelSizes : {})
         },
         focusMode: savedPrefs.focusMode !== undefined ? savedPrefs.focusMode : DEFAULT_PREFERENCES.focusMode,
+        graphLayout: {
+          ...DEFAULT_PREFERENCES.graphLayout!,
+          ...(savedPrefs.graphLayout && typeof savedPrefs.graphLayout === 'object' ? savedPrefs.graphLayout : {})
+        },
       };
 
       viewMode.set(projectPrefs.viewMode);
       panelVisibility.set(projectPrefs.panelVisibility);
       panelSizes.set(projectPrefs.panelSizes);
       focusMode.set(projectPrefs.focusMode);
+      graphLayout.set(projectPrefs.graphLayout);
     } catch (error) {
       console.error('Failed to load view preferences, using defaults:', error);
       // Clear corrupted data and use defaults
@@ -178,6 +201,7 @@ currentProjectKey.subscribe($key => {
       panelVisibility.set(DEFAULT_PREFERENCES.panelVisibility);
       panelSizes.set(DEFAULT_PREFERENCES.panelSizes);
       focusMode.set(false);
+      graphLayout.set(DEFAULT_PREFERENCES.graphLayout!);
     }
   } else {
     // No project loaded, use defaults
@@ -185,6 +209,7 @@ currentProjectKey.subscribe($key => {
     panelVisibility.set(DEFAULT_PREFERENCES.panelVisibility);
     panelSizes.set(DEFAULT_PREFERENCES.panelSizes);
     focusMode.set(false);
+    graphLayout.set(DEFAULT_PREFERENCES.graphLayout!);
   }
 });
 
@@ -229,6 +254,21 @@ export const viewPreferencesActions = {
     this.save();
   },
 
+  setGraphLayoutAlgorithm(algorithm: LayoutAlgorithm) {
+    graphLayout.update(current => ({ ...current, algorithm }));
+    this.save();
+  },
+
+  setGraphLayoutDirection(direction: 'TB' | 'LR') {
+    graphLayout.update(current => ({ ...current, direction }));
+    this.save();
+  },
+
+  setGraphLayoutAutoApply(autoApply: boolean) {
+    graphLayout.update(current => ({ ...current, autoApply }));
+    this.save();
+  },
+
   save() {
     // Get current project key
     let projectKey: string | null = null;
@@ -244,16 +284,19 @@ export const viewPreferencesActions = {
     let currentPanelVisibility: PanelVisibility = DEFAULT_PREFERENCES.panelVisibility;
     let currentPanelSizes: PanelSizes = DEFAULT_PREFERENCES.panelSizes;
     let currentFocusMode: boolean = false;
+    let currentGraphLayout: GraphLayoutPreferences = DEFAULT_PREFERENCES.graphLayout!;
 
     const unsubViewMode = viewMode.subscribe(v => { currentViewMode = v; });
     const unsubPanelVis = panelVisibility.subscribe(v => { currentPanelVisibility = v; });
     const unsubPanelSizes = panelSizes.subscribe(v => { currentPanelSizes = v; });
     const unsubFocusMode = focusMode.subscribe(v => { currentFocusMode = v; });
+    const unsubGraphLayout = graphLayout.subscribe(v => { currentGraphLayout = v; });
 
     unsubViewMode();
     unsubPanelVis();
     unsubPanelSizes();
     unsubFocusMode();
+    unsubGraphLayout();
 
     // Update all preferences
     allPreferences.update(all => {
@@ -262,6 +305,7 @@ export const viewPreferencesActions = {
         panelVisibility: currentPanelVisibility,
         panelSizes: currentPanelSizes,
         focusMode: currentFocusMode,
+        graphLayout: currentGraphLayout,
       };
       savePreferences(all);
       return all;
@@ -273,6 +317,7 @@ export const viewPreferencesActions = {
     panelVisibility.set(DEFAULT_PREFERENCES.panelVisibility);
     panelSizes.set(DEFAULT_PREFERENCES.panelSizes);
     focusMode.set(DEFAULT_PREFERENCES.focusMode);
+    graphLayout.set(DEFAULT_PREFERENCES.graphLayout!);
     this.save();
   },
 };

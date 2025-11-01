@@ -108,10 +108,15 @@ export class Passage {
   }
 
   clone(): Passage {
+    const serialized = this.serialize();
     return new Passage({
-      ...this.serialize(),
+      ...serialized,
       id: nanoid(), // New ID for clone
       title: `${this.title} (copy)`,
+      position: {
+        x: serialized.position.x + 50, // Offset right
+        y: serialized.position.y + 50, // Offset down
+      },
     });
   }
 }

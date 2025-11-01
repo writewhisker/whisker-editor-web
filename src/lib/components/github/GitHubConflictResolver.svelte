@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Story } from '../../types/story';
+  import type { Story } from '../../models/Story';
+  import StoryComparisonView from '../comparison/StoryComparisonView.svelte';
 
   export let show = false;
   export let localVersion: Story | null = null;
@@ -12,7 +13,7 @@
 
   type ResolutionChoice = 'local' | 'remote' | 'manual';
   let selectedResolution: ResolutionChoice | null = null;
-  let showDiff = false;
+  let showComparison = false;
 
   function formatDate(date: Date | null): string {
     if (!date) return 'Unknown';
@@ -74,11 +75,24 @@
   function close() {
     show = false;
     selectedResolution = null;
-    showDiff = false;
+    showComparison = false;
   }
 
-  function toggleDiff() {
-    showDiff = !showDiff;
+  function toggleComparison() {
+    showComparison = !showComparison;
+  }
+
+  function handleComparisonAccept(event: CustomEvent) {
+    const { source } = event.detail;
+
+    // Map comparison source to resolution choice
+    if (source === 'left') {
+      selectedResolution = 'local';
+    } else if (source === 'right') {
+      selectedResolution = 'remote';
+    }
+
+    applyResolution();
   }
 
   $: changeSummary = getChangeSummary(localVersion, remoteVersion);
@@ -242,27 +256,26 @@
           </button>
         </div>
 
-        <!-- View Diff -->
+        <!-- View Comparison -->
         <button
-          on:click={toggleDiff}
+          on:click={toggleComparison}
           class="text-sm text-blue-600 dark:text-blue-400 hover:underline mb-2"
         >
-          {showDiff ? '▼' : '▶'} {showDiff ? 'Hide' : 'Show'} detailed comparison
+          {showComparison ? '▼' : '▶'} {showComparison ? 'Hide' : 'Show'} detailed comparison
         </button>
 
-        {#if showDiff}
-          <div class="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Local Version (JSON)
-              </h4>
-              <pre class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-3 text-xs overflow-auto max-h-60">{JSON.stringify(localVersion, null, 2)}</pre>
-            </div>
-            <div>
-              <h4 class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                GitHub Version (JSON)
-              </h4>
-              <pre class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-3 text-xs overflow-auto max-h-60">{JSON.stringify(remoteVersion, null, 2)}</pre>
+        {#if showComparison && localVersion && remoteVersion}
+          <div class="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div class="h-[500px]">
+              <StoryComparisonView
+                leftStory={localVersion}
+                rightStory={remoteVersion}
+                leftLabel="Local Version"
+                rightLabel="GitHub Version"
+                leftDate={localModified}
+                rightDate={remoteModified}
+                on:accept={handleComparisonAccept}
+              />
             </div>
           </div>
         {/if}

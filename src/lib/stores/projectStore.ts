@@ -296,6 +296,44 @@ export const projectActions = {
     }
   },
 
+  duplicatePassage(passageId: string): Passage | null {
+    let duplicatedPassage: Passage | null = null;
+
+    currentStory.update(story => {
+      if (!story) return story;
+
+      const passage = story.getPassage(passageId);
+      if (!passage) return story;
+
+      // Clone the passage (which automatically offsets position and adds " (Copy)" to title)
+      const duplicate = passage.clone();
+
+      // Check for duplicate titles and make unique if necessary
+      let finalTitle = duplicate.title;
+      let counter = 2;
+      while (Array.from(story.passages.values()).some(p => p.title.toLowerCase() === finalTitle.toLowerCase())) {
+        finalTitle = `${passage.title} (Copy ${counter})`;
+        counter++;
+      }
+      duplicate.title = finalTitle;
+
+      story.addPassage(duplicate);
+      selectedPassageId.set(duplicate.id);
+      unsavedChanges.set(true);
+      duplicatedPassage = duplicate;
+
+      return story;
+    });
+
+    // Save new state to history AFTER making changes
+    const newState = get(currentStory);
+    if (newState) {
+      historyActions.pushState(newState.serialize());
+    }
+
+    return duplicatedPassage;
+  },
+
   // Undo/Redo
   async undo() {
     // Prevent concurrent undo operations

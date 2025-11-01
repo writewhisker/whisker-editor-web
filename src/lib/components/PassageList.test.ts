@@ -669,7 +669,7 @@ describe('PassageList', () => {
 
       await waitFor(() => {
         expect(getByText(/1 passage selected/)).toBeTruthy();
-        expect(getByText('Add Tag')).toBeTruthy();
+        expect(getByText('+ Add Tag')).toBeTruthy();
         expect(getByText('Delete')).toBeTruthy();
         expect(getByText('Clear')).toBeTruthy();
       });
@@ -737,7 +737,7 @@ describe('PassageList', () => {
       await fireEvent.click(getByText('P1').closest('button')!, { ctrlKey: true });
       await fireEvent.click(getByText('P2').closest('button')!, { ctrlKey: true });
 
-      await fireEvent.click(getByText('Add Tag'));
+      await fireEvent.click(getByText('+ Add Tag'));
 
       expect(promptSpy).toHaveBeenCalled();
 

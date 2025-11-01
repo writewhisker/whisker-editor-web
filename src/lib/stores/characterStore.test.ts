@@ -68,7 +68,7 @@ describe('characterStore', () => {
         },
       ];
 
-      story.setMetadata('entities', testEntities);
+      story.settings.entities = testEntities;
       characterStore.loadEntities(story);
 
       expect(get(entities)).toEqual(testEntities);
@@ -80,7 +80,7 @@ describe('characterStore', () => {
     });
 
     it('should handle invalid metadata', () => {
-      story.setMetadata('entities', 'invalid');
+      story.settings.entities = 'invalid';
       characterStore.loadEntities(story);
       expect(get(entities)).toEqual([]);
     });
@@ -168,7 +168,7 @@ describe('characterStore', () => {
       expect(updated.description).toBe('Updated description');
     });
 
-    it('should update modified timestamp', () => {
+    it('should update modified timestamp', async () => {
       characterStore.addEntity({
         name: 'Hero',
         type: 'character',
@@ -179,6 +179,9 @@ describe('characterStore', () => {
 
       const entityId = get(entities)[0].id;
       const originalModified = get(entities)[0].modified;
+
+      // Wait a bit to ensure time passes
+      await new Promise(resolve => setTimeout(resolve, 1));
 
       characterStore.updateEntity(entityId, { name: 'Updated' });
 
@@ -407,7 +410,7 @@ describe('characterStore', () => {
 
       characterStore.saveEntities(story);
 
-      const saved = story.getMetadata('entities');
+      const saved = story.settings.entities;
       expect(saved).toHaveLength(1);
       expect(saved[0].name).toBe('Hero');
     });

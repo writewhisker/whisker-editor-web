@@ -262,7 +262,8 @@ export class IndexedDBAdapter {
     if (!obj || typeof obj !== 'object') return;
 
     // Common date field names to check
-    const dateFields = ['created', 'modified', 'createdAt', 'updatedAt', 'timestamp'];
+    // Note: 'updatedAt' is excluded because it's a storage-level timestamp that should remain as ISO string
+    const dateFields = ['created', 'modified', 'createdAt', 'timestamp'];
 
     for (const key of Object.keys(obj)) {
       const value = obj[key];

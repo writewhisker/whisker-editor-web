@@ -171,7 +171,7 @@ describe('wordGoalStore', () => {
       expect(get(goals)[0].type).toBe('weekly');
     });
 
-    it('should update modified timestamp', () => {
+    it('should update modified timestamp', async () => {
       wordGoalStore.addGoal({
         type: 'daily',
         target: 1000,
@@ -180,6 +180,9 @@ describe('wordGoalStore', () => {
 
       const goalId = get(goals)[0].id;
       const originalModified = get(goals)[0].modified;
+
+      // Wait 1ms to ensure timestamp changes
+      await new Promise(resolve => setTimeout(resolve, 1));
 
       wordGoalStore.updateGoal(goalId, { target: 1500 });
 

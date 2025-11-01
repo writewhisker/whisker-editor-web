@@ -86,21 +86,22 @@ describe('playtestStore', () => {
     });
 
     it('should set session start time', () => {
-      const before = new Date().toISOString();
+      const before = Date.now();
       playtestStore.startSession(story);
-      const after = new Date().toISOString();
+      const after = Date.now();
 
       const session = get(currentSession);
       expect(session?.startTime).toBeDefined();
-      expect(session?.startTime).toBeGreaterThanOrEqual(before);
-      expect(session?.startTime).toBeLessThanOrEqual(after);
+      const startTime = new Date(session!.startTime).getTime();
+      expect(startTime).toBeGreaterThanOrEqual(before);
+      expect(startTime).toBeLessThanOrEqual(after);
     });
 
     it('should generate unique session ID', () => {
       playtestStore.startSession(story);
       const session1 = get(currentSession);
 
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.startSession(story);
       const session2 = get(currentSession);
@@ -172,7 +173,7 @@ describe('playtestStore', () => {
     });
 
     it('should not record if not recording', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.recordPassageView('p1', 'Title');
 
@@ -220,7 +221,7 @@ describe('playtestStore', () => {
     });
 
     it('should not record if not recording', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.recordChoice('c1', 'Text');
 
@@ -294,34 +295,34 @@ describe('playtestStore', () => {
     });
 
     it('should end current session', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       expect(get(isRecording)).toBe(false);
       expect(get(currentSession)).toBeNull();
     });
 
     it('should save session to sessions list', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       expect(get(sessions)).toHaveLength(1);
     });
 
     it('should set end time', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].endTime).toBeDefined();
     });
 
     it('should calculate session duration', () => {
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].duration).toBeGreaterThanOrEqual(0);
     });
 
     it('should mark session as completed if requested', () => {
-      playtestStore.endSession(story, true);
+      playtestStore.endSession(true);
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].completed).toBe(true);
@@ -330,7 +331,7 @@ describe('playtestStore', () => {
     it('should save final variables if provided', () => {
       const finalVars = { health: 80, score: 1000 };
 
-      playtestStore.endSession(story, true, finalVars);
+      playtestStore.endSession(true, finalVars);
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].finalVariables).toEqual(finalVars);
@@ -339,7 +340,7 @@ describe('playtestStore', () => {
     it('should add end action to actions list', () => {
       playtestStore.recordPassageView('p1', 'Start');
 
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       const lastAction = savedSessions[0].actions[savedSessions[0].actions.length - 1];
@@ -347,8 +348,8 @@ describe('playtestStore', () => {
     });
 
     it('should do nothing if no session is active', () => {
-      playtestStore.endSession(story);
-      playtestStore.endSession(story); // Second call
+      playtestStore.endSession();
+      playtestStore.endSession(); // Second call
 
       expect(get(sessions)).toHaveLength(1);
     });
@@ -370,7 +371,7 @@ describe('playtestStore', () => {
   describe('deleteSession', () => {
     it('should delete specific session', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       const sessionId = savedSessions[0].id;
@@ -382,10 +383,10 @@ describe('playtestStore', () => {
 
     it('should not affect other sessions', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       const firstSessionId = savedSessions[0].id;
@@ -404,13 +405,13 @@ describe('playtestStore', () => {
       playtestStore.recordPassageView('p1', 'Start');
       playtestStore.recordChoice('c1', 'Continue', 'p2');
       playtestStore.recordPassageView('p2', 'Middle');
-      playtestStore.endSession(story, true);
+      playtestStore.endSession(true);
 
       playtestStore.startSession(story);
       playtestStore.recordPassageView('p1', 'Start');
       playtestStore.recordChoice('c2', 'Quit', 'p3');
       playtestStore.recordPassageView('p3', 'End');
-      playtestStore.endSession(story, false);
+      playtestStore.endSession(false);
     });
 
     it('should analyze all sessions', () => {
@@ -506,7 +507,7 @@ describe('playtestStore', () => {
     it('should export sessions as JSON', () => {
       playtestStore.startSession(story);
       playtestStore.recordPassageView('p1', 'Test');
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const exported = playtestStore.exportSessions();
 
@@ -517,7 +518,7 @@ describe('playtestStore', () => {
     it('should include all session data', () => {
       playtestStore.startSession(story);
       playtestStore.recordPassageView('p1', 'Test');
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const exported = playtestStore.exportSessions();
       const parsed = JSON.parse(exported);
@@ -561,7 +562,7 @@ describe('playtestStore', () => {
 
     it('should append to existing sessions', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const testSessions: PlaytestSession[] = [
         {
@@ -600,10 +601,10 @@ describe('playtestStore', () => {
   describe('clearAllSessions', () => {
     it('should clear all sessions', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.clearAllSessions();
 
@@ -612,7 +613,7 @@ describe('playtestStore', () => {
 
     it('should reset analytics', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
       playtestStore.analyze();
 
       playtestStore.clearAllSessions();
@@ -626,7 +627,7 @@ describe('playtestStore', () => {
       playtestStore.startSession(story);
       playtestStore.recordPassageView('p1', 'Start');
       playtestStore.recordPassageView('p1', 'Start');
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.analyze();
 
@@ -639,7 +640,7 @@ describe('playtestStore', () => {
       playtestStore.startSession(story);
       playtestStore.recordPassageView('p1', 'Start', 5000);
       playtestStore.recordPassageView('p1', 'Start', 3000);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.analyze();
 
@@ -654,7 +655,7 @@ describe('playtestStore', () => {
       playtestStore.recordPassageView('p2', 'Middle');
       playtestStore.recordPassageView('p2', 'Middle');
       playtestStore.recordPassageView('p2', 'Middle');
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.analyze();
 
@@ -667,17 +668,17 @@ describe('playtestStore', () => {
   describe('derived stores', () => {
     it('should derive sessionCount', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       expect(get(sessionCount)).toBe(2);
     });
 
     it('should update sessions store', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const allSessions = get(sessions);
       expect(allSessions).toHaveLength(1);
@@ -692,7 +693,7 @@ describe('playtestStore', () => {
         playtestStore.recordPassageView(`p${i}`, `Passage ${i}`);
       }
 
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].passagesVisited).toHaveLength(100);
@@ -700,7 +701,7 @@ describe('playtestStore', () => {
 
     it('should handle sessions with no actions', () => {
       playtestStore.startSession(story);
-      playtestStore.endSession(story);
+      playtestStore.endSession();
 
       const savedSessions = get(sessions);
       expect(savedSessions[0].actions).toHaveLength(1); // Only end action

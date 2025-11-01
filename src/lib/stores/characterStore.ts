@@ -48,7 +48,7 @@ const createCharacterStore = () => {
      * Load entities for a story
      */
     loadEntities: (story: Story) => {
-      const savedData = story.getMetadata('entities');
+      const savedData = story.settings.entities;
       if (savedData && Array.isArray(savedData)) {
         update(state => ({
           ...state,
@@ -67,7 +67,7 @@ const createCharacterStore = () => {
      */
     saveEntities: (story: Story) => {
       const state = get({ subscribe });
-      story.setMetadata('entities', state.entities);
+      story.settings.entities = state.entities;
     },
 
     /**

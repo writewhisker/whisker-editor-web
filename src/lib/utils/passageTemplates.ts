@@ -1,4 +1,5 @@
 import type { PassageData } from '../models/types';
+import { nanoid } from 'nanoid';
 
 export interface PassageTemplate {
   id: string;
@@ -34,10 +35,12 @@ export const defaultTemplates: PassageTemplate[] = [
       content: 'You stand at a crossroads. Which path do you take?',
       choices: [
         {
+          id: nanoid(),
           text: 'Take the left path',
           target: '',
         },
         {
+          id: nanoid(),
           text: 'Take the right path',
           target: '',
         },
@@ -55,10 +58,10 @@ export const defaultTemplates: PassageTemplate[] = [
       title: 'Multiple Options',
       content: 'Several paths lie before you. What will you do?',
       choices: [
-        { text: 'Option A', target: '' },
-        { text: 'Option B', target: '' },
-        { text: 'Option C', target: '' },
-        { text: 'Option D', target: '' },
+        { id: nanoid(), text: 'Option A', target: '' },
+        { id: nanoid(), text: 'Option B', target: '' },
+        { id: nanoid(), text: 'Option C', target: '' },
+        { id: nanoid(), text: 'Option D', target: '' },
       ],
       tags: ['choice', 'branching'],
     },
@@ -74,11 +77,13 @@ export const defaultTemplates: PassageTemplate[] = [
       content: 'The available options depend on your previous decisions.',
       choices: [
         {
+          id: nanoid(),
           text: 'Option if condition is true',
           target: '',
           condition: 'hasKey == true',
         },
         {
+          id: nanoid(),
           text: 'Option if condition is false',
           target: '',
           condition: 'hasKey == false',
@@ -101,7 +106,7 @@ health = 100
 coins = 0
 inventory = {}`,
       choices: [
-        { text: 'Continue', target: '' },
+        { id: nanoid(), text: 'Continue', target: '' },
       ],
       tags: ['script', 'variables'],
     },
@@ -130,10 +135,12 @@ inventory = {}`,
       content: 'You must decide quickly!',
       choices: [
         {
+          id: nanoid(),
           text: 'Act immediately',
           target: '',
         },
         {
+          id: nanoid(),
           text: 'Wait and see',
           target: '',
         },
@@ -157,16 +164,17 @@ enemyHealth = 50
 playerHealth = health or 100`,
       choices: [
         {
+          id: nanoid(),
           text: 'Attack',
           target: '',
-          onChoiceScript: 'enemyHealth = enemyHealth - 10',
         },
         {
+          id: nanoid(),
           text: 'Defend',
           target: '',
-          onChoiceScript: 'playerHealth = playerHealth + 5',
         },
         {
+          id: nanoid(),
           text: 'Flee',
           target: '',
           condition: 'canFlee == true',
@@ -186,11 +194,13 @@ playerHealth = health or 100`,
       content: 'You need certain items to proceed.',
       choices: [
         {
+          id: nanoid(),
           text: 'Use the key',
           target: '',
           condition: 'hasItem("key")',
         },
         {
+          id: nanoid(),
           text: 'Turn back',
           target: '',
         },
@@ -208,9 +218,9 @@ playerHealth = health or 100`,
       title: 'Conversation',
       content: '"Hello, traveler," the merchant says. "What brings you here?"',
       choices: [
-        { text: '"I\'m looking for supplies."', target: '' },
-        { text: '"Just passing through."', target: '' },
-        { text: '[Say nothing and leave]', target: '' },
+        { id: nanoid(), text: '"I\'m looking for supplies."', target: '' },
+        { id: nanoid(), text: '"Just passing through."', target: '' },
+        { id: nanoid(), text: '[Say nothing and leave]', target: '' },
       ],
       tags: ['dialogue', 'npc'],
     },

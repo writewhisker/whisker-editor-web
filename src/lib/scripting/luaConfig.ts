@@ -9,8 +9,9 @@ import type { languages } from 'monaco-editor';
 
 /**
  * Story API autocomplete suggestions
+ * Note: range is added dynamically in the completion provider
  */
-const storyApiCompletions: languages.CompletionItem[] = [
+const storyApiCompletions: Omit<languages.CompletionItem, 'range'>[] = [
   // Variables API
   {
     label: 'game_state.get',

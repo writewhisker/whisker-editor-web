@@ -35,6 +35,7 @@
   import { isMobile, isTouch, setupPinchZoom } from '../utils/mobile';
   import { graphLayout, viewMode, viewPreferencesActions, type LayoutAlgorithm } from '../stores/viewPreferencesStore';
   import { notificationStore } from '../stores/notificationStore';
+  import { FolderManager } from '../utils/folderManager';
 
   // Node types
   const nodeTypes = {
@@ -916,6 +917,69 @@
     }
   }
 
+  function selectByFolder() {
+    if (!$currentStory) return;
+
+    const folders = FolderManager.getAllFolders($currentStory);
+    if (folders.length === 0) {
+      notificationStore.info('No folders found. Create folders by using "Move to Folder" action.');
+      return;
+    }
+
+    const folderList = folders.map(f => `${f.name} (${f.passageCount})`).join('\n');
+    const folderName = prompt(`Enter folder name to select:\n\nAvailable folders:\n${folderList}`);
+
+    if (!folderName || !folderName.trim()) return;
+
+    const trimmedFolder = folderName.trim();
+    clearSelection();
+
+    $currentStory.passages.forEach(passage => {
+      if (FolderManager.getFolder(passage) === trimmedFolder) {
+        selectedNodes.add(passage.id);
+      }
+    });
+
+    selectedNodes = selectedNodes;
+    if (selectedNodes.size > 0) {
+      selectMode = true;
+      notificationStore.success(`Selected ${selectedNodes.size} passage${selectedNodes.size !== 1 ? 's' : ''} in folder "${trimmedFolder}"`);
+    } else {
+      notificationStore.info(`No passages found in folder "${trimmedFolder}"`);
+    }
+  }
+
+  function bulkMoveToFolder() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const folders = FolderManager.getAllFolders($currentStory);
+    const folderList = folders.length > 0
+      ? `\n\nExisting folders:\n${folders.map(f => f.name).join('\n')}`
+      : '';
+
+    const folderName = prompt(`Enter folder name (leave empty to remove from folder):${folderList}`);
+
+    if (folderName === null) return; // Cancelled
+
+    const trimmedFolder = folderName.trim() || null;
+    const passages = Array.from(selectedNodes)
+      .map(id => $currentStory.getPassage(id))
+      .filter(p => p !== null) as any[];
+
+    FolderManager.moveToFolder(passages, trimmedFolder);
+
+    currentStory.update(s => s);
+    projectActions.markChanged();
+
+    if (trimmedFolder) {
+      notificationStore.success(`Moved ${passages.length} passage${passages.length !== 1 ? 's' : ''} to folder "${trimmedFolder}"`);
+    } else {
+      notificationStore.success(`Removed ${passages.length} passage${passages.length !== 1 ? 's' : ''} from folders`);
+    }
+
+    clearSelection();
+  }
+
   // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
@@ -1084,6 +1148,13 @@
             By Tag
           </button>
           <button
+            class="px-2 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            on:click={selectByFolder}
+            title="Select passages by folder"
+          >
+            By Folder
+          </button>
+          <button
             class="px-2 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700"
             on:click={selectOrphans}
             title="Select orphaned passages"
@@ -1121,6 +1192,13 @@
             title="Duplicate selected passages"
           >
             Duplicate
+          </button>
+          <button
+            class="px-3 py-1 text-xs bg-indigo-500 text-white rounded hover:bg-indigo-600"
+            on:click={bulkMoveToFolder}
+            title="Move selected passages to a folder"
+          >
+            📁 Move to Folder
           </button>
           <button
             class="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"

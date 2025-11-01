@@ -33,7 +33,7 @@
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
   import MobileToolbar from './graph/MobileToolbar.svelte';
   import { isMobile, isTouch, setupPinchZoom } from '../utils/mobile';
-  import { graphLayout, viewPreferencesActions, type LayoutAlgorithm } from '../stores/viewPreferencesStore';
+  import { graphLayout, viewMode, viewPreferencesActions, type LayoutAlgorithm } from '../stores/viewPreferencesStore';
 
   // Node types
   const nodeTypes = {
@@ -288,6 +288,11 @@
     } else {
       // Normal mode - select single passage
       selectedPassageId.set(node.id);
+
+      // If in graph-only mode, switch to split view to show passage editor
+      if (get(viewMode) === 'graph') {
+        viewPreferencesActions.setViewMode('split');
+      }
     }
   }
 

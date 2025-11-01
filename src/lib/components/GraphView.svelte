@@ -34,6 +34,7 @@
   import MobileToolbar from './graph/MobileToolbar.svelte';
   import { isMobile, isTouch, setupPinchZoom } from '../utils/mobile';
   import { graphLayout, viewMode, viewPreferencesActions, type LayoutAlgorithm } from '../stores/viewPreferencesStore';
+  import { notificationStore } from '../stores/notificationStore';
 
   // Node types
   const nodeTypes = {
@@ -822,6 +823,99 @@
     clearSelection();
   }
 
+  function bulkDuplicate() {
+    if (selectedNodes.size === 0 || !$currentStory) return;
+
+    const count = selectedNodes.size;
+    if (confirm(`Duplicate ${count} selected passage${count !== 1 ? 's' : ''}?`)) {
+      const newPassageIds: string[] = [];
+
+      selectedNodes.forEach(id => {
+        const duplicated = projectActions.duplicatePassage(id);
+        if (duplicated) {
+          newPassageIds.push(duplicated.id);
+          // Offset duplicates slightly
+          if (duplicated.position) {
+            duplicated.position.x += 50;
+            duplicated.position.y += 50;
+          }
+        }
+      });
+
+      currentStory.update(s => s);
+      updateGraph();
+
+      // Select the duplicated passages
+      clearSelection();
+      newPassageIds.forEach(id => selectedNodes.add(id));
+      selectedNodes = selectedNodes;
+
+      notificationStore.success(`Duplicated ${count} passage${count !== 1 ? 's' : ''}`);
+    }
+  }
+
+  function selectByTag() {
+    if (!$currentStory) return;
+
+    const tagName = prompt('Enter tag name to select passages:');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmedTag = tagName.trim();
+    clearSelection();
+
+    $currentStory.passages.forEach(passage => {
+      if (passage.tags.includes(trimmedTag)) {
+        selectedNodes.add(passage.id);
+      }
+    });
+
+    selectedNodes = selectedNodes;
+    if (selectedNodes.size > 0) {
+      selectMode = true;
+      notificationStore.success(`Selected ${selectedNodes.size} passage${selectedNodes.size !== 1 ? 's' : ''} with tag "${trimmedTag}"`);
+    } else {
+      notificationStore.info(`No passages found with tag "${trimmedTag}"`);
+    }
+  }
+
+  function selectOrphans() {
+    if (!$currentStory) return;
+
+    clearSelection();
+    $nodes.forEach(node => {
+      if (node.data?.isOrphan) {
+        selectedNodes.add(node.id);
+      }
+    });
+
+    selectedNodes = selectedNodes;
+    if (selectedNodes.size > 0) {
+      selectMode = true;
+      notificationStore.success(`Selected ${selectedNodes.size} orphaned passage${selectedNodes.size !== 1 ? 's' : ''}`);
+    } else {
+      notificationStore.info('No orphaned passages found');
+    }
+  }
+
+  function selectDeadEnds() {
+    if (!$currentStory) return;
+
+    clearSelection();
+    $nodes.forEach(node => {
+      if (node.data?.isDead) {
+        selectedNodes.add(node.id);
+      }
+    });
+
+    selectedNodes = selectedNodes;
+    if (selectedNodes.size > 0) {
+      selectMode = true;
+      notificationStore.success(`Selected ${selectedNodes.size} dead-end passage${selectedNodes.size !== 1 ? 's' : ''}`);
+    } else {
+      notificationStore.info('No dead-end passages found');
+    }
+  }
+
   // Highlight selected node (optimized to avoid full array recreation)
   $: {
     const currentNodes = $nodes;
@@ -974,13 +1068,34 @@
         <div class="text-sm font-semibold text-purple-800">
           {selectedNodes.size} node{selectedNodes.size !== 1 ? 's' : ''} selected
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button
             class="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
             on:click={selectAll}
             title="Select all visible nodes"
           >
             Select All
+          </button>
+          <button
+            class="px-2 py-1 text-xs bg-cyan-600 text-white rounded hover:bg-cyan-700"
+            on:click={selectByTag}
+            title="Select passages by tag"
+          >
+            By Tag
+          </button>
+          <button
+            class="px-2 py-1 text-xs bg-orange-600 text-white rounded hover:bg-orange-700"
+            on:click={selectOrphans}
+            title="Select orphaned passages"
+          >
+            Orphans
+          </button>
+          <button
+            class="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+            on:click={selectDeadEnds}
+            title="Select dead-end passages"
+          >
+            Dead Ends
           </button>
           <button
             class="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
@@ -999,6 +1114,13 @@
             title="Move selected nodes"
           >
             Move
+          </button>
+          <button
+            class="px-3 py-1 text-xs bg-purple-500 text-white rounded hover:bg-purple-600"
+            on:click={bulkDuplicate}
+            title="Duplicate selected passages"
+          >
+            Duplicate
           </button>
           <button
             class="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"

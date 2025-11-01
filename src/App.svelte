@@ -532,7 +532,11 @@
       loadingMessage = `Loading ${templateName}...`;
       showTemplateGallery = false;
 
-      const response = await fetch(`/examples/${templateId}.json`);
+      // Use import.meta.env.BASE_URL to get the correct base path for GitHub Pages
+      const basePath = import.meta.env.BASE_URL || '/';
+      const templatePath = `${basePath}examples/${templateId}.json`;
+
+      const response = await fetch(templatePath);
       if (!response.ok) {
         throw new Error('Failed to load template');
       }

@@ -12,13 +12,21 @@ import {
 
 describe('achievementStore', () => {
   beforeEach(() => {
-    // Reset store to default state
-    achievementStore.subscribe(state => state)();
+    // Reset store to default state by creating a new instance
+    // Note: The store is a singleton, so we need to clear it properly
+    // We'll do this by clearing achievements one by one
+    const currentAchievements = get(achievements);
+    currentAchievements.forEach(ach => {
+      achievementStore.deleteAchievement(ach.id);
+    });
   });
 
   afterEach(() => {
     // Clean up after each test
-    achievementStore.subscribe(state => state)();
+    const currentAchievements = get(achievements);
+    currentAchievements.forEach(ach => {
+      achievementStore.deleteAchievement(ach.id);
+    });
   });
 
   describe('initial state', () => {

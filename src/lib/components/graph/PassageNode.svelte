@@ -218,6 +218,45 @@
     return text.substring(0, maxLength) + '...';
   }
 
+  // Simple markdown-to-HTML converter for rich preview
+  function renderMarkdown(text: string): string {
+    if (!text) return '';
+
+    let html = text;
+
+    // Escape HTML tags first
+    html = html.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // Headers (##, ###)
+    html = html.replace(/^### (.+)$/gm, '<span class="text-xs font-semibold text-gray-800">$1</span>');
+    html = html.replace(/^## (.+)$/gm, '<span class="text-sm font-bold text-gray-900">$1</span>');
+
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold">$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong class="font-bold">$1</strong>');
+
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em class="italic">$1</em>');
+
+    // Code
+    html = html.replace(/`(.+?)`/g, '<code class="bg-gray-200 px-1 rounded text-xs font-mono">$1</code>');
+
+    // Links (simplified, just show as colored text)
+    html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<span class="text-blue-600 underline">$1</span>');
+
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+
+    return html;
+  }
+
+  // Get rich preview of content
+  function getRichPreview(text: string): string {
+    const truncated = truncateContent(text || 'Empty passage', 120);
+    return renderMarkdown(truncated);
+  }
+
   // Get node color based on status
   function getNodeColor(): string {
     // Custom color takes precedence if set
@@ -342,9 +381,9 @@
 
   <!-- Content Preview -->
   <div class="p-3">
-    <p class="text-xs text-gray-600 line-clamp-3">
-      {truncateContent(passage.content || 'Empty passage')}
-    </p>
+    <div class="text-xs text-gray-600 line-clamp-3 rich-preview">
+      {@html getRichPreview(passage.content)}
+    </div>
 
     {#if passage.tags.length > 0}
       <div class="flex flex-wrap gap-1 mt-2">
@@ -504,6 +543,28 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  /* Rich text preview styles */
+  .rich-preview {
+    word-wrap: break-word;
+    white-space: normal;
+  }
+
+  .rich-preview :global(strong) {
+    color: #1f2937;
+  }
+
+  .rich-preview :global(em) {
+    color: #4b5563;
+  }
+
+  .rich-preview :global(code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .rich-preview :global(.text-blue-600) {
+    color: #2563eb;
   }
 
   /* Resize Handles */

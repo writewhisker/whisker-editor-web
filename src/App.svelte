@@ -15,6 +15,7 @@
   import SnippetsPanel from './lib/components/SnippetsPanel.svelte';
   import CharacterManager from './lib/components/CharacterManager.svelte';
   import WordGoalsPanel from './lib/components/WordGoalsPanel.svelte';
+  import CollaborationPanel from './lib/components/CollaborationPanel.svelte';
   import GraphView from './lib/components/GraphView.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import Breadcrumb from './lib/components/Breadcrumb.svelte';
@@ -1305,6 +1306,16 @@
           >
             🎯 Goals
           </button>
+          <button
+            type="button"
+            class="px-2 py-1 text-xs rounded {$panelVisibility.collaboration ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border border-blue-300 dark:border-blue-700' : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'}"
+            on:click={() => viewPreferencesActions.togglePanel('collaboration')}
+            aria-label="Toggle collaboration panel"
+            aria-pressed={$panelVisibility.collaboration}
+            title="Toggle Collaboration Panel"
+          >
+            👥 Collab
+          </button>
         </div>
 
         <!-- Divider -->
@@ -1372,46 +1383,51 @@
             </div>
           {/if}
 
-          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets, Characters & Word Goals -->
-          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals) && !$focusMode}
+          <!-- Right: Variable Manager, Validation, Tag Manager, Statistics, Snippets, Characters, Word Goals & Collaboration -->
+          {#if ($panelVisibility.variables || $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration) && !$focusMode}
             <ResizeHandle on:resize={handleVariablesResize} />
             <div class="flex-shrink-0 flex flex-col" style="width: {$panelSizes.variablesWidth}px;">
               {#if $panelVisibility.variables}
                 <div style="height: {$panelSizes.variablesHeight}px;" class="border-b border-gray-300 dark:border-gray-700">
                   <VariableManager />
                 </div>
-                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals}
+                {#if $panelVisibility.validation || $panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration}
                   <ResizeHandle orientation="horizontal" on:resize={handleVariablesHeightResize} />
                 {/if}
               {/if}
               {#if $panelVisibility.validation}
-                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {($panelVisibility.tagManager || $panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration) ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <ValidationPanel />
                 </div>
               {/if}
               {#if $panelVisibility.tagManager}
-                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.statistics || $panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <TagManager />
                 </div>
               {/if}
               {#if $panelVisibility.statistics}
-                <div class="flex-1 min-h-0 {$panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.snippets || $panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <StoryStatisticsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.snippets}
-                <div class="flex-1 min-h-0 {$panelVisibility.characters || $panelVisibility.wordGoals ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.characters || $panelVisibility.wordGoals || $panelVisibility.collaboration ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <SnippetsPanel />
                 </div>
               {/if}
               {#if $panelVisibility.characters}
-                <div class="flex-1 min-h-0 {$panelVisibility.wordGoals ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
+                <div class="flex-1 min-h-0 {$panelVisibility.wordGoals || $panelVisibility.collaboration ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <CharacterManager />
                 </div>
               {/if}
               {#if $panelVisibility.wordGoals}
-                <div class="flex-1 min-h-0">
+                <div class="flex-1 min-h-0 {$panelVisibility.collaboration ? 'border-b border-gray-300 dark:border-gray-700' : ''}">
                   <WordGoalsPanel />
+                </div>
+              {/if}
+              {#if $panelVisibility.collaboration}
+                <div class="flex-1 min-h-0">
+                  <CollaborationPanel />
                 </div>
               {/if}
             </div>

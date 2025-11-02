@@ -4,11 +4,91 @@
    *
    * Fun, colorful landing page specifically designed for kids (ages 8-15).
    * Shows different messaging and visual style than the professional landing page.
+   * Adapts content based on selected age group for age-appropriate messaging.
    */
+
+  import { kidsAgeGroup } from '../lib/stores/kidsModeStore';
+  import type { AgeGroup } from '../lib/stores/kidsModeStore';
 
   export let onGetStarted: () => void;
   export let onBrowseTemplates: () => void;
   export let onParentInfo: () => void;
+
+  // Age-specific content variations
+  $: ageContent = getAgeContent($kidsAgeGroup);
+
+  function getAgeContent(age: AgeGroup | null) {
+    if (!age) {
+      // Default: show general content for all ages
+      return {
+        title: 'Create Your Own',
+        titleHighlight: 'Amazing Adventures!',
+        subtitle: 'Build epic stories for Minecraft and Roblox! No coding needed - just your awesome imagination!',
+        ctaButton: 'Start Creating!',
+        features: [
+          { emoji: '🎮', title: 'Minecraft Adventures', desc: 'Create quests, puzzles, and adventures for Minecraft! Add items, mobs, and cool locations to your story.' },
+          { emoji: '🎭', title: 'Roblox Stories', desc: 'Build roleplay stories and games for Roblox! Add badges, sounds, and interactive choices.' },
+          { emoji: '🗺️', title: 'Story Maps', desc: 'See your whole story like a map! Connect your pages and watch your adventure grow.' },
+          { emoji: '⚡', title: 'Super Simple', desc: 'No coding needed! Just write your story, add choices, and share it with friends.' },
+          { emoji: '🎨', title: 'Cool Templates', desc: 'Start with awesome templates for Minecraft and Roblox, or build from scratch!' },
+          { emoji: '🛡️', title: 'Safe & Fun', desc: 'Made just for kids! Safe, friendly, and easy to use. Parents love it too!' },
+        ]
+      };
+    }
+
+    if (age === '8-10') {
+      // Younger kids: simpler language, focus on fun and safety
+      return {
+        title: 'Make Cool Stories',
+        titleHighlight: 'Super Easy & Fun!',
+        subtitle: 'Create awesome Minecraft and Roblox adventures! It\'s easy, safe, and SO much fun!',
+        ctaButton: 'Let\'s Make a Story!',
+        features: [
+          { emoji: '🏰', title: 'Minecraft Quests', desc: 'Make fun quests in Minecraft! Easy to do, super fun to play!' },
+          { emoji: '🎮', title: 'Roblox Games', desc: 'Create games for Roblox! Add characters, places, and cool stuff!' },
+          { emoji: '📖', title: 'Story Pages', desc: 'Make up to 15 pages! That\'s lots of adventure!' },
+          { emoji: '😊', title: 'Really Easy', desc: 'So easy! Just type your story and pick what happens next!' },
+          { emoji: '🌟', title: 'Cool Helpers', desc: 'We help you make your story awesome with easy templates!' },
+          { emoji: '🔒', title: 'Super Safe', desc: 'Safe for kids! Your parents will love it!' },
+        ]
+      };
+    }
+
+    if (age === '10-13') {
+      // Middle kids: balanced, mention more features
+      return {
+        title: 'Build Amazing',
+        titleHighlight: 'Interactive Stories!',
+        subtitle: 'Create epic adventures for Minecraft and Roblox! Add choices, items, and make it YOUR story!',
+        ctaButton: 'Start Building!',
+        features: [
+          { emoji: '🎮', title: 'Minecraft Adventures', desc: 'Create quests with items, mobs, and locations! Up to 30 story pages!' },
+          { emoji: '🎭', title: 'Roblox Experiences', desc: 'Build roleplay stories with badges, sounds, and multiple paths!' },
+          { emoji: '🔀', title: 'Branching Choices', desc: 'Add up to 6 choices per page! Make different endings and paths!' },
+          { emoji: '📦', title: 'Items & Variables', desc: 'Use items and track things in your story! Make it more fun!' },
+          { emoji: '🎨', title: 'Templates & Tools', desc: 'Start with templates or create from scratch with helpful tools!' },
+          { emoji: '🛡️', title: 'Safe Creation', desc: 'Kid-friendly tools with helpful guides. Share safely with friends!' },
+        ]
+      };
+    }
+
+    // ages === '13-15'
+    // Older kids/teens: more advanced, unlock all features
+    return {
+      title: 'Create Advanced',
+      titleHighlight: 'Interactive Narratives!',
+      subtitle: 'Design complex branching stories for Minecraft and Roblox! Unlock all features and build something amazing!',
+      ctaButton: 'Start Creating!',
+      features: [
+        { emoji: '🚀', title: 'Unlimited Passages', desc: 'No limits! Create stories as big as you can imagine with unlimited pages and choices!' },
+        { emoji: '🎮', title: 'Full Game Features', desc: 'Use variables, conditionals, and advanced scripting! Make complex Minecraft/Roblox experiences!' },
+        { emoji: '🔀', title: 'Complex Branching', desc: 'Create intricate story paths with unlimited choices and multiple endings!' },
+        { emoji: '💻', title: 'Code View', desc: 'See and edit the code! Learn how interactive fiction works under the hood!' },
+        { emoji: '📊', title: 'Advanced Tools', desc: 'Access statistics, validation, and all professional tools!' },
+        { emoji: '🌐', title: 'Share Online', desc: 'Export and share your stories online! Full publishing options available!' },
+      ]
+    };
+  }
 </script>
 
 <div class="kids-landing">
@@ -22,19 +102,19 @@
       </div>
 
       <h1 class="hero-title">
-        Create Your Own<br/>
-        <span class="gradient-text">Amazing Adventures!</span>
+        {ageContent.title}<br/>
+        <span class="gradient-text">{ageContent.titleHighlight}</span>
       </h1>
 
       <p class="hero-subtitle">
-        Build epic stories for Minecraft and Roblox! No coding needed - just your awesome imagination!
+        {ageContent.subtitle}
       </p>
 
       <!-- Big colorful buttons -->
       <div class="hero-actions">
         <button class="btn btn-primary" on:click={onGetStarted}>
           <span class="btn-emoji">🚀</span>
-          <span>Start Creating!</span>
+          <span>{ageContent.ctaButton}</span>
         </button>
 
         <button class="btn btn-secondary" on:click={onBrowseTemplates}>
@@ -87,41 +167,13 @@
     <h2 class="section-title">What Can You Create?</h2>
 
     <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-emoji">🎮</div>
-        <h3>Minecraft Adventures</h3>
-        <p>Create quests, puzzles, and adventures for Minecraft! Add items, mobs, and cool locations to your story.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-emoji">🎭</div>
-        <h3>Roblox Stories</h3>
-        <p>Build roleplay stories and games for Roblox! Add badges, sounds, and interactive choices.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-emoji">🗺️</div>
-        <h3>Story Maps</h3>
-        <p>See your whole story like a map! Connect your pages and watch your adventure grow.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-emoji">⚡</div>
-        <h3>Super Simple</h3>
-        <p>No coding needed! Just write your story, add choices, and share it with friends.</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-emoji">🎨</div>
-        <h3>Cool Templates</h3>
-        <p>Start with awesome templates for Minecraft and Roblox, or build from scratch!</p>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-emoji">🛡️</div>
-        <h3>Safe & Fun</h3>
-        <p>Made just for kids! Safe, friendly, and easy to use. Parents love it too!</p>
-      </div>
+      {#each ageContent.features as feature}
+        <div class="feature-card">
+          <div class="feature-emoji">{feature.emoji}</div>
+          <h3>{feature.title}</h3>
+          <p>{feature.desc}</p>
+        </div>
+      {/each}
     </div>
   </section>
 

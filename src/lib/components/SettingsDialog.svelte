@@ -1,5 +1,6 @@
 <script lang="ts">
   import { autoSaveManager, getAutoSaveInterval } from '../utils/autoSave';
+  import { kidsModeActions, kidsModeEnabled } from '../stores/kidsModeStore';
 
   export let show = false;
 
@@ -279,6 +280,43 @@
               </div>
               <div class="mt-2 text-xs text-gray-600 dark:text-gray-400">
                 Changes the base font size for the entire interface. Save to apply.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Kids Mode Settings -->
+        <section>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Kids Mode
+          </h3>
+
+          <div class="space-y-4">
+            <!-- Kids Mode Toggle -->
+            <div class="p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-700">
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <div class="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <span class="text-2xl">🎨</span>
+                    <span>Enable Kids Mode</span>
+                  </div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Simplified, colorful interface for ages 8-13
+                  </div>
+                </div>
+                <button
+                  class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors {$kidsModeEnabled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}"
+                  on:click={() => kidsModeActions.toggle()}
+                  role="switch"
+                  aria-checked={$kidsModeEnabled}
+                >
+                  <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {$kidsModeEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
+                </button>
+              </div>
+
+              <div class="text-xs text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 p-3 rounded border border-purple-200 dark:border-purple-700">
+                <strong>Features:</strong> Larger buttons, friendly language, game-themed UI (Minecraft/Roblox),
+                simplified menus, and kid-friendly tutorials. Perfect for creative writing and game storytelling!
               </div>
             </div>
           </div>

@@ -777,7 +777,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
         on:click|stopPropagation
-        role="dialog"
+        role="dialog" tabindex="-1"
         aria-modal="true"
         aria-labelledby="fix-all-confirm-title"
         tabindex="-1"
@@ -864,7 +864,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
         on:click|stopPropagation
-        role="dialog"
+        role="dialog" tabindex="-1"
         aria-modal="true"
         aria-labelledby="fix-all-summary-title"
         tabindex="-1"

@@ -146,7 +146,7 @@
     <div
       class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
       on:click|stopPropagation
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="settings-title"
     >
       <!-- Header -->

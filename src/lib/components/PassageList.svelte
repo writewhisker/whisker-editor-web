@@ -926,7 +926,7 @@
 {#if showContextMenu}
   <div
     bind:this={contextMenuElement}
-    role="menu"
+    role="menu" tabindex="0"
     aria-label="Passage options"
     class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
     style="left: {contextMenuX}px; top: {contextMenuY}px;"

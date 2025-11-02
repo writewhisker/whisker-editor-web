@@ -12,6 +12,7 @@
   import KidsTemplateGallery from './KidsTemplateGallery.svelte';
   import VisualScriptEditor from './VisualScriptEditor.svelte';
   import MinecraftAssetPicker from './MinecraftAssetPicker.svelte';
+  import RobloxAssetPicker from './RobloxAssetPicker.svelte';
   import { currentStory, selectedPassageId, projectActions } from '../../stores/projectStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import { kidsModePreferences, kidsTheme } from '../../stores/kidsModeStore';
@@ -28,7 +29,9 @@
   let showTemplateGallery = false;
   let showVisualScriptEditor = false;
   let showMinecraftAssetPicker = false;
+  let showRobloxAssetPicker = false;
   let minecraftAssetType: 'item' | 'mob' | 'biome' | 'location' = 'item';
+  let robloxAssetType: 'item' | 'badge' | 'sound' | 'location' = 'item';
 
   // Handler functions
   function handleAddPassage() {
@@ -227,3 +230,4 @@
 <KidsTemplateGallery bind:show={showTemplateGallery} />
 <VisualScriptEditor bind:show={showVisualScriptEditor} passageId={$selectedPassageId} />
 <MinecraftAssetPicker bind:show={showMinecraftAssetPicker} assetType={minecraftAssetType} />
+<RobloxAssetPicker bind:show={showRobloxAssetPicker} assetType={robloxAssetType} />

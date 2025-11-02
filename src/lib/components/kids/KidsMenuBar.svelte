@@ -14,6 +14,10 @@
     newStory: void;
     openStory: void;
     saveStory: void;
+    exportMinecraft: void;
+    exportRoblox: void;
+    showShare: void;
+    showParentalControls: void;
   }>();
 
   // Menu visibility
@@ -112,6 +116,18 @@
       {/if}
     </div>
 
+    <!-- Share Menu (NEW) -->
+    <div class="relative">
+      <button
+        type="button"
+        class="px-6 py-3 bg-green-500 bg-opacity-90 hover:bg-opacity-100 rounded-2xl font-bold text-white text-lg transition-all transform hover:scale-105 shadow-lg"
+        on:click|stopPropagation={() => dispatch('showShare')}
+      >
+        <span class="text-2xl mr-2">🚀</span>
+        Share
+      </button>
+    </div>
+
     <!-- Theme Selector -->
     <div class="relative">
       <button
@@ -184,6 +200,17 @@
         </div>
       {/if}
     </div>
+
+    <!-- Parental Controls (NEW) -->
+    <button
+      type="button"
+      class="px-6 py-3 bg-orange-500 bg-opacity-80 hover:bg-opacity-100 rounded-2xl font-bold text-white text-lg transition-all transform hover:scale-105"
+      on:click={() => dispatch('showParentalControls')}
+      title="Parental Controls (for parents/teachers)"
+    >
+      <span class="text-2xl mr-2">🔒</span>
+      Parent
+    </button>
 
     <!-- Exit Kids Mode -->
     <button

@@ -13,6 +13,9 @@
   import VisualScriptEditor from './VisualScriptEditor.svelte';
   import MinecraftAssetPicker from './MinecraftAssetPicker.svelte';
   import RobloxAssetPicker from './RobloxAssetPicker.svelte';
+  import KidsExportDialog from './KidsExportDialog.svelte';
+  import KidsSharePanel from './KidsSharePanel.svelte';
+  import KidsParentalControlsPanel from './KidsParentalControlsPanel.svelte';
   import { currentStory, selectedPassageId, projectActions } from '../../stores/projectStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import { kidsModePreferences, kidsTheme } from '../../stores/kidsModeStore';
@@ -30,6 +33,10 @@
   let showVisualScriptEditor = false;
   let showMinecraftAssetPicker = false;
   let showRobloxAssetPicker = false;
+  let showExportDialog = false;
+  let showSharePanel = false;
+  let showParentalControls = false;
+  let exportPlatform: 'minecraft' | 'roblox' = 'minecraft';
   let minecraftAssetType: 'item' | 'mob' | 'biome' | 'location' = 'item';
   let robloxAssetType: 'item' | 'badge' | 'sound' | 'location' = 'item';
 
@@ -107,6 +114,10 @@
     on:newStory={() => projectActions.newProject()}
     on:openStory={() => notificationStore.info('Open story coming soon!')}
     on:saveStory={() => notificationStore.info('Save story coming soon!')}
+    on:exportMinecraft={() => { exportPlatform = 'minecraft'; showExportDialog = true; }}
+    on:exportRoblox={() => { exportPlatform = 'roblox'; showExportDialog = true; }}
+    on:showShare={() => showSharePanel = true}
+    on:showParentalControls={() => showParentalControls = true}
   />
 
   <!-- Kids Mode Toolbar -->
@@ -231,3 +242,6 @@
 <VisualScriptEditor bind:show={showVisualScriptEditor} passageId={$selectedPassageId} />
 <MinecraftAssetPicker bind:show={showMinecraftAssetPicker} assetType={minecraftAssetType} />
 <RobloxAssetPicker bind:show={showRobloxAssetPicker} assetType={robloxAssetType} />
+<KidsExportDialog bind:show={showExportDialog} bind:platform={exportPlatform} />
+<KidsSharePanel bind:show={showSharePanel} />
+<KidsParentalControlsPanel bind:show={showParentalControls} />

@@ -214,7 +214,7 @@ describe('EPUBExporter', () => {
         throw new Error('Start passage not found');
       }
       const conditionalChoice = new Choice({ text: 'Secret path', target: 'secret' });
-      conditionalChoice.conditions = ['has_key', 'health > 50'];
+      conditionalChoice.condition = 'has_key && health > 50';
       passage.choices.push(conditionalChoice);
 
       const secretPassage = new Passage({

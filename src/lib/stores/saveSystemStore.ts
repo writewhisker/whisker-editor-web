@@ -80,8 +80,8 @@ const DEFAULT_CONFIG: SaveSystemConfig = {
 // Generate save system code
 function generateSaveCode(config: SaveSystemConfig, story: Story): GeneratedSaveCode {
   const variables = config.persistAll
-    ? story.variables.filter(v => !config.excludeVariables.includes(v.name))
-    : story.variables.filter(v => config.persistVariables.includes(v.name));
+    ? Array.from(story.variables.values()).filter(v => !config.excludeVariables.includes(v.name))
+    : Array.from(story.variables.values()).filter(v => config.persistVariables.includes(v.name));
 
   // Generate TypeScript types
   const types = `

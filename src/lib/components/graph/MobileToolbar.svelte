@@ -41,7 +41,7 @@
     }
   }
 
-  function handleMenuAction(action: keyof typeof dispatch, label: string) {
+  function handleMenuAction(action: 'newStory' | 'openStory' | 'saveStory' | 'exportStory' | 'importStory' | 'openSettings', label: string) {
     hapticFeedback(10);
     dispatch(action);
     showMenu = false;

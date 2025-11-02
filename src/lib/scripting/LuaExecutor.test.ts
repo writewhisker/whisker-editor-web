@@ -21,7 +21,6 @@ describe('LuaExecutor', () => {
       content: 'Starting passage',
       tags: ['start', 'intro'],
       position: { x: 0, y: 0 },
-      connections: [],
     });
 
     const passage2 = new Passage({
@@ -30,7 +29,6 @@ describe('LuaExecutor', () => {
       content: 'Middle passage',
       tags: ['middle'],
       position: { x: 100, y: 0 },
-      connections: [],
     });
 
     story = new Story({

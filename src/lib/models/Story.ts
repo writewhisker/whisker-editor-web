@@ -442,3 +442,7 @@ export class Story {
     };
   }
 }
+
+// Re-export Variable and Passage for convenience
+export { Variable } from './Variable';
+export { Passage } from './Passage';

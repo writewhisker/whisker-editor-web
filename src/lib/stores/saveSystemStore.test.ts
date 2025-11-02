@@ -27,10 +27,10 @@ describe('saveSystemStore', () => {
         { name: 'score', type: 'number', initialValue: 0 },
         { name: 'playerName', type: 'string', initialValue: '' },
         { name: 'isAlive', type: 'boolean', initialValue: true },
-      ] as Variable[],
+      ] as unknown as Variable[],
       passages: [],
       startPassage: '',
-    } as Story;
+    } as unknown as Story;
 
     saveSystemStore.reset();
   });
@@ -653,10 +653,17 @@ describe('saveSystemStore', () => {
 
   describe('edge cases', () => {
     it('should handle story with no variables', () => {
-      const emptyStory = {
-        ...story,
+      const emptyStory: Story = {
         variables: [],
-      };
+        metadata: story.metadata,
+        startPassage: story.startPassage,
+        passages: new Map(),
+        settings: {},
+        stylesheets: [],
+        scripts: [],
+        assets: new Map(),
+        luaFunctions: new Map(),
+      } as unknown as Story;
 
       const code = saveSystemStore.generateCode(emptyStory);
 
@@ -665,13 +672,24 @@ describe('saveSystemStore', () => {
     });
 
     it('should handle story with special characters in title', () => {
-      const specialStory = {
-        ...story,
+      const specialStory: Story = {
         metadata: {
-          ...story.metadata,
           title: 'Story "with" <special> & characters',
+          id: story.metadata.id,
+          author: story.metadata.author,
+          version: story.metadata.version,
+          created: story.metadata.created,
+          modified: story.metadata.modified,
         },
-      };
+        startPassage: story.startPassage,
+        passages: new Map(),
+        variables: new Map(),
+        settings: {},
+        stylesheets: [],
+        scripts: [],
+        assets: new Map(),
+        luaFunctions: new Map(),
+      } as unknown as Story;
 
       const code = saveSystemStore.generateCode(specialStory);
 

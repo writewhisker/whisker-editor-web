@@ -54,6 +54,7 @@
   import TemplateGallery from './lib/components/onboarding/TemplateGallery.svelte';
   import AssetManager from './lib/components/editor/AssetManager.svelte';
   import AudioControls from './lib/components/audio/AudioControls.svelte';
+  import { AudioManager } from './lib/audio/AudioManager';
   import AnimationControls from './lib/components/animation/AnimationControls.svelte';
   import StylesheetEditor from './lib/components/editor/StylesheetEditor.svelte';
   import { initMobileDetection, isMobile } from './lib/utils/mobile';
@@ -110,6 +111,9 @@
   let showAssetManager = false;
   let showAudioControls = false;
   let showAnimationControls = false;
+
+  // Audio Manager instance
+  const audioManager = new AudioManager();
   let showStylesheetEditor = false;
   let fileHandle: FileHandle | null = null;
   let isLoading = false;
@@ -558,17 +562,15 @@
       projectActions.loadProject(data, `${templateName} (Template)`);
       fileHandle = null; // Clear file handle since this is a template
 
-      notificationStore.add({
-        message: `Loaded ${templateName} template - now customize it to make it your own!`,
-        type: 'success',
-        duration: 5000
-      });
+      notificationStore.success(
+        `Loaded ${templateName} template - now customize it to make it your own!`,
+        5000
+      );
     } catch (error) {
       console.error('Error loading template:', error);
-      notificationStore.add({
-        message: 'Failed to load template. Please try again.',
-        type: 'error'
-      });
+      notificationStore.error(
+        'Failed to load template. Please try again.'
+      );
     } finally {
       isLoading = false;
       loadingMessage = '';
@@ -1895,19 +1897,19 @@
 {/if}
 
 {#if showAssetManager}
-  <AssetManager bind:show={showAssetManager} />
+  <AssetManager on:close={() => showAssetManager = false} />
 {/if}
 
 {#if showAudioControls}
-  <AudioControls bind:show={showAudioControls} />
+  <AudioControls audioManager={audioManager} on:close={() => showAudioControls = false} />
 {/if}
 
 {#if showAnimationControls}
-  <AnimationControls bind:show={showAnimationControls} />
+  <AnimationControls on:close={() => showAnimationControls = false} />
 {/if}
 
 {#if showStylesheetEditor}
-  <StylesheetEditor bind:show={showStylesheetEditor} />
+  <StylesheetEditor on:close={() => showStylesheetEditor = false} />
 {/if}
 
 {#if showGitHubCallback}

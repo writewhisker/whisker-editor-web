@@ -238,7 +238,7 @@
           </div>
         </div>
 
-        {#if selectedPlaythrough.choices && selectedPlaythrough.getChoices().length > 0}
+        {#if selectedPlaythrough.getChoices().length > 0}
           <div class="details-section">
             <h3>Choices Made</h3>
             <div class="choices-list">
@@ -268,10 +268,10 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick={() => handleExport(selectedPlaythrough)}>
+        <button class="btn btn-secondary" onclick={() => selectedPlaythrough && handleExport(selectedPlaythrough)}>
           💾 Export
         </button>
-        <button class="btn btn-danger" onclick={() => handleDelete(selectedPlaythrough)}>
+        <button class="btn btn-danger" onclick={() => selectedPlaythrough && handleDelete(selectedPlaythrough)}>
           🗑️ Delete
         </button>
         <button class="btn btn-primary" onclick={handleCloseDetails}>

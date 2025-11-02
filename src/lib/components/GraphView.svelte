@@ -747,7 +747,7 @@
     const count = selectedNodes.size;
     if (confirm(`Delete ${count} selected passage${count !== 1 ? 's' : ''}?`)) {
       selectedNodes.forEach(id => {
-        $currentStory.deletePassage(id);
+        $currentStory.removePassage(id);
       });
       currentStory.update(s => s);
       projectActions.markChanged();

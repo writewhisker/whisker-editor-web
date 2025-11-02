@@ -30,7 +30,7 @@ describe('versionDiffStore', () => {
           tags: [],
           x: 0,
           y: 0,
-        } as Passage,
+        } as unknown as Passage,
         {
           id: 'p2',
           title: 'Middle',
@@ -38,11 +38,11 @@ describe('versionDiffStore', () => {
           tags: ['important'],
           x: 100,
           y: 0,
-        } as Passage,
+        } as unknown as Passage,
       ],
       startPassage: 'p1',
       variables: [],
-    } as Story;
+    } as unknown as Story;
 
     story2 = {
       metadata: {
@@ -58,7 +58,7 @@ describe('versionDiffStore', () => {
           tags: [],
           x: 0,
           y: 0,
-        } as Passage,
+        } as unknown as Passage,
         {
           id: 'p2',
           title: 'Middle',
@@ -66,7 +66,7 @@ describe('versionDiffStore', () => {
           tags: ['important', 'new'],
           x: 100,
           y: 100,
-        } as Passage,
+        } as unknown as Passage,
         {
           id: 'p3',
           title: 'End',
@@ -74,11 +74,11 @@ describe('versionDiffStore', () => {
           tags: [],
           x: 200,
           y: 0,
-        } as Passage,
+        } as unknown as Passage,
       ],
       startPassage: 'p1',
       variables: [],
-    } as Story;
+    } as unknown as Story;
 
     versionDiffStore.clearAllSnapshots();
   });
@@ -151,10 +151,10 @@ describe('versionDiffStore', () => {
       versionDiffStore.createSnapshot(story1, 'V1');
 
       // Modify original story
-      story1.passages[0].content = 'Modified content';
+      Array.from(story1.passages.values())[0].content = 'Modified content';
 
       const allSnapshots = get(snapshots);
-      expect(allSnapshots[0].story.passages[0].content).toBe('This is the beginning.');
+      expect(Array.from(allSnapshots[0].story.passages.values())[0].content).toBe('This is the beginning.');
     });
 
     it('should generate unique IDs for each snapshot', () => {
@@ -673,7 +673,7 @@ describe('versionDiffStore', () => {
         passages: [],
         startPassage: '',
         variables: [],
-      } as Story;
+      } as unknown as Story;
 
       const id1 = versionDiffStore.createSnapshot(emptyStory, 'V1');
       const id2 = versionDiffStore.createSnapshot(story1, 'V2');
@@ -695,8 +695,8 @@ describe('versionDiffStore', () => {
             tags: [],
             x: 0,
             y: 0,
-          } as Passage,
-        ],
+          } as unknown as Passage,
+        ] as unknown as Map<string, Passage>,
       };
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
@@ -719,8 +719,8 @@ describe('versionDiffStore', () => {
             tags: [],
             x: 0,
             y: 0,
-          } as Passage,
-        ],
+          } as unknown as Passage,
+        ] as unknown as Map<string, Passage>,
       };
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
@@ -743,8 +743,8 @@ describe('versionDiffStore', () => {
             tags: [],
             x: 0,
             y: 0,
-          } as Passage,
-        ],
+          } as unknown as Passage,
+        ] as unknown as Map<string, Passage>,
       };
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
@@ -768,8 +768,8 @@ describe('versionDiffStore', () => {
             tags: [],
             x: 0,
             y: 0,
-          } as Passage,
-        ],
+          } as unknown as Passage,
+        ] as unknown as Map<string, Passage>,
       };
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');

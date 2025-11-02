@@ -40,7 +40,7 @@ describe('ItchPublisher', () => {
       scripts: [],
       assets: new Map(),
       luaFunctions: new Map(),
-    } as Story;
+    } as unknown as Story;
 
     // Mock StaticSiteExporter
     vi.mocked(StaticSiteExporter).mockImplementation(() => ({

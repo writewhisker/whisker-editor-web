@@ -156,7 +156,7 @@ export function isRetryableError(message: string, category: ErrorCategory): bool
   }
 
   // Default based on category
-  return category === ErrorCategory.SYNC || category === ErrorCategory.NETWORK;
+  return category === ErrorCategory.SYNC || category === ErrorCategory.STORAGE || category === ErrorCategory.AUTHENTICATION || category === ErrorCategory.VALIDATION || category === ErrorCategory.UNKNOWN;
 }
 
 /**
@@ -240,7 +240,8 @@ export async function withRetry<T>(
 
       // Check if error is retryable
       const category = classifyError(error);
-      if (!isRetryableError(error.message || '', category)) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!isRetryableError(errorMessage, category)) {
         throw error;
       }
 

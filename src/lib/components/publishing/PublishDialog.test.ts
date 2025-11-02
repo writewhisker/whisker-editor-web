@@ -931,10 +931,10 @@ describe('PublishDialog - itch.io Publishing', () => {
       };
 
       state.itchApiKey = 'my-api-key-123';
-      state.itchVisibility = 'public';
+      state.itchVisibility = 'draft';
 
       expect(state.itchApiKey).toBe('my-api-key-123');
-      expect(state.itchVisibility).toBe('public');
+      expect(state.itchVisibility).toBe('draft');
     });
   });
 });

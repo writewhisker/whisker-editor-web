@@ -666,7 +666,7 @@ ${generatedCode.utilityCode}
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Type Definitions</div>
               <button
                 class="px-2 py-0.5 text-xs {copiedSection === 'types' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'} text-white rounded"
-                on:click={() => copyCode('types', generatedCode.types)}
+                on:click={() => generatedCode && copyCode('types', generatedCode.types)}
               >
                 {copiedSection === 'types' ? 'Copied!' : 'Copy'}
               </button>
@@ -680,7 +680,7 @@ ${generatedCode.utilityCode}
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Metrics Tracker</div>
               <button
                 class="px-2 py-0.5 text-xs {copiedSection === 'metrics' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'} text-white rounded"
-                on:click={() => copyCode('metrics', generatedCode.metricsCode)}
+                on:click={() => generatedCode && copyCode('metrics', generatedCode.metricsCode)}
               >
                 {copiedSection === 'metrics' ? 'Copied!' : 'Copy'}
               </button>
@@ -694,7 +694,7 @@ ${generatedCode.utilityCode}
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Difficulty Evaluation</div>
               <button
                 class="px-2 py-0.5 text-xs {copiedSection === 'eval' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'} text-white rounded"
-                on:click={() => copyCode('eval', generatedCode.evaluationCode)}
+                on:click={() => generatedCode && copyCode('eval', generatedCode.evaluationCode)}
               >
                 {copiedSection === 'eval' ? 'Copied!' : 'Copy'}
               </button>
@@ -708,7 +708,7 @@ ${generatedCode.utilityCode}
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Adjustment Application</div>
               <button
                 class="px-2 py-0.5 text-xs {copiedSection === 'adj' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'} text-white rounded"
-                on:click={() => copyCode('adj', generatedCode.adjustmentCode)}
+                on:click={() => generatedCode && copyCode('adj', generatedCode.adjustmentCode)}
               >
                 {copiedSection === 'adj' ? 'Copied!' : 'Copy'}
               </button>
@@ -722,7 +722,7 @@ ${generatedCode.utilityCode}
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300">Difficulty Manager</div>
               <button
                 class="px-2 py-0.5 text-xs {copiedSection === 'util' ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'} text-white rounded"
-                on:click={() => copyCode('util', generatedCode.utilityCode)}
+                on:click={() => generatedCode && copyCode('util', generatedCode.utilityCode)}
               >
                 {copiedSection === 'util' ? 'Copied!' : 'Copy'}
               </button>

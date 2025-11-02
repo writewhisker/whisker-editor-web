@@ -45,7 +45,7 @@
 
   // Load version history when story changes
   $effect(() => {
-    if (story) {
+    if (story && story.metadata.ifid) {
       versionHistory = versionManager.getVersions(story.metadata.ifid);
       // Suggest next version
       if (!version) {
@@ -114,17 +114,19 @@
 
       if (result.success) {
         // Save version to history
-        versionManager.addVersion(
-          story.metadata.ifid,
-          story.metadata.title,
-          version,
-          platform,
-          result,
-          versionNotes || undefined
-        );
+        if (story.metadata.ifid) {
+          versionManager.addVersion(
+            story.metadata.ifid,
+            story.metadata.title,
+            version,
+            platform,
+            result,
+            versionNotes || undefined
+          );
 
-        // Refresh version history
-        versionHistory = versionManager.getVersions(story.metadata.ifid);
+          // Refresh version history
+          versionHistory = versionManager.getVersions(story.metadata.ifid);
+        }
 
         dispatch('published', result);
         open = false;

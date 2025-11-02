@@ -57,7 +57,7 @@
   }
 
   // Sync changes periodically
-  let syncInterval: number;
+  let syncInterval: ReturnType<typeof setInterval>;
   $effect(() => {
     if ($isCollaborating) {
       syncInterval = setInterval(() => {

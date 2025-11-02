@@ -369,14 +369,18 @@ describe('IndexedDBAdapter', () => {
         timestamp: new Date(),
         data: {},
         retryCount: 0,
+        lastError: undefined,
       };
 
       await adapter.addToSyncQueue(entry);
 
       // Update with higher retry count
-      entry.retryCount = 2;
-      entry.lastError = 'Network error';
-      await adapter.addToSyncQueue(entry);
+      const updatedEntry = {
+        ...entry,
+        retryCount: 2,
+        lastError: 'Network error',
+      };
+      await adapter.addToSyncQueue(updatedEntry);
 
       const queue = await adapter.getSyncQueue();
       expect(queue).toHaveLength(1);

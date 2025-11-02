@@ -457,3 +457,7 @@ export const selectedPassage = derived(
     return $story.getPassage($selectedId) || null;
   }
 );
+
+// Re-export Story and Passage for convenience
+export { Story } from '../models/Story';
+export { Passage } from '../models/Passage';

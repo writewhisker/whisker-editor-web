@@ -179,7 +179,7 @@
                 <div class="flex items-center justify-between mb-2">
                   <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">File Content</h4>
                   <button
-                    on:click={() => revertToCommit(selectedCommit)}
+                    on:click={() => selectedCommit && revertToCommit(selectedCommit)}
                     class="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
                   >
                     Restore this version

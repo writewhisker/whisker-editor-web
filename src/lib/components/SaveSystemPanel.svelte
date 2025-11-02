@@ -378,7 +378,7 @@ ${generatedCode.utilities}
                     {variable.name}
                   </div>
                   <div class="text-xs text-gray-500 dark:text-gray-400">
-                    {variable.type} · {variable.description || 'No description'}
+                    {variable.type}
                   </div>
                 </div>
               </label>

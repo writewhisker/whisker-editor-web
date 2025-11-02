@@ -321,7 +321,7 @@ game_state:set_variable("variableName", newValue)`
           bind:this={editorRef}
           bind:value={code}
           language="lua"
-          theme="story-dark"
+          theme="vs-dark"
           lineNumbers="on"
           minimap={false}
           fontSize={14}

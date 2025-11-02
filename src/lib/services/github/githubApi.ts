@@ -72,7 +72,7 @@ export async function listRepositories(): Promise<GitHubRepository[]> {
           description: repo.description || undefined,
           private: repo.private,
           defaultBranch: repo.default_branch,
-          updatedAt: repo.updated_at,
+          updatedAt: repo.updated_at || new Date().toISOString(),
         }));
     } catch (error: any) {
       console.error('Failed to list repositories:', error);
@@ -315,7 +315,7 @@ export async function saveFile(
       });
 
       return {
-        sha: response.data.commit.sha,
+        sha: response.data.commit.sha || '',
         message: response.data.commit.message || message,
         date: response.data.commit.author?.date || new Date().toISOString(),
       };

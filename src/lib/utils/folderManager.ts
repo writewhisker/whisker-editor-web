@@ -56,7 +56,7 @@ export class FolderManager {
    * Get passages in a specific folder
    */
   static getPassagesInFolder(story: Story, folderName: string): Passage[] {
-    return story.passages.filter(passage =>
+    return Array.from(story.passages.values()).filter(passage =>
       this.getFolder(passage) === folderName
     );
   }
@@ -65,7 +65,7 @@ export class FolderManager {
    * Get passages not in any folder
    */
   static getUnfolderedPassages(story: Story): Passage[] {
-    return story.passages.filter(passage =>
+    return Array.from(story.passages.values()).filter(passage =>
       !this.getFolder(passage)
     );
   }

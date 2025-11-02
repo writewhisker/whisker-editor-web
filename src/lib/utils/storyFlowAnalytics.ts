@@ -232,7 +232,7 @@ export class StoryFlowAnalyzer {
    * Analyze the story flow and return comprehensive metrics
    */
   analyze(): StoryFlowMetrics {
-    const startPassageId = this.story.metadata.startPassage;
+    const startPassageId = this.story.startPassage;
     if (!startPassageId) {
       return {
         totalPaths: 0,

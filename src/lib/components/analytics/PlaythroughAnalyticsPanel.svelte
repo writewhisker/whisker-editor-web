@@ -35,7 +35,7 @@
     isAnalyzing = true;
 
     try {
-      const analyzer = new PlaythroughAnalytics(playthroughs, story);
+      const analyzer = new PlaythroughAnalytics(story, playthroughs);
       analytics = analyzer.analyze();
     } finally {
       isAnalyzing = false;
@@ -127,7 +127,7 @@
         onclick={() => (selectedTab = 'choices')}
       >
         🎯 Choices
-        <span class="badge">{analytics.choices.size}</span>
+        <span class="badge">{analytics.choices.length}</span>
       </button>
       <button
         class="tab"
@@ -179,14 +179,16 @@
             <div class="section">
               <h3>⚠️ Dead Ends ({analytics.deadEnds.length})</h3>
               <div class="dead-ends-list">
-                {#each analytics.deadEnds as deadEnd}
-                  <div class="dead-end-item">
-                    <div class="dead-end-title">{deadEnd.passageTitle}</div>
-                    <div class="dead-end-stats">
-                      {deadEnd.abandonmentCount} abandonment{deadEnd.abandonmentCount !== 1 ? 's' : ''}
-                      • {formatPercentage(deadEnd.abandonmentRate)} rate
+                {#each analytics.deadEnds as deadEndId}
+                  {@const passage = analytics.passages.get(deadEndId)}
+                  {#if passage}
+                    <div class="dead-end-item">
+                      <div class="dead-end-title">{passage.passageTitle}</div>
+                      <div class="dead-end-stats">
+                        {passage.visitCount} visit{passage.visitCount !== 1 ? 's' : ''}
+                      </div>
                     </div>
-                  </div>
+                  {/if}
                 {/each}
               </div>
             </div>
@@ -235,7 +237,7 @@
         <div class="choices-section">
           <div class="section-header">
             <h3>Choice Statistics</h3>
-            <span class="section-count">{analytics.choices.size} choices</span>
+            <span class="section-count">{analytics.choices.length} choices</span>
           </div>
           <div class="table-container">
             <table class="choice-table">
@@ -248,7 +250,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each Array.from(analytics.choices.entries()).sort((a, b) => b[1].selectionCount - a[1].selectionCount) as [choiceKey, stats]}
+                {#each analytics.choices.sort((a, b) => b.selectionCount - a.selectionCount) as stats}
                   <tr>
                     <td class="choice-text">{stats.choiceText}</td>
                     <td class="passage-title">{stats.fromPassageTitle}</td>

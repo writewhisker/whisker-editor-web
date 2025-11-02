@@ -173,7 +173,7 @@
       : `Delete passage "${passage.title}"?`;
 
     if (confirm(confirmMessage)) {
-      $currentStory.deletePassage(passage.id);
+      $currentStory.removePassage(passage.id);
       projectActions.markChanged();
     }
     closeContextMenu();

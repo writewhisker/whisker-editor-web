@@ -11,6 +11,7 @@ export interface PassageStatistics {
   passageId: string;
   passageTitle: string;
   visitCount: number;
+  visitRate: number;
   totalTimeSpent: number;
   averageTimeSpent: number;
   exitPaths: Map<string, number>; // Maps passage ID to count
@@ -19,10 +20,13 @@ export interface PassageStatistics {
 export interface ChoiceStatistics {
   passageId: string;
   passageTitle: string;
+  fromPassageTitle: string;
   choiceIndex: number;
   choiceText: string;
   chosenCount: number;
+  selectionCount: number;
   percentage: number;
+  selectionRate: number;
 }
 
 export interface PathStatistics {
@@ -30,6 +34,7 @@ export interface PathStatistics {
   pathTitles: string[]; // Sequence of passage titles
   count: number;
   percentage: number;
+  frequency: number;
   averageDuration: number;
 }
 
@@ -38,7 +43,11 @@ export interface CompletionStatistics {
   completedPlaythroughs: number;
   completionRate: number;
   averageDuration: number;
+  minDuration: number;
+  maxDuration: number;
   averageSteps: number;
+  minSteps: number;
+  maxSteps: number;
 }
 
 export interface PlaythroughAnalyticsData {
@@ -89,18 +98,26 @@ export class PlaythroughAnalytics {
     const averageDuration = durations.length > 0
       ? durations.reduce((a, b) => a + b, 0) / durations.length
       : 0;
+    const minDuration = durations.length > 0 ? Math.min(...durations) : 0;
+    const maxDuration = durations.length > 0 ? Math.max(...durations) : 0;
 
     const steps = this.playthroughs.map(p => p.steps.length);
     const averageSteps = steps.length > 0
       ? steps.reduce((a, b) => a + b, 0) / steps.length
       : 0;
+    const minSteps = steps.length > 0 ? Math.min(...steps) : 0;
+    const maxSteps = steps.length > 0 ? Math.max(...steps) : 0;
 
     return {
       totalPlaythroughs: total,
       completedPlaythroughs: completed,
       completionRate,
       averageDuration,
+      minDuration,
+      maxDuration,
       averageSteps,
+      minSteps,
+      maxSteps,
     };
   }
 
@@ -116,6 +133,7 @@ export class PlaythroughAnalytics {
         passageId: id,
         passageTitle: passage.title,
         visitCount: 0,
+        visitRate: 0,
         totalTimeSpent: 0,
         averageTimeSpent: 0,
         exitPaths: new Map(),
@@ -140,11 +158,13 @@ export class PlaythroughAnalytics {
       });
     });
 
-    // Calculate averages
+    // Calculate averages and visit rates
+    const totalVisits = this.playthroughs.reduce((sum, p) => sum + p.steps.length, 0);
     passageStats.forEach(stats => {
       if (stats.visitCount > 0) {
         stats.averageTimeSpent = stats.totalTimeSpent / stats.visitCount;
       }
+      stats.visitRate = totalVisits > 0 ? stats.visitCount / totalVisits : 0;
     });
 
     return passageStats;
@@ -165,15 +185,19 @@ export class PlaythroughAnalytics {
           choiceMap.set(key, {
             passageId: '', // Would need to look up from story
             passageTitle: choice.passageTitle,
+            fromPassageTitle: choice.passageTitle,
             choiceIndex: choice.choiceIndex,
             choiceText: choice.choiceText,
             chosenCount: 0,
+            selectionCount: 0,
             percentage: 0,
+            selectionRate: 0,
           });
         }
 
         const stats = choiceMap.get(key)!;
         stats.chosenCount++;
+        stats.selectionCount++;
       });
     });
 
@@ -194,6 +218,7 @@ export class PlaythroughAnalytics {
       const total = passageChoices.reduce((sum, c) => sum + c.chosenCount, 0);
       passageChoices.forEach(choice => {
         choice.percentage = total > 0 ? (choice.chosenCount / total) * 100 : 0;
+        choice.selectionRate = total > 0 ? choice.chosenCount / total : 0;
       });
     });
 
@@ -217,6 +242,7 @@ export class PlaythroughAnalytics {
           pathTitles,
           count: 0,
           percentage: 0,
+          frequency: 0,
           averageDuration: 0,
         });
       }
@@ -232,6 +258,7 @@ export class PlaythroughAnalytics {
 
     paths.forEach(path => {
       path.percentage = total > 0 ? (path.count / total) * 100 : 0;
+      path.frequency = total > 0 ? path.count / total : 0;
       path.averageDuration = path.averageDuration / path.count;
     });
 

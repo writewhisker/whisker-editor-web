@@ -223,7 +223,11 @@ function analyzeSessions(sessions: PlaytestSession[]): PlaytestAnalytics {
   );
 
   // Dropoff points (where players stopped but didn't complete)
-  const dropoffs = deadEnds.slice(0, 5);
+  const dropoffPoints = deadEnds.slice(0, 5).map(de => ({
+    passageId: de.passageId,
+    passageTitle: de.passageTitle,
+    dropoffs: de.hits
+  }));
 
   return {
     totalSessions,
@@ -236,7 +240,7 @@ function analyzeSessions(sessions: PlaytestSession[]): PlaytestAnalytics {
     deadEnds,
     choiceDistribution,
     passageHeatmap,
-    dropoffPoints: dropoffs,
+    dropoffPoints,
   };
 }
 

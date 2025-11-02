@@ -111,7 +111,7 @@
         shortestPassage,
       },
       structure: {
-        startPassageSet: !!$story.metadata.startPassage,
+        startPassageSet: !!$story.startPassage,
         deadEnds,
         passagesWithNoChoices: deadEnds,
         passagesWithManyChoices,

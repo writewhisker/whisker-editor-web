@@ -276,7 +276,7 @@
                       <div class="text-xs text-gray-400 dark:text-gray-500">
                         {formatDate(snapshot.timestamp)}
                         {#if snapshot.author} • {snapshot.author}{/if}
-                        • {snapshot.story.passages.length} passages
+                        • {snapshot.story.passages.size} passages
                       </div>
                     </div>
                     <div class="flex gap-1">

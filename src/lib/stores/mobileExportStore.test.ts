@@ -52,7 +52,7 @@ describe('mobileExportStore', () => {
       ],
       startPassage: 'passage-1',
       variables: [],
-    } as Story;
+    } as unknown as Story;
 
     mobileExportStore.reset();
   });
@@ -342,7 +342,7 @@ describe('mobileExportStore', () => {
 
       const html = files.get('index.html')!;
       expect(html).toContain('const story =');
-      expect(html).toContain(story.passages[0].title);
+      expect(html).toContain(Array.from(story.passages.values())[0].title);
     });
   });
 
@@ -539,10 +539,17 @@ describe('mobileExportStore', () => {
 
   describe('edge cases', () => {
     it('should handle story with no passages', () => {
-      const emptyStory = {
-        ...story,
+      const emptyStory: Story = {
         passages: [],
-      };
+        metadata: story.metadata,
+        startPassage: story.startPassage,
+        variables: new Map(),
+        settings: {},
+        stylesheets: [],
+        scripts: [],
+        assets: new Map(),
+        luaFunctions: new Map(),
+      } as unknown as Story;
 
       const { files } = mobileExportStore.generateExport(emptyStory);
       const html = files.get('index.html')!;
@@ -551,13 +558,24 @@ describe('mobileExportStore', () => {
     });
 
     it('should handle story with special characters in title', () => {
-      const specialStory = {
-        ...story,
+      const specialStory: Story = {
         metadata: {
-          ...story.metadata,
           title: 'Story "with" <special> & characters',
+          id: story.metadata.id,
+          author: story.metadata.author,
+          version: story.metadata.version,
+          created: story.metadata.created,
+          modified: story.metadata.modified,
         },
-      };
+        startPassage: story.startPassage,
+        passages: story.passages,
+        variables: new Map(),
+        settings: {},
+        stylesheets: [],
+        scripts: [],
+        assets: new Map(),
+        luaFunctions: new Map(),
+      } as unknown as Story;
 
       const { files } = mobileExportStore.generateExport(specialStory);
       const html = files.get('index.html')!;

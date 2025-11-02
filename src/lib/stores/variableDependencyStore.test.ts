@@ -30,13 +30,13 @@ describe('variableDependencyStore', () => {
     });
 
     // Add some test variables
-    story.variables = [
-      { name: 'health', type: 'number', initialValue: 100 },
-      { name: 'maxHealth', type: 'number', initialValue: 100 },
-      { name: 'score', type: 'number', initialValue: 0 },
-      { name: 'playerName', type: 'string', initialValue: '' },
-      { name: 'isAlive', type: 'boolean', initialValue: true },
-    ];
+    story.variables = new Map([
+      ['health', { name: 'health', type: 'number', initialValue: 100 } as any],
+      ['maxHealth', { name: 'maxHealth', type: 'number', initialValue: 100 } as any],
+      ['score', { name: 'score', type: 'number', initialValue: 0 } as any],
+      ['playerName', { name: 'playerName', type: 'string', initialValue: '' } as any],
+      ['isAlive', { name: 'isAlive', type: 'boolean', initialValue: true } as any],
+    ]);
 
     dependencyStore.clear();
   });
@@ -531,7 +531,7 @@ describe('variableDependencyStore', () => {
     });
 
     it('should handle story with no variables', () => {
-      story.variables = [];
+      story.variables = new Map();
       const passage = new Passage({ title: 'Test' });
       passage.content = 'No variables';
       story.addPassage(passage);
@@ -569,7 +569,7 @@ describe('variableDependencyStore', () => {
     });
 
     it('should handle complex variable names', () => {
-      story.variables.push({ name: 'player_health_max', type: 'number', initialValue: 100 });
+      story.variables.set('player_health_max', { name: 'player_health_max', type: 'number', initialValue: 100 } as any);
 
       const passage = new Passage({ title: 'Test' });
       passage.content = 'Max health: ${player_health_max}';

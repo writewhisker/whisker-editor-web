@@ -3,8 +3,13 @@
   import { currentStory } from '../stores/projectStore';
   import { Passage } from '../models/Passage';
 
-  export let isOpen = $state(false);
-  export let onSelect: ((template: PassageTemplate) => void) | undefined = undefined;
+  let {
+    isOpen = $bindable(false),
+    onSelect = undefined
+  }: {
+    isOpen?: boolean;
+    onSelect?: ((template: PassageTemplate) => void) | undefined;
+  } = $props();
 
   let selectedCategory: PassageTemplate['category'] | 'all' = $state('all');
   let searchQuery = $state('');

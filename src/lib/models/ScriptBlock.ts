@@ -27,7 +27,7 @@ export type BlockCategory = 'variables' | 'math' | 'logic' | 'output' | 'control
 export interface BlockParameter {
   name: string;
   type: 'text' | 'number' | 'variable' | 'expression' | 'block';
-  value?: string | number | ScriptBlock;
+  value?: string | number | ScriptBlock | BlockData;
   placeholder?: string;
 }
 
@@ -38,7 +38,7 @@ export interface BlockData {
   label: string;
   parameters: BlockParameter[];
   color: string;
-  children?: ScriptBlock[];
+  children?: ScriptBlock[] | BlockData[];
 }
 
 /**
@@ -60,7 +60,10 @@ export class ScriptBlock {
     this.label = data.label;
     this.parameters = data.parameters;
     this.color = data.color;
-    this.children = data.children || [];
+    // Convert BlockData[] to ScriptBlock[] if necessary
+    this.children = data.children
+      ? data.children.map(c => c instanceof ScriptBlock ? c : ScriptBlock.deserialize(c as BlockData))
+      : [];
   }
 
   /**

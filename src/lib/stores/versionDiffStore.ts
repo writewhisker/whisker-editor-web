@@ -149,17 +149,17 @@ function computeStoryDiff(from: VersionSnapshot, to: VersionSnapshot): StoryDiff
   if (from.story.passages instanceof Map) {
     oldPassagesMap = from.story.passages;
   } else if (Array.isArray(from.story.passages)) {
-    oldPassagesMap = new Map(from.story.passages.map(p => [p.id, p]));
+    oldPassagesMap = new Map(from.story.passages.map((p: Passage) => [p.id, p]));
   } else {
-    oldPassagesMap = new Map(Object.entries(from.story.passages));
+    oldPassagesMap = new Map(Object.entries(from.story.passages as Record<string, Passage>));
   }
 
   if (to.story.passages instanceof Map) {
     newPassagesMap = to.story.passages;
   } else if (Array.isArray(to.story.passages)) {
-    newPassagesMap = new Map(to.story.passages.map(p => [p.id, p]));
+    newPassagesMap = new Map(to.story.passages.map((p: Passage) => [p.id, p]));
   } else {
-    newPassagesMap = new Map(Object.entries(to.story.passages));
+    newPassagesMap = new Map(Object.entries(to.story.passages as Record<string, Passage>));
   }
 
   const allPassageIds = new Set([...oldPassagesMap.keys(), ...newPassagesMap.keys()]);

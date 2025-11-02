@@ -7,6 +7,8 @@
 
 import type { ContentFilterLevel } from '../../stores/parentalControlsStore';
 
+import type { AgeGroup } from '../../stores/kidsModeStore';
+
 /**
  * Words to filter at different levels
  */
@@ -19,6 +21,13 @@ const STRICT_FILTER_WORDS = [
   ...MILD_FILTER_WORDS,
   'scary', 'fight', 'battle', 'war',
   'blood', 'hurt', 'pain', 'wound',
+];
+
+// Age 8-10: Very strict, extra protective
+const YOUNG_FILTER_WORDS = [
+  ...STRICT_FILTER_WORDS,
+  'monster', 'ghost', 'creepy', 'spooky',
+  'evil', 'danger', 'afraid', 'nightmare',
 ];
 
 /**

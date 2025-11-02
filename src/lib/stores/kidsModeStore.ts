@@ -15,6 +15,11 @@ const KIDS_THEME_KEY = 'whisker-kids-theme';
 const prefService = getPreferenceService();
 
 /**
+ * Age groups for kids mode
+ */
+export type AgeGroup = '8-10' | '10-13' | '13-15';
+
+/**
  * Kids mode themes for Minecraft and Roblox
  */
 export type KidsTheme = 'default' | 'minecraft' | 'roblox';
@@ -24,10 +29,13 @@ export type KidsTheme = 'default' | 'minecraft' | 'roblox';
  */
 export interface KidsModePreferences {
   enabled: boolean;
+  ageGroup: AgeGroup | null;
+  childName: string | null;
   theme: KidsTheme;
   soundEffectsEnabled: boolean;
   tutorialCompleted: boolean;
   achievementBadges: string[]; // List of earned achievement IDs
+  completedTutorials: string[]; // List of completed tutorial IDs
 }
 
 /**
@@ -35,10 +43,13 @@ export interface KidsModePreferences {
  */
 const DEFAULT_PREFERENCES: KidsModePreferences = {
   enabled: false,
+  ageGroup: null,
+  childName: null,
   theme: 'default',
   soundEffectsEnabled: false, // Disabled by default to avoid annoying sounds
   tutorialCompleted: false,
   achievementBadges: [],
+  completedTutorials: [],
 };
 
 /**
@@ -79,6 +90,8 @@ export const kidsModePreferences = writable<KidsModePreferences>(loadPreferences
 // Convenience stores for common values
 export const kidsModeEnabled = derived(kidsModePreferences, $prefs => $prefs.enabled);
 export const kidsTheme = derived(kidsModePreferences, $prefs => $prefs.theme);
+export const kidsAgeGroup = derived(kidsModePreferences, $prefs => $prefs.ageGroup);
+export const kidsChildName = derived(kidsModePreferences, $prefs => $prefs.childName);
 
 /**
  * Actions for managing kids mode
@@ -101,6 +114,28 @@ export const kidsModeActions = {
   toggle() {
     kidsModePreferences.update(prefs => {
       const newPrefs = { ...prefs, enabled: !prefs.enabled };
+      savePreferences(newPrefs);
+      return newPrefs;
+    });
+  },
+
+  /**
+   * Set the age group
+   */
+  setAgeGroup(ageGroup: AgeGroup) {
+    kidsModePreferences.update(prefs => {
+      const newPrefs = { ...prefs, ageGroup };
+      savePreferences(newPrefs);
+      return newPrefs;
+    });
+  },
+
+  /**
+   * Set child's name for personalization
+   */
+  setChildName(childName: string) {
+    kidsModePreferences.update(prefs => {
+      const newPrefs = { ...prefs, childName };
       savePreferences(newPrefs);
       return newPrefs;
     });
@@ -135,6 +170,21 @@ export const kidsModeActions = {
       ...prefs,
       tutorialCompleted: true,
     }));
+  },
+
+  /**
+   * Mark a specific tutorial as completed
+   */
+  completeSpecificTutorial(tutorialId: string) {
+    kidsModePreferences.update(prefs => {
+      if (prefs.completedTutorials.includes(tutorialId)) {
+        return prefs; // Already completed
+      }
+      return {
+        ...prefs,
+        completedTutorials: [...prefs.completedTutorials, tutorialId],
+      };
+    });
   },
 
   /**

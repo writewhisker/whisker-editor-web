@@ -160,9 +160,7 @@ describe('StorageSettings', () => {
     });
   });
 
-  describe.skip('Export Preferences', () => {
-    // Note: Skipping these 3 tests due to Svelte 5 conditional rendering issues
-    // The export success message display triggers similar DOM node tree issues as Import tests
+  describe('Export Preferences', () => {
     beforeEach(() => {
       // Mock preference values
       mockPrefService.getPreference
@@ -240,16 +238,7 @@ describe('StorageSettings', () => {
     });
   });
 
-  describe.skip('Import Preferences', () => {
-    // Note: Skipping these 11 tests due to Svelte 5 conditional rendering issues with file input dialogs
-    // in test environments. The import preview dialog uses complex reactive state that triggers
-    // DOM node tree issues in both jsdom and happy-dom: "Cannot read properties of undefined (reading 'Symbol(nodeArray)')"
-    //
-    // Workarounds to try in future:
-    // 1. Use vitest browser mode for real browser testing
-    // 2. Extract file handling logic to separate testable functions
-    // 3. Mock the file input event handling at a higher level
-    // 4. Wait for better Svelte 5 test environment support
+  describe('Import Preferences', () => {
     const mockImportData = {
       version: '1.0',
       exportedAt: '2024-01-01T00:00:00.000Z',

@@ -106,8 +106,10 @@ describe('PropertiesPanel', () => {
     });
 
     it.skip('should show warning when duplicate title is entered (case-insensitive)', async () => {
-      // Note: Skipping this test due to Svelte reactivity timing issues in test environment
-      // The duplicate detection logic is tested in E2E tests instead
+      // Note: This test is skipped due to Svelte 5 reactivity timing issues in jsdom/happy-dom.
+      // The reactive store updates from currentStory.update() don't complete synchronously,
+      // causing the duplicate warning to not appear within waitFor() timeouts.
+      // The duplicate detection logic IS working and tested in E2E tests instead.
       const passage2 = new Passage({
         id: 'passage-2',
         title: 'Existing Passage',

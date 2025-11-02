@@ -73,6 +73,11 @@
   import { IndexedDBAdapter } from './lib/services/storage/IndexedDBAdapter';
   import KidsModeApp from './lib/components/kids/KidsModeApp.svelte';
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
+  import Landing from './routes/Landing.svelte';
+  import KidsLanding from './routes/KidsLanding.svelte';
+
+  // Landing page state
+  let showLanding = !$currentStory; // Show landing if no story loaded
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -160,6 +165,36 @@
   // First-time user detection
   const FIRST_VISIT_KEY = 'whisker-first-visit';
   let hasSeenTemplates = false;
+
+  // Update landing page visibility when story changes
+  $: showLanding = !$currentStory;
+
+  // Landing page handlers
+  function handleGetStarted() {
+    showLanding = false;
+    showTemplateGallery = true;
+  }
+
+  function handleTryDemo() {
+    showLanding = false;
+    // Load a demo story
+    projectActions.newProject();
+    if ($currentStory) {
+      $currentStory.metadata.title = 'Demo Story';
+      $currentStory.metadata.author = 'Whisker Demo';
+      currentStory.set($currentStory);
+    }
+  }
+
+  function handleSignIn() {
+    // Future: Handle authentication
+    notificationStore.info('Sign in coming soon!');
+  }
+
+  function handleParentInfo() {
+    // Show parent information
+    notificationStore.info('Parent information coming soon!');
+  }
 
   // Helper to show confirm dialog
   function showConfirm(
@@ -1175,11 +1210,26 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<!-- Kids Mode: Use simplified UI -->
+<!-- Kids Mode: Use simplified UI with kids landing -->
 {#if $kidsModeEnabled}
-  <KidsModeApp />
+  {#if showLanding}
+    <KidsLanding
+      onGetStarted={handleGetStarted}
+      onBrowseTemplates={() => showTemplateGallery = true}
+      onParentInfo={handleParentInfo}
+    />
+  {:else}
+    <KidsModeApp />
+  {/if}
 {:else}
-  <!-- Standard Mode: Full professional UI -->
+  <!-- Standard Mode: Professional UI with professional landing -->
+  {#if showLanding}
+    <Landing
+      onGetStarted={handleGetStarted}
+      onTryDemo={handleTryDemo}
+      onSignIn={handleSignIn}
+    />
+  {:else}
   <div class="flex flex-col h-screen bg-white dark:bg-gray-900">
     {#if !$focusMode && !$isMobile}
     <MenuBar
@@ -1979,5 +2029,7 @@
     </div>
   </div>
 {/if}
+  {/if}
+  <!-- End of showLanding check for standard mode -->
 {/if}
-<!-- End of standard mode / kids mode conditional -->
+<!-- End of kids mode / standard mode conditional -->

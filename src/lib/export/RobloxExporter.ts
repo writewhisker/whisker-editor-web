@@ -135,7 +135,7 @@ export class RobloxExporter {
     lines.push('');
 
     // Add start passage
-    lines.push(`StoryModule.StartPassage = "${this.escapeString(story.startPassage)}"');
+    lines.push(`StoryModule.StartPassage = "${this.escapeString(story.startPassage)}"`);
     lines.push('');
 
     // Helper functions
@@ -559,6 +559,6 @@ export class RobloxExporter {
    * Get suggested filename for the export
    */
   static getSuggestedFilename(story: Story): string {
-    return `${this.sanitizeName(story.metadata.title)}_roblox.zip`;
+    return this.sanitizeName(story.metadata.title).toLowerCase() + '_roblox.zip';
   }
 }

@@ -530,11 +530,8 @@ a:hover {
 
         // Format choice conditions if they exist
         let conditionText = '';
-        if (choice.conditions && choice.conditions.length > 0) {
-          const conditionsList = choice.conditions
-            .map((cond: string) => this.escapeXML(cond))
-            .join(', ');
-          conditionText = `<span class="condition">Requires: ${conditionsList}</span>`;
+        if (choice.condition) {
+          conditionText = `<span class="condition">Requires: ${this.escapeXML(choice.condition)}</span>`;
         }
 
         return `<div class="choice">

@@ -9,7 +9,8 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story, Passage } from './projectStore';
+import type { Story } from '../models/Story';
+import type { Passage } from '../models/Passage';
 
 export type ChangeType = 'added' | 'removed' | 'modified' | 'unchanged';
 export type DiffLevel = 'passage' | 'text' | 'metadata';
@@ -122,12 +123,15 @@ function computeMetadataChanges(oldPassage: Passage, newPassage: Passage): Metad
     changes.push({ field: 'tags', oldValue: oldPassage.tags, newValue: newPassage.tags });
   }
 
-  // Check position
-  if (oldPassage.x !== newPassage.x || oldPassage.y !== newPassage.y) {
+  // Check position - handle both direct x/y and position object formats
+  const oldPos = oldPassage.position || { x: (oldPassage as any).x, y: (oldPassage as any).y };
+  const newPos = newPassage.position || { x: (newPassage as any).x, y: (newPassage as any).y };
+
+  if (oldPos && newPos && (oldPos.x !== newPos.x || oldPos.y !== newPos.y)) {
     changes.push({
       field: 'position',
-      oldValue: { x: oldPassage.x, y: oldPassage.y },
-      newValue: { x: newPassage.x, y: newPassage.y },
+      oldValue: { x: oldPos.x, y: oldPos.y },
+      newValue: { x: newPos.x, y: newPos.y },
     });
   }
 
@@ -137,8 +141,27 @@ function computeMetadataChanges(oldPassage: Passage, newPassage: Passage): Metad
 // Compare two story versions
 function computeStoryDiff(from: VersionSnapshot, to: VersionSnapshot): StoryDiff {
   const passageDiffs: PassageDiff[] = [];
-  const oldPassagesMap = new Map(from.story.passages.map(p => [p.id, p]));
-  const newPassagesMap = new Map(to.story.passages.map(p => [p.id, p]));
+
+  // Handle Map, object, and array formats for passages
+  let oldPassagesMap: Map<string, Passage>;
+  let newPassagesMap: Map<string, Passage>;
+
+  if (from.story.passages instanceof Map) {
+    oldPassagesMap = from.story.passages;
+  } else if (Array.isArray(from.story.passages)) {
+    oldPassagesMap = new Map(from.story.passages.map(p => [p.id, p]));
+  } else {
+    oldPassagesMap = new Map(Object.entries(from.story.passages));
+  }
+
+  if (to.story.passages instanceof Map) {
+    newPassagesMap = to.story.passages;
+  } else if (Array.isArray(to.story.passages)) {
+    newPassagesMap = new Map(to.story.passages.map(p => [p.id, p]));
+  } else {
+    newPassagesMap = new Map(Object.entries(to.story.passages));
+  }
+
   const allPassageIds = new Set([...oldPassagesMap.keys(), ...newPassagesMap.keys()]);
 
   let stats: DiffStats = {

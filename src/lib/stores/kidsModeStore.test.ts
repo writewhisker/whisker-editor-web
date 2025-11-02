@@ -8,9 +8,12 @@ import {
   kidsModePreferences,
   kidsModeEnabled,
   kidsTheme,
+  kidsAgeGroup,
+  kidsChildName,
   kidsModeActions,
   getKidFriendlyTerm,
   type KidsTheme,
+  type AgeGroup,
 } from './kidsModeStore';
 
 describe('kidsModeStore', () => {
@@ -37,6 +40,19 @@ describe('kidsModeStore', () => {
       expect(prefs.soundEffectsEnabled).toBe(false);
       expect(prefs.tutorialCompleted).toBe(false);
       expect(prefs.achievementBadges).toEqual([]);
+      expect(prefs.ageGroup).toBe(null);
+      expect(prefs.childName).toBe(null);
+      expect(prefs.completedTutorials).toEqual([]);
+    });
+
+    it('should have age group as null by default', () => {
+      const ageGroup = get(kidsAgeGroup);
+      expect(ageGroup).toBe(null);
+    });
+
+    it('should have child name as null by default', () => {
+      const name = get(kidsChildName);
+      expect(name).toBe(null);
     });
   });
 
@@ -131,6 +147,73 @@ describe('kidsModeStore', () => {
       });
     });
 
+    describe('setAgeGroup', () => {
+      it('should set age group to 8-10', () => {
+        kidsModeActions.setAgeGroup('8-10');
+        expect(get(kidsAgeGroup)).toBe('8-10');
+      });
+
+      it('should set age group to 10-13', () => {
+        kidsModeActions.setAgeGroup('10-13');
+        expect(get(kidsAgeGroup)).toBe('10-13');
+      });
+
+      it('should set age group to 13-15', () => {
+        kidsModeActions.setAgeGroup('13-15');
+        expect(get(kidsAgeGroup)).toBe('13-15');
+      });
+
+      it('should update preferences store', () => {
+        kidsModeActions.setAgeGroup('10-13');
+        const prefs = get(kidsModePreferences);
+        expect(prefs.ageGroup).toBe('10-13');
+      });
+    });
+
+    describe('setChildName', () => {
+      it('should set child name', () => {
+        kidsModeActions.setChildName('Alex');
+        expect(get(kidsChildName)).toBe('Alex');
+      });
+
+      it('should update preferences store', () => {
+        kidsModeActions.setChildName('Sam');
+        const prefs = get(kidsModePreferences);
+        expect(prefs.childName).toBe('Sam');
+      });
+
+      it('should handle empty string', () => {
+        kidsModeActions.setChildName('');
+        expect(get(kidsChildName)).toBe('');
+      });
+    });
+
+    describe('completeSpecificTutorial', () => {
+      it('should mark a tutorial as completed', () => {
+        kidsModeActions.completeSpecificTutorial('first-story');
+        const prefs = get(kidsModePreferences);
+        expect(prefs.completedTutorials).toContain('first-story');
+      });
+
+      it('should not duplicate tutorial completions', () => {
+        kidsModeActions.completeSpecificTutorial('first-story');
+        kidsModeActions.completeSpecificTutorial('first-story');
+        const prefs = get(kidsModePreferences);
+        expect(prefs.completedTutorials.filter(t => t === 'first-story').length).toBe(1);
+      });
+
+      it('should track multiple tutorial completions', () => {
+        kidsModeActions.completeSpecificTutorial('first-story');
+        kidsModeActions.completeSpecificTutorial('add-choices');
+        kidsModeActions.completeSpecificTutorial('play-story');
+        const prefs = get(kidsModePreferences);
+        expect(prefs.completedTutorials).toHaveLength(3);
+        expect(prefs.completedTutorials).toContain('first-story');
+        expect(prefs.completedTutorials).toContain('add-choices');
+        expect(prefs.completedTutorials).toContain('play-story');
+      });
+    });
+
     describe('reset', () => {
       it('should reset all preferences to default', () => {
         kidsModeActions.setEnabled(true);
@@ -138,6 +221,9 @@ describe('kidsModeStore', () => {
         kidsModeActions.toggleSoundEffects();
         kidsModeActions.completeTutorial();
         kidsModeActions.awardBadge('test');
+        kidsModeActions.setAgeGroup('10-13');
+        kidsModeActions.setChildName('Test');
+        kidsModeActions.completeSpecificTutorial('first-story');
 
         kidsModeActions.reset();
 
@@ -147,6 +233,9 @@ describe('kidsModeStore', () => {
         expect(prefs.soundEffectsEnabled).toBe(false);
         expect(prefs.tutorialCompleted).toBe(false);
         expect(prefs.achievementBadges).toEqual([]);
+        expect(prefs.ageGroup).toBe(null);
+        expect(prefs.childName).toBe(null);
+        expect(prefs.completedTutorials).toEqual([]);
       });
     });
   });
@@ -182,6 +271,41 @@ describe('kidsModeStore', () => {
 
       kidsModeActions.setTheme('minecraft');
       expect(get(kidsTheme)).toBe('minecraft');
+
+      kidsModeActions.setAgeGroup('8-10');
+      expect(get(kidsAgeGroup)).toBe('8-10');
+
+      kidsModeActions.setChildName('Jordan');
+      expect(get(kidsChildName)).toBe('Jordan');
+    });
+  });
+
+  describe('Age Group Integration', () => {
+    it('should work with full onboarding flow', () => {
+      // Simulate full onboarding
+      kidsModeActions.setEnabled(true);
+      kidsModeActions.setAgeGroup('10-13');
+      kidsModeActions.setChildName('Alex');
+      kidsModeActions.setTheme('minecraft');
+
+      const prefs = get(kidsModePreferences);
+      expect(prefs.enabled).toBe(true);
+      expect(prefs.ageGroup).toBe('10-13');
+      expect(prefs.childName).toBe('Alex');
+      expect(prefs.theme).toBe('minecraft');
+
+      expect(get(kidsModeEnabled)).toBe(true);
+      expect(get(kidsAgeGroup)).toBe('10-13');
+      expect(get(kidsChildName)).toBe('Alex');
+      expect(get(kidsTheme)).toBe('minecraft');
+    });
+
+    it('should allow changing age group', () => {
+      kidsModeActions.setAgeGroup('8-10');
+      expect(get(kidsAgeGroup)).toBe('8-10');
+
+      kidsModeActions.setAgeGroup('13-15');
+      expect(get(kidsAgeGroup)).toBe('13-15');
     });
   });
 });

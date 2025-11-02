@@ -18,8 +18,9 @@
   import KidsParentalControlsPanel from './KidsParentalControlsPanel.svelte';
   import { currentStory, selectedPassageId, projectActions } from '../../stores/projectStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
-  import { kidsModePreferences, kidsTheme } from '../../stores/kidsModeStore';
+  import { kidsModePreferences, kidsTheme, kidsAgeGroup } from '../../stores/kidsModeStore';
   import { notificationStore } from '../../stores/notificationStore';
+  import { getPassageLimit } from '../../stores/ageGroupFeatures';
   import PassageList from '../PassageList.svelte';
   import PropertiesPanel from '../PropertiesPanel.svelte';
   import GraphView from '../GraphView.svelte';
@@ -43,6 +44,18 @@
   // Handler functions
   function handleAddPassage() {
     if (!$currentStory) return;
+
+    // Check age-based passage limit
+    if ($kidsAgeGroup) {
+      const passageLimit = getPassageLimit($kidsAgeGroup);
+      if (passageLimit && $currentStory.passages.size >= passageLimit) {
+        notificationStore.warning(
+          `You've reached the maximum of ${passageLimit} story pages! Try finishing this story first.`
+        );
+        return;
+      }
+    }
+
     projectActions.addPassage();
   }
 

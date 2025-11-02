@@ -13,6 +13,8 @@
   import { setupLongPress, isMobile, isTouch } from '../utils/mobile';
   import { notificationStore } from '../stores/notificationStore';
   import { commentsByPassage } from '../stores/commentStore';
+  import { kidsModeEnabled, kidsAgeGroup } from '../stores/kidsModeStore';
+  import { getPassageLimit } from '../stores/ageGroupFeatures';
 
   export let onAddPassage: () => void;
   export let onDeletePassage: (id: string) => void;
@@ -481,7 +483,17 @@
   <!-- Header -->
   <div class="p-3 border-b border-gray-300">
     <div class="flex items-center justify-between mb-2">
-      <h3 class="font-semibold text-gray-800">Passages</h3>
+      <h3 class="font-semibold text-gray-800">
+        Passages
+        {#if $kidsModeEnabled && $kidsAgeGroup && $currentStory}
+          {@const passageLimit = getPassageLimit($kidsAgeGroup)}
+          {#if passageLimit}
+            <span class="text-xs font-normal text-gray-500">
+              ({$currentStory.passages.size}/{passageLimit})
+            </span>
+          {/if}
+        {/if}
+      </h3>
       <button
         class="px-3 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 active:scale-95 transition-transform touch-manipulation"
         style="min-height: {$isMobile ? '44px' : 'auto'}"

@@ -121,7 +121,7 @@
     <div
       class="bg-gradient-to-br from-green-100 via-lime-100 to-emerald-100 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border-8 border-green-600"
       on:click|stopPropagation
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="asset-picker-title"
     >
       <!-- Header -->

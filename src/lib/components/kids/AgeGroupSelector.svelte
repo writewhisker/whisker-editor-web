@@ -10,6 +10,7 @@
   import type { AgeGroup } from '../../stores/kidsModeStore';
   import { kidsModeActions } from '../../stores/kidsModeStore';
   import { getFeaturesForAge } from '../../stores/ageGroupFeatures';
+  import { parentalControlsActions } from '../../stores/parentalControlsStore';
 
   export let show = false;
 
@@ -56,6 +57,10 @@
     if (selectedAge && childName.trim()) {
       kidsModeActions.setAgeGroup(selectedAge);
       kidsModeActions.setChildName(childName.trim());
+
+      // Apply age-appropriate parental control defaults
+      parentalControlsActions.applyAgeDefaults(selectedAge);
+
       dispatch('complete', { ageGroup: selectedAge, name: childName.trim() });
       show = false;
     }

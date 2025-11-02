@@ -133,7 +133,7 @@
     <div
       class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden border-8 border-blue-400"
       on:click|stopPropagation
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="visual-script-title"
     >
       <!-- Header -->

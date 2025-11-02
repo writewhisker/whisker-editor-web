@@ -7,6 +7,7 @@
 
 import { writable, derived } from 'svelte/store';
 import { getPreferenceService } from '../services/storage/PreferenceService';
+import type { AgeGroup } from './kidsModeStore';
 
 const PARENTAL_CONTROLS_KEY = 'whisker-parental-controls';
 const PARENTAL_PIN_KEY = 'whisker-parental-pin';
@@ -296,4 +297,60 @@ export const parentalControlsActions = {
     parentalControlsStore.set(DEFAULT_CONTROLS);
     saveControls(DEFAULT_CONTROLS);
   },
+
+  /**
+   * Apply age-appropriate defaults for parental controls
+   */
+  applyAgeDefaults(ageGroup: AgeGroup) {
+    const ageDefaults = getAgeGroupDefaults(ageGroup);
+    parentalControlsStore.update(controls => {
+      const newControls = {
+        ...controls,
+        ...ageDefaults,
+        // Keep existing PIN if set
+        pin: controls.pin,
+        enabled: controls.enabled,
+      };
+      saveControls(newControls);
+      this.logActivity('Age Group Changed', `Applied defaults for ages ${ageGroup}`);
+      return newControls;
+    });
+  },
 };
+
+/**
+ * Get age-appropriate parental control defaults
+ */
+export function getAgeGroupDefaults(ageGroup: AgeGroup): Partial<ParentalControls> {
+  switch (ageGroup) {
+    case '8-10':
+      return {
+        exportRestricted: true, // Requires parent approval
+        allowLocalExport: true, // But can download files
+        allowOnlineSharing: false, // No online sharing
+        contentFilterLevel: 'strict',
+        requireApprovalForExport: true,
+        maxSessionTime: 30, // 30 minutes recommended
+      };
+
+    case '10-13':
+      return {
+        exportRestricted: false,
+        allowLocalExport: true,
+        allowOnlineSharing: false, // Still safe
+        contentFilterLevel: 'mild',
+        requireApprovalForExport: false,
+        maxSessionTime: 60, // 1 hour recommended
+      };
+
+    case '13-15':
+      return {
+        exportRestricted: false,
+        allowLocalExport: true,
+        allowOnlineSharing: true, // More freedom
+        contentFilterLevel: 'none',
+        requireApprovalForExport: false,
+        maxSessionTime: null, // Unlimited
+      };
+  }
+}

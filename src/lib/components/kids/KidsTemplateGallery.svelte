@@ -62,7 +62,7 @@
     <div
       class="bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border-8 border-purple-400"
       on:click|stopPropagation
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="template-gallery-title"
     >
       <!-- Header -->

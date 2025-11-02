@@ -57,11 +57,11 @@
       bind:this={dialogElement}
       class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 min-w-[400px]"
       on:click|stopPropagation
-      role="dialog" tabindex="-1"
+      role="dialog"
+      tabindex="-1"
       aria-modal="true"
       aria-labelledby="file-dialog-title"
       aria-describedby={message ? 'file-dialog-message' : undefined}
-      tabindex="-1"
     >
       <h2 id="file-dialog-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">{title}</h2>
 

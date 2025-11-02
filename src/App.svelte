@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { errorTracking } from './lib/services/errorTracking';
   import MenuBar from './lib/components/MenuBar.svelte';
   import Toolbar from './lib/components/Toolbar.svelte';
   import StatusBar from './lib/components/StatusBar.svelte';
@@ -70,6 +71,8 @@
   import { backgroundSync } from './lib/services/storage/backgroundSync';
   import { syncQueue } from './lib/services/storage/syncQueue';
   import { IndexedDBAdapter } from './lib/services/storage/IndexedDBAdapter';
+  import KidsModeApp from './lib/components/kids/KidsModeApp.svelte';
+  import { kidsModeEnabled } from './lib/stores/kidsModeStore';
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -1066,6 +1069,9 @@
   onMount(() => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
 
+    // Initialize error tracking (Sentry)
+    errorTracking.initialize();
+
     // Check for GitHub OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
@@ -1169,8 +1175,13 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="flex flex-col h-screen bg-white dark:bg-gray-900">
-  {#if !$focusMode && !$isMobile}
+<!-- Kids Mode: Use simplified UI -->
+{#if $kidsModeEnabled}
+  <KidsModeApp />
+{:else}
+  <!-- Standard Mode: Full professional UI -->
+  <div class="flex flex-col h-screen bg-white dark:bg-gray-900">
+    {#if !$focusMode && !$isMobile}
     <MenuBar
       onNew={handleNewProject}
       onOpen={handleOpenProject}
@@ -1968,3 +1979,5 @@
     </div>
   </div>
 {/if}
+{/if}
+<!-- End of standard mode / kids mode conditional -->

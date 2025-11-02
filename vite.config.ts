@@ -7,7 +7,15 @@ import path from 'path'
 export default defineConfig(({ mode }) => ({
   plugins: [
     svelte(),
-    monacoEditorPlugin.default({
+    (monacoEditorPlugin as any).default ? (monacoEditorPlugin as any).default({
+      languageWorkers: ['editorWorkerService'],
+      customWorkers: [
+        {
+          label: 'lua',
+          entry: 'monaco-editor/esm/vs/language/typescript/ts.worker',
+        },
+      ],
+    }) : monacoEditorPlugin({
       languageWorkers: ['editorWorkerService'],
       customWorkers: [
         {

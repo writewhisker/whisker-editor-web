@@ -685,7 +685,7 @@ describe('versionDiffStore', () => {
     });
 
     it('should handle passages with multiline content', () => {
-      const multilineStory: Story = {
+      const multilineStory = {
         ...story1,
         passages: [
           {
@@ -697,7 +697,7 @@ describe('versionDiffStore', () => {
             y: 0,
           } as unknown as Passage,
         ] as unknown as Map<string, Passage>,
-      };
+      } as any as Story;
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
       const id2 = versionDiffStore.createSnapshot(multilineStory, 'V2');
@@ -709,7 +709,7 @@ describe('versionDiffStore', () => {
     });
 
     it('should handle passages with no content', () => {
-      const emptyPassageStory: Story = {
+      const emptyPassageStory = {
         ...story1,
         passages: [
           {
@@ -721,7 +721,7 @@ describe('versionDiffStore', () => {
             y: 0,
           } as unknown as Passage,
         ] as unknown as Map<string, Passage>,
-      };
+      } as any as Story;
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
       const id2 = versionDiffStore.createSnapshot(emptyPassageStory, 'V2');
@@ -733,7 +733,7 @@ describe('versionDiffStore', () => {
     });
 
     it('should handle special characters in passage content', () => {
-      const specialStory: Story = {
+      const specialStory = {
         ...story1,
         passages: [
           {
@@ -745,7 +745,7 @@ describe('versionDiffStore', () => {
             y: 0,
           } as unknown as Passage,
         ] as unknown as Map<string, Passage>,
-      };
+      } as any as Story;
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
       const id2 = versionDiffStore.createSnapshot(specialStory, 'V2');
@@ -758,7 +758,7 @@ describe('versionDiffStore', () => {
 
     it('should handle very long passages', () => {
       const longContent = 'A'.repeat(10000);
-      const longStory: Story = {
+      const longStory = {
         ...story1,
         passages: [
           {
@@ -770,7 +770,7 @@ describe('versionDiffStore', () => {
             y: 0,
           } as unknown as Passage,
         ] as unknown as Map<string, Passage>,
-      };
+      } as any as Story;
 
       const id1 = versionDiffStore.createSnapshot(story1, 'V1');
       const id2 = versionDiffStore.createSnapshot(longStory, 'V2');

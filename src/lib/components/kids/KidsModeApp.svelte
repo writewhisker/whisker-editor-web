@@ -9,6 +9,9 @@
   import { onMount } from 'svelte';
   import KidsMenuBar from './KidsMenuBar.svelte';
   import KidsToolbar from './KidsToolbar.svelte';
+  import KidsTemplateGallery from './KidsTemplateGallery.svelte';
+  import VisualScriptEditor from './VisualScriptEditor.svelte';
+  import MinecraftAssetPicker from './MinecraftAssetPicker.svelte';
   import { currentStory, selectedPassageId, projectActions } from '../../stores/projectStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import { kidsModePreferences, kidsTheme } from '../../stores/kidsModeStore';
@@ -20,6 +23,12 @@
   import StatusBar from '../StatusBar.svelte';
   import { SvelteFlowProvider } from '@xyflow/svelte';
   import NotificationToast from '../NotificationToast.svelte';
+
+  // Dialog states
+  let showTemplateGallery = false;
+  let showVisualScriptEditor = false;
+  let showMinecraftAssetPicker = false;
+  let minecraftAssetType: 'item' | 'mob' | 'biome' | 'location' = 'item';
 
   // Handler functions
   function handleAddPassage() {
@@ -90,7 +99,12 @@
 
 <div class="flex flex-col h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100">
   <!-- Kids Mode Header -->
-  <KidsMenuBar />
+  <KidsMenuBar
+    on:openTemplates={() => showTemplateGallery = true}
+    on:newStory={() => projectActions.newProject()}
+    on:openStory={() => notificationStore.info('Open story coming soon!')}
+    on:saveStory={() => notificationStore.info('Save story coming soon!')}
+  />
 
   <!-- Kids Mode Toolbar -->
   {#if $currentStory}
@@ -157,26 +171,27 @@
           <!-- Big Action Buttons -->
           <div class="flex gap-6 justify-center mb-8">
             <button
+              type="button"
               class="btn-primary px-10 py-6 rounded-3xl text-2xl font-black shadow-2xl transform hover:scale-110 transition-all"
+              on:click={() => projectActions.newProject()}
             >
               <span class="text-4xl mr-3">✨</span>
               Start a New Story
             </button>
             <button
+              type="button"
               class="btn-secondary px-10 py-6 rounded-3xl text-2xl font-black shadow-xl transform hover:scale-110 transition-all"
+              on:click={() => showTemplateGallery = true}
             >
-              <span class="text-4xl mr-3">📂</span>
-              Open a Story
+              <span class="text-4xl mr-3">🎨</span>
+              Browse Templates
             </button>
           </div>
 
-          <!-- Browse Templates -->
-          <button
-            class="px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-400 hover:from-yellow-500 hover:to-orange-500 text-white rounded-2xl shadow-lg transform hover:scale-105 transition-all font-bold text-xl"
-          >
-            <span class="text-3xl mr-2">🎨</span>
-            Choose a Story Template
-          </button>
+          <!-- Or make blank -->
+          <p class="text-gray-600 font-semibold text-lg">
+            💡 Start with a template for Minecraft or Roblox, or create your own from scratch!
+          </p>
 
           <!-- Fun Facts -->
           <div class="mt-12 grid grid-cols-3 gap-6">
@@ -207,3 +222,8 @@
   <!-- Notifications -->
   <NotificationToast />
 </div>
+
+<!-- Dialogs -->
+<KidsTemplateGallery bind:show={showTemplateGallery} />
+<VisualScriptEditor bind:show={showVisualScriptEditor} passageId={$selectedPassageId} />
+<MinecraftAssetPicker bind:show={showMinecraftAssetPicker} assetType={minecraftAssetType} />

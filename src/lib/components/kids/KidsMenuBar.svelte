@@ -5,7 +5,16 @@
    * Simplified, colorful menu bar for kids mode with large, friendly buttons.
    */
 
+  import { createEventDispatcher } from 'svelte';
   import { kidsModeActions, kidsTheme, getKidFriendlyTerm } from '../../stores/kidsModeStore';
+  import { projectActions } from '../../stores/projectStore';
+
+  const dispatch = createEventDispatcher<{
+    openTemplates: void;
+    newStory: void;
+    openStory: void;
+    saveStory: void;
+  }>();
 
   // Menu visibility
   let showFileMenu = false;
@@ -66,20 +75,36 @@
           class="absolute top-full mt-2 left-0 bg-white rounded-2xl shadow-2xl border-4 border-purple-300 py-2 min-w-[200px] z-50"
           on:click|stopPropagation
         >
-          <button class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3">
+          <button
+            type="button"
+            class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3"
+            on:click={() => { dispatch('newStory'); closeAllMenus(); }}
+          >
             <span class="text-2xl">✨</span>
             New Story
           </button>
-          <button class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3">
+          <button
+            type="button"
+            class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3"
+            on:click={() => { dispatch('openStory'); closeAllMenus(); }}
+          >
             <span class="text-2xl">📂</span>
             Open Story
           </button>
-          <button class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3">
+          <button
+            type="button"
+            class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3"
+            on:click={() => { dispatch('saveStory'); closeAllMenus(); }}
+          >
             <span class="text-2xl">💾</span>
             Save Story
           </button>
           <div class="border-t-2 border-purple-200 my-2"></div>
-          <button class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3">
+          <button
+            type="button"
+            class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3"
+            on:click={() => { dispatch('openTemplates'); closeAllMenus(); }}
+          >
             <span class="text-2xl">🎨</span>
             Browse Templates
           </button>

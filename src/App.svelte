@@ -1051,9 +1051,16 @@
     // Just close the modal, localStorage already cleared by component
   }
 
-  // Force graph view and hide panels on mobile
-  $: if ($isMobile && $viewMode !== 'graph') {
-    viewPreferencesActions.setViewMode('graph');
+  // Mobile-friendly: Default to list view on mobile (better for editing)
+  // but allow users to switch to any view mode they prefer
+  let hasSetMobileDefault = false;
+  $: if ($isMobile && !hasSetMobileDefault) {
+    // Only set default once, don't force it every time
+    if ($viewMode === 'split') {
+      // Split view doesn't work well on mobile, switch to list
+      viewPreferencesActions.setViewMode('list');
+    }
+    hasSetMobileDefault = true;
   }
 
   onMount(() => {

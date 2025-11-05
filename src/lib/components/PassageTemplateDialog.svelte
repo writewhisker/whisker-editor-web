@@ -81,7 +81,7 @@
 
 {#if isOpen}
   <div class="dialog-backdrop" onclick={handleBackdropClick}>
-    <div class="dialog" role="dialog" aria-modal="true">
+    <div class="dialog" role="dialog" tabindex="-1" aria-modal="true">
       <div class="dialog-header">
         <h2>Passage Templates</h2>
         <button class="close-btn" onclick={close} aria-label="Close">×</button>

@@ -80,7 +80,7 @@
 {#if show}
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-    role="dialog"
+    role="dialog" tabindex="-1"
     aria-labelledby="find-replace-title"
     aria-modal="true"
     on:click={handleClose}

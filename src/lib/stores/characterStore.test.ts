@@ -180,8 +180,8 @@ describe('characterStore', () => {
       const entityId = get(entities)[0].id;
       const originalModified = get(entities)[0].modified;
 
-      // Wait a bit to ensure time passes
-      await new Promise(resolve => setTimeout(resolve, 1));
+      // Wait a bit to ensure time passes (increased to 10ms for reliability)
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       characterStore.updateEntity(entityId, { name: 'Updated' });
 

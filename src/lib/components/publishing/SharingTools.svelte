@@ -84,7 +84,7 @@
     <div
       class="dialog"
       onclick={(e) => e.stopPropagation()}
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="sharing-title"
       aria-modal="true"
     >

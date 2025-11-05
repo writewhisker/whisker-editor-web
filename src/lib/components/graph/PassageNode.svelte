@@ -483,7 +483,7 @@
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
     on:click|stopPropagation
     on:touchend|stopPropagation
-    role="menu"
+    role="menu" tabindex="0"
     tabindex="-1"
   >
     <button

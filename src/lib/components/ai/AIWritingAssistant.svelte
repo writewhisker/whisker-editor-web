@@ -106,7 +106,7 @@
     <div
       class="dialog"
       onclick={(e) => e.stopPropagation()}
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="ai-assistant-title"
       aria-modal="true"
     >

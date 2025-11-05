@@ -1302,7 +1302,7 @@
       class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[180px]"
       style="left: {edgeContextMenu.x}px; top: {edgeContextMenu.y}px;"
       on:click|stopPropagation
-      role="menu"
+      role="menu" tabindex="0"
       tabindex="-1"
     >
       <button
@@ -1329,7 +1329,7 @@
       class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[200px]"
       style="left: {graphContextMenu.x}px; top: {graphContextMenu.y}px;"
       on:click|stopPropagation
-      role="menu"
+      role="menu" tabindex="0"
       tabindex="0"
       on:keydown={(e) => {
         if (e.key === 'Escape') closeGraphContextMenu();

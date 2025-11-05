@@ -127,7 +127,6 @@ describe('typeAdapter', () => {
         name: 'Test Image',
         path: 'path/to/image.png',
         mimeType: 'image/png',
-        type: 'image',
         size: 1024,
       });
       expect(serialized.assets).toContainEqual({
@@ -135,7 +134,6 @@ describe('typeAdapter', () => {
         name: 'Test Audio',
         path: 'path/to/audio.mp3',
         mimeType: 'audio/mp3',
-        type: 'audio',
       });
     });
 
@@ -422,7 +420,6 @@ describe('typeAdapter', () => {
       expect(restored.getAsset('img1')).toEqual({
         id: 'img1',
         name: 'Image',
-        type: 'image',
         path: 'img.png',
         mimeType: 'image/png',
         size: 2048,

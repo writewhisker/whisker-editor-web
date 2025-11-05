@@ -184,9 +184,9 @@ export const parentalControlsActions = {
     parentalControlsStore.update(controls => {
       const newControls = { ...controls, exportRestricted: restricted };
       saveControls(newControls);
-      this.logActivity('Setting Changed', `Export restricted: ${restricted}`);
       return newControls;
     });
+    this.logActivity('Setting Changed', `Export restricted: ${restricted}`);
   },
 
   /**
@@ -196,9 +196,9 @@ export const parentalControlsActions = {
     parentalControlsStore.update(controls => {
       const newControls = { ...controls, allowLocalExport: allow };
       saveControls(newControls);
-      this.logActivity('Setting Changed', `Allow local export: ${allow}`);
       return newControls;
     });
+    this.logActivity('Setting Changed', `Allow local export: ${allow}`);
   },
 
   /**
@@ -208,9 +208,9 @@ export const parentalControlsActions = {
     parentalControlsStore.update(controls => {
       const newControls = { ...controls, allowOnlineSharing: allow };
       saveControls(newControls);
-      this.logActivity('Setting Changed', `Allow online sharing: ${allow}`);
       return newControls;
     });
+    this.logActivity('Setting Changed', `Allow online sharing: ${allow}`);
   },
 
   /**
@@ -220,9 +220,9 @@ export const parentalControlsActions = {
     parentalControlsStore.update(controls => {
       const newControls = { ...controls, contentFilterLevel: level };
       saveControls(newControls);
-      this.logActivity('Setting Changed', `Content filter: ${level}`);
       return newControls;
     });
+    this.logActivity('Setting Changed', `Content filter: ${level}`);
   },
 
   /**
@@ -258,9 +258,12 @@ export const parentalControlsActions = {
         details,
       };
 
+      // Limit activity log to 100 entries (keep the most recent)
+      const updatedLog = [...controls.activityLog, newEntry].slice(-100);
+
       const newControls = {
         ...controls,
-        activityLog: [...controls.activityLog, newEntry],
+        activityLog: updatedLog,
       };
 
       saveControls(newControls);
@@ -312,9 +315,9 @@ export const parentalControlsActions = {
         enabled: controls.enabled,
       };
       saveControls(newControls);
-      this.logActivity('Age Group Changed', `Applied defaults for ages ${ageGroup}`);
       return newControls;
     });
+    this.logActivity('Age Group Changed', `Applied defaults for ages ${ageGroup}`);
   },
 };
 

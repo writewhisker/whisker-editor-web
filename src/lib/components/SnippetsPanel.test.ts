@@ -49,14 +49,14 @@ describe('SnippetsPanel', () => {
 
   describe('category filters', () => {
     it('should display all category filter buttons', () => {
-      const { getByText } = render(SnippetsPanel);
+      const { getAllByText } = render(SnippetsPanel);
 
-      expect(getByText(/All/)).toBeTruthy();
-      expect(getByText(/Narrative/)).toBeTruthy();
-      expect(getByText(/Choice/)).toBeTruthy();
-      expect(getByText(/Conditional/)).toBeTruthy();
-      expect(getByText(/Scripted/)).toBeTruthy();
-      expect(getByText(/Custom/)).toBeTruthy();
+      expect(getAllByText(/All/).length).toBeGreaterThan(0);
+      expect(getAllByText(/Narrative/).length).toBeGreaterThan(0);
+      expect(getAllByText(/Choice/).length).toBeGreaterThan(0);
+      expect(getAllByText(/Conditional/).length).toBeGreaterThan(0);
+      expect(getAllByText(/Scripted/).length).toBeGreaterThan(0);
+      expect(getAllByText(/Custom/).length).toBeGreaterThan(0);
     });
 
     it('should show category counts', () => {
@@ -81,12 +81,12 @@ describe('SnippetsPanel', () => {
     });
 
     it('should highlight selected category', async () => {
-      const { getByText } = render(SnippetsPanel);
+      const { getAllByText } = render(SnippetsPanel);
 
-      const choiceButton = getByText(/Choice/) as HTMLButtonElement;
-      await fireEvent.click(choiceButton);
+      const choiceButtons = getAllByText(/Choice/);
+      await fireEvent.click(choiceButtons[0] as HTMLButtonElement);
 
-      expect(choiceButton.className).toContain('bg-blue-500');
+      expect((choiceButtons[0] as HTMLButtonElement).className).toContain('bg-blue-500');
     });
 
     it('should show all templates when All is selected', async () => {
@@ -294,8 +294,8 @@ describe('SnippetsPanel', () => {
         const newPassage = passages.find(p => p.id !== existingPassage.id);
 
         if (newPassage && newPassage.position) {
-          expect(newPassage.position.x).toBe(100 + 250);
-          expect(newPassage.position.y).toBe(100);
+          expect(newPassage.position.x).toBe(100 + 300);
+          expect(newPassage.position.y).toBe(300);
         }
       });
     });

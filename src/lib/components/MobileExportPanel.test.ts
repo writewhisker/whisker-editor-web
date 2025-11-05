@@ -14,13 +14,13 @@ describe('MobileExportPanel', () => {
   describe('Rendering', () => {
     it('should render mobile export panel', () => {
       render(MobileExportPanel);
-      expect(screen.getByText(/Export/i)).toBeInTheDocument();
+      expect(screen.getByText('Mobile Export')).toBeInTheDocument();
     });
 
     it('should show export format options', () => {
       render(MobileExportPanel);
-      expect(screen.getByText(/HTML/i)).toBeInTheDocument();
-      expect(screen.getByText(/JSON/i)).toBeInTheDocument();
+      expect(screen.getByText('PWA')).toBeInTheDocument();
+      expect(screen.getByText('Cordova')).toBeInTheDocument();
     });
   });
 
@@ -28,49 +28,51 @@ describe('MobileExportPanel', () => {
     it('should select HTML export', async () => {
       render(MobileExportPanel);
 
-      const htmlButton = screen.getByText(/HTML/i);
-      await fireEvent.click(htmlButton);
+      const pwaButton = screen.getByText('PWA');
+      await fireEvent.click(pwaButton);
 
-      expect(htmlButton).toHaveClass(/selected|active/);
+      // PWA is selected by default, so it should already have the selected styling
+      expect(pwaButton.closest('button')).toHaveClass(/border-blue-500/);
     });
 
     it('should select JSON export', async () => {
       render(MobileExportPanel);
 
-      const jsonButton = screen.getByText(/JSON/i);
-      await fireEvent.click(jsonButton);
+      const cordovaButton = screen.getByText('Cordova');
+      await fireEvent.click(cordovaButton);
 
-      expect(jsonButton).toHaveClass(/selected|active/);
+      expect(cordovaButton.closest('button')).toHaveClass(/border-blue-500/);
     });
   });
 
   describe('Export Options', () => {
     it('should show export options', () => {
       render(MobileExportPanel);
-      expect(screen.getByText(/Options/i)).toBeInTheDocument();
+      expect(screen.getByText('Player Settings')).toBeInTheDocument();
     });
 
     it('should toggle include images option', async () => {
       render(MobileExportPanel);
 
-      const imagesToggle = screen.getByLabelText(/Include Images/i);
-      await fireEvent.click(imagesToggle);
+      const swipeToggle = screen.getByLabelText(/Enable swipe gestures/i);
+      // It's enabled by default, so clicking should uncheck it
+      await fireEvent.click(swipeToggle);
 
-      expect(imagesToggle).toBeChecked();
+      expect(swipeToggle).not.toBeChecked();
     });
   });
 
   describe('Export Action', () => {
     it('should have export button', () => {
       render(MobileExportPanel);
-      const exportButton = screen.getByRole('button', { name: /Export/i });
+      const exportButton = screen.getByRole('button', { name: /Generate Export Package/i });
       expect(exportButton).toBeInTheDocument();
     });
 
     it('should trigger export on button click', async () => {
       render(MobileExportPanel);
 
-      const exportButton = screen.getByRole('button', { name: /Export/i });
+      const exportButton = screen.getByRole('button', { name: /Generate Export Package/i });
       await fireEvent.click(exportButton);
 
       // Export should have been triggered

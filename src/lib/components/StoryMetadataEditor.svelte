@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { currentStory, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
 
   export let show = false;
 
@@ -32,7 +33,7 @@
 
     // Trigger store update
     currentStory.set($currentStory);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
 
     close();
   }

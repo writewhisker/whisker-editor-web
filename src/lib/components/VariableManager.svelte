@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory, variableList } from '../stores/projectStore';
+  import { currentStory, variableList } from '../stores/storyStateStore';
   import { playerVariables, isPlayerActive } from '../stores/playerStore';
   import { Variable } from '../models/Variable';
 

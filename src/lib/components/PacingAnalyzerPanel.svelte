@@ -8,7 +8,7 @@
     longestPath,
     type PacingIssue,
   } from '../stores/pacingStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let analyzing = $state(false);
 

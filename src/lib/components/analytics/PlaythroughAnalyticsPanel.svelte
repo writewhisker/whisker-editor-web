@@ -3,6 +3,7 @@
   import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
   import { currentStory } from '$lib/stores/projectStore';
   import type { Playthrough } from '$lib/models/Playthrough';
+  import { untrack } from 'svelte';
 
   // State
   let analytics = $state<PlaythroughAnalyticsData | null>(null);
@@ -10,9 +11,12 @@
   let selectedTab = $state<'overview' | 'passages' | 'choices' | 'paths'>('overview');
   let playthroughs = $state<Playthrough[]>([]);
 
-  // Load playthroughs on mount
+  // Load playthroughs when story changes
   $effect(() => {
-    loadPlaythroughs();
+    const story = $currentStory;
+    if (story) {
+      untrack(() => loadPlaythroughs());
+    }
   });
 
   function loadPlaythroughs() {
@@ -20,8 +24,15 @@
     const story = $currentStory;
 
     if (story && story.metadata.id) {
-      playthroughs = recorder.getPlaythroughsByStory(story.metadata.id);
-      analyzePlaythroughs();
+      try {
+        playthroughs = recorder.getPlaythroughsByStory(story.metadata.id);
+        analyzePlaythroughs();
+      } catch (error) {
+        // Handle errors gracefully - reset to empty state
+        console.error('Failed to load playthroughs:', error);
+        playthroughs = [];
+        analytics = null;
+      }
     }
   }
 

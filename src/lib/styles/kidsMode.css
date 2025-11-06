@@ -1,0 +1,283 @@
+/**
+ * Kids Mode Styles
+ *
+ * Bright, colorful, and playful styles for kids mode.
+ * Applied when data-kids-mode="true" is set on the root element.
+ */
+
+/* Base kids mode styles */
+[data-kids-mode="true"] {
+  /* Larger base font for readability */
+  font-size: 16px;
+}
+
+[data-kids-mode="true"] * {
+  /* Smoother, rounder corners everywhere */
+  border-radius: 0.75rem;
+}
+
+/* Colorful primary buttons */
+[data-kids-mode="true"] .btn-primary {
+  background-image: linear-gradient(to right, rgb(59 130 246), rgb(168 85 247));
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 200ms;
+  font-size: 1.125rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+}
+
+[data-kids-mode="true"] .btn-primary:hover {
+  background-image: linear-gradient(to right, rgb(37 99 235), rgb(147 51 234));
+  transform: scale(1.05);
+}
+
+/* Fun secondary buttons */
+[data-kids-mode="true"] .btn-secondary {
+  background-image: linear-gradient(to right, rgb(74 222 128), rgb(34 211 238));
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 200ms;
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+}
+
+[data-kids-mode="true"] .btn-secondary:hover {
+  background-image: linear-gradient(to right, rgb(34 197 94), rgb(6 182 212));
+  transform: scale(1.05);
+}
+
+/* Larger touch targets for kids */
+[data-kids-mode="true"] button,
+[data-kids-mode="true"] a {
+  min-height: 44px; /* iOS recommended touch target */
+  min-width: 44px;
+}
+
+/* Minecraft Theme */
+[data-kids-theme="minecraft"] {
+  /* Pixelated, blocky aesthetic */
+  font-family: 'Courier New', monospace;
+}
+
+[data-kids-theme="minecraft"] * {
+  border-radius: 0; /* Square, blocky like Minecraft */
+  image-rendering: pixelated;
+}
+
+[data-kids-theme="minecraft"] .btn-primary {
+  @apply bg-gradient-to-b from-green-600 to-green-800;
+  @apply border-4 border-green-900;
+  @apply shadow-xl;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.1) 0%, transparent 100%),
+    linear-gradient(to bottom, #16a34a, #166534);
+}
+
+[data-kids-theme="minecraft"] .btn-secondary {
+  @apply bg-gradient-to-b from-gray-400 to-gray-600;
+  @apply border-4 border-gray-700;
+  @apply shadow-xl;
+}
+
+[data-kids-theme="minecraft"] .panel {
+  @apply bg-gradient-to-b from-amber-100 to-amber-200;
+  @apply border-4 border-amber-800;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, transparent 2px, transparent 4px, rgba(0,0,0,0.1) 4px),
+    linear-gradient(to bottom, #fef3c7, #fde68a);
+}
+
+/* Roblox Theme */
+[data-kids-theme="roblox"] {
+  /* Bold, clean, modern */
+  font-family: 'Arial', 'Helvetica', sans-serif;
+}
+
+[data-kids-theme="roblox"] * {
+  border-radius: 0.5rem; /* Softer than default but not too round */
+}
+
+[data-kids-theme="roblox"] .btn-primary {
+  @apply bg-gradient-to-r from-red-500 to-red-600;
+  @apply border-2 border-red-700;
+  @apply shadow-lg;
+  @apply font-black;
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+}
+
+[data-kids-theme="roblox"] .btn-secondary {
+  @apply bg-gradient-to-r from-blue-500 to-blue-600;
+  @apply border-2 border-blue-700;
+  @apply shadow-md;
+  @apply font-bold;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+}
+
+[data-kids-theme="roblox"] .panel {
+  @apply bg-gradient-to-br from-white to-gray-100;
+  @apply border-2 border-gray-300;
+  @apply shadow-xl;
+}
+
+/* Default Kids Theme (Bright & Friendly) */
+[data-kids-theme="default"] {
+  font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+}
+
+[data-kids-theme="default"] .panel {
+  @apply bg-gradient-to-br from-yellow-50 via-pink-50 to-blue-50;
+  @apply border-4 border-purple-300;
+  @apply shadow-2xl;
+}
+
+[data-kids-theme="default"] .btn-primary {
+  @apply bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400;
+  @apply hover:from-pink-500 hover:via-purple-500 hover:to-indigo-500;
+  @apply shadow-xl;
+  @apply border-4 border-white;
+  text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+/* Kids mode specific components */
+[data-kids-mode="true"] .kids-header {
+  @apply bg-gradient-to-r from-purple-500 via-pink-500 to-red-500;
+  @apply text-white;
+  @apply py-4;
+  @apply shadow-lg;
+}
+
+[data-kids-mode="true"] .kids-toolbar {
+  @apply bg-gradient-to-r from-blue-400 to-cyan-400;
+  @apply p-3;
+  @apply shadow-md;
+}
+
+[data-kids-mode="true"] .kids-badge {
+  @apply inline-flex items-center justify-center;
+  @apply px-3 py-1.5;
+  @apply bg-yellow-400;
+  @apply border-2 border-yellow-600;
+  @apply rounded-full;
+  @apply font-bold;
+  @apply text-sm;
+  @apply shadow-md;
+  @apply transform hover:scale-110;
+  @apply transition-transform;
+}
+
+/* Achievement badges */
+[data-kids-mode="true"] .achievement-badge {
+  @apply inline-flex flex-col items-center;
+  @apply p-4;
+  @apply bg-gradient-to-b from-yellow-300 to-yellow-500;
+  @apply border-4 border-yellow-600;
+  @apply rounded-2xl;
+  @apply shadow-xl;
+  @apply transform hover:scale-105 hover:rotate-3;
+  @apply transition-all;
+}
+
+[data-kids-mode="true"] .achievement-badge.locked {
+  @apply from-gray-300 to-gray-400;
+  @apply border-gray-500;
+  @apply opacity-50;
+}
+
+/* Tutorial overlay */
+[data-kids-mode="true"] .tutorial-overlay {
+  @apply fixed inset-0;
+  @apply bg-black bg-opacity-60;
+  @apply flex items-center justify-center;
+  @apply z-50;
+}
+
+[data-kids-mode="true"] .tutorial-card {
+  @apply bg-white;
+  @apply p-8;
+  @apply rounded-3xl;
+  @apply shadow-2xl;
+  @apply max-w-2xl;
+  @apply border-8 border-purple-400;
+}
+
+/* Simplified panel headers */
+[data-kids-mode="true"] .panel-header {
+  @apply text-2xl;
+  @apply font-bold;
+  @apply py-3;
+  @apply px-4;
+  @apply bg-gradient-to-r from-purple-400 to-pink-400;
+  @apply text-white;
+  @apply rounded-t-xl;
+}
+
+/* Fun animations */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+[data-kids-mode="true"] .wiggle-on-hover:hover {
+  animation: wiggle 0.3s ease-in-out;
+}
+
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+[data-kids-mode="true"] .bounce-on-hover:hover {
+  animation: bounce-gentle 0.5s ease-in-out;
+}
+
+/* Larger icons for kids */
+[data-kids-mode="true"] .icon {
+  @apply text-2xl;
+}
+
+/* Simplified validation colors */
+[data-kids-mode="true"] .validation-error {
+  @apply bg-red-100;
+  @apply border-4 border-red-400;
+  @apply p-4;
+  @apply rounded-xl;
+  @apply shadow-md;
+}
+
+[data-kids-mode="true"] .validation-warning {
+  @apply bg-yellow-100;
+  @apply border-4 border-yellow-400;
+  @apply p-4;
+  @apply rounded-xl;
+  @apply shadow-md;
+}
+
+[data-kids-mode="true"] .validation-success {
+  @apply bg-green-100;
+  @apply border-4 border-green-400;
+  @apply p-4;
+  @apply rounded-xl;
+  @apply shadow-md;
+}
+
+/* Mobile optimizations for kids mode */
+@media (max-width: 768px) {
+  [data-kids-mode="true"] {
+    font-size: 18px; /* Even larger on mobile */
+  }
+
+  [data-kids-mode="true"] button {
+    min-height: 56px; /* Even larger touch targets */
+    min-width: 56px;
+    font-size: 1.125rem;
+  }
+}
+
+/* Print styles - disable kids mode styling for printing */
+@media print {
+  [data-kids-mode="true"] * {
+    border-radius: 0;
+    box-shadow: none;
+    background: white;
+    color: black;
+  }
+}

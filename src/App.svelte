@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { errorTracking } from './lib/services/errorTracking';
   import MenuBar from './lib/components/MenuBar.svelte';
   import Toolbar from './lib/components/Toolbar.svelte';
   import StatusBar from './lib/components/StatusBar.svelte';
@@ -70,6 +71,13 @@
   import { backgroundSync } from './lib/services/storage/backgroundSync';
   import { syncQueue } from './lib/services/storage/syncQueue';
   import { IndexedDBAdapter } from './lib/services/storage/IndexedDBAdapter';
+  import KidsModeApp from './lib/components/kids/KidsModeApp.svelte';
+  import { kidsModeEnabled } from './lib/stores/kidsModeStore';
+  import Landing from './routes/Landing.svelte';
+  import KidsLanding from './routes/KidsLanding.svelte';
+
+  // Landing page state
+  let showLanding = !$currentStory; // Show landing if no story loaded
 
   let showNewDialog = false;
   let newProjectTitle = '';
@@ -157,6 +165,36 @@
   // First-time user detection
   const FIRST_VISIT_KEY = 'whisker-first-visit';
   let hasSeenTemplates = false;
+
+  // Update landing page visibility when story changes
+  $: showLanding = !$currentStory;
+
+  // Landing page handlers
+  function handleGetStarted() {
+    showLanding = false;
+    showTemplateGallery = true;
+  }
+
+  function handleTryDemo() {
+    showLanding = false;
+    // Load a demo story
+    projectActions.newProject();
+    if ($currentStory) {
+      $currentStory.metadata.title = 'Demo Story';
+      $currentStory.metadata.author = 'Whisker Demo';
+      currentStory.set($currentStory);
+    }
+  }
+
+  function handleSignIn() {
+    // Future: Handle authentication
+    notificationStore.info('Sign in coming soon!');
+  }
+
+  function handleParentInfo() {
+    // Show parent information
+    notificationStore.info('Parent information coming soon!');
+  }
 
   // Helper to show confirm dialog
   function showConfirm(
@@ -1051,13 +1089,23 @@
     // Just close the modal, localStorage already cleared by component
   }
 
-  // Force graph view and hide panels on mobile
-  $: if ($isMobile && $viewMode !== 'graph') {
-    viewPreferencesActions.setViewMode('graph');
+  // Mobile-friendly: Default to list view on mobile (better for editing)
+  // but allow users to switch to any view mode they prefer
+  let hasSetMobileDefault = false;
+  $: if ($isMobile && !hasSetMobileDefault) {
+    // Only set default once, don't force it every time
+    if ($viewMode === 'split') {
+      // Split view doesn't work well on mobile, switch to list
+      viewPreferencesActions.setViewMode('list');
+    }
+    hasSetMobileDefault = true;
   }
 
   onMount(() => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
+
+    // Initialize error tracking (Sentry)
+    errorTracking.initialize();
 
     // Check for GitHub OAuth callback
     const urlParams = new URLSearchParams(window.location.search);
@@ -1162,8 +1210,28 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="flex flex-col h-screen bg-white dark:bg-gray-900">
-  {#if !$focusMode && !$isMobile}
+<!-- Kids Mode: Use simplified UI with kids landing -->
+{#if $kidsModeEnabled}
+  {#if showLanding}
+    <KidsLanding
+      onGetStarted={handleGetStarted}
+      onBrowseTemplates={() => showTemplateGallery = true}
+      onParentInfo={handleParentInfo}
+    />
+  {:else}
+    <KidsModeApp />
+  {/if}
+{:else}
+  <!-- Standard Mode: Professional UI with professional landing -->
+  {#if showLanding}
+    <Landing
+      onGetStarted={handleGetStarted}
+      onTryDemo={handleTryDemo}
+      onSignIn={handleSignIn}
+    />
+  {:else}
+  <div class="flex flex-col h-screen bg-white dark:bg-gray-900">
+    {#if !$focusMode && !$isMobile}
     <MenuBar
       onNew={handleNewProject}
       onOpen={handleOpenProject}
@@ -1961,3 +2029,7 @@
     </div>
   </div>
 {/if}
+  {/if}
+  <!-- End of showLanding check for standard mode -->
+{/if}
+<!-- End of kids mode / standard mode conditional -->

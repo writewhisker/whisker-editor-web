@@ -132,7 +132,7 @@
             bind:value={editText}
             placeholder="Edit comment..."
             rows="3"
-            autofocus
+            
           ></textarea>
           <div class="form-actions">
             <button class="btn btn-secondary" onclick={cancelEditing}>Cancel</button>
@@ -158,7 +158,7 @@
           bind:value={replyText}
           placeholder="Write a reply..."
           rows="2"
-          autofocus
+          
         ></textarea>
         <div class="form-actions">
           <button class="btn btn-secondary" onclick={cancelReply}>Cancel</button>

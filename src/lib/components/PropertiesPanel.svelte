@@ -7,6 +7,8 @@
   import PassageLinkAutocomplete from './PassageLinkAutocomplete.svelte';
   import CommentPanel from './collaboration/CommentPanel.svelte';
   import { commentsByPassage } from '../stores/commentStore';
+  import { kidsModeEnabled, kidsAgeGroup } from '../stores/kidsModeStore';
+  import { getChoiceLimit } from '../stores/ageGroupFeatures';
 
   $: passage = $selectedPassage;
 
@@ -190,14 +192,25 @@
   }
 
   function addChoice() {
-    if (passage) {
-      const choice = new Choice({
-        text: 'New choice',
-        target: ''
-      });
-      passage.addChoice(choice);
-      currentStory.update(s => s);
+    if (!passage) return;
+
+    // Check age-based choice limit in kids mode
+    if ($kidsModeEnabled && $kidsAgeGroup) {
+      const choiceLimit = getChoiceLimit($kidsAgeGroup);
+      if (choiceLimit && passage.choices.length >= choiceLimit) {
+        notificationStore.warning(
+          `You've reached the maximum of ${choiceLimit} choices for this page. Try keeping it simple!`
+        );
+        return;
+      }
     }
+
+    const choice = new Choice({
+      text: 'New choice',
+      target: ''
+    });
+    passage.addChoice(choice);
+    currentStory.update(s => s);
   }
 
   function removeChoice(choiceId: string) {
@@ -533,6 +546,14 @@
         <div class="flex items-center justify-between mb-2">
           <div class="block text-sm font-medium text-gray-700">
             Choices
+            {#if $kidsModeEnabled && $kidsAgeGroup}
+              {@const choiceLimit = getChoiceLimit($kidsAgeGroup)}
+              {#if choiceLimit}
+                <span class="text-xs font-normal text-gray-500">
+                  ({passage.choices.length}/{choiceLimit})
+                </span>
+              {/if}
+            {/if}
           </div>
           <button
             type="button"

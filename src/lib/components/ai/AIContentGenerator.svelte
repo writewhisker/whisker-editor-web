@@ -153,7 +153,7 @@ Choices: [choice 1], [choice 2]
     <div
       class="dialog"
       onclick={(e) => e.stopPropagation()}
-      role="dialog"
+      role="dialog" tabindex="-1"
       aria-labelledby="generator-title"
       aria-modal="true"
     >

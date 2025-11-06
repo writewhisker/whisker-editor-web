@@ -389,7 +389,7 @@ ${generatedCode.utilityCode}
                 rows="2"
                 placeholder="Describe what this metric measures..."
                 class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-              />
+              ></textarea>
             </div>
 
             {#if formMetricType === 'custom'}
@@ -400,7 +400,7 @@ ${generatedCode.utilityCode}
                   rows="4"
                   placeholder="// Code to calculate metric value\nreturn value;"
                   class="w-full px-2 py-1 text-sm font-mono border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-                />
+                ></textarea>
               </div>
             {/if}
 
@@ -498,7 +498,7 @@ ${generatedCode.utilityCode}
                 rows="2"
                 placeholder="Describe what this adjustment does..."
                 class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-              />
+              ></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-2">

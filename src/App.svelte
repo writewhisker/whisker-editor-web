@@ -51,6 +51,7 @@
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
+  import { pluginStoreActions } from './lib/plugins';
   import { notificationStore } from './lib/stores/notificationStore';
   import TemplateGallery from './lib/components/onboarding/TemplateGallery.svelte';
   import AssetManager from './lib/components/editor/AssetManager.svelte';
@@ -993,6 +994,14 @@
 
   // Auto-save: Start/stop based on story existence
   $: if ($currentStory) {
+    // Trigger plugin onStoryLoad hook
+    pluginStoreActions.executeHook('onStoryLoad', {
+      storyState: { story: $currentStory },
+      variables: new Map(),
+      currentPassage: null,
+      history: [],
+    });
+
     autoSaveManager.start(async () => {
       if ($currentStory) {
         // Show saving status
@@ -1101,11 +1110,15 @@
     hasSetMobileDefault = true;
   }
 
-  onMount(() => {
+  onMount(async () => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
 
     // Initialize error tracking (Sentry)
     errorTracking.initialize();
+
+    // Initialize plugin system
+    await pluginStoreActions.initialize();
+    console.log('Plugin system initialized');
 
     // Check for GitHub OAuth callback
     const urlParams = new URLSearchParams(window.location.search);

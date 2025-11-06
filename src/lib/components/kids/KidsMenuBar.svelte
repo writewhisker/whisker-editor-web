@@ -7,7 +7,7 @@
 
   import { createEventDispatcher } from 'svelte';
   import { kidsModeActions, kidsTheme, getKidFriendlyTerm } from '../../stores/kidsModeStore';
-  import { projectActions } from '../../stores/projectStore';
+  import { projectActions } from '../../stores/storyStateStore';
 
   const dispatch = createEventDispatcher<{
     openTemplates: void;

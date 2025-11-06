@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { Handle, Position } from '@xyflow/svelte';
   import type { Passage } from '../../models/Passage';
-  import { currentStory, projectActions, selectedPassageId } from '../../stores/projectStore';
+  import { currentStory, projectActions, selectedPassageId } from '../../stores/storyStateStore';
 
   import type { ValidationIssue } from '../../validation/types';
   import { tagActions } from '../../stores/tagStore';

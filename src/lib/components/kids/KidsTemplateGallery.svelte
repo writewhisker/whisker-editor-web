@@ -7,7 +7,7 @@
 
   import { createEventDispatcher } from 'svelte';
   import { kidsTemplates, type KidsTemplate } from '../../templates/kidsTemplates';
-  import { projectActions } from '../../stores/projectStore';
+  import { projectActions } from '../../stores/storyStateStore';
   import { notificationStore } from '../../stores/notificationStore';
 
   export let show = false;

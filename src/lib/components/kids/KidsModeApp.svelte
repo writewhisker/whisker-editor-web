@@ -16,7 +16,7 @@
   import KidsExportDialog from './KidsExportDialog.svelte';
   import KidsSharePanel from './KidsSharePanel.svelte';
   import KidsParentalControlsPanel from './KidsParentalControlsPanel.svelte';
-  import { currentStory, selectedPassageId, projectActions } from '../../stores/projectStore';
+  import { currentStory, selectedPassageId, projectActions } from '../../stores/storyStateStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import { kidsModePreferences, kidsTheme, kidsAgeGroup } from '../../stores/kidsModeStore';
   import { notificationStore } from '../../stores/notificationStore';

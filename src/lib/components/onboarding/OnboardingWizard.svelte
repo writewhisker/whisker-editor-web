@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { projectActions } from '../../stores/projectStore';
+  import { projectActions } from '../../stores/storyStateStore';
 
   const dispatch = createEventDispatcher();
 

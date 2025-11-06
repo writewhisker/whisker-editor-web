@@ -68,3 +68,9 @@ __package_previews
 # Playwright
 test-results
 playwright-report
+
+# Turborepo
+.turbo
+
+# pnpm
+.pnpm-debug.log

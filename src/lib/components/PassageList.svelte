@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { selectedPassageId, selectionActions } from '../stores/selectionStore';
+  import { passageOperations } from '../stores/passageOperationsStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
+  import { historyIntegration } from '../stores/historyIntegrationStore';
   import { filteredPassages, isStartPassage, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { validationResult } from '../stores/validationStore';
   import { passageOrderState, passageOrderActions, type SortOrder } from '../stores/passageOrderStore';
@@ -364,7 +368,11 @@
 
   function handleDuplicate() {
     if (contextMenuPassageId) {
-      const duplicated = projectActions.duplicatePassage(contextMenuPassageId);
+      const duplicated = passageOperations.duplicatePassage(contextMenuPassageId);
+      if (duplicated) {
+        projectMetadataActions.markChanged();
+        historyIntegration.pushCurrentState();
+      }
       if (duplicated) {
         notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
       }

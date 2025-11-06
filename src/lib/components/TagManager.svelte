@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tagRegistry, tagsByUsage, tagsByName, tagActions, type TagInfo } from '../stores/tagStore';
-  import { currentStory, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
   import { filterState } from '../stores/filterStore';
 
   let sortBy: 'name' | 'usage' | 'color' = 'usage';
@@ -47,7 +48,7 @@
 
     const count = tagActions.renameTag(editingTag, newTagName, $currentStory);
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
 
     console.log(`Renamed "${editingTag}" to "${newTagName}" (${count} passages updated)`);
     cancelRename();
@@ -66,7 +67,7 @@
     if (confirmed) {
       const count = tagActions.deleteTag(tagName, $currentStory);
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
 
       console.log(`Deleted tag "${tagName}" from ${count} passages`);
     }
@@ -109,7 +110,7 @@
       });
 
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
       clearSelection();
 
       console.log(`Deleted ${selectedTags.size} tags affecting ${totalCount} passages`);
@@ -139,7 +140,7 @@
 
     const count = tagActions.mergeTags(mergeSource, mergeTarget, $currentStory);
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
 
     console.log(`Merged "${mergeSource}" into "${mergeTarget}" (${count} passages updated)`);
     closeMergeDialog();

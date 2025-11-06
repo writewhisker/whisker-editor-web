@@ -12,7 +12,11 @@
     type Connection,
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
-  import { currentStory, selectedPassageId, projectActions, unsavedChanges } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { selectedPassageId } from '../stores/selectionStore';
+  import { passageOperations } from '../stores/passageOperationsStore';
+  import { unsavedChanges, projectMetadataActions } from '../stores/projectMetadataStore';
+  import { historyIntegration } from '../stores/historyIntegrationStore';
   import { filteredPassages, hasActiveFilters, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import PassageNode from './graph/PassageNode.svelte';
   import ConnectionEdge from './graph/ConnectionEdge.svelte';
@@ -216,7 +220,7 @@
         }
       });
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
       hasManualPositions = false; // Reset manual position flag after applying layout
     }
 
@@ -269,7 +273,7 @@
       });
 
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
       hasManualPositions = true; // Mark that manual adjustments have been made
     }
   }
@@ -320,7 +324,7 @@
       if (choice) {
         choice.text = newText;
         currentStory.update(s => s);
-        projectActions.markChanged();
+        projectMetadataActions.markChanged();
         updateGraph();
       }
     }
@@ -521,7 +525,7 @@
       if (confirm('Delete this connection?')) {
         passage.removeChoice(choiceId);
         currentStory.update(s => s);
-        projectActions.markChanged();
+        projectMetadataActions.markChanged();
         updateGraph();
       }
     }
@@ -541,7 +545,7 @@
         if (condition !== null) {
           choice.condition = condition.trim() || undefined;
           currentStory.update(s => s);
-          projectActions.markChanged();
+          projectMetadataActions.markChanged();
           updateGraph();
         }
       }
@@ -591,7 +595,7 @@
         // Update existing choice target
         choice.target = targetId;
         currentStory.update(s => s);
-        projectActions.markChanged();
+        projectMetadataActions.markChanged();
         updateGraph();
       }
     } else {
@@ -612,7 +616,7 @@
 
       sourcePassage.addChoice(newChoice);
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
       updateGraph();
 
       // Prompt user to customize the choice text
@@ -621,7 +625,7 @@
         if (customText !== null && customText.trim() !== '') {
           newChoice.text = customText.trim();
           currentStory.update(s => s);
-          projectActions.markChanged();
+          projectMetadataActions.markChanged();
           updateGraph();
         }
       }, 100); // Small delay to ensure graph is updated first
@@ -657,7 +661,11 @@
 
   // Mobile toolbar event handlers
   function handleMobileAddPassage() {
-    projectActions.addPassage();
+    const passage = passageOperations.addPassage();
+    if (passage) {
+      projectMetadataActions.markChanged();
+      historyIntegration.pushCurrentState();
+    }
   }
 
   function handleMobileFitView() {
@@ -750,7 +758,7 @@
         $currentStory.removePassage(id);
       });
       currentStory.update(s => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
       clearSelection();
       updateGraph();
     }
@@ -770,7 +778,7 @@
       }
     });
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     clearSelection();
   }
 
@@ -788,7 +796,7 @@
       }
     });
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     clearSelection();
   }
 
@@ -819,7 +827,7 @@
     });
 
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     updateGraph();
     clearSelection();
   }
@@ -969,7 +977,7 @@
     FolderManager.moveToFolder(passages, trimmedFolder);
 
     currentStory.update(s => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
 
     if (trimmedFolder) {
       notificationStore.success(`Moved ${passages.length} passage${passages.length !== 1 ? 's' : ''} to folder "${trimmedFolder}"`);

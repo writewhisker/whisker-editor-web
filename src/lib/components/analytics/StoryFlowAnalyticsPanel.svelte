@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { StoryFlowAnalyzer, type StoryFlowMetrics } from '../../utils/storyFlowAnalytics';
   import { onMount } from 'svelte';
 

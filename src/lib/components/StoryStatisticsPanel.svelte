@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory, passageList, variableList } from '../stores/projectStore';
+  import { currentStory, passageList, variableList } from '../stores/storyStateStore';
   import { validationResult } from '../stores/validationStore';
   import { isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { derived } from 'svelte/store';

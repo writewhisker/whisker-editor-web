@@ -1,7 +1,7 @@
 <script lang="ts">
   import { PlaythroughAnalytics, type PlaythroughAnalyticsData } from '$lib/analytics/PlaythroughAnalytics';
   import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
-  import { currentStory } from '$lib/stores/projectStore';
+  import { currentStory } from '$lib/stores/storyStateStore';
   import type { Playthrough } from '$lib/models/Playthrough';
   import { untrack } from 'svelte';
 

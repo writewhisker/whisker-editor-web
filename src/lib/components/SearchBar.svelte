@@ -7,7 +7,7 @@
     filteredPassages,
     filterCount,
   } from '../stores/filterStore';
-  import { passageList } from '../stores/projectStore';
+  import { passageList } from '../stores/storyStateStore';
 
   let showTagDropdown = false;
   let showTypeDropdown = false;

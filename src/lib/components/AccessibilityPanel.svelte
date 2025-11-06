@@ -8,7 +8,7 @@
     criticalIssues,
     type AccessibilityIssue,
   } from '../stores/accessibilityStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   // Get score color
   function getScoreColor(score: number): string {

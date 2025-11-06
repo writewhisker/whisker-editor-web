@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory, passageList } from '../stores/projectStore';
+  import { currentStory, passageList } from '../stores/storyStateStore';
   import { viewPreferencesActions } from '../stores/viewPreferencesStore';
   import { derived } from 'svelte/store';
 

@@ -9,7 +9,7 @@
     orphanVariables,
     type VariableNode,
   } from '../stores/variableDependencyStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let analyzing = $state(false);
   let viewMode: 'list' | 'issues' | 'details' = $state('list');

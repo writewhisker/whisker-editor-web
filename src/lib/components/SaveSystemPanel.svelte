@@ -8,7 +8,7 @@
     type SaveStorageType,
     type SaveSlotType,
   } from '../stores/saveSystemStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let viewMode: 'config' | 'variables' | 'code' = $state('config');
   let generatedCode = $state<any>(null);

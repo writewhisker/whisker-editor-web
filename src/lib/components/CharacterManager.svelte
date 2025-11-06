@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { characterStore, entities, selectedEntity, entityCounts, type Entity, type EntityType, type EntityAttribute } from '../stores/characterStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
   import { notificationStore } from '../stores/notificationStore';
 
   let searchQuery = '';

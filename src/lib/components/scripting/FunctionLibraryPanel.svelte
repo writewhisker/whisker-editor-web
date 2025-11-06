@@ -2,7 +2,7 @@
   /**
    * FunctionLibraryPanel - Manage reusable Lua functions
    */
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES } from '../../models/LuaFunction';
 
   let selectedFunctionId = $state<string | null>(null);

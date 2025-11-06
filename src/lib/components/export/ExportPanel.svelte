@@ -9,7 +9,7 @@
     recentExports,
     exportActions,
   } from '../../stores/exportStore';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { JSONExporter } from '../../export/formats/JSONExporter';
   import { HTMLExporter } from '../../export/formats/HTMLExporter';
   import { MarkdownExporter } from '../../export/formats/MarkdownExporter';

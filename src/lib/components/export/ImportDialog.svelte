@@ -10,7 +10,7 @@
   import type { ImportResult, ConversionOptions } from '../../import/types';
   import ImportPreviewPanel from './ImportPreviewPanel.svelte';
   import StoryComparisonView from '../comparison/StoryComparisonView.svelte';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
 
   export let show = false;
   export let showComparison = true; // Whether to show comparison view

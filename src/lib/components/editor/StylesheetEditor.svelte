@@ -2,7 +2,7 @@
   /**
    * StylesheetEditor - Edit CSS stylesheets for the story
    */
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
 
   let activeIndex = 0;
   let code = '';

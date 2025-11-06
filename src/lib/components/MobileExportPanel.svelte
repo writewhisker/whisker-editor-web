@@ -1,6 +1,6 @@
 <script lang="ts">
   import { mobileExportStore, exportTarget, playerConfig, appMetadata } from '../stores/mobileExportStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
   import type { ExportTarget, Orientation, ThemePreference } from '../stores/mobileExportStore';
 
   let selectedTarget = $state<ExportTarget>('pwa');

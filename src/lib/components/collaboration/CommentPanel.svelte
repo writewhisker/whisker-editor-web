@@ -1,7 +1,7 @@
 <script lang="ts">
   import CommentThread from './CommentThread.svelte';
   import { commentActions, commentsByPassage, unresolvedComments, currentUser } from '$lib/stores/commentStore';
-  import { currentStory } from '$lib/stores/projectStore';
+  import { currentStory } from '$lib/stores/storyStateStore';
 
   // Props
   let {

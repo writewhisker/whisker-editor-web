@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { playerVariables, playerActions } from '../../stores/playerStore';
 
   // Get story variables definitions

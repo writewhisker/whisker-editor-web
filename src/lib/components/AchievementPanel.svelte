@@ -7,7 +7,7 @@
     type AchievementRarity,
     type TriggerType,
   } from '../stores/achievementStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let viewMode: 'list' | 'edit' | 'code' = $state('list');
   let editingId: string | null = $state(null);

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { isGenerating, canGenerate, aiActions } from '$lib/stores/aiStore';
-  import { currentStory } from '$lib/stores/projectStore';
+  import { currentStory } from '$lib/stores/storyStateStore';
 
   // Props
   let {

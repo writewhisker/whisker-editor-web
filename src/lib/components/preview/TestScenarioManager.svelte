@@ -7,7 +7,7 @@
     runningScenarioId,
     scenarioCount,
   } from '../../stores/testScenarioStore';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import type { TestScenario, TestStep } from '../../player/testScenarioTypes';
 
   let view: 'list' | 'create' | 'edit' | 'results' = 'list';

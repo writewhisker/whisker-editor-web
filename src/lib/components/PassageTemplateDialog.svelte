@@ -1,6 +1,6 @@
 <script lang="ts">
   import { templateManager, type PassageTemplate } from '../utils/passageTemplates';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
   import { Passage } from '../models/Passage';
 
   let {

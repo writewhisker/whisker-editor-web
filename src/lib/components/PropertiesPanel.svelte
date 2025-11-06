@@ -1,5 +1,9 @@
 <script lang="ts">
-  import { currentStory, selectedPassage, selectedPassageId, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { selectedPassage, selectedPassageId } from '../stores/selectionStore';
+  import { passageOperations } from '../stores/passageOperationsStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
+  import { historyIntegration } from '../stores/historyIntegrationStore';
   import { Choice } from '../models/Choice';
   import { tagActions } from '../stores/tagStore';
   import TagInput from './TagInput.svelte';
@@ -9,6 +13,23 @@
   import { commentsByPassage } from '../stores/commentStore';
   import { kidsModeEnabled, kidsAgeGroup } from '../stores/kidsModeStore';
   import { getChoiceLimit } from '../stores/ageGroupFeatures';
+
+  // Helper to maintain backward compatibility with projectActions pattern
+  function updatePassage(passageId: string, updates: any) {
+    if (passageOperations.updatePassage(passageId, updates)) {
+      projectMetadataActions.markChanged();
+      historyIntegration.pushCurrentState();
+    }
+  }
+
+  function duplicatePassage(passageId: string) {
+    const passage = passageOperations.duplicatePassage(passageId);
+    if (passage) {
+      projectMetadataActions.markChanged();
+      historyIntegration.pushCurrentState();
+    }
+    return passage;
+  }
 
   $: passage = $selectedPassage;
 
@@ -44,7 +65,10 @@
           currentStory.update(s => s);
         } else {
           titleWarning = '';
-          projectActions.updatePassage(passage.id, { title: newTitle });
+          if (passageOperations.updatePassage(passage.id, { title: newTitle })) {
+            projectMetadataActions.markChanged();
+            historyIntegration.pushCurrentState();
+          }
           originalTitle = newTitle;
         }
       } else {
@@ -60,7 +84,7 @@
   function updatePassageContent(event: Event) {
     const target = event.target as HTMLTextAreaElement;
     if (passage) {
-      projectActions.updatePassage(passage.id, { content: target.value });
+      updatePassage(passage.id, { content: target.value });
     }
   }
 
@@ -142,7 +166,7 @@
     const after = content.substring(cursorPos);
     const newContent = before + `[[${title}]]` + after;
 
-    projectActions.updatePassage(passage.id, { content: newContent });
+    updatePassage(passage.id, { content: newContent });
 
     // Close autocomplete
     autocompleteVisible = false;
@@ -179,7 +203,7 @@
 
     // Insert snippet at cursor position
     const newContent = content.substring(0, start) + snippet + content.substring(end);
-    projectActions.updatePassage(passage.id, { content: newContent });
+    updatePassage(passage.id, { content: newContent });
 
     // Reset select to trigger UI update
     setTimeout(() => {
@@ -263,26 +287,26 @@
   function removeTag(tagName: string) {
     if (passage) {
       const newTags = passage.tags.filter(t => t !== tagName);
-      projectActions.updatePassage(passage.id, { tags: newTags });
+      updatePassage(passage.id, { tags: newTags });
     }
   }
 
   function updatePassageColor(event: Event) {
     const target = event.target as HTMLInputElement;
     if (passage) {
-      projectActions.updatePassage(passage.id, { color: target.value || undefined });
+      updatePassage(passage.id, { color: target.value || undefined });
     }
   }
 
   function clearPassageColor() {
     if (passage) {
-      projectActions.updatePassage(passage.id, { color: undefined });
+      updatePassage(passage.id, { color: undefined });
     }
   }
 
   function duplicatePassage() {
     if (passage) {
-      const duplicated = projectActions.duplicatePassage(passage.id);
+      const duplicated = duplicatePassage(passage.id);
       if (duplicated) {
         notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
       }
@@ -433,7 +457,7 @@
               class:border-gray-800={passage.color === color}
               class:border-gray-300={passage.color !== color}
               style="background-color: {color};"
-              on:click={() => passage && projectActions.updatePassage(passage.id, { color })}
+              on:click={() => passage && updatePassage(passage.id, { color })}
               title={color}
             ></button>
           {/each}
@@ -501,7 +525,7 @@
         <textarea
           id="passage-notes"
           value={passage.notes || ''}
-          on:input={(e) => projectActions.updatePassage(passage.id, { notes: e.currentTarget.value })}
+          on:input={(e) => updatePassage(passage.id, { notes: e.currentTarget.value })}
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           placeholder="Add notes about this passage..."

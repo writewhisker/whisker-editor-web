@@ -1,6 +1,8 @@
 <script lang="ts">
   import { templateManager, type PassageTemplate } from '../utils/passageTemplates';
-  import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { selectedPassageId } from '../stores/selectionStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
   import { Passage } from '../models/Passage';
   import { notificationStore } from '../stores/notificationStore';
   import { get } from 'svelte/store';
@@ -64,7 +66,7 @@
       return story;
     });
 
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     notificationStore.success(`Inserted "${template.name}" template`);
   }
 

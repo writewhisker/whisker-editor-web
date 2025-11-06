@@ -15,6 +15,9 @@
   let importPreviewData: Record<string, any> = {};
   let selectedPreferences: Set<string> = new Set();
 
+  // Derived array for stable iteration
+  $: importPreviewEntries = Object.entries(importPreviewData);
+
   onMount(async () => {
     await loadQuotaInfo();
     await checkMigrationStatus();
@@ -246,6 +249,7 @@
   }
 </script>
 
+<div class="storage-settings-wrapper relative">
 <div class="storage-settings p-4 space-y-6">
   <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Storage Settings</h2>
 
@@ -291,11 +295,9 @@
           </span>
         {/if}
       </div>
-      {#if migrationProgress}
-        <div class="migration-progress text-sm text-gray-600 dark:text-gray-400 mt-2">
-          {migrationProgress}
-        </div>
-      {/if}
+      <div class="migration-progress text-sm text-gray-600 dark:text-gray-400 mt-2" class:opacity-0={!migrationProgress} class:h-0={!migrationProgress}>
+        {migrationProgress || '\u00A0'}
+      </div>
     </section>
 
     <!-- Import/Export -->
@@ -318,11 +320,9 @@
           <span>📤</span> Import Preferences
         </button>
       </div>
-      {#if importExportMessage}
-        <div class="import-export-message text-sm text-gray-600 dark:text-gray-400 mt-2">
-          {importExportMessage}
-        </div>
-      {/if}
+      <div class="import-export-message text-sm text-gray-600 dark:text-gray-400 mt-2" class:opacity-0={!importExportMessage} class:h-0={!importExportMessage}>
+        {importExportMessage || '\u00A0'}
+      </div>
       <input
         bind:this={fileInput}
         type="file"
@@ -352,11 +352,12 @@
     </section>
   {/if}
 </div>
+</div>
 
-<!-- Import Preview Dialog -->
 {#if showImportPreview}
-  <div class="import-preview-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="import-preview-dialog bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+<!-- Import Preview Dialog -->
+<div class="import-preview-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="import-preview-overlay">
+  <div class="import-preview-dialog bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
       <!-- Header -->
       <div class="dialog-header p-4 border-b border-gray-200 dark:border-gray-700">
         <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Preview Import</h3>
@@ -385,26 +386,28 @@
           </span>
         </div>
 
+        {#if importPreviewEntries && importPreviewEntries.length > 0}
         <div class="preferences-list space-y-2">
-          {#each Object.entries(importPreviewData) as [key, value]}
-            <div class="preference-item border border-gray-200 dark:border-gray-700 rounded p-3">
-              <label class="flex items-start gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selectedPreferences.has(key)}
-                  on:change={() => togglePreferenceSelection(key)}
-                  class="mt-1"
-                />
-                <div class="flex-1">
-                  <div class="font-medium text-gray-900 dark:text-gray-100">{key}</div>
-                  <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 font-mono">
-                    {JSON.stringify(value, null, 2).substring(0, 200)}{JSON.stringify(value, null, 2).length > 200 ? '...' : ''}
+            {#each importPreviewEntries as [key, value] (key)}
+              <div class="preference-item border border-gray-200 dark:border-gray-700 rounded p-3">
+                <label class="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedPreferences.has(key)}
+                    on:change={() => togglePreferenceSelection(key)}
+                    class="mt-1"
+                  />
+                  <div class="flex-1">
+                    <div class="font-medium text-gray-900 dark:text-gray-100">{key}</div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 font-mono">
+                      {JSON.stringify(value, null, 2).substring(0, 200)}{JSON.stringify(value, null, 2).length > 200 ? '...' : ''}
+                    </div>
                   </div>
-                </div>
-              </label>
-            </div>
-          {/each}
+                </label>
+              </div>
+            {/each}
         </div>
+          {/if}
       </div>
 
       <!-- Footer -->

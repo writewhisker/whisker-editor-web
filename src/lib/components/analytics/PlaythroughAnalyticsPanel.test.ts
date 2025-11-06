@@ -1,15 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/svelte';
+import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
 import { currentStory } from '$lib/stores/projectStore';
 import { Story } from '$lib/models/Story';
 import { Playthrough } from '$lib/models/Playthrough';
 
+// Create mock data
+const createMockPlaythroughs = () => [
+  new Playthrough('story1', 'passage1'),
+  new Playthrough('story1', 'passage1'),
+  new Playthrough('story1', 'passage1'),
+];
+
 // Mock the PlaythroughRecorder
+const mockGetPlaythroughsByStory = vi.fn(() => createMockPlaythroughs());
+const mockClearPlaythroughsByStory = vi.fn();
+
 vi.mock('$lib/analytics/PlaythroughRecorder', () => ({
   getPlaythroughRecorder: vi.fn(() => ({
-    getPlaythroughsByStory: vi.fn(() => []),
-    clearPlaythroughsByStory: vi.fn(),
+    getPlaythroughsByStory: mockGetPlaythroughsByStory,
+    clearPlaythroughsByStory: mockClearPlaythroughsByStory,
   })),
 }));
 
@@ -106,6 +117,16 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('empty state', () => {
+    beforeEach(() => {
+      // Override mock to return empty array for these tests
+      mockGetPlaythroughsByStory.mockReturnValue([]);
+    });
+
+    afterEach(() => {
+      // Restore default mock
+      mockGetPlaythroughsByStory.mockReturnValue(createMockPlaythroughs());
+    });
+
     it('should show empty state when no playthroughs exist', () => {
       render(PlaythroughAnalyticsPanel);
 
@@ -133,26 +154,17 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('with playthrough data', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
+    // No need for beforeEach - the global mock already returns playthroughs
 
-      // Create mock playthroughs
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-        new Playthrough('story1', 'passage1'),
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
-    it('should render tabs when data exists', () => {
+    it('should render tabs when data exists', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      expect(screen.getByText('📋 Overview')).toBeTruthy();
+      // Wait for $effect to run and analyze playthroughs
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
+
       expect(screen.getByText(/📍 Passages/)).toBeTruthy();
       expect(screen.getByText(/🎯 Choices/)).toBeTruthy();
       expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
@@ -174,73 +186,68 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('overview tab', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
-    it('should show completion statistics', () => {
+    it('should show completion statistics', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      expect(screen.getByText('Total Playthroughs')).toBeTruthy();
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('Total Playthroughs')).toBeTruthy();
+      });
       expect(screen.getByText('Completion Rate')).toBeTruthy();
       expect(screen.getByText('Avg. Duration')).toBeTruthy();
       expect(screen.getByText('Avg. Path Length')).toBeTruthy();
     });
 
-    it('should display numerical values', () => {
+    it('should display numerical values', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      // Check for stat values - they should be rendered
-      const statValues = screen.getAllByText('5');
-      expect(statValues.length).toBeGreaterThan(0);
+      await tick();
+      await waitFor(() => {
+        // Check for stat values - they should be rendered
+        const statValues = screen.getAllByText('5');
+        expect(statValues.length).toBeGreaterThan(0);
+      });
     });
 
-    it('should show completion details', () => {
+    it('should show completion details', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      expect(screen.getByText(/of \d+ completed/)).toBeTruthy();
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/of \d+ completed/)).toBeTruthy();
+      });
     });
 
-    it('should display duration range', () => {
+    it('should display duration range', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      expect(screen.getByText(/Min:/)).toBeTruthy();
-      expect(screen.getByText(/Max:/)).toBeTruthy();
+      await tick();
+      await waitFor(() => {
+        const minElements = screen.getAllByText(/Min:/);
+        expect(minElements.length).toBeGreaterThan(0);
+      });
+      const maxElements = screen.getAllByText(/Max:/);
+      expect(maxElements.length).toBeGreaterThan(0);
     });
 
-    it('should show dead ends section when they exist', () => {
+    it('should show dead ends section when they exist', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      expect(screen.getByText(/Dead Ends/)).toBeTruthy();
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/Dead Ends/)).toBeTruthy();
+      });
     });
   });
 
   describe('passages tab', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
     it('should switch to passages tab when clicked', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
 
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
@@ -250,6 +257,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should display passage table', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
 
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
@@ -262,6 +274,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should show passage count', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
+
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
 
@@ -271,6 +288,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should display passage data rows', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
+
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
 
@@ -279,21 +301,13 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('choices tab', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
     it('should switch to choices tab when clicked', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🎯 Choices/)).toBeTruthy();
+      });
 
       const choicesTab = screen.getByText(/🎯 Choices/).closest('button') as HTMLElement;
       await fireEvent.click(choicesTab);
@@ -303,6 +317,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should display choices table', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🎯 Choices/)).toBeTruthy();
+      });
 
       const choicesTab = screen.getByText(/🎯 Choices/).closest('button') as HTMLElement;
       await fireEvent.click(choicesTab);
@@ -315,6 +334,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should show choice count', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🎯 Choices/)).toBeTruthy();
+      });
+
       const choicesTab = screen.getByText(/🎯 Choices/).closest('button') as HTMLElement;
       await fireEvent.click(choicesTab);
 
@@ -323,6 +347,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should display progress bars for selection rates', async () => {
       const { container } = render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🎯 Choices/)).toBeTruthy();
+      });
 
       const choicesTab = screen.getByText(/🎯 Choices/).closest('button') as HTMLElement;
       await fireEvent.click(choicesTab);
@@ -333,21 +362,13 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('paths tab', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
     it('should switch to paths tab when clicked', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
+      });
 
       const pathsTab = screen.getByText(/🛤️ Paths/).closest('button') as HTMLElement;
       await fireEvent.click(pathsTab);
@@ -358,6 +379,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should show path count', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
+      });
+
       const pathsTab = screen.getByText(/🛤️ Paths/).closest('button') as HTMLElement;
       await fireEvent.click(pathsTab);
 
@@ -367,6 +393,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should display path rankings', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
+      });
+
       const pathsTab = screen.getByText(/🛤️ Paths/).closest('button') as HTMLElement;
       await fireEvent.click(pathsTab);
 
@@ -375,6 +406,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should show path steps', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
+      });
 
       const pathsTab = screen.getByText(/🛤️ Paths/).closest('button') as HTMLElement;
       await fireEvent.click(pathsTab);
@@ -387,6 +423,11 @@ describe('PlaythroughAnalyticsPanel', () => {
     it('should display path frequency', async () => {
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/🛤️ Paths/)).toBeTruthy();
+      });
+
       const pathsTab = screen.getByText(/🛤️ Paths/).closest('button') as HTMLElement;
       await fireEvent.click(pathsTab);
 
@@ -395,21 +436,13 @@ describe('PlaythroughAnalyticsPanel', () => {
   });
 
   describe('tab navigation', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-    });
-
     it('should highlight active tab', async () => {
       const { container } = render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
 
       const overviewTab = screen.getByText('📋 Overview').closest('button') as HTMLElement;
       expect(overviewTab.classList.contains('active')).toBe(true);
@@ -417,6 +450,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should switch tabs on click', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
 
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
@@ -426,6 +464,11 @@ describe('PlaythroughAnalyticsPanel', () => {
 
     it('should update content when switching tabs', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText(/📍 Passages/)).toBeTruthy();
+      });
 
       const passagesTab = screen.getByText(/📍 Passages/).closest('button') as HTMLElement;
       await fireEvent.click(passagesTab);
@@ -441,41 +484,36 @@ describe('PlaythroughAnalyticsPanel', () => {
 
   describe('refresh functionality', () => {
     it('should reload data when refresh is clicked', async () => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-      const mockGetPlaythroughs = vi.fn(() => []);
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: mockGetPlaythroughs,
-        clearPlaythroughsByStory: vi.fn(),
-      });
-
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
+
       const refreshButton = screen.getByText('🔄 Refresh');
+
+      // Clear call count from initial load
+      mockGetPlaythroughsByStory.mockClear();
+
       await fireEvent.click(refreshButton);
 
-      expect(mockGetPlaythroughs).toHaveBeenCalled();
+      expect(mockGetPlaythroughsByStory).toHaveBeenCalled();
     });
   });
 
   describe('clear data functionality', () => {
     beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-
       vi.spyOn(window, 'confirm').mockReturnValue(true);
     });
 
     it('should show confirmation dialog when clear is clicked', async () => {
       render(PlaythroughAnalyticsPanel);
+
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
 
       const clearButton = screen.getByText('🗑️ Clear Data');
       await fireEvent.click(clearButton);
@@ -484,68 +522,60 @@ describe('PlaythroughAnalyticsPanel', () => {
     });
 
     it('should clear data when confirmed', async () => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-      const mockClear = vi.fn();
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => [new Playthrough('story1', 'passage1')]),
-        clearPlaythroughsByStory: mockClear,
-      });
-
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
+
       const clearButton = screen.getByText('🗑️ Clear Data');
+
+      mockClearPlaythroughsByStory.mockClear();
       await fireEvent.click(clearButton);
 
-      expect(mockClear).toHaveBeenCalledWith('test-story-id');
+      expect(mockClearPlaythroughsByStory).toHaveBeenCalledWith('test-story-id');
     });
 
     it('should not clear data when cancelled', async () => {
       vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-      const mockClear = vi.fn();
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => [new Playthrough('story1', 'passage1')]),
-        clearPlaythroughsByStory: mockClear,
-      });
-
       render(PlaythroughAnalyticsPanel);
 
+      await tick();
+      await waitFor(() => {
+        expect(screen.getByText('📋 Overview')).toBeTruthy();
+      });
+
       const clearButton = screen.getByText('🗑️ Clear Data');
+
+      mockClearPlaythroughsByStory.mockClear();
       await fireEvent.click(clearButton);
 
-      expect(mockClear).not.toHaveBeenCalled();
+      expect(mockClearPlaythroughsByStory).not.toHaveBeenCalled();
     });
   });
 
   describe('helper functions', () => {
-    beforeEach(() => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
+    it('should format durations correctly', async () => {
+      render(PlaythroughAnalyticsPanel);
 
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
+      await tick();
+      await waitFor(() => {
+        // Should show formatted durations like "2m 0s" or "1h 30m"
+        const durations = screen.getAllByText(/\d+m\s*\d*s*/);
+        expect(durations.length).toBeGreaterThan(0);
       });
     });
 
-    it('should format durations correctly', () => {
+    it('should format percentages correctly', async () => {
       render(PlaythroughAnalyticsPanel);
 
-      // Should show formatted durations like "2m" or "1h 30m"
-      expect(screen.getByText(/m/)).toBeTruthy();
-    });
-
-    it('should format percentages correctly', () => {
-      render(PlaythroughAnalyticsPanel);
-
-      // Should show percentages like "60%"
-      expect(screen.getByText(/60%/)).toBeTruthy();
+      await tick();
+      await waitFor(() => {
+        // Should show percentages like "60%"
+        expect(screen.getByText(/60%/)).toBeTruthy();
+      });
     });
   });
 
@@ -576,34 +606,21 @@ describe('PlaythroughAnalyticsPanel', () => {
     });
 
     it('should handle analysis errors gracefully', () => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => {
-          throw new Error('Analysis error');
-        }),
-        clearPlaythroughsByStory: vi.fn(),
+      mockGetPlaythroughsByStory.mockImplementation(() => {
+        throw new Error('Analysis error');
       });
 
       // Should not crash
       render(PlaythroughAnalyticsPanel);
       expect(screen.getByText('Playthrough Analytics')).toBeTruthy();
+
+      // Restore mock
+      mockGetPlaythroughsByStory.mockImplementation(() => createMockPlaythroughs());
     });
   });
 
   describe('loading state', () => {
     it('should show loading indicator during analysis', () => {
-      const { getPlaythroughRecorder } = require('$lib/analytics/PlaythroughRecorder');
-
-      const mockPlaythroughs = [
-        new Playthrough('story1', 'passage1'),
-      ];
-
-      vi.mocked(getPlaythroughRecorder).mockReturnValue({
-        getPlaythroughsByStory: vi.fn(() => mockPlaythroughs),
-        clearPlaythroughsByStory: vi.fn(),
-      });
-
       const { container } = render(PlaythroughAnalyticsPanel);
 
       // Loading state might be very brief, but should exist during analysis

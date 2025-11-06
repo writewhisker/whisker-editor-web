@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
   import { getRecentFiles, formatLastOpened, clearRecentFiles, getFileIcon, truncatePath, type RecentFile } from '../utils/recentFiles';
   import { theme, themeActions } from '../stores/themeStore';
   import { panelVisibility, viewPreferencesActions } from '../stores/viewPreferencesStore';

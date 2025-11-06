@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { currentStory, unsavedChanges, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { unsavedChanges } from '../stores/projectMetadataStore';
+  import { historyIntegration } from '../stores/historyIntegrationStore';
   import { canUndo, canRedo, historyCount } from '../stores/historyStore';
   import { validationResult, errorCount, warningCount, infoCount, isValid } from '../stores/validationStore';
 
@@ -72,7 +74,7 @@
   <!-- Undo/Redo Controls -->
   <button
     class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
-    on:click={() => projectActions.undo()}
+    on:click={() => historyIntegration.undo()}
     disabled={!$canUndo}
     title="Undo ({navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Z)"
     aria-label="Undo last action"
@@ -82,7 +84,7 @@
 
   <button
     class="px-3 py-2 bg-gray-300 rounded hover:bg-gray-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
-    on:click={() => projectActions.redo()}
+    on:click={() => historyIntegration.redo()}
     disabled={!$canRedo}
     title="Redo ({navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+Shift+Z)"
     aria-label="Redo last undone action"

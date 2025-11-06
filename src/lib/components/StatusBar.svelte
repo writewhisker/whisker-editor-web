@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { currentStory, passageList, variableList, selectedPassageId, currentFilePath } from '../stores/projectStore';
+  import { currentStory, passageList, variableList } from '../stores/storyStateStore';
+  import { selectedPassageId } from '../stores/selectionStore';
+  import { currentFilePath } from '../stores/projectMetadataStore';
   import { validationResult } from '../stores/validationStore';
   import { canUndo, canRedo, historyCount } from '../stores/historyStore';
   import { derived } from 'svelte/store';

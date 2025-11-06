@@ -14,7 +14,7 @@
     validatorConfig,
     performanceMetrics,
   } from '../../stores/validationStore';
-  import { selectedPassageId } from '../../stores/projectStore';
+  import { selectedPassageId } from '../../stores/storyStateStore';
   import { viewMode, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '../../validation/types';
 

@@ -7,7 +7,7 @@
    */
 
   import { createEventDispatcher } from 'svelte';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { PublishingService } from '../../services/kids/publishingService';
   import { notificationStore } from '../../stores/notificationStore';
 

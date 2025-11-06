@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { derived } from 'svelte/store';
 
   interface StoryMetrics {

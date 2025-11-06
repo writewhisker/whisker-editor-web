@@ -2,7 +2,7 @@
   /**
    * AssetManager - Manage story assets (images, audio, video)
    */
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import type { AssetReference } from '../../models/types';
   import { nanoid } from 'nanoid';
 

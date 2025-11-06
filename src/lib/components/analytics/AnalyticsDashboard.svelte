@@ -5,7 +5,7 @@
   import PlaythroughList from './PlaythroughList.svelte';
   import { currentMetrics, isAnalyzing, analyticsActions, lastAnalyzed } from '$lib/stores/analyticsStore';
   import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
-  import { currentStory } from '$lib/stores/projectStore';
+  import { currentStory } from '$lib/stores/storyStateStore';
 
   // State
   let activeTab = $state<'metrics' | 'issues' | 'playthroughs' | 'history'>('metrics');

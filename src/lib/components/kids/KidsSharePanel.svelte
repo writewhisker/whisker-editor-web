@@ -5,7 +5,7 @@
    * Provides various sharing options for kids to share their stories.
    */
 
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { PublishingService } from '../../services/kids/publishingService';
   import { notificationStore } from '../../stores/notificationStore';
   import { parentalControlsStore } from '../../stores/parentalControlsStore';

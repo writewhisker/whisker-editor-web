@@ -6,7 +6,7 @@
    */
 
   import { viewMode, viewPreferencesActions } from '../../stores/viewPreferencesStore';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
 
   // View mode friendly names
   const viewModes = [

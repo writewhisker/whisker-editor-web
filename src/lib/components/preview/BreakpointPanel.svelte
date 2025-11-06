@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import { breakpoints, playerActions } from '../../stores/playerStore';
 
   function removeBreakpoint(passageId: string) {

@@ -3,7 +3,7 @@
    * ScriptEditor - Edit Lua scripts for the story
    */
   import { onMount } from 'svelte';
-  import { currentStory } from '../../stores/projectStore';
+  import { currentStory } from '../../stores/storyStateStore';
   import MonacoEditor from './MonacoEditor.svelte';
   import FunctionLibraryPanel from '../scripting/FunctionLibraryPanel.svelte';
   import VisualScriptBuilder from '../scripting/VisualScriptBuilder.svelte';

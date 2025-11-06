@@ -8,7 +8,7 @@
     sessionCount,
     type PlaytestSession,
   } from '../stores/playtestStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let selectedSession: PlaytestSession | null = $state(null);
   let showSessionDetails = $state(false);

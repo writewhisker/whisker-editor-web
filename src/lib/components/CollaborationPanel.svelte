@@ -10,7 +10,7 @@
     hasConflicts,
     type Collaborator,
   } from '../stores/collaborationStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let userName = $state($currentUser?.name || 'Anonymous');
   let userColor = $state($currentUser?.color || '#3b82f6');

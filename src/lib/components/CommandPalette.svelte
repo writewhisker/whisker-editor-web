@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { currentStory, passageList, selectedPassageId } from '../stores/projectStore';
+  import { currentStory, passageList } from '../stores/storyStateStore';
+  import { selectedPassageId } from '../stores/selectionStore';
   import { trapFocus } from '../utils/accessibility';
 
   export let show = false;

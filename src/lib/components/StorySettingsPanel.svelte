@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { currentStory, projectActions } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { projectMetadataActions } from '../stores/projectMetadataStore';
 
   let showAddDialog = false;
   let newSettingKey = '';
@@ -44,7 +45,7 @@
 
     $currentStory.setSetting(newSettingKey.trim(), value);
     currentStory.update((s) => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     closeAddDialog();
   }
 
@@ -54,7 +55,7 @@
     if (confirm(`Delete setting "${key}"?`)) {
       $currentStory.deleteSetting(key);
       currentStory.update((s) => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
     }
   }
 
@@ -83,7 +84,7 @@
 
     $currentStory.setSetting(key, value);
     currentStory.update((s) => s);
-    projectActions.markChanged();
+    projectMetadataActions.markChanged();
     cancelEdit();
   }
 
@@ -109,7 +110,7 @@
     if (confirm(`Clear all ${count} setting(s)? This cannot be undone.`)) {
       $currentStory.clearSettings();
       currentStory.update((s) => s);
-      projectActions.markChanged();
+      projectMetadataActions.markChanged();
     }
   }
 </script>

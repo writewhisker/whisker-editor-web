@@ -4,6 +4,15 @@
  */
 
 export { PluginManager, pluginManager } from './PluginManager';
+export {
+  registeredPlugins,
+  allPluginEntries,
+  passageTypes,
+  customActions,
+  customConditions,
+  pluginSystemInitialized,
+  pluginStoreActions,
+} from '../stores/pluginStore';
 export type {
   EditorPlugin,
   PluginRegistryEntry,

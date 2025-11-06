@@ -1,6 +1,6 @@
 <script lang="ts">
   import { wordGoalStore, goals, selectedGoalId, activeGoals, type WordGoal, type GoalType } from '../stores/wordGoalStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
   import { notificationStore } from '../stores/notificationStore';
   import { onMount, onDestroy } from 'svelte';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { versionDiffStore, snapshots, currentDiff, hasSnapshots, type VersionSnapshot, type PassageDiff } from '../stores/versionDiffStore';
-  import { currentStory } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
 
   let view: 'snapshots' | 'compare' | 'diff' = 'snapshots';
 

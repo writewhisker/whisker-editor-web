@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { currentStory, selectedPassageId } from '../stores/projectStore';
+  import { currentStory } from '../stores/storyStateStore';
+  import { selectedPassageId } from '../stores/selectionStore';
   import type { Passage } from '../models/Passage';
 
   // Calculate breadcrumb trail from start passage to selected passage

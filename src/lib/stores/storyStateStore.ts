@@ -1,6 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { Story } from '../models/Story';
-import type { ProjectData } from '../models/types';
+import { Story, type ProjectData } from '@whisker/core-ts';
 
 /**
  * Core story state store

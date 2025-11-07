@@ -12,8 +12,8 @@ import {
   type VariableNode,
   type VariableDependency,
 } from './variableDependencyStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('variableDependencyStore', () => {
   let story: Story;

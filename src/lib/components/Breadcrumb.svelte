@@ -1,7 +1,7 @@
 <script lang="ts">
   import { currentStory } from '../stores/storyStateStore';
   import { selectedPassageId } from '../stores/selectionStore';
-  import type { Passage } from '../models/Passage';
+  import type { Passage } from '@whisker/core-ts';
 
   // Calculate breadcrumb trail from start passage to selected passage
   $: breadcrumbTrail = calculateBreadcrumb($currentStory, $selectedPassageId);

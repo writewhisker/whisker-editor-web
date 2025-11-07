@@ -3,8 +3,8 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import ImportDialog from './ImportDialog.svelte';
 import { get } from 'svelte/store';
 import { importHistory, isImporting, importError, exportActions } from '../../stores/exportStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 // Mock URL methods globally
 global.URL.createObjectURL = vi.fn(() => 'blob:mock');

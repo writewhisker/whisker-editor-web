@@ -4,13 +4,13 @@
  * Imports stories from JSON format (exported by JSONExporter).
  */
 
-import { Story } from '../../models/Story';
+import { Story } from '@whisker/core-ts';
 import type {
   ImportContext,
   ImportResult,
   IImporter,
 } from '../types';
-import { importWhiskerFile, isWhiskerCoreFormat } from '../../utils/whiskerCoreAdapter';
+import { importWhiskerFile, isWhiskerCoreFormat } from '@whisker/core-ts';
 
 /**
  * JSON Importer

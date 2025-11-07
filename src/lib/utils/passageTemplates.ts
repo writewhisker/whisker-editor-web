@@ -1,4 +1,4 @@
-import type { PassageData } from '../models/types';
+import type { PassageData } from '@whisker/core-ts';
 import { nanoid } from 'nanoid';
 
 export interface PassageTemplate {

@@ -11,7 +11,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 
 export interface PlaytestAction {
   type: 'passage_view' | 'choice_select' | 'variable_change' | 'restart' | 'end';

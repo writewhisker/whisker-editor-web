@@ -7,7 +7,7 @@
  * - src/lib/services/storage/types.ts (Storage format)
  */
 
-import type { ProjectData as ModelProjectData, StoryData } from '../../models/types';
+import type { ProjectData as ModelProjectData, StoryData } from '@whisker/core-ts';
 import type {
 	StoredProject,
 	SerializedStory

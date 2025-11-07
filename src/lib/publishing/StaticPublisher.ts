@@ -6,7 +6,7 @@
  */
 
 import type { IPublisher, PublishOptions, PublishResult } from './types';
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 
 export class StaticPublisher implements IPublisher {

@@ -3,7 +3,7 @@ import { storyStateActions } from './storyStateStore';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions } from './selectionStore';
 import { historyActions } from './historyStore';
-import type { ProjectData } from '../models/types';
+import type { ProjectData } from '@whisker/core-ts';
 import { getDefaultStorageAdapter } from '../services/storage/StorageServiceFactory';
 import type { IStorageAdapter } from '../services/storage/types';
 import { modelToStorage, storageToModel } from '../services/storage/typeAdapter';

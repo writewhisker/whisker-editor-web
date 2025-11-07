@@ -3,7 +3,7 @@
    * AssetManager - Manage story assets (images, audio, video)
    */
   import { currentStory } from '../../stores/storyStateStore';
-  import type { AssetReference } from '../../models/types';
+  import type { AssetReference } from '@whisker/core-ts';
   import { nanoid } from 'nanoid';
 
   interface UploadQueueItem {

@@ -7,7 +7,7 @@
  * - Offers recovery after crash/refresh
  */
 
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 import { safeSetJSON, safeGetJSON, safeSetItem, type StorageResult } from './storageUtils';
 
 const AUTO_SAVE_KEY = 'whisker-autosave';

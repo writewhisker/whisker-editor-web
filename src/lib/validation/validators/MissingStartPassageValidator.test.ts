@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { MissingStartPassageValidator } from './MissingStartPassageValidator';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
-import type { StoryData } from '../../models/types';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import type { StoryData } from '@whisker/core-ts';
 
 describe('MissingStartPassageValidator', () => {
   it('should have correct metadata', () => {

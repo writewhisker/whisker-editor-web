@@ -4,7 +4,7 @@ import PassageTemplateDialog from './PassageTemplateDialog.svelte';
 import { get } from 'svelte/store';
 import { currentStory } from '../stores/projectStore';
 import { templateManager } from '../utils/passageTemplates';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('PassageTemplateDialog', () => {
   beforeEach(() => {

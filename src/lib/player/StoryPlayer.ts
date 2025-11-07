@@ -1,6 +1,6 @@
-import type { Story } from '../models/Story';
-import type { Passage } from '../models/Passage';
-import type { Choice } from '../models/Choice';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
+import type { Choice } from '@whisker/core-ts';
 import type {
   PlaythroughStep,
   PlaythroughRecording,
@@ -11,7 +11,7 @@ import type {
   PlayerState,
 } from './types';
 import { getPlaythroughRecorder, type PlaythroughRecorder } from '../analytics/PlaythroughRecorder';
-import type { Playthrough } from '../models/Playthrough';
+import type { Playthrough } from '@whisker/core-ts';
 import { getLuaEngine, type LuaEngine } from '../scripting/LuaEngine';
 
 /**

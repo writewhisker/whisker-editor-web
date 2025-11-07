@@ -12,7 +12,7 @@ import {
   session,
 } from '../stores/collaborationStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('CollaborationPanel', () => {
   let story: Story;

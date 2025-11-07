@@ -4,10 +4,10 @@
  * Runs test scenarios and generates detailed results.
  */
 
-import type { Story } from '../models/Story';
-import type { Passage } from '../models/Passage';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
 import { TestScenario, type TestStep } from './TestScenario';
-import { Playthrough, PlaythroughStep } from '../models/Playthrough';
+import { Playthrough, PlaythroughStep } from '@whisker/core-ts';
 
 export interface TestStepResult {
   stepIndex: number;

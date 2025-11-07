@@ -10,7 +10,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story, Variable } from '../models/Story';
+import type { Story, Variable } from '@whisker/core-ts';
 
 export type SaveStorageType = 'localStorage' | 'indexedDB' | 'json' | 'custom';
 export type SaveSlotType = 'manual' | 'auto' | 'quick';

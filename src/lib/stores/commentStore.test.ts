@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { comments, commentActions, currentUser } from './commentStore';
 import { currentStory } from './projectStore';
-import { Story } from '$lib/models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('commentStore', () => {
   let mockStory: Story;

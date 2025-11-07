@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import type { StoryData } from '../models/types';
+import type { StoryData } from '@whisker/core-ts';
 
 interface HistoryState {
   past: StoryData[];

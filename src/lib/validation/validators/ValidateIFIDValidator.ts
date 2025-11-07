@@ -4,7 +4,7 @@
  * Ensures the story has a valid Interactive Fiction ID (UUID v4 format).
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 

@@ -3,7 +3,7 @@
   import { validationResult } from '../stores/validationStore';
   import { isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { derived } from 'svelte/store';
-  import type { Passage } from '../models/Passage';
+  import type { Passage } from '@whisker/core-ts';
 
   // Comprehensive story statistics
   const stats = derived([currentStory, passageList, validationResult], ([$story, $passages, $validation]) => {

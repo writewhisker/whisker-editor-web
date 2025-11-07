@@ -3,8 +3,8 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import Breadcrumb from './Breadcrumb.svelte';
 import { currentStory, selectedPassageId } from '../stores/projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('Breadcrumb', () => {
   let story: Story;

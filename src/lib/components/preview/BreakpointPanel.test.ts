@@ -3,8 +3,8 @@ import { render, waitFor } from '@testing-library/svelte';
 import BreakpointPanel from './BreakpointPanel.svelte';
 import { playerActions } from '../../stores/playerStore';
 import { projectActions } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('BreakpointPanel', () => {
   let story: Story;

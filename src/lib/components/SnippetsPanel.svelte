@@ -3,7 +3,7 @@
   import { currentStory } from '../stores/storyStateStore';
   import { selectedPassageId } from '../stores/selectionStore';
   import { projectMetadataActions } from '../stores/projectMetadataStore';
-  import { Passage } from '../models/Passage';
+  import { Passage } from '@whisker/core-ts';
   import { notificationStore } from '../stores/notificationStore';
   import { get } from 'svelte/store';
 

@@ -5,9 +5,9 @@ import PassageList from './PassageList.svelte';
 import { currentStory, selectedPassageId } from '../stores/projectStore';
 import { filterState } from '../stores/filterStore';
 import { validationResult } from '../stores/validationStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
-import { Choice } from '../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 
 describe('PassageList', () => {
   let story: Story;

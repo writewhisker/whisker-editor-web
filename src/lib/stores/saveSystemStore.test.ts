@@ -10,7 +10,7 @@ import {
   type SaveSlotType,
   type SaveMetadata,
 } from './saveSystemStore';
-import type { Story, Variable } from '../models/Story';
+import type { Story, Variable } from '@whisker/core-ts';
 
 describe('saveSystemStore', () => {
   let story: Story;

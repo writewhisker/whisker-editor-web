@@ -5,8 +5,8 @@
  * Folders are stored in passage.metadata.folder
  */
 
-import type { Passage } from '../models/Passage';
-import type { Story } from '../models/Story';
+import type { Passage } from '@whisker/core-ts';
+import type { Story } from '@whisker/core-ts';
 
 export interface Folder {
   name: string;

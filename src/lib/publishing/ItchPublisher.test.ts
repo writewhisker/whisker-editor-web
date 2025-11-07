@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ItchPublisher } from './ItchPublisher';
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { PublishOptions } from './types';
 import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 

@@ -12,7 +12,7 @@
  * - Professional styling
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type {
   ExportContext,
   ExportResult,

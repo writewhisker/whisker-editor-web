@@ -15,9 +15,9 @@ import {
   validationActions,
 } from './validationStore';
 import { currentStory } from './projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
-import { Choice } from '../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 
 describe('validationStore', () => {
   let story: Story;

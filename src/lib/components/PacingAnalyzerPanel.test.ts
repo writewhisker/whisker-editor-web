@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import PacingAnalyzerPanel from './PacingAnalyzerPanel.svelte';
 import { pacingStore, pacingMetrics, pacingIssues } from '../stores/pacingStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('PacingAnalyzerPanel', () => {
   let story: Story;

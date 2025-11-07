@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { DeadLinksValidator } from './DeadLinksValidator';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
-import { Choice } from '../../models/Choice';
-import type { StoryData } from '../../models/types';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
+import type { StoryData } from '@whisker/core-ts';
 
 describe('DeadLinksValidator', () => {
   it('should have correct metadata', () => {

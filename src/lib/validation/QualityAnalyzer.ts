@@ -4,8 +4,8 @@
  * Analyzes story structure and content to generate quality metrics.
  */
 
-import type { Story } from '../models/Story';
-import type { Passage } from '../models/Passage';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
 import type { QualityMetrics } from './types';
 
 export type { QualityMetrics } from './types';

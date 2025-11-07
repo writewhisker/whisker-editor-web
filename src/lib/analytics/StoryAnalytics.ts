@@ -4,8 +4,8 @@
  * Analyzes story structure and generates metrics.
  */
 
-import type { Story } from '../models/Story';
-import type { Passage } from '../models/Passage';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
 import type { StoryMetrics, AnalyticsIssue } from './types';
 
 export class StoryAnalytics {

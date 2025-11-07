@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Handle, Position } from '@xyflow/svelte';
-  import type { Passage } from '../../models/Passage';
+  import type { Passage } from '@whisker/core-ts';
   import { currentStory, projectActions, selectedPassageId } from '../../stores/storyStateStore';
 
   import type { ValidationIssue } from '../../validation/types';

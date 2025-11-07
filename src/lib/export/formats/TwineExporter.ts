@@ -1,7 +1,7 @@
 import type { IExporter } from '../types';
 import type { ExportContext, ExportResult } from '../types';
-import type { Story } from '$lib/models/Story';
-import type { Passage } from '$lib/models/Passage';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
 import { nanoid } from 'nanoid';
 
 /**

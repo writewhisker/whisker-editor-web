@@ -12,8 +12,8 @@ import {
   recentImports,
   exportActions,
 } from './exportStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 // Mock localStorage
 const localStorageMock = (() => {

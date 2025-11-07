@@ -4,7 +4,7 @@
  * Validates Lua/JavaScript code blocks for basic syntax errors.
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 

@@ -1,7 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import { StoryPlayer } from '../player/StoryPlayer';
-import type { Passage } from '../models/Passage';
-import type { Choice } from '../models/Choice';
+import type { Passage } from '@whisker/core-ts';
+import type { Choice } from '@whisker/core-ts';
 import type { PlayerState, PlaythroughStep, VariableChange } from '../player/types';
 
 // Create singleton player instance

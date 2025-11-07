@@ -8,5 +8,8 @@
 // Models
 export * from './models';
 
+// Validation
+export * from './validation';
+
 // Utils
 export * from './utils';

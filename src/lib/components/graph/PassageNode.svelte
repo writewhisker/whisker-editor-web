@@ -4,7 +4,7 @@
   import type { Passage } from '@whisker/core-ts';
   import { currentStory, projectActions, selectedPassageId } from '../../stores/storyStateStore';
 
-  import type { ValidationIssue } from '../../validation/types';
+  import type { ValidationIssue } from '@whisker/core-ts'types';
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
   import { setupLongPress, isTouch } from '../../utils/mobile';

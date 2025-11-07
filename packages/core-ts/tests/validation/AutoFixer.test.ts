@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AutoFixer } from './AutoFixer';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
-import type { ValidationIssue } from './types';
+import { AutoFixer } from '../../src/validation/AutoFixer';
+import { Story } from '../../src/models';
+import { Passage } from '../../src/models';
+import { Choice } from '../../src/models';
+import { Variable } from '../../src/models';
+import type { ValidationIssue } from '../../src/validation/types';
 
 describe('AutoFixer', () => {
   let fixer: AutoFixer;

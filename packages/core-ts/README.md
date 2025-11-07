@@ -29,6 +29,25 @@ pnpm add @whisker/core-ts
 - **Comment** - Comments and annotations
 - **Collaborator** - Collaborator information
 
+### Validation
+
+- **StoryValidator** - Main story validation with pluggable validators
+  - Dead Links Validator - Find broken passage links
+  - Empty Passages Validator - Find passages with no content
+  - Missing Start Passage Validator - Ensure start passage exists
+  - Undefined Variables Validator - Find undefined variable references
+  - Unreachable Passages Validator - Find unreachable passages
+  - Unused Variables Validator - Find unused variables
+  - Validate Assets Validator - Validate asset references
+  - Validate IFID Validator - Validate Interactive Fiction ID
+  - Validate Passage Metadata Validator - Validate passage metadata
+  - Validate Scripts Validator - Validate Lua scripts
+  - Validate Stylesheets Validator - Validate CSS stylesheets
+
+- **AutoFixer** - Automatically fix validation issues
+- **QualityAnalyzer** - Analyze story quality and provide recommendations
+- **createDefaultValidator()** - Create validator with all default validators
+
 ### Utilities
 
 - **whiskerCoreAdapter** - Format conversion between editor and runtime formats

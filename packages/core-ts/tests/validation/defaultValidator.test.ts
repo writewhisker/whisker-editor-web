@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createDefaultValidator } from './defaultValidator';
+import { createDefaultValidator } from '../../src/validation/defaultValidator';
 
 describe('defaultValidator', () => {
   describe('createDefaultValidator', () => {

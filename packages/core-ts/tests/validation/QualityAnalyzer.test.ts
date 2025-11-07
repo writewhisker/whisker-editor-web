@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { QualityAnalyzer } from './QualityAnalyzer';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { QualityAnalyzer } from '../../src/validation/QualityAnalyzer';
+import { Story } from '../../src/models';
+import { Passage } from '../../src/models';
+import { Choice } from '../../src/models';
+import { Variable } from '../../src/models';
 
 describe('QualityAnalyzer', () => {
   let analyzer: QualityAnalyzer;

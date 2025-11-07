@@ -1,6 +1,6 @@
 {
   "name": "@whisker/core-ts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Core TypeScript runtime for Whisker story engine",
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -15,6 +15,10 @@
     "./models": {
       "types": "./dist/models/index.d.ts",
       "import": "./dist/models/index.js"
+    },
+    "./validation": {
+      "types": "./dist/validation/index.d.ts",
+      "import": "./dist/validation/index.js"
     },
     "./utils": {
       "types": "./dist/utils/index.d.ts",

@@ -52,6 +52,10 @@
   },
   "dependencies": {
     "@whisker/core-ts": "workspace:*",
+    "isomorphic-dompurify": "^2.0.0",
+    "jszip": "^3.10.0",
+    "marked": "^12.0.0",
+    "nanoid": "^5.0.0",
     "svelte": "^5.0.0"
   },
   "devDependencies": {

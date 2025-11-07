@@ -5,10 +5,10 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { ValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '../validation/types';
-import { createDefaultValidator } from '../validation/defaultValidator';
-import { createQualityAnalyzer } from '../validation/QualityAnalyzer';
-import { createAutoFixer } from '../validation/AutoFixer';
+import type { ValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '@whisker/core-ts'types';
+import { createDefaultValidator } from '@whisker/core-ts'defaultValidator';
+import { createQualityAnalyzer } from '@whisker/core-ts'QualityAnalyzer';
+import { createAutoFixer } from '@whisker/core-ts'AutoFixer';
 import { currentStory } from './projectStore';
 import type { Story } from '@whisker/core-ts';
 

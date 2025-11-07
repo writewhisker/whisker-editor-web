@@ -5,8 +5,8 @@
  */
 
 import type { Story } from '@whisker/core-ts';
-import type { ValidationResult } from '../validation/types';
-import type { QualityMetrics } from '../validation/QualityAnalyzer';
+import type { ValidationResult } from '@whisker/core-ts'types';
+import type { QualityMetrics } from '@whisker/core-ts'QualityAnalyzer';
 
 /**
  * Supported export formats

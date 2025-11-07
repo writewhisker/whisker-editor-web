@@ -9,9 +9,9 @@ import {
   criticalIssues,
   hasAccessibilityIssues,
 } from './accessibilityStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
-import { Choice } from '../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 
 describe('accessibilityStore', () => {
   let story: Story;

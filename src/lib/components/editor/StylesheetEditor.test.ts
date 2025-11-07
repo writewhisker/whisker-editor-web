@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import StylesheetEditor from './StylesheetEditor.svelte';
 import { currentStory } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('StylesheetEditor', () => {
   let story: Story;

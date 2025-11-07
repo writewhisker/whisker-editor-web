@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { StoryValidator } from './StoryValidator';
 import { createDefaultValidator } from './defaultValidator';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
-import { Choice } from '../models/Choice';
-import { Variable } from '../models/Variable';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
+import { Variable } from '@whisker/core-ts';
 import { UnreachablePassagesValidator } from './validators/UnreachablePassagesValidator';
 import { DeadLinksValidator } from './validators/DeadLinksValidator';
 

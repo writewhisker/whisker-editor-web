@@ -4,8 +4,8 @@
  * Used for analytics and automated testing.
  */
 
-import { Playthrough, PlaythroughStep, type PlaythroughData } from '../models/Playthrough';
-import type { Story } from '../models/Story';
+import { Playthrough, PlaythroughStep, type PlaythroughData } from '@whisker/core-ts';
+import type { Story } from '@whisker/core-ts';
 
 export class PlaythroughRecorder {
   private playthrough: Playthrough | null = null;

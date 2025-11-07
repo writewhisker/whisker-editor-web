@@ -10,9 +10,9 @@ import {
   validationActions,
 } from '../../stores/validationStore';
 import { currentStory } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
-import { Choice } from '../../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 import type { ValidationResult, QualityMetrics } from '../../validation/types';
 
 describe('ValidationPanel', () => {

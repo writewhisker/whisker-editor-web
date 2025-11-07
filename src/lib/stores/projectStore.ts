@@ -65,8 +65,8 @@ export {
 };
 
 // Re-export models for convenience
-export { Story } from '../models/Story';
-export { Passage } from '../models/Passage';
+export { Story } from '@whisker/core-ts';
+export { Passage } from '@whisker/core-ts';
 
 /**
  * Legacy projectActions object for backward compatibility

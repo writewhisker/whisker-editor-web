@@ -1,7 +1,7 @@
 <script lang="ts">
   import { templateManager, type PassageTemplate } from '../utils/passageTemplates';
   import { currentStory } from '../stores/storyStateStore';
-  import { Passage } from '../models/Passage';
+  import { Passage } from '@whisker/core-ts';
 
   let {
     isOpen = $bindable(false),

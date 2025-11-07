@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import StoryMetadataEditor from './StoryMetadataEditor.svelte';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 // Mock trapFocus utility
 vi.mock('../utils/accessibility', () => ({

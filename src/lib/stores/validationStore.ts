@@ -10,7 +10,7 @@ import { createDefaultValidator } from '../validation/defaultValidator';
 import { createQualityAnalyzer } from '../validation/QualityAnalyzer';
 import { createAutoFixer } from '../validation/AutoFixer';
 import { currentStory } from './projectStore';
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 
 // Settings persistence
 const STORAGE_KEY_OPTIONS = 'whisker_validation_options';

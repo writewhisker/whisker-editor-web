@@ -4,7 +4,7 @@
  * Exports stories as standalone HTML files with embedded player.
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type {
   ExportContext,
   ExportResult,

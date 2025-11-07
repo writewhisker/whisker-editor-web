@@ -4,7 +4,7 @@
  * Exports stories to JSON format for backup, interchange, and debugging.
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type {
   ExportContext,
   ExportResult,

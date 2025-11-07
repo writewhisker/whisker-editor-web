@@ -9,7 +9,7 @@ import {
   filterCount,
 } from './filterStore';
 import { projectActions } from './projectStore';
-import { Passage } from '../models/Passage';
+import { Passage } from '@whisker/core-ts';
 
 describe('filterStore', () => {
   beforeEach(() => {

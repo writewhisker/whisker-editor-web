@@ -12,7 +12,7 @@ import {
   isEditorFormat,
   importWhiskerFile
 } from './whiskerCoreAdapter';
-import type { StoryData, WhiskerCoreFormat, WhiskerFormatV21, LuaFunctionData } from '../models/types';
+import type { StoryData, WhiskerCoreFormat, WhiskerFormatV21, LuaFunctionData } from '@whisker/core-ts';
 
 describe('whiskerCoreAdapter', () => {
   describe('generateIfid', () => {

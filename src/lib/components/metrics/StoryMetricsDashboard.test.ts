@@ -3,8 +3,8 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import StoryMetricsDashboard from './StoryMetricsDashboard.svelte';
 import { currentStory } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('StoryMetricsDashboard', () => {
   let story: Story;

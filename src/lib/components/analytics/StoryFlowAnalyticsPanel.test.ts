@@ -3,8 +3,8 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import StoryFlowAnalyticsPanel from './StoryFlowAnalyticsPanel.svelte';
 import { get } from 'svelte/store';
 import { currentStory } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 // Mock the StoryFlowAnalyzer
 vi.mock('../../utils/storyFlowAnalytics', () => ({

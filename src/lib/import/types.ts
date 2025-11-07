@@ -4,7 +4,7 @@
  * Type definitions for the story import system.
  */
 
-import type { Story } from '../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { ValidationResult } from '../validation/types';
 
 /**

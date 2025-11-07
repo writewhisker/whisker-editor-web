@@ -4,9 +4,9 @@
  * Provides functions for comparing two Story instances and detecting differences.
  */
 
-import type { Story } from '../models/Story';
-import type { Passage } from '../models/Passage';
-import type { Variable } from '../models/Variable';
+import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@whisker/core-ts';
+import type { Variable } from '@whisker/core-ts';
 
 export type DiffStatus = 'added' | 'removed' | 'modified' | 'unchanged';
 

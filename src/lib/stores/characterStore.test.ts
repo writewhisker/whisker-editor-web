@@ -9,7 +9,7 @@ import {
   type Entity,
   type EntityType,
 } from './characterStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('characterStore', () => {
   let story: Story;

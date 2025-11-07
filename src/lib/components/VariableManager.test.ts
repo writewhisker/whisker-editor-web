@@ -3,10 +3,10 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import VariableManager from './VariableManager.svelte';
 import { currentStory, variableList } from '../stores/projectStore';
-import { Story } from '../models/Story';
-import { Variable } from '../models/Variable';
-import { Passage } from '../models/Passage';
-import { Choice } from '../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Variable } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 
 describe('VariableManager', () => {
   let story: Story;

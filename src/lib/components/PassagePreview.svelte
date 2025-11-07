@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Passage } from '../models/Passage';
+  import type { Passage } from '@whisker/core-ts';
   import { tagActions } from '../stores/tagStore';
 
   export let passage: Passage;

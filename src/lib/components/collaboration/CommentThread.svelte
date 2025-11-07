@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Comment } from '$lib/models/Comment';
+  import type { Comment } from '@whisker/core-ts';
   import { currentUser } from '$lib/stores/commentStore';
 
   // Props

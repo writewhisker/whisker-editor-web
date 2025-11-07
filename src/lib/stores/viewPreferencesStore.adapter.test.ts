@@ -19,7 +19,7 @@ import {
 	type PanelSizes,
 } from './viewPreferencesStore';
 import { currentStory } from './projectStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 import { getPreferenceService } from '../services/storage/PreferenceService';
 import { LocalStorageAdapter } from '../services/storage/LocalStorageAdapter';
 import { MockLocalStorage } from '../services/storage/testHelpers';

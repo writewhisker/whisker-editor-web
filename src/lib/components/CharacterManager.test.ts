@@ -4,7 +4,7 @@ import CharacterManager from './CharacterManager.svelte';
 import { get } from 'svelte/store';
 import { characterStore, entities } from '../stores/characterStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('CharacterManager', () => {
   beforeEach(() => {

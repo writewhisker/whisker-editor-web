@@ -4,7 +4,7 @@
  * Finds passages that cannot be reached from the start passage.
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 

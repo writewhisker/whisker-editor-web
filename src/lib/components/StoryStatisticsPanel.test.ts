@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import StoryStatisticsPanel from './StoryStatisticsPanel.svelte';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('StoryStatisticsPanel', () => {
   beforeEach(() => {

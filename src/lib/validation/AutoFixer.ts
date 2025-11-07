@@ -4,8 +4,8 @@
  * Automatically fixes validation issues where possible.
  */
 
-import type { Story } from '../models/Story';
-import type { Variable } from '../models/Variable';
+import type { Story } from '@whisker/core-ts';
+import type { Variable } from '@whisker/core-ts';
 import type { ValidationIssue, AutoFixResult } from './types';
 
 export class AutoFixer {

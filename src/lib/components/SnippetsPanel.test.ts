@@ -5,8 +5,8 @@ import SnippetsPanel from './SnippetsPanel.svelte';
 import { templateManager } from '../utils/passageTemplates';
 import { currentStory, selectedPassageId } from '../stores/projectStore';
 import { notificationStore } from '../stores/notificationStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('SnippetsPanel', () => {
   let story: Story;

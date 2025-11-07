@@ -3,9 +3,9 @@ import { render, waitFor } from '@testing-library/svelte';
 import HistoryPanel from './HistoryPanel.svelte';
 import { playerActions } from '../../stores/playerStore';
 import { projectActions } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
-import { Choice } from '../../models/Choice';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
 
 describe('HistoryPanel', () => {
   let story: Story;

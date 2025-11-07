@@ -10,10 +10,10 @@ import {
   selectedPassage,
   projectActions,
 } from './projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
-import { Variable } from '../models/Variable';
-import type { ProjectData } from '../models/types';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Variable } from '@whisker/core-ts';
+import type { ProjectData } from '@whisker/core-ts';
 import * as historyStore from './historyStore';
 import * as connectionValidator from '../utils/connectionValidator';
 

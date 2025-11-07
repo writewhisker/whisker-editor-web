@@ -4,7 +4,7 @@
  * Finds choices that point to non-existent passages.
  */
 
-import type { Story } from '../../models/Story';
+import type { Story } from '@whisker/core-ts';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 

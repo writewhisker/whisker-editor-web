@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import PlaythroughList from './PlaythroughList.svelte';
 import { currentStory } from '$lib/stores/projectStore';
-import { Story } from '$lib/models/Story';
-import { Playthrough } from '$lib/models/Playthrough';
+import { Story } from '@whisker/core-ts';
+import { Playthrough } from '@whisker/core-ts';
 
 // Mock the PlaythroughRecorder
 const mockGetPlaythroughs = vi.fn(() => []);

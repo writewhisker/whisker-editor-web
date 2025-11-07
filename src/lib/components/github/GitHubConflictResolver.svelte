@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Story } from '../../models/Story';
+  import type { Story } from '@whisker/core-ts';
   import StoryComparisonView from '../comparison/StoryComparisonView.svelte';
 
   export let show = false;

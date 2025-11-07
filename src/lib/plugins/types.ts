@@ -1,5 +1,5 @@
 import type { ComponentType } from 'svelte';
-import type { Passage } from '../models/Passage';
+import type { Passage } from '@whisker/core-ts';
 
 /**
  * Plugin System Type Definitions

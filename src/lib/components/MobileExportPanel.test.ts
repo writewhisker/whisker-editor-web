@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import MobileExportPanel from './MobileExportPanel.svelte';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('MobileExportPanel', () => {
   beforeEach(() => {

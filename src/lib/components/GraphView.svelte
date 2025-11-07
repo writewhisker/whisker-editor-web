@@ -21,8 +21,8 @@
   import PassageNode from './graph/PassageNode.svelte';
   import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
-  import { Choice } from '../models/Choice';
-  import { Passage } from '../models/Passage';
+  import { Choice } from '@whisker/core-ts';
+  import { Passage } from '@whisker/core-ts';
   import { historyActions } from '../stores/historyStore';
   import {
     getLayoutedElements,

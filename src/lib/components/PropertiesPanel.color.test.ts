@@ -3,8 +3,8 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import PropertiesPanel from './PropertiesPanel.svelte';
 import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('PropertiesPanel - Color Picker', () => {
   let story: Story;

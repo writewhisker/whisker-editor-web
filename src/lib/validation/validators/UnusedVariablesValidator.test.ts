@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { UnusedVariablesValidator } from './UnusedVariablesValidator';
-import { Story } from '../../models/Story';
-import { Passage } from '../../models/Passage';
-import { Choice } from '../../models/Choice';
-import { Variable } from '../../models/Variable';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
+import { Choice } from '@whisker/core-ts';
+import { Variable } from '@whisker/core-ts';
 
 // Helper to create story without default passage
 const createStory = () => {

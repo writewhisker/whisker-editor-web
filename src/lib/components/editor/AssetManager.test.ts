@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import AssetManager from './AssetManager.svelte';
 import { currentStory } from '../../stores/projectStore';
-import { Story } from '../../models/Story';
+import { Story } from '@whisker/core-ts';
 
 describe('AssetManager', () => {
   let story: Story;

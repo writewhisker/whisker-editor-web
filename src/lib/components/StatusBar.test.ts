@@ -11,8 +11,8 @@ import {
 } from '../stores/projectStore';
 import { validationResult } from '../stores/validationStore';
 import { canUndo, canRedo, historyCount, historyActions } from '../stores/historyStore';
-import { Story } from '../models/Story';
-import { Passage } from '../models/Passage';
+import { Story } from '@whisker/core-ts';
+import { Passage } from '@whisker/core-ts';
 
 describe('StatusBar', () => {
   beforeEach(() => {

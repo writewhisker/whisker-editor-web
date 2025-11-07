@@ -1,8 +1,6 @@
 /**
- * Editor services
- *
- * Services will be added in PR #26
+ * Editor services - Phase 2c
  */
 
-// Placeholder - services will be moved in PR #26
-export {};
+// Storage service types
+export * from './storage';

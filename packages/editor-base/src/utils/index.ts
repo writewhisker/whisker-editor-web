@@ -1,8 +1,9 @@
 /**
- * Editor utilities
- *
- * Utilities will be added in PR #26
+ * Editor utilities - Phase 2c
  */
 
-// Placeholder - utilities will be moved in PR #26
-export {};
+// Graph and passage utilities
+export * from './connectionValidator';
+
+// Error handling
+export * from './errorHandling';

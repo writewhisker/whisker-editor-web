@@ -1,11 +1,8 @@
 /**
- * Editor stores - Phase 2a & 2b: Core Stores
- *
- * Phase 2a: 5 independent core stores
- * Phase 2b: 3 history & validation stores
+ * Editor stores
  */
 
-// Core state stores
+// Core state stores (Phase 2a)
 export * from './storyStateStore';
 export * from './selectionStore';
 export * from './projectMetadataStore';
@@ -15,6 +12,12 @@ export * from './historyStore';
 export * from './historyIntegrationStore';
 export * from './validationStore';
 
-// UI state stores
+// UI state stores (Phase 2a)
 export * from './loadingStore';
 export * from './notificationStore';
+
+// Additional stores (Phase 2e-3)
+export * from './tagStore';
+export * from './themeStore';
+export * from './viewPreferencesStore';
+export * from './keyboardShortcutsStore';

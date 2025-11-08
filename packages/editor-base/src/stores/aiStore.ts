@@ -5,8 +5,8 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { AIService } from '$lib/ai/AIService';
-import type { AIConfig, AIRequest, AIResponse, WritingSuggestion } from '$lib/ai/types';
+import { AIService } from '../ai/AIService';
+import type { AIConfig, AIRequest, AIResponse, WritingSuggestion } from '../ai/types';
 
 // State
 export const aiConfig = writable<AIConfig>({

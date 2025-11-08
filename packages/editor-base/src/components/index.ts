@@ -2,11 +2,13 @@
  * Editor components
  */
 
-// Core UI (Phase 2e-2, 2e-5)
+// Core UI (Phase 2e-2, 2e-5, 2e-6)
 export { default as MenuBar } from './MenuBar.svelte';
 export { default as Toolbar } from './Toolbar.svelte';
 export { default as StatusBar } from './StatusBar.svelte';
 export { default as Breadcrumb } from './Breadcrumb.svelte';
+export { default as PassageList } from './PassageList.svelte';
+export { default as SearchBar } from './SearchBar.svelte';
 
 // Dialogs (Phase 2e-1)
 export { default as FileDialog } from './FileDialog.svelte';

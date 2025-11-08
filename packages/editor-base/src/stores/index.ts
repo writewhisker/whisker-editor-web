@@ -21,3 +21,11 @@ export * from './tagStore';
 export * from './themeStore';
 export * from './viewPreferencesStore';
 export * from './keyboardShortcutsStore';
+
+// Passage and filter stores (Phase 2e-6)
+export * from './passageOperationsStore';
+export * from './filterStore';
+export * from './passageOrderStore';
+export * from './commentStore';
+export * from './kidsModeStore';
+export * from './ageGroupFeatures';

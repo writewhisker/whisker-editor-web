@@ -60,6 +60,9 @@ importers:
       svelte:
         specifier: ^5.0.0
         version: 5.43.4
+      svelte-virtual-list:
+        specifier: ^3.0.1
+        version: 3.0.1
     devDependencies:
       '@sveltejs/vite-plugin-svelte':
         specifier: ^4.0.0
@@ -1451,6 +1454,9 @@ packages:
     peerDependencies:
       svelte: ^4.0.0 || ^5.0.0-next.0
       typescript: '>=5.0.0'
+
+  svelte-virtual-list@3.0.1:
+    resolution: {integrity: sha512-e7e+jn8VDjmdD8A1oOVBWmUi7jg+uugmiihkK0Cuk35JeeCR8ja40/B6DpCTHJFsQAZg6EVPjetN2ibgr25YCA==}
 
   svelte@5.43.4:
     resolution: {integrity: sha512-tPNp21nDWB0PSHE+VrTvEy9cFtDp2Q+ATxQoFomISEVdikZ1QZ69UqBPz/LlT+Oc8/LYS/COYwDQZrmZEUr+JQ==}
@@ -3082,6 +3088,8 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - picomatch
+
+  svelte-virtual-list@3.0.1: {}
 
   svelte@5.43.4:
     dependencies:

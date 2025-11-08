@@ -4,6 +4,8 @@
 
 // Graph and passage utilities
 export * from './connectionValidator';
+export * from './graphLayout';
+export * from './folderManager';
 
 // Error handling
 export * from './errorHandling';

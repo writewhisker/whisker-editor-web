@@ -52,6 +52,8 @@
   },
   "dependencies": {
     "@whisker/core-ts": "workspace:*",
+    "@xyflow/svelte": "^1.4.1",
+    "dagre": "^0.8.5",
     "isomorphic-dompurify": "^2.0.0",
     "jszip": "^3.10.0",
     "marked": "^12.0.0",
@@ -62,6 +64,7 @@
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@testing-library/svelte": "^5.0.0",
+    "@types/dagre": "^0.7.53",
     "@types/node": "^20.0.0",
     "svelte-check": "^4.0.0",
     "typescript": "^5.3.0",

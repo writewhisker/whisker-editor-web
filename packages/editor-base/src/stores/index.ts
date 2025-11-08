@@ -29,3 +29,6 @@ export * from './passageOrderStore';
 export * from './commentStore';
 export * from './kidsModeStore';
 export * from './ageGroupFeatures';
+
+// Player store (Phase 2e-8)
+export * from './playerStore';

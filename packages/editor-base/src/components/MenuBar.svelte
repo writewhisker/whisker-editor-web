@@ -1,0 +1,763 @@
+<script lang="ts">
+  import { onMount } from 'svelte';
+  import { currentStory } from '../stores/storyStateStore';
+  import { getRecentFiles, formatLastOpened, clearRecentFiles, getFileIcon, truncatePath, type RecentFile } from '../utils/recentFiles';
+  import { theme, themeActions } from '../stores/themeStore';
+  import { panelVisibility, viewPreferencesActions } from '../stores/viewPreferencesStore';
+  import GitHubConnect from './github/GitHubConnect.svelte';
+
+  export let onNew: () => void;
+  export let onOpen: () => void;
+  export let onSave: () => void;
+  export let onSaveAs: () => void;
+  export let onOpenRecent: ((file: RecentFile) => void) | undefined = undefined;
+  export let onStoryInfo: (() => void) | undefined = undefined;
+  export let onAbout: (() => void) | undefined = undefined;
+  export let onSettings: (() => void) | undefined = undefined;
+
+  let showFileMenu = false;
+  let showRecentMenu = false;
+  let showEditMenu = false;
+  let showViewMenu = false;
+  let showTestMenu = false;
+  let showHelpMenu = false;
+  let recentFiles: RecentFile[] = [];
+
+  let fileMenuElement: HTMLElement | null = null;
+  let recentMenuElement: HTMLElement | null = null;
+  let editMenuElement: HTMLElement | null = null;
+  let viewMenuElement: HTMLElement | null = null;
+  let testMenuElement: HTMLElement | null = null;
+  let helpMenuElement: HTMLElement | null = null;
+
+  export let onFind: (() => void) | undefined = undefined;
+  export let onValidate: (() => void) | undefined = undefined;
+  export let onCheckLinks: (() => void) | undefined = undefined;
+  export let onManageAssets: (() => void) | undefined = undefined;
+  export let onManageAudio: (() => void) | undefined = undefined;
+  export let onManageAnimations: (() => void) | undefined = undefined;
+  export let onManageStylesheets: (() => void) | undefined = undefined;
+  export let onSaveToGitHub: (() => void) | undefined = undefined;
+  export let onLoadFromGitHub: (() => void) | undefined = undefined;
+  export let onViewCommitHistory: (() => void) | undefined = undefined;
+
+  function toggleFileMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showFileMenu = !showFileMenu;
+    showRecentMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+    if (showFileMenu) {
+      // Reload recent files when opening menu
+      recentFiles = getRecentFiles();
+    }
+  }
+
+  function toggleRecentMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showRecentMenu = !showRecentMenu;
+    showFileMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+    if (showRecentMenu) {
+      // Reload recent files when opening menu
+      recentFiles = getRecentFiles();
+    }
+  }
+
+  function toggleEditMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showEditMenu = !showEditMenu;
+    showFileMenu = false;
+    showRecentMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+  }
+
+  function toggleViewMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showViewMenu = !showViewMenu;
+    showFileMenu = false;
+    showRecentMenu = false;
+    showEditMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+  }
+
+  function toggleTestMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showTestMenu = !showTestMenu;
+    showFileMenu = false;
+    showRecentMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showHelpMenu = false;
+  }
+
+  function toggleHelpMenu(event: MouseEvent) {
+    event.stopPropagation();
+    showHelpMenu = !showHelpMenu;
+    showFileMenu = false;
+    showRecentMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+  }
+
+  function closeMenus() {
+    showFileMenu = false;
+    showRecentMenu = false;
+    showEditMenu = false;
+    showViewMenu = false;
+    showTestMenu = false;
+    showHelpMenu = false;
+  }
+
+  function handleClearRecent(e: MouseEvent) {
+    e.stopPropagation();
+    clearRecentFiles();
+    recentFiles = [];
+  }
+
+  function handleOpenRecent(file: RecentFile) {
+    if (onOpenRecent) {
+      onOpenRecent(file);
+    }
+    closeMenus();
+  }
+
+  function handleMenuKeydown(menuType: 'file' | 'recent' | 'edit' | 'view' | 'test' | 'help', event: KeyboardEvent) {
+    const menuElement = menuType === 'file' ? fileMenuElement :
+                       menuType === 'recent' ? recentMenuElement :
+                       menuType === 'edit' ? editMenuElement :
+                       menuType === 'view' ? viewMenuElement :
+                       menuType === 'test' ? testMenuElement :
+                       helpMenuElement;
+
+    if (!menuElement) return;
+
+    const menuItems = Array.from(menuElement.querySelectorAll('button:not([disabled])')) as HTMLElement[];
+    const currentIndex = menuItems.indexOf(document.activeElement as HTMLElement);
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        if (currentIndex < menuItems.length - 1) {
+          menuItems[currentIndex + 1]?.focus();
+        } else {
+          menuItems[0]?.focus();
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (currentIndex > 0) {
+          menuItems[currentIndex - 1]?.focus();
+        } else {
+          menuItems[menuItems.length - 1]?.focus();
+        }
+        break;
+      case 'Escape':
+        event.preventDefault();
+        closeMenus();
+        // Return focus to the menu button
+        const buttonId = `${menuType}-menu-button`;
+        document.getElementById(buttonId)?.focus();
+        break;
+      case 'Home':
+        event.preventDefault();
+        menuItems[0]?.focus();
+        break;
+      case 'End':
+        event.preventDefault();
+        menuItems[menuItems.length - 1]?.focus();
+        break;
+    }
+  }
+
+  function getKeyboardShortcut(index: number): string {
+    if (index >= 9) return '';
+    const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
+    const modifier = isMac ? '\u2318' : 'Ctrl+';
+    return `${modifier}${index + 1}`;
+  }
+
+  onMount(() => {
+    recentFiles = getRecentFiles();
+  });
+</script>
+
+<nav class="bg-gray-800 text-white h-10 flex items-center px-4 border-b border-gray-700">
+  <div class="flex gap-4">
+    <!-- File Menu -->
+    <div class="relative">
+      <button
+        id="file-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleFileMenu}
+        aria-expanded={showFileMenu}
+        aria-controls="file-menu"
+        aria-haspopup="true"
+      >
+        File
+      </button>
+      {#if showFileMenu}
+        <div
+          id="file-menu"
+          bind:this={fileMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="file-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('file', e)}
+        >
+          <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={onNew}>
+            New Project
+            <span class="text-xs text-gray-400">Ctrl+N</span>
+          </button>
+          <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={onOpen}>
+            Open...
+            <span class="text-xs text-gray-400">Ctrl+O</span>
+          </button>
+
+          <!-- Recent Files -->
+          {#if recentFiles.length > 0}
+            <div class="border-t border-gray-700 my-1" role="separator"></div>
+            <div class="px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">
+              Recent Files
+            </div>
+            {#each recentFiles as file}
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full text-left px-4 py-2 hover:bg-gray-700 flex flex-col gap-0.5"
+                on:click={() => handleOpenRecent(file)}
+              >
+                <span class="text-sm">{file.name}</span>
+                {#if file.storyTitle && file.storyTitle !== file.name}
+                  <span class="text-xs text-gray-400">{file.storyTitle}</span>
+                {/if}
+                <span class="text-xs text-gray-500">{formatLastOpened(file.lastOpened)}</span>
+              </button>
+            {/each}
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full text-left px-4 py-2 hover:bg-gray-700 text-xs text-gray-400"
+              on:click={handleClearRecent}
+            >
+              Clear Recent Files
+            </button>
+          {/if}
+
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={onSave}
+            disabled={!$currentStory}
+          >
+            Save
+            <span class="text-xs text-gray-400">Ctrl+S</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={onSaveAs}
+            disabled={!$currentStory}
+          >
+            Save As...
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onSaveToGitHub && onSaveToGitHub()}
+            disabled={!$currentStory}
+          >
+            <span>Save to GitHub...</span>
+            <span class="text-xs text-gray-400">☁️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onLoadFromGitHub && onLoadFromGitHub()}
+          >
+            <span>Load from GitHub...</span>
+            <span class="text-xs text-gray-400">☁️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onViewCommitHistory && onViewCommitHistory()}
+            disabled={!$currentStory}
+          >
+            <span>View Commit History...</span>
+            <span class="text-xs text-gray-400">📜</span>
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onStoryInfo && onStoryInfo()}
+            disabled={!$currentStory}
+          >
+            Story Info...
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAssets && onManageAssets()}
+            disabled={!$currentStory}
+          >
+            <span>Manage Assets...</span>
+            <span class="text-xs text-gray-400 ml-2">🖼️</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAudio && onManageAudio()}
+            disabled={!$currentStory}
+          >
+            <span>Audio Settings...</span>
+            <span class="text-xs text-gray-400 ml-2">🔊</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageAnimations && onManageAnimations()}
+            disabled={!$currentStory}
+          >
+            <span>Animation Settings...</span>
+            <span class="text-xs text-gray-400 ml-2">✨</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700"
+            on:click={() => onManageStylesheets && onManageStylesheets()}
+            disabled={!$currentStory}
+          >
+            <span>Custom Stylesheets...</span>
+            <span class="text-xs text-gray-400 ml-2">🎨</span>
+          </button>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Recent Menu -->
+    <div class="relative">
+      <button
+        id="recent-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleRecentMenu}
+        aria-expanded={showRecentMenu}
+        aria-controls="recent-menu"
+        aria-haspopup="true"
+      >
+        Recent
+      </button>
+      {#if showRecentMenu}
+        <div
+          id="recent-menu"
+          bind:this={recentMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="recent-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[300px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('recent', e)}
+        >
+          {#if recentFiles.length > 0}
+            <!-- Recent Files List -->
+            {#each recentFiles as file, index}
+              <button
+                type="button"
+                role="menuitem"
+                class="w-full text-left px-4 py-2 hover:bg-gray-700 flex items-start gap-3 border-b border-gray-700/50 last:border-b-0"
+                on:click={() => handleOpenRecent(file)}
+              >
+                <!-- File Icon -->
+                <span class="text-lg flex-shrink-0 mt-0.5">{getFileIcon(file.name)}</span>
+
+                <!-- File Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-medium truncate">{file.name}</span>
+                    {#if index < 9}
+                      <span class="text-xs text-gray-500 flex-shrink-0">{getKeyboardShortcut(index)}</span>
+                    {/if}
+                  </div>
+
+                  {#if file.path}
+                    <div class="text-xs text-gray-400 truncate" title={file.path}>
+                      {truncatePath(file.path, 50)}
+                    </div>
+                  {/if}
+
+                  {#if file.storyTitle && file.storyTitle !== file.name}
+                    <div class="text-xs text-gray-500 truncate">
+                      {file.storyTitle}
+                    </div>
+                  {/if}
+
+                  <div class="text-xs text-gray-500 mt-0.5">
+                    {formatLastOpened(file.lastOpened)}
+                  </div>
+                </div>
+              </button>
+            {/each}
+
+            <!-- Clear Recent -->
+            <div class="border-t border-gray-700 my-1" role="separator"></div>
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full text-left px-4 py-2 hover:bg-gray-700 text-sm text-gray-400 flex items-center gap-2"
+              on:click={handleClearRecent}
+            >
+              <span>🗑️</span>
+              <span>Clear Recent Files</span>
+            </button>
+          {:else}
+            <!-- No Recent Files -->
+            <div class="px-4 py-6 text-center">
+              <div class="text-4xl mb-2">📂</div>
+              <div class="text-sm text-gray-400">No recent files</div>
+              <div class="text-xs text-gray-500 mt-1">Open a file to see it here</div>
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+
+    <!-- Edit Menu -->
+    <div class="relative">
+      <button
+        id="edit-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleEditMenu}
+        aria-expanded={showEditMenu}
+        aria-controls="edit-menu"
+        aria-haspopup="true"
+      >
+        Edit
+      </button>
+      {#if showEditMenu}
+        <div
+          id="edit-menu"
+          bind:this={editMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="edit-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('edit', e)}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onFind && onFind()}
+            disabled={!$currentStory}
+          >
+            <span>Find & Replace...</span>
+            <span class="text-xs text-gray-400">Ctrl+Shift+F</span>
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => {
+              document.execCommand('selectAll');
+              closeMenus();
+            }}
+            disabled={!$currentStory}
+          >
+            <span>Select All</span>
+            <span class="text-xs text-gray-400">Ctrl+A</span>
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <div class="px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">
+            Clipboard
+          </div>
+          <div class="px-4 py-2 text-xs text-gray-500 italic">
+            Copy/Paste work with standard keyboard shortcuts (Ctrl+C / Ctrl+V)
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <!-- View Menu -->
+    <div class="relative">
+      <button
+        id="view-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleViewMenu}
+        aria-expanded={showViewMenu}
+        aria-controls="view-menu"
+        aria-haspopup="true"
+      >
+        View
+      </button>
+      {#if showViewMenu}
+        <div
+          id="view-menu"
+          bind:this={viewMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="view-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('view', e)}
+        >
+          <!-- Settings -->
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onSettings && onSettings()}
+          >
+            <span>Settings...</span>
+            <span class="text-xs text-gray-400">⚙️</span>
+          </button>
+
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+
+          <!-- Panels Section -->
+          <div class="px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">
+            Panels
+          </div>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={$panelVisibility.passageList}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click|stopPropagation={() => viewPreferencesActions.togglePanel('passageList')}
+            disabled={!$currentStory}
+          >
+            <span>Passage List</span>
+            {#if $panelVisibility.passageList}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={$panelVisibility.properties}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click|stopPropagation={() => viewPreferencesActions.togglePanel('properties')}
+            disabled={!$currentStory}
+          >
+            <span>Properties</span>
+            {#if $panelVisibility.properties}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={$panelVisibility.variables}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click|stopPropagation={() => viewPreferencesActions.togglePanel('variables')}
+            disabled={!$currentStory}
+          >
+            <span>Variables</span>
+            {#if $panelVisibility.variables}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={$panelVisibility.validation}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click|stopPropagation={() => viewPreferencesActions.togglePanel('validation')}
+            disabled={!$currentStory}
+          >
+            <span>Validation</span>
+            {#if $panelVisibility.validation}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={$panelVisibility.statistics}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click|stopPropagation={() => viewPreferencesActions.togglePanel('statistics')}
+            disabled={!$currentStory}
+          >
+            <span>Statistics</span>
+            {#if $panelVisibility.statistics}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+
+          <!-- Theme Section -->
+          <div class="px-4 py-1 text-xs text-gray-400 uppercase tracking-wide">
+            Theme
+          </div>
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={$theme === 'light'}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={themeActions.setLight}
+          >
+            <span>Light</span>
+            {#if $theme === 'light'}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={$theme === 'dark'}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={themeActions.setDark}
+          >
+            <span>Dark</span>
+            {#if $theme === 'dark'}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            role="menuitemradio"
+            aria-checked={$theme === 'auto'}
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={themeActions.setAuto}
+          >
+            <span>Auto (System)</span>
+            {#if $theme === 'auto'}
+              <span class="text-green-400">✓</span>
+            {/if}
+          </button>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Test Menu -->
+    <div class="relative">
+      <button
+        id="test-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleTestMenu}
+        aria-expanded={showTestMenu}
+        aria-controls="test-menu"
+        aria-haspopup="true"
+      >
+        Test
+      </button>
+      {#if showTestMenu}
+        <div
+          id="test-menu"
+          bind:this={testMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="test-menu-button"
+          class="absolute top-full left-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('test', e)}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onValidate && onValidate()}
+            disabled={!$currentStory}
+          >
+            <span>Run Validation</span>
+            <span class="text-xs text-gray-400">🔍</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center"
+            on:click={() => onCheckLinks && onCheckLinks()}
+            disabled={!$currentStory}
+          >
+            <span>Check All Links</span>
+            <span class="text-xs text-gray-400">🔗</span>
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <div class="px-4 py-2 text-xs text-gray-500 italic">
+            Use the Validation panel to see detailed results
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <!-- GitHub Connection -->
+    <div class="ml-auto mr-4">
+      <GitHubConnect />
+    </div>
+
+    <!-- Help Menu -->
+    <div class="relative">
+      <button
+        id="help-menu-button"
+        type="button"
+        class="px-3 py-1 hover:bg-gray-700 rounded"
+        on:click={toggleHelpMenu}
+        aria-expanded={showHelpMenu}
+        aria-controls="help-menu"
+        aria-haspopup="true"
+      >
+        Help
+      </button>
+      {#if showHelpMenu}
+        <div
+          id="help-menu"
+          bind:this={helpMenuElement}
+          role="menu"
+          tabindex="-1"
+          aria-labelledby="help-menu-button"
+          class="absolute top-full right-0 mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg min-w-[200px] z-50"
+          on:click|stopPropagation={closeMenus}
+          on:keydown={(e) => handleMenuKeydown('help', e)}
+        >
+          <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={() => window.open('docs/USER_GUIDE.md', '_blank')}>
+            User Guide
+            <span class="text-xs text-gray-400">📖</span>
+          </button>
+          <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={() => window.open('docs/KEYBOARD_SHORTCUTS.md', '_blank')}>
+            Keyboard Shortcuts
+            <span class="text-xs text-gray-400">?</span>
+          </button>
+          <div class="border-t border-gray-700 my-1" role="separator"></div>
+          <button type="button" role="menuitem" class="w-full text-left px-4 py-2 hover:bg-gray-700 flex justify-between items-center" on:click={() => onAbout && onAbout()}>
+            About Whisker
+            <span class="text-xs text-gray-400">ℹ️</span>
+          </button>
+        </div>
+      {/if}
+    </div>
+  </div>
+</nav>
+
+<svelte:window on:click={closeMenus} />

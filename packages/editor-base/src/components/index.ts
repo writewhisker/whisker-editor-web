@@ -2,7 +2,9 @@
  * Editor components
  */
 
-// Core UI (Phase 2e-2)
+// Core UI (Phase 2e-2, 2e-5)
+export { default as MenuBar } from './MenuBar.svelte';
+export { default as Toolbar } from './Toolbar.svelte';
 export { default as StatusBar } from './StatusBar.svelte';
 export { default as Breadcrumb } from './Breadcrumb.svelte';
 
@@ -22,3 +24,6 @@ export { default as LoadingSpinner } from './LoadingSpinner.svelte';
 export { default as ErrorBoundary } from './ErrorBoundary.svelte';
 export { default as NotificationToast } from './NotificationToast.svelte';
 export { default as ResizeHandle } from './ResizeHandle.svelte';
+
+// GitHub integration (Phase 2e-5)
+export { default as GitHubConnect } from './github/GitHubConnect.svelte';

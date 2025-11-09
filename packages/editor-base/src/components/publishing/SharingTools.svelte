@@ -5,7 +5,7 @@
     generateQRCode,
     generateSocialShareUrl,
     generateEmailShareUrl,
-  } from '$lib/publishing/sharingUtils';
+  } from '../../publishing/sharingUtils';
 
   // Props
   let {

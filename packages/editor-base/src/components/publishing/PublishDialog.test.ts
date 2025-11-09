@@ -6,10 +6,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
-import { StaticPublisher } from '$lib/publishing/StaticPublisher';
-import { ItchPublisher } from '$lib/publishing/ItchPublisher';
+import { StaticPublisher } from '../../publishing/StaticPublisher';
+import { ItchPublisher } from '../../publishing/ItchPublisher';
 import type { Story } from '@whisker/core-ts';
-import type { PublishResult } from '$lib/publishing/types';
+import type { PublishResult } from '../../publishing/types';
 
 // Mock the publishers
 vi.mock('$lib/publishing/StaticPublisher', () => ({

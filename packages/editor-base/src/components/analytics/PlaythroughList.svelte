@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Playthrough } from '$lib/models/Playthrough';
-  import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
-  import { currentStory } from '$lib/stores/storyStateStore';
+  import type { Playthrough } from '../../models/Playthrough';
+  import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
+  import { currentStory } from '../../stores/storyStateStore';
 
   // State
   let playthroughs = $state<Playthrough[]>([]);

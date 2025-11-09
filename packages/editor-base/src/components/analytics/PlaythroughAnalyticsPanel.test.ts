@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
-import { currentStory } from '$lib/stores/projectStore';
+import { currentStory } from '../../stores/projectStore';
 import { Story } from '@whisker/core-ts';
 import { Playthrough } from '@whisker/core-ts';
 

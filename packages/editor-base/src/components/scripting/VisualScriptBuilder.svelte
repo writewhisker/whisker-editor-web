@@ -6,7 +6,7 @@
     BLOCK_TEMPLATES,
     type BlockType,
     type BlockCategory,
-  } from '$lib/models/ScriptBlock';
+  } from '../../models/ScriptBlock';
 
   // Props
   let { onCodeChange }: { onCodeChange?: (code: string) => void } = $props();

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getLuaEngine } from '$lib/scripting/LuaEngine';
-  import type { LuaExecutionResult } from '$lib/scripting/LuaEngine';
+  import { getLuaEngine } from '../../scripting/LuaEngine';
+  import type { LuaExecutionResult } from '../../scripting/LuaEngine';
 
   // State
   let input = $state('');

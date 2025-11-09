@@ -11,7 +11,7 @@ import {
   generateQRCode,
   generateSocialShareUrl,
   generateEmailShareUrl,
-} from '$lib/publishing/sharingUtils';
+} from '../../publishing/sharingUtils';
 
 describe('SharingTools - Embed Code Generation', () => {
   it('should generate basic embed code', () => {

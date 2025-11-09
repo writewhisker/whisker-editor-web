@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { AnalyticsIssue } from '$lib/analytics/types';
+  import type { AnalyticsIssue } from '../../analytics/types';
 
   // Props
   let {

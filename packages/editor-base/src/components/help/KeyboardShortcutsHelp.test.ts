@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp.svelte';
-import { shortcutCategories, showShortcutsHelp } from '$lib/stores/keyboardShortcutsStore';
+import { shortcutCategories, showShortcutsHelp } from '../../stores/keyboardShortcutsStore';
 
 // Mock trapFocus utility
 vi.mock('$lib/utils/accessibility', () => ({

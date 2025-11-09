@@ -5,8 +5,8 @@
     suggestions,
     canGenerate,
     aiActions,
-  } from '$lib/stores/aiStore';
-  import type { WritingSuggestion } from '$lib/ai/types';
+  } from '../../stores/aiStore';
+  import type { WritingSuggestion } from '../../ai/types';
 
   // Props
   let {

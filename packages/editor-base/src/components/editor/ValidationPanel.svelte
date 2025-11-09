@@ -16,7 +16,7 @@
   } from '../../stores/validationStore';
   import { selectedPassageId } from '../../stores/storyStateStore';
   import { viewMode, viewPreferencesActions } from '../../stores/viewPreferencesStore';
-  import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '@whisker/core-ts'types';
+  import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '@whisker/core-ts';
 
   // Filter state
   let selectedSeverity: ValidationSeverity | 'all' = 'all';
@@ -777,7 +777,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
         on:click|stopPropagation
-        role="dialog" tabindex="-1"
+        role="dialog"
         aria-modal="true"
         aria-labelledby="fix-all-confirm-title"
         tabindex="-1"
@@ -864,7 +864,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
         on:click|stopPropagation
-        role="dialog" tabindex="-1"
+        role="dialog"
         aria-modal="true"
         aria-labelledby="fix-all-summary-title"
         tabindex="-1"

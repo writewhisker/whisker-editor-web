@@ -51,3 +51,10 @@ export * from './testScenarioStore';
 export * from './variableDependencyStore';
 export * from './versionDiffStore';
 export * from './wordGoalStore';
+
+// Additional stores (Phase 3d)
+export * from './analyticsStore';
+export * from './changeTrackingStore';
+export * from './fileOperationsStore';
+export * from './parentalControlsStore';
+export * from './projectStore';

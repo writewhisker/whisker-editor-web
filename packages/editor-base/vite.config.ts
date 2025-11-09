@@ -21,7 +21,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['svelte', '@whisker/core-ts', '@whisker/core-ts/validation'],
+      external: ['svelte', '@whisker/core-ts', 'monaco-editor'],
     },
   },
   test: {

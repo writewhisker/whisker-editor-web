@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { aiConfig, isAIEnabled, usageStats, aiActions } from '$lib/stores/aiStore';
-  import type { AIProvider } from '$lib/ai/types';
+  import { aiConfig, isAIEnabled, usageStats, aiActions } from '../../stores/aiStore';
+  import type { AIProvider } from '../../ai/types';
 
   // State
   let provider = $state<AIProvider>($aiConfig.provider);

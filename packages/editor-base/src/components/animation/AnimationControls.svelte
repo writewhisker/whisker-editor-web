@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { TransitionType, EasingFunction } from '$lib/animations/types';
+  import type { TransitionType, EasingFunction } from '../../animations/types';
 
   // Props
   let {

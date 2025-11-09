@@ -3,9 +3,9 @@
   import IssueList from './IssueList.svelte';
   import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
   import PlaythroughList from './PlaythroughList.svelte';
-  import { currentMetrics, isAnalyzing, analyticsActions, lastAnalyzed } from '$lib/stores/analyticsStore';
-  import { getPlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder';
-  import { currentStory } from '$lib/stores/storyStateStore';
+  import { currentMetrics, isAnalyzing, analyticsActions, lastAnalyzed } from '../../stores/analyticsStore';
+  import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
+  import { currentStory } from '../../stores/storyStateStore';
 
   // State
   let activeTab = $state<'metrics' | 'issues' | 'playthroughs' | 'history'>('metrics');

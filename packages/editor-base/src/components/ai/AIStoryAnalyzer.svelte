@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { isGenerating, canGenerate, aiActions } from '$lib/stores/aiStore';
-  import { currentStory } from '$lib/stores/storyStateStore';
-  import type { StoryAnalysisResult } from '$lib/ai/types';
+  import { isGenerating, canGenerate, aiActions } from '../../stores/aiStore';
+  import { currentStory } from '../../stores/storyStateStore';
+  import type { StoryAnalysisResult } from '../../ai/types';
 
   // Props
   let {

@@ -8,6 +8,7 @@ export class StaticSiteExporter implements IExporter {
   readonly name = 'Static Site Exporter';
   readonly format = 'html-standalone';
   readonly description = 'Exports story as standalone HTML with embedded player';
+  readonly extension = '.html';
   readonly extensions = ['.html'];
   readonly mimeType = 'text/html';
 
@@ -18,7 +19,6 @@ export class StaticSiteExporter implements IExporter {
       if (!story) {
         return {
           success: false,
-          format: this.format,
           error: 'No story provided for export',
         };
       }
@@ -34,14 +34,12 @@ export class StaticSiteExporter implements IExporter {
 
       return {
         success: true,
-        format: this.format,
-        data: html,
+        content: html,
         filename: `${this.sanitizeFilename(story.metadata.title || 'story')}.html`,
       };
     } catch (error) {
       return {
         success: false,
-        format: this.format,
         error: error instanceof Error ? error.message : 'Unknown export error',
       };
     }

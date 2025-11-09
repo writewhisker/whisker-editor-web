@@ -10,7 +10,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story } from './projectStore';
+import type { Story } from '@whisker/core-ts';
 
 export type ExportTarget = 'pwa' | 'cordova' | 'capacitor' | 'standalone';
 export type Orientation = 'portrait' | 'landscape' | 'any';

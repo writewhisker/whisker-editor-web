@@ -2,6 +2,7 @@
   import { wordGoalStore, goals, selectedGoalId, activeGoals, type WordGoal, type GoalType } from '../stores/wordGoalStore';
   import { currentStory } from '../stores/storyStateStore';
   import { notificationStore } from '../stores/notificationStore';
+  import type { Passage } from '@whisker/core-ts';
   import { onMount, onDestroy } from 'svelte';
 
   let showAddGoal = false;
@@ -12,7 +13,7 @@
 
   // Calculate total word count
   $: totalWords = $currentStory
-    ? Array.from($currentStory.passages.values())
+    ? (Array.from($currentStory.passages.values()) as Passage[])
         .reduce((sum, passage) => sum + (passage.content?.split(/\s+/).filter(w => w.length > 0).length || 0), 0)
     : 0;
 

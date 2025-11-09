@@ -32,3 +32,22 @@ export * from './ageGroupFeatures';
 
 // Player store (Phase 2e-8)
 export * from './playerStore';
+
+// Feature stores (Phase 3b)
+export * from './accessibilityStore';
+export * from './achievementStore';
+export * from './adaptiveDifficultyStore';
+export * from './aiStore';
+export * from './aiWritingStore';
+export * from './characterStore';
+export * from './collaborationStore';
+export * from './exportStore';
+export * from './mobileExportStore';
+export * from './pacingStore';
+export * from './playtestStore';
+export * from './pluginStore';
+export * from './saveSystemStore';
+export * from './testScenarioStore';
+export * from './variableDependencyStore';
+export * from './versionDiffStore';
+export * from './wordGoalStore';

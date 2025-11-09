@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { trapFocus } from '$lib/utils/accessibility';
-  import { loadFromLocalStorage, clearLocalStorage, formatAutoSaveTime, type AutoSaveData } from '$lib/utils/autoSave';
+  import { trapFocus } from '../utils/accessibility';
+  import { loadFromLocalStorage, clearLocalStorage, formatAutoSaveTime, type AutoSaveData } from '../utils/autoSave';
 
   export let onRecover: (data: AutoSaveData) => void;
   export let onDismiss: () => void;

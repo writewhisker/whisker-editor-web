@@ -32,7 +32,7 @@
     type LayoutOptions,
   } from '../utils/graphLayout';
   import { validationResult, validationActions } from '../stores/validationStore';
-  import type { ValidationIssue } from '@whisker/core-ts/validation';
+  import type { ValidationIssue } from '@whisker/core-ts';
   import { prefersReducedMotion } from '../utils/motion';
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
   import MobileToolbar from './graph/MobileToolbar.svelte';

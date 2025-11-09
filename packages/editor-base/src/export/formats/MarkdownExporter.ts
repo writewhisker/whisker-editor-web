@@ -4,7 +4,7 @@
  * Exports stories as Markdown documentation for readability and sharing.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story, Variable } from '@whisker/core-ts';
 import type { Passage } from '@whisker/core-ts';
 import type { Choice } from '@whisker/core-ts';
 import type {
@@ -263,7 +263,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate variables section
    */
   private generateVariablesSection(story: Story): string {
-    const variables = Array.from(story.variables.values());
+    const variables = Array.from(story.variables.values()) as Variable[];
 
     const varList = variables.map(v => {
       const value = typeof v.initial === 'string' ? `"${v.initial}"` : v.initial;

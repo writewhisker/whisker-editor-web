@@ -1,11 +1,12 @@
 <script lang="ts">
   import { currentStory } from '../../stores/storyStateStore';
   import { playerVariables, playerActions } from '../../stores/playerStore';
+  import type { Variable } from '@whisker/core-ts';
 
   // Get story variables definitions
   $: storyVariables = $currentStory
-    ? Array.from($currentStory.variables.values())
-    : [];
+    ? (Array.from($currentStory.variables.values()) as Variable[])
+    : ([] as Variable[]);
 
   function getInputType(type: string): string {
     switch (type) {

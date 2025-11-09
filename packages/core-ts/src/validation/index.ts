@@ -2,6 +2,8 @@
  * Story validation and quality analysis
  */
 
+import { AutoFixer } from './AutoFixer';
+
 export { StoryValidator } from './StoryValidator';
 export { AutoFixer } from './AutoFixer';
 export { QualityAnalyzer, createQualityAnalyzer } from './QualityAnalyzer';

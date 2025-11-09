@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { Story, type ProjectData } from '@whisker/core-ts';
+import { Story, Passage, Variable, type ProjectData } from '@whisker/core-ts';
 
 /**
  * Core story state store
@@ -81,15 +81,15 @@ export const storyStateActions = {
  */
 
 // List of all passages
-export const passageList = derived(currentStory, $story => {
+export const passageList = derived<typeof currentStory, Passage[]>(currentStory, $story => {
   if (!$story) return [];
-  return Array.from($story.passages.values());
+  return Array.from($story.passages.values()) as Passage[];
 });
 
 // List of all variables
-export const variableList = derived(currentStory, $story => {
+export const variableList = derived<typeof currentStory, Variable[]>(currentStory, $story => {
   if (!$story) return [];
-  return Array.from($story.variables.values());
+  return Array.from($story.variables.values()) as Variable[];
 });
 
 // Count of passages

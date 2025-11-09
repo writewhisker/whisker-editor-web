@@ -21,7 +21,7 @@ export const passageOperations = {
       // Check for duplicate titles
       const requestedTitle = title || 'Untitled Passage';
       const existingPassage = Array.from(story.passages.values()).find(
-        p => p.title.toLowerCase() === requestedTitle.toLowerCase()
+        (p: Passage) => p.title.toLowerCase() === requestedTitle.toLowerCase()
       );
 
       let finalTitle = requestedTitle;
@@ -30,7 +30,7 @@ export const passageOperations = {
         // Auto-append number to make it unique
         let counter = 2;
         let uniqueTitle = `${requestedTitle} ${counter}`;
-        while (Array.from(story.passages.values()).some(p => p.title.toLowerCase() === uniqueTitle.toLowerCase())) {
+        while (Array.from(story.passages.values()).some((p: Passage) => p.title.toLowerCase() === uniqueTitle.toLowerCase())) {
           counter++;
           uniqueTitle = `${requestedTitle} ${counter}`;
         }
@@ -82,7 +82,7 @@ export const passageOperations = {
       // Check for duplicate title if title is being updated
       if (updates.title !== undefined && updates.title !== passage.title) {
         const existingPassage = Array.from(story.passages.values()).find(
-          p => p.id !== passageId && p.title.toLowerCase() === updates.title!.toLowerCase()
+          (p: Passage) => p.id !== passageId && p.title.toLowerCase() === updates.title!.toLowerCase()
         );
 
         if (existingPassage) {
@@ -168,7 +168,7 @@ export const passageOperations = {
       // Check for duplicate titles and make unique if necessary
       let finalTitle = duplicate.title;
       let counter = 2;
-      while (Array.from(story.passages.values()).some(p => p.title.toLowerCase() === finalTitle.toLowerCase())) {
+      while (Array.from(story.passages.values()).some((p: Passage) => p.title.toLowerCase() === finalTitle.toLowerCase())) {
         finalTitle = `${passage.title} (Copy ${counter})`;
         counter++;
       }

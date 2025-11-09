@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { tick } from 'svelte';
-import { Story } from '@whisker/core-ts';
+import { Story, Passage } from '@whisker/core-ts';
 import { storyStateActions, currentStory } from './storyStateStore';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions, selectedPassageId } from './selectionStore';
@@ -54,7 +54,7 @@ export const historyIntegration = {
         // Update selection if the currently selected passage no longer exists
         const currentSelection = get(selectedPassageId);
         if (currentSelection && !story.getPassage(currentSelection)) {
-          const firstPassage = Array.from(story.passages.values())[0];
+          const firstPassage = Array.from(story.passages.values())[0] as Passage | undefined;
           if (firstPassage) {
             selectionActions.selectPassage(firstPassage.id);
           } else {

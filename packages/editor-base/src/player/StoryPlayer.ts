@@ -1,6 +1,7 @@
 import type { Story } from '@whisker/core-ts';
 import type { Passage } from '@whisker/core-ts';
 import type { Choice } from '@whisker/core-ts';
+import type { Variable } from '@whisker/core-ts';
 import type {
   PlaythroughStep,
   PlaythroughRecording,
@@ -490,7 +491,7 @@ export class StoryPlayer {
     this.variables.clear();
 
     // Set initial values from story variables
-    for (const variable of Array.from(this.story.variables.values())) {
+    for (const variable of Array.from(this.story.variables.values()) as Variable[]) {
       this.variables.set(variable.name, variable.initial);
     }
   }

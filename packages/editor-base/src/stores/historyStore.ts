@@ -91,4 +91,14 @@ export const historyActions = {
   clear() {
     history.set(initialState);
   },
+
+  // Check if undo is available
+  canUndo(): boolean {
+    return get(history).past.length > 0;
+  },
+
+  // Check if redo is available
+  canRedo(): boolean {
+    return get(history).future.length > 0;
+  },
 };

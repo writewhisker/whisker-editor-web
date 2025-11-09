@@ -1,5 +1,4 @@
 import type { Passage } from '../models';
-import type { Choice } from '../models';
 
 /**
  * Represents a single step in a playthrough

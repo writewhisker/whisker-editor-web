@@ -5,7 +5,7 @@
  */
 
 import type { Story } from '@whisker/core-ts';
-import type { ValidationResult } from '@whisker/core-ts/validation';
+import type { ValidationResult } from '@whisker/core-ts';
 
 /**
  * Supported import formats

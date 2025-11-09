@@ -6,7 +6,7 @@
   import { selectedPassageId } from '../../stores/selectionStore';
   import { projectMetadataActions as projectActions } from '../../stores/projectMetadataStore';
 
-  import type { ValidationIssue } from '@whisker/core-ts/validation';
+  import type { ValidationIssue } from '@whisker/core-ts';
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
   import { setupLongPress, isTouch } from '../../utils/mobile';

@@ -31,9 +31,9 @@ export class StoryPlayer {
   private startTime: number = 0;
   private paused: boolean = false;
   private recordingEnabled: boolean = false;
-  private recorder: PlaythroughRecorder;
+  private recorder: any | null = null;  // PlaythroughRecorder - optional dependency
   private currentPlaythrough: Playthrough | null = null;
-  private luaEngine: LuaEngine;
+  private luaEngine: any | null = null;  // LuaEngine - optional dependency
 
   constructor() {
     // Initialize event listener maps
@@ -43,11 +43,7 @@ export class StoryPlayer {
     this.eventListeners.set('error', new Set());
     this.eventListeners.set('stateChanged', new Set());
 
-    // Initialize playthrough recorder
-    this.recorder = getPlaythroughRecorder();
-
-    // Initialize Lua engine
-    this.luaEngine = getLuaEngine();
+    // Playthrough recorder and Lua engine are optional - can be injected later
   }
 
   /**
@@ -477,7 +473,7 @@ export class StoryPlayer {
   /**
    * Get the playthrough recorder instance
    */
-  getRecorder(): PlaythroughRecorder {
+  getRecorder(): any | null {
     return this.recorder;
   }
 

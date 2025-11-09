@@ -35,6 +35,22 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "import": "./dist/utils/index.js"
+    },
+    "./audio": {
+      "types": "./dist/audio/index.d.ts",
+      "import": "./dist/audio/index.js"
+    },
+    "./analytics": {
+      "types": "./dist/analytics/index.d.ts",
+      "import": "./dist/analytics/index.js"
+    },
+    "./animations": {
+      "types": "./dist/animations/index.d.ts",
+      "import": "./dist/animations/index.js"
+    },
+    "./publishing": {
+      "types": "./dist/publishing/index.d.ts",
+      "import": "./dist/publishing/index.js"
     }
   },
   "files": [

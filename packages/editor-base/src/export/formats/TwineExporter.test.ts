@@ -36,12 +36,12 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
+      expect(result.content).toBeDefined();
       expect(result.format).toBe('twine');
       expect(result.filename).toBe('Test Story.html');
 
       // Verify HTML structure
-      const html = result.data as string;
+      const html = result.content as string;
       expect(html).toContain('<tw-storydata');
       expect(html).toContain('name="Test Story"');
       expect(html).toContain('ifid="TEST-IFID-12345"');
@@ -78,7 +78,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       // Verify all passages are present
       expect(html).toContain('name="Start"');
@@ -109,7 +109,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('tags="intro important"');
     });
@@ -128,7 +128,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('name="Empty Story"');
     });
@@ -152,7 +152,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('name="Untitled Story"');
     });
@@ -184,7 +184,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('&lt;html&gt;');
       expect(html).toContain('&amp;');
@@ -211,7 +211,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('name="Story &lt;with&gt; &quot;HTML&quot;"');
     });
@@ -235,7 +235,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('name="Passage &lt;with&gt; &quot;HTML&quot;"');
     });
@@ -259,7 +259,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('$playerName');
       expect(html).toContain('$health');
@@ -286,7 +286,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('(if: health &gt; 50)[');
       expect(html).toContain('](else:)[');
@@ -315,7 +315,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('(set: $health to 100)');
       expect(html).toContain('(set: $name to &quot;Hero&quot;)');
@@ -342,7 +342,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toMatch(/ifid="[a-zA-Z0-9_-]+"/);
     });
@@ -372,7 +372,7 @@ describe('TwineExporter', () => {
       const result = await exporter.export({ story, options: {}, format: 'twine' });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('position="250,300"');
     });

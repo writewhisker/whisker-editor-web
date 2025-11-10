@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import TelemetryPanel from './TelemetryPanel.svelte';
-import { getTelemetryService } from '../../services/TelemetryService';
-import type { StorageMetrics, PerformanceMetric, ErrorEvent, QuotaMetrics } from '../../services/TelemetryService';
+import { TelemetryService } from '../../services/TelemetryService';
 
 // Mock the telemetry service
 vi.mock('../../services/TelemetryService', () => {
@@ -59,11 +58,11 @@ vi.mock('../../services/TelemetryService', () => {
 });
 
 describe('TelemetryPanel', () => {
-  let telemetryService: ReturnType<typeof getTelemetryService>;
+  let telemetryService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    telemetryService = getTelemetryService();
+    telemetryService = new TelemetryService();
     vi.useFakeTimers();
   });
 
@@ -399,7 +398,7 @@ describe('TelemetryPanel', () => {
           success: true,
           timestamp: Date.now(),
         },
-      ] as PerformanceMetric[]);
+      ] as any[]);
 
       const { container } = render(TelemetryPanel);
 
@@ -408,7 +407,7 @@ describe('TelemetryPanel', () => {
     });
 
     it('should limit history to last 10 operations', () => {
-      const history: PerformanceMetric[] = Array.from({ length: 15 }, (_, i) => ({
+      const history: any[] = Array.from({ length: 15 }, (_, i) => ({
         operation: 'read',
         key: `key-${i}`,
         duration: 10,
@@ -441,7 +440,7 @@ describe('TelemetryPanel', () => {
           key: 'test-key',
           timestamp: Date.now(),
         },
-      ] as ErrorEvent[]);
+      ] as any);
 
       const { container } = render(TelemetryPanel);
 
@@ -451,7 +450,7 @@ describe('TelemetryPanel', () => {
     });
 
     it('should limit error display to last 5 errors', () => {
-      const errors: ErrorEvent[] = Array.from({ length: 10 }, (_, i) => ({
+      const errors: any[] = Array.from({ length: 10 }, (_, i) => ({
         operation: 'read',
         error: `Error ${i}`,
         timestamp: Date.now() + i,

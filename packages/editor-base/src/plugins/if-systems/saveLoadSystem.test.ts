@@ -14,7 +14,7 @@ describe('Save/Load System Plugin', () => {
       inventory: { items: { sword: 1 }, equipped: [], capacity: 10, maxCapacity: 100 },
       playtime: 0,
     } as any,
-    variables: new Map([
+    variables: new Map<string, any>([
       ['health', 100],
       ['has_sword', true],
     ]),
@@ -93,7 +93,7 @@ describe('Save/Load System Plugin', () => {
 
       // Modify state
       context.storyState.stats.stats.health.value = 50;
-      context.variables.set('health', 50);
+      context.variables.set('health', 50 as any);
 
       // Load
       const loadAction = saveLoadSystem.actions!.find(a => a.type === 'save.load')!;

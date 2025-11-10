@@ -493,7 +493,11 @@ describe('StoryComparisonView', () => {
     it('should handle empty passage list', async () => {
       const { compareStories } = await import('../../utils/storyComparison');
       vi.mocked(compareStories).mockReturnValue({
+        passagesAdded: [],
+        passagesRemoved: [],
+        passagesModified: [],
         metadataChanged: false,
+        variablesChanged: false,
         passageDiffs: [],
         variableDiffs: [],
         summary: { added: 0, removed: 0, modified: 0 },
@@ -528,7 +532,11 @@ describe('StoryComparisonView', () => {
     it('should handle stories with no variables', async () => {
       const { compareStories } = await import('../../utils/storyComparison');
       vi.mocked(compareStories).mockReturnValue({
+        passagesAdded: [],
+        passagesRemoved: [],
+        passagesModified: [],
         metadataChanged: false,
+        variablesChanged: false,
         passageDiffs: [],
         variableDiffs: [],
         summary: { added: 0, removed: 0, modified: 0 },

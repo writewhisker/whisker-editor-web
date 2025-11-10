@@ -43,6 +43,7 @@ export interface ConditionContext {
   currentPassage: Passage | null;
   storyState: Record<string, any>;
   variables: Map<string, any>;
+  history?: string[];
 }
 
 // UI extension points

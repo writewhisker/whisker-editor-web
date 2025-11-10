@@ -62,7 +62,7 @@ export class PublishingService {
     // Check for inappropriate content (very simplified)
     const blockedWords = ['violence', 'weapon', 'blood'];
     for (const passage of passages) {
-      const content = passage.content.toLowerCase();
+      const content = ((passage as any).content || '').toLowerCase();
       for (const word of blockedWords) {
         if (content.includes(word)) {
           return {

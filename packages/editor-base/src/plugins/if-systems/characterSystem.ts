@@ -365,7 +365,7 @@ export const characterSystem: EditorPlugin = {
       const characters = context.storyState.characters;
       if (characters) {
         const characterCount = Object.keys(characters.characters).length;
-        const metCount = Object.values(characters.relationships).filter(r => r.met).length;
+        const metCount = Object.values(characters.relationships).filter((r: any) => r.met).length;
         console.log(`[Character System] Story loaded: ${metCount}/${characterCount} characters met`);
       }
     },

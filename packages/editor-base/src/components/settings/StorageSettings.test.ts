@@ -55,7 +55,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText('Storage Settings') as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText('Storage Settings')).toBeInTheDocument();
       });
     });
 
@@ -63,9 +64,12 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/Used:/) as any).toBeInTheDocument();
-        expect(screen.getByText(/Available:/) as any).toBeInTheDocument();
-        expect(screen.getByText(/Total:/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Used:/)).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Available:/)).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Total:/)).toBeInTheDocument();
       });
     });
 
@@ -73,9 +77,12 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/1.00 MB/) as any).toBeInTheDocument(); // Used
-        expect(screen.getByText(/9.00 MB/) as any).toBeInTheDocument(); // Available
-        expect(screen.getByText(/10.00 MB/) as any).toBeInTheDocument(); // Total
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/1.00 MB/)).toBeInTheDocument(); // Used
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/9.00 MB/)).toBeInTheDocument(); // Available
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/10.00 MB/)).toBeInTheDocument(); // Total
       });
     });
 
@@ -83,7 +90,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/10.0% used/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/10.0% used/)).toBeInTheDocument();
       });
     });
   });
@@ -93,7 +101,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/Up to Date/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Up to Date/)).toBeInTheDocument();
       });
     });
 
@@ -103,7 +112,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/Migration Pending/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Migration Pending/)).toBeInTheDocument();
       });
     });
 
@@ -113,7 +123,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText(/Migration Pending/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Migration Pending/)).toBeInTheDocument();
       });
 
       const button = screen.getByText('Run Migration');
@@ -121,7 +132,8 @@ describe('StorageSettings', () => {
 
       await waitFor(() => {
         expect(mockMigration.migrateAll).toHaveBeenCalled();
-        expect(screen.getByText(/Successfully migrated 5 items/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Successfully migrated 5 items/)).toBeInTheDocument();
       });
     });
   });
@@ -133,7 +145,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText('Clear Cache') as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText('Clear Cache')).toBeInTheDocument();
       });
 
       const button = screen.getByText('Clear Cache');
@@ -141,7 +154,8 @@ describe('StorageSettings', () => {
 
       await waitFor(() => {
         expect(mockPrefService.clearCache).toHaveBeenCalled();
-        expect(screen.getByText(/Cache cleared successfully/) as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText(/Cache cleared successfully/)).toBeInTheDocument();
       });
     });
 
@@ -151,7 +165,8 @@ describe('StorageSettings', () => {
       render(StorageSettings);
 
       await waitFor(() => {
-        expect(screen.getByText('Clear Cache') as any).toBeInTheDocument();
+        // @ts-expect-error - toBeInTheDocument from testing-library
+        expect(screen.getByText('Clear Cache')).toBeInTheDocument();
       });
 
       const button = screen.getByText('Clear Cache');

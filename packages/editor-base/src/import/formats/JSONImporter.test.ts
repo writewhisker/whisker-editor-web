@@ -116,9 +116,9 @@ describe('JSONImporter', () => {
 
       const passages = Array.from(result.story!.passages.values());
       // Find our test Start passage by content (not the default one)
-      const startPassage = passages.find(p => p.content === 'Welcome!');
+      const startPassage = passages.find(p => (p as any).content === 'Welcome!');
       expect(startPassage).toBeDefined();
-      expect(startPassage?.content).toBe('Welcome!');
+      expect((startPassage as any)?.content).toBe('Welcome!');
     });
 
     it('should preserve choices and connections', async () => {
@@ -134,10 +134,10 @@ describe('JSONImporter', () => {
 
       const passages = Array.from(result.story!.passages.values());
       // Find our test Start passage with choices (not the default one)
-      const startPassage = passages.find(p => p.choices.length > 0);
+      const startPassage = passages.find(p => (p as any).choices?.length > 0);
       expect(startPassage).toBeDefined();
-      expect(startPassage?.choices.length).toBeGreaterThan(0);
-      expect(startPassage?.choices[0].text).toBe('Continue');
+      expect((startPassage as any)?.choices.length).toBeGreaterThan(0);
+      expect((startPassage as any)?.choices[0].text).toBe('Continue');
     });
 
     it('should import direct story data format', async () => {

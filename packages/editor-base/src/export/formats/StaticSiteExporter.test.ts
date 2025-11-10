@@ -256,7 +256,7 @@ describe('StaticSiteExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: { format: 'html-standalone' });
+      const result = await exporter.export({ story: null as any, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();

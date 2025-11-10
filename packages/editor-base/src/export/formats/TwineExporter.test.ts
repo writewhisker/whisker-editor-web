@@ -10,7 +10,7 @@ describe('TwineExporter', () => {
     it('should have correct exporter metadata', () => {
       expect(exporter.name).toBe('Twine HTML Exporter');
       expect(exporter.format).toBe('twine');
-      expect(exporter.extensions).toEqual(['.html']);
+      expect(exporter.extension).toEqual('.html');
       expect(exporter.mimeType).toBe('text/html');
     });
   });
@@ -158,7 +158,7 @@ describe('TwineExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: { format: 'twine' });
+      const result = await exporter.export({ story: null as any, options: { format: 'twine' } });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -360,8 +360,8 @@ describe('TwineExporter', () => {
 
       // Remove default passage
       const defaultPassage = Array.from(story.passages.values())[0];
-      if (defaultPassage) {
-        story.passages.delete(defaultPassage.id);
+      if (defaultPassage && (defaultPassage as any).id) {
+        story.passages.delete((defaultPassage as any).id);
       }
 
       const passage = new Passage({ title: 'Positioned', position: { x: 250, y: 300 } });

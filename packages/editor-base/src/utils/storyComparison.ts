@@ -53,14 +53,14 @@ export function compareStories(oldStory: Story, newStory: Story): StoryDiff {
   // Find added passages
   for (const id of newPassageIds) {
     if (!oldPassageIds.has(id)) {
-      passagesAdded.push(id);
+      passagesAdded.push(id as string);
     }
   }
 
   // Find removed passages
   for (const id of oldPassageIds) {
     if (!newPassageIds.has(id)) {
-      passagesRemoved.push(id);
+      passagesRemoved.push(id as string);
     }
   }
 
@@ -71,12 +71,12 @@ export function compareStories(oldStory: Story, newStory: Story): StoryDiff {
       const newPassage = newStory.passages.get(id);
 
       if (oldPassage && newPassage) {
-        const contentChanged = oldPassage.content !== newPassage.content;
+        const contentChanged = (oldPassage as any).content !== (newPassage as any).content;
         const titleChanged = oldPassage.title !== newPassage.title;
-        const choicesChanged = JSON.stringify(oldPassage.choices) !== JSON.stringify(newPassage.choices);
+        const choicesChanged = JSON.stringify((oldPassage as any).choices) !== JSON.stringify((newPassage as any).choices);
 
         if (contentChanged || titleChanged || choicesChanged) {
-          passagesModified.push(id);
+          passagesModified.push(id as string);
         }
       }
     }

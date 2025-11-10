@@ -89,7 +89,7 @@ describe('GitHubCommitHistory', () => {
     });
 
     it('should show loading spinner while fetching commits', () => {
-      mockGetCommitHistory.mockImplementation(() => new Promise(() => {}));
+      (mockGetCommitHistory as any).mockImplementation(() => new Promise(() => {}));
 
       const { container } = render(GitHubCommitHistory, {
         props: {
@@ -181,7 +181,7 @@ describe('GitHubCommitHistory', () => {
     });
 
     it('should show error message on fetch failure', async () => {
-      mockGetCommitHistory.mockRejectedValue(new Error('Failed to fetch'));
+      (mockGetCommitHistory as any).mockRejectedValue(new Error('Failed to fetch'));
 
       const { getByText } = render(GitHubCommitHistory, {
         props: {
@@ -295,7 +295,7 @@ describe('GitHubCommitHistory', () => {
     });
 
     it('should show loading spinner while loading file content', async () => {
-      mockGetFileAtCommit.mockImplementation(() => new Promise(() => {}));
+      (mockGetFileAtCommit as any).mockImplementation(() => new Promise(() => {}));
 
       const { getByText, container } = render(GitHubCommitHistory, {
         props: {
@@ -657,7 +657,7 @@ describe('GitHubCommitHistory', () => {
         expect(mockGetCommitHistory).toHaveBeenCalledWith('user1', 'repo1', 'file1.json');
       });
 
-      mockGetCommitHistory.mockClear();
+      (mockGetCommitHistory as any).mockClear();
 
       await rerender({
         show: true,

@@ -76,6 +76,9 @@ export interface ExportResult {
   /** Exported content (string or Blob) */
   content?: string | Blob;
 
+  /** Export format used */
+  format?: ExportFormat;
+
   /** Filename suggestion */
   filename?: string;
 

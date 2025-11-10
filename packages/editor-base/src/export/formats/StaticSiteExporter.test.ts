@@ -39,7 +39,7 @@ describe('StaticSiteExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       expect(result.content).toBeDefined();
@@ -66,7 +66,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -86,7 +86,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -108,7 +108,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -142,7 +142,7 @@ describe('StaticSiteExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -164,7 +164,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       expect(result.filename).toBe('my-cool-story.html');
@@ -201,7 +201,7 @@ describe('StaticSiteExporter', () => {
 
       story.startPassage = passage1.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -245,7 +245,7 @@ describe('StaticSiteExporter', () => {
 
       story.startPassage = passage1.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -256,7 +256,7 @@ describe('StaticSiteExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story: null as any, options: { format: 'html-standalone' });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -274,7 +274,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -295,7 +295,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -314,7 +314,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;

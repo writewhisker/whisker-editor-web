@@ -33,7 +33,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       expect(result.content).toBeDefined();
@@ -75,7 +75,7 @@ describe('TwineExporter', () => {
 
       story.startPassage = passage1.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -106,7 +106,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -125,7 +125,7 @@ describe('TwineExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -149,7 +149,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -158,7 +158,7 @@ describe('TwineExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: {}, format: 'twine' });
+      const result = await exporter.export({ story: null as any, options: { format: 'twine' });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -181,7 +181,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -208,7 +208,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -232,7 +232,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -256,7 +256,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -283,7 +283,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -312,7 +312,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -339,7 +339,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;
@@ -369,7 +369,7 @@ describe('TwineExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'twine' });
+      const result = await exporter.export({ story, options: { format: 'twine' } });
 
       expect(result.success).toBe(true);
       const html = result.content as string;

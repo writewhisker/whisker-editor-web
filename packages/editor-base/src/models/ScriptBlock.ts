@@ -10,7 +10,10 @@ export type ScriptBlockType =
   | 'action'
   | 'function'
   | 'event'
-  | 'comment';
+  | 'comment'
+  | 'math_operation'
+  | 'change_variable'
+  | 'comparison';
 
 export interface ScriptBlockData {
   id?: string;
@@ -60,6 +63,7 @@ export class ScriptBlock {
   }>;
   position: { x: number; y: number };
   metadata: Record<string, any>;
+  color?: string;
 
   constructor(data: Partial<ScriptBlockData> & { type: ScriptBlockType }) {
     this.id = data.id || nanoid();
@@ -71,6 +75,7 @@ export class ScriptBlock {
     this.parameters = data.parameters || [];
     this.position = data.position || { x: 0, y: 0 };
     this.metadata = data.metadata || {};
+    this.color = (data as any).color;
   }
 
   serialize(): ScriptBlockData {
@@ -98,7 +103,7 @@ export function createBlock(type: ScriptBlockType, label?: string): ScriptBlock 
 }
 
 // Block categories for organization
-export type BlockCategory = 'variables' | 'logic' | 'actions' | 'functions' | 'events' | 'other';
+export type BlockCategory = 'variables' | 'logic' | 'actions' | 'functions' | 'events' | 'other' | 'math' | 'text' | 'output' | 'control';
 
 export type BlockType = ScriptBlockType;
 

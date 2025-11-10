@@ -13,6 +13,15 @@ export interface StoryDiff {
   variablesChanged: boolean;
   passageDiffs?: PassageDiff[];
   variableDiffs?: any[];
+  summary?: string;
+  leftStats?: {
+    totalPassages: number;
+    totalChoices: number;
+  };
+  rightStats?: {
+    totalPassages: number;
+    totalChoices: number;
+  };
 }
 
 export interface PassageDiff {
@@ -21,6 +30,7 @@ export interface PassageDiff {
   oldContent?: string;
   newContent?: string;
   changes: string[];
+  status?: 'added' | 'removed' | 'modified';
 }
 
 // Alias for backward compatibility

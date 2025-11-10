@@ -23,6 +23,11 @@ export interface FlowAnalytics {
   averageChoicesPerPassage: number;
   maxPathDepth: number;
   cyclicPaths: boolean;
+  circularPaths?: string[][];
+  totalPaths?: number;
+  shortestPath?: number;
+  longestPath?: number;
+  bottlenecks?: string[];
 }
 
 // Alias for backward compatibility

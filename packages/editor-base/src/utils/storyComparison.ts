@@ -13,14 +13,20 @@ export interface StoryDiff {
   variablesChanged: boolean;
   passageDiffs?: PassageDiff[];
   variableDiffs?: any[];
-  summary?: string;
+  summary?: string | { added: number; removed: number; modified: number };
   leftStats?: {
     totalPassages: number;
     totalChoices: number;
+    passageCount?: number;
+    variableCount?: number;
+    totalWords?: number;
   };
   rightStats?: {
     totalPassages: number;
     totalChoices: number;
+    passageCount?: number;
+    variableCount?: number;
+    totalWords?: number;
   };
 }
 

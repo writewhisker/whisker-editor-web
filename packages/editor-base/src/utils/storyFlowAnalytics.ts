@@ -25,9 +25,9 @@ export interface FlowAnalytics {
   cyclicPaths: boolean;
   circularPaths?: string[][];
   totalPaths?: number;
-  shortestPath?: number;
-  longestPath?: number;
-  bottlenecks?: string[];
+  shortestPath?: number | { length: number; path: string[] };
+  longestPath?: number | { length: number; path: string[] };
+  bottlenecks?: string[] | Array<{ passageId: string; bottleneckScore: number }>;
 }
 
 // Alias for backward compatibility

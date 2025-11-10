@@ -34,9 +34,9 @@ export interface FlowAnalytics {
 export type StoryFlowMetrics = FlowAnalytics;
 
 export function analyzeStoryFlow(story: Story): FlowAnalytics {
-  const passages = Array.from(story.passages.values());
+  const passages = Array.from(story.passages.values()) as Passage[];
   const totalPassages = passages.length;
-  const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
+  const totalChoices = passages.reduce((sum, p) => sum + (p.choices?.length || 0), 0);
 
   // Find dead ends (passages with no choices)
   const deadEnds = passages

@@ -132,7 +132,8 @@
     input.click();
   }
 
-  $: passages: Passage[] = $currentStory ? Array.from($currentStory.passages.values()) : [];
+  let passages: Passage[] = [];
+  $: passages = $currentStory ? Array.from($currentStory.passages.values()) : [];
   $: hasScenarios = $scenarioCount > 0;
 </script>
 

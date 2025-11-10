@@ -12,7 +12,8 @@
   let showPassageSamples = false;
 
   // Get sample passages (first 3)
-  $: samplePassages: Passage[] = result.story
+  let samplePassages: Passage[] = [];
+  $: samplePassages = result.story
     ? Array.from(result.story.passages.values()).slice(0, 3)
     : [];
 

@@ -9,7 +9,7 @@ import {
   autoValidate,
   validationActions,
 } from '../../stores/validationStore';
-import { currentStory } from '../../stores/projectStore';
+import { currentStory } from '../../stores';
 import { Story } from '@whisker/core-ts';
 import { Passage } from '@whisker/core-ts';
 import { Choice } from '@whisker/core-ts';

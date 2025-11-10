@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/svelte';
 import KidsSharePanel from './KidsSharePanel.svelte';
-import { projectActions } from '../../stores/projectStore';
+import { projectActions } from '../../stores';
 
 describe('KidsSharePanel', () => {
   beforeEach(() => {

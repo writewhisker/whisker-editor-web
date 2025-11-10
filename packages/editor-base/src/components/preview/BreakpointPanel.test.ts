@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, waitFor } from '@testing-library/svelte';
 import BreakpointPanel from './BreakpointPanel.svelte';
 import { playerActions } from '../../stores/playerStore';
-import { projectActions } from '../../stores/projectStore';
+import { projectActions } from '../../stores';
 import { Story } from '@whisker/core-ts';
 import { Passage } from '@whisker/core-ts';
 

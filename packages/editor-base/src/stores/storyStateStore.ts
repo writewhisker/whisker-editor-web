@@ -74,7 +74,26 @@ export const storyStateActions = {
     story.updateModified();
     return story.serializeProject();
   },
+
+  /**
+   * Load a project (alias for loadStory)
+   */
+  loadProject(data: ProjectData, filename?: string): Story {
+    return this.loadStory(data);
+  },
+
+  /**
+   * Create a new project (alias for createStory)
+   */
+  newProject(title?: string): Story {
+    return this.createStory(title);
+  },
 };
+
+/**
+ * Legacy alias for backward compatibility
+ */
+export const projectActions = storyStateActions;
 
 /**
  * Derived stores

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import StoryMetricsDashboard from './StoryMetricsDashboard.svelte';
-import { currentStory } from '../../stores/projectStore';
+import { currentStory } from '../../stores';
 import { Story } from '@whisker/core-ts';
 import { Passage } from '@whisker/core-ts';
 

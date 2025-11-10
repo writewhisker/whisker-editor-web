@@ -21,17 +21,17 @@ describe('GitHubConflictResolver', () => {
     localStory.metadata.title = 'My Story';
     // Clear default passage and add our test passages
     localStory.passages.clear();
-    localStory.passages.set('1', new Passage('1', 'Start', 'Local content'));
-    localStory.passages.set('2', new Passage('2', 'Middle', 'More local content'));
+    localStory.passages.set('1', new Passage({ id: '1', title: 'Start', content: 'Local content' }));
+    localStory.passages.set('2', new Passage({ id: '2', title: 'Middle', content: 'More local content' }));
 
     // Create remote story with differences
     remoteStory = new Story();
     remoteStory.metadata.title = 'My Story';
     // Clear default passage and add our test passages
     remoteStory.passages.clear();
-    remoteStory.passages.set('1', new Passage('1', 'Start', 'Remote content'));
-    remoteStory.passages.set('2', new Passage('2', 'Middle', 'More remote content'));
-    remoteStory.passages.set('3', new Passage('3', 'End', 'Remote ending'));
+    remoteStory.passages.set('1', new Passage({ id: '1', title: 'Start', content: 'Remote content' }));
+    remoteStory.passages.set('2', new Passage({ id: '2', title: 'Middle', content: 'More remote content' }));
+    remoteStory.passages.set('3', new Passage({ id: '3', title: 'End', content: 'Remote ending' }));
   });
 
   describe('rendering', () => {
@@ -187,9 +187,9 @@ describe('GitHubConflictResolver', () => {
     });
 
     it('should show variables count differences', () => {
-      localStory.variables.set('var1', { name: 'var1', value: 1, type: 'number' });
-      remoteStory.variables.set('var1', { name: 'var1', value: 1, type: 'number' });
-      remoteStory.variables.set('var2', { name: 'var2', value: 2, type: 'number' });
+      localStory.variables.set('var1', { name: 'var1', initial: 1, type: 'number' });
+      remoteStory.variables.set('var1', { name: 'var1', initial: 1, type: 'number' });
+      remoteStory.variables.set('var2', { name: 'var2', initial: 2, type: 'number' });
 
       const { getByText } = render(GitHubConflictResolver, {
         props: {

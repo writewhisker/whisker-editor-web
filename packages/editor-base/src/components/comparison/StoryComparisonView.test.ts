@@ -70,7 +70,7 @@ describe('StoryComparisonView', () => {
     vi.clearAllMocks();
 
     // Create left story
-    leftStory = new Story({ metadata: { title: 'Test Story v1', author: 'Author A', version: '1.0' } });
+    leftStory = new Story({ metadata: { title: 'Test Story v1', author: 'Author A', version: '1.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
 
     const passage1 = new Passage({ id: 'p1', title: 'Passage 1', content: 'Original content' });
     const passage3 = new Passage({ id: 'p3', title: 'Passage 3', content: 'To be removed' });
@@ -79,7 +79,7 @@ describe('StoryComparisonView', () => {
     leftStory.variables.set('score', new Variable({ name: 'score', type: 'number', initial: 0 }));
 
     // Create right story
-    rightStory = new Story({ metadata: { title: 'Test Story v2', author: 'Author B', version: '2.0' } });
+    rightStory = new Story({ metadata: { title: 'Test Story v2', author: 'Author B', version: '2.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
 
     const passage1r = new Passage({ id: 'p1', title: 'Passage 1', content: 'Modified content' });
     const passage2r = new Passage({ id: 'p2', title: 'Passage 2', content: 'New passage' });

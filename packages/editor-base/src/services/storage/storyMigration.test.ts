@@ -124,7 +124,7 @@ describe('StoryMigration', () => {
   describe('Migration Execution', () => {
     it('should migrate a single story successfully', async () => {
       const story = {
-        metadata: { id: 'story-1', title: 'Test Story', author: 'Test' },
+        metadata: { id: 'story-1', title: 'Test Story', author: 'Test', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
         passages: [{ id: 'p1', title: 'Start', content: 'Beginning' }],
       };
 

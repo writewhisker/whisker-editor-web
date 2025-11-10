@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { pluginManager } from '../PluginManager';
 import { pluginStoreActions } from '../index';
 import { saveLoadSystem } from './saveLoadSystem';
+import { Passage } from '@whisker/core-ts';
 
 describe('Save/Load System Plugin', () => {
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe('Save/Load System Plugin', () => {
       ['health', 100],
       ['has_sword', true],
     ]),
-    currentPassage: { id: '1', title: 'Start', content: '', tags: [], position: { x: 0, y: 0 }, links: [] },
+    currentPassage: new Passage({ id: '1', title: 'Start', content: '', tags: [], position: { x: 0, y: 0 } }),
   });
 
   describe('registration', () => {
@@ -217,14 +218,13 @@ describe('Save/Load System Plugin', () => {
     it('should increment playtime on passage enter', async () => {
       await pluginStoreActions.register(saveLoadSystem);
 
-      const passage = {
+      const passage = new Passage({
         id: 'test',
         title: 'Test',
         content: '',
         tags: [],
         position: { x: 0, y: 0 },
-        links: [],
-      };
+      });
 
       const context = createContext();
       context.storyState.playtime = 0;

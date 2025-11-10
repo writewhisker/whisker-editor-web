@@ -131,7 +131,7 @@ describe('IndexedDBAdapter', () => {
     it('should save a story', async () => {
       const story = {
         id: 'story-1',
-        metadata: { title: 'Test Story', author: 'Test' },
+        metadata: { title: 'Test Story', author: 'Test', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
         passages: [],
       };
 
@@ -142,7 +142,7 @@ describe('IndexedDBAdapter', () => {
     it('should load a saved story', async () => {
       const story = {
         id: 'story-2',
-        metadata: { title: 'Test Story 2', author: 'Test' },
+        metadata: { title: 'Test Story 2', author: 'Test', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
         passages: [{ id: 'p1', title: 'Start', content: 'Beginning' }],
       };
 

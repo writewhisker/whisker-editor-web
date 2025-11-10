@@ -31,7 +31,7 @@ export interface SerializedStory {
 		onExitScript?: string;                      // Script on passage exit
 		connections: Array<{
 			choiceId: string;           // Unique choice ID (preserves editor IDs)
-			targetPassageId: string;
+			target: string;
 			choiceText: string;
 			choiceIndex: number;        // Index in choices array (for ordering)
 			condition?: string;         // Choice condition expression

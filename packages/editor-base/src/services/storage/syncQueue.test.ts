@@ -468,7 +468,7 @@ describe('SyncQueueService', () => {
       const complexData = {
         story: {
           id: 'story-1',
-          metadata: { title: 'Test', author: 'Author', tags: ['tag1', 'tag2'] },
+          metadata: { title: 'Test', author: 'Author', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString(), tags: ['tag1', 'tag2'] },
           passages: [
             { id: 'p1', title: 'Start', content: 'Text' },
             { id: 'p2', title: 'Next', content: 'More text' },

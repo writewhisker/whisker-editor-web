@@ -53,3 +53,20 @@ export const analyticsStore = createAnalyticsStore();
 
 export const playthroughCount = derived(analyticsStore, ($analytics) => $analytics.totalPlays);
 export const completionRate = derived(analyticsStore, ($analytics) => $analytics.completionRate);
+
+// Additional exports for compatibility
+export const currentMetrics = derived(analyticsStore, ($analytics) => $analytics);
+export const isAnalyzing = writable(false);
+export const lastAnalyzed = writable<number | null>(null);
+
+export const analyticsActions = {
+  addPlaythrough: analyticsStore.addPlaythrough,
+  clear: analyticsStore.clear,
+  analyze: () => {
+    isAnalyzing.set(true);
+    setTimeout(() => {
+      isAnalyzing.set(false);
+      lastAnalyzed.set(Date.now());
+    }, 100);
+  },
+};

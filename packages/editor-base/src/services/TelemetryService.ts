@@ -9,6 +9,31 @@ export interface TelemetryEvent {
   properties?: Record<string, any>;
 }
 
+export interface StorageMetrics {
+  used: number;
+  available: number;
+  total: number;
+}
+
+export interface PerformanceMetric {
+  name: string;
+  duration: number;
+  timestamp: number;
+}
+
+export interface ErrorEvent {
+  message: string;
+  stack?: string;
+  timestamp: number;
+  context?: Record<string, any>;
+}
+
+export interface QuotaMetrics {
+  quota: number;
+  usage: number;
+  percentage: number;
+}
+
 export class TelemetryService {
   private events: TelemetryEvent[] = [];
   private enabled: boolean = false;
@@ -61,3 +86,8 @@ export class TelemetryService {
 
 // Singleton instance
 export const telemetryService = new TelemetryService();
+
+// Alias for getTelemetryService
+export function getTelemetryService(): TelemetryService {
+  return telemetryService;
+}

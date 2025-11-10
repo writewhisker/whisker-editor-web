@@ -11,6 +11,11 @@ export interface MinecraftAsset {
   description: string;
 }
 
+export type MinecraftItem = MinecraftAsset & { category: 'item' };
+export type MinecraftMob = MinecraftAsset & { category: 'mob' };
+export type MinecraftBiome = MinecraftAsset & { category: 'biome' };
+export type MinecraftLocation = MinecraftAsset & { category: 'biome' | 'structure' };
+
 export const minecraftAssets: MinecraftAsset[] = [
   {
     id: 'grass-block',
@@ -55,4 +60,17 @@ export function getMinecraftAssetsByCategory(category: MinecraftAsset['category'
 
 export function getMinecraftAssetById(id: string): MinecraftAsset | undefined {
   return minecraftAssets.find((asset) => asset.id === id);
+}
+
+export const minecraftItems = minecraftAssets.filter(a => a.category === 'item') as MinecraftItem[];
+export const minecraftMobs = minecraftAssets.filter(a => a.category === 'mob') as MinecraftMob[];
+export const minecraftBiomes = minecraftAssets.filter(a => a.category === 'biome') as MinecraftBiome[];
+export const minecraftLocations = minecraftAssets.filter(a => a.category === 'biome' || a.category === 'structure') as MinecraftLocation[];
+
+export function searchMinecraftItems(query: string): MinecraftItem[] {
+  return minecraftItems.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+}
+
+export function searchMinecraftMobs(query: string): MinecraftMob[] {
+  return minecraftMobs.filter(mob => mob.name.toLowerCase().includes(query.toLowerCase()));
 }

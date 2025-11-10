@@ -5,7 +5,7 @@
 import { nanoid } from 'nanoid';
 
 export type ChangeType = 'create' | 'update' | 'delete' | 'reorder';
-export type EntityType = 'passage' | 'choice' | 'variable' | 'metadata' | 'asset' | 'function';
+export type EntityType = 'passage' | 'choice' | 'variable' | 'metadata' | 'asset' | 'function' | 'story';
 
 export interface ChangeLogData {
   id?: string;

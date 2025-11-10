@@ -92,6 +92,19 @@ export class ScriptBlock {
     };
   }
 
+  clone(): ScriptBlock {
+    return new ScriptBlock({
+      type: this.type,
+      label: this.label,
+      code: this.code,
+      inputs: JSON.parse(JSON.stringify(this.inputs)),
+      outputs: JSON.parse(JSON.stringify(this.outputs)),
+      parameters: JSON.parse(JSON.stringify(this.parameters)),
+      position: { ...this.position },
+      metadata: { ...this.metadata },
+    });
+  }
+
   static deserialize(data: ScriptBlockData): ScriptBlock {
     return new ScriptBlock(data);
   }

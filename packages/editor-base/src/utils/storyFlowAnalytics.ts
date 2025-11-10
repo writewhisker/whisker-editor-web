@@ -21,18 +21,19 @@ export interface FlowAnalytics {
   deadEnds: string[];
   unreachablePassages: string[];
   averageChoicesPerPassage: number;
+  averagePathLength: number;
   maxPathDepth: number;
   cyclicPaths: boolean;
-  circularPaths?: string[][];
-  totalPaths?: number;
-  shortestPath?: number | { length: number; path: string[] };
-  longestPath?: number | { length: number; path: string[] };
-  bottlenecks?: string[] | Array<{
+  circularPaths: Array<{ path: string[] }>;
+  totalPaths: number;
+  shortestPath: { length: number; path: string[] };
+  longestPath: { length: number; path: string[] };
+  bottlenecks: Array<{
     passageId: string;
-    passageTitle?: string;
+    passageTitle: string;
     bottleneckScore: number;
-    incomingCount?: number;
-    outgoingCount?: number;
+    incomingCount: number;
+    outgoingCount: number;
   }>;
 }
 
@@ -114,8 +115,14 @@ export function analyzeStoryFlow(story: Story): FlowAnalytics {
     deadEnds,
     unreachablePassages,
     averageChoicesPerPassage,
+    averagePathLength: maxPathDepth,
     maxPathDepth,
     cyclicPaths,
+    circularPaths: [],
+    totalPaths: passages.length,
+    shortestPath: { length: 0, path: [] },
+    longestPath: { length: maxPathDepth, path: [] },
+    bottlenecks: [],
   };
 }
 

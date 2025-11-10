@@ -72,3 +72,16 @@ export const hasUnsavedChanges = derived(
   changeTrackingStore,
   ($tracking) => $tracking.hasUnsavedChanges
 );
+
+// Additional exports for compatibility
+export const recentChanges = derived(changeTrackingStore, ($tracking) =>
+  $tracking.changes.slice(-10)
+);
+
+export const isTrackingEnabled = writable(true);
+
+export const changeTrackingActions = {
+  recordChange: changeTrackingStore.recordChange,
+  markSaved: changeTrackingStore.markSaved,
+  clear: changeTrackingStore.clear,
+};

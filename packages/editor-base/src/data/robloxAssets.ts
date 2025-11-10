@@ -11,6 +11,11 @@ export interface RobloxAsset {
   description: string;
 }
 
+export type RobloxItem = RobloxAsset & { category: 'item' };
+export type RobloxBadge = RobloxAsset & { category: 'accessory' };
+export type RobloxSound = RobloxAsset & { category: 'effect' };
+export type RobloxLocation = RobloxAsset & { category: 'environment' };
+
 export const robloxAssets: RobloxAsset[] = [
   {
     id: 'noob-avatar',
@@ -55,4 +60,17 @@ export function getRobloxAssetsByCategory(category: RobloxAsset['category']): Ro
 
 export function getRobloxAssetById(id: string): RobloxAsset | undefined {
   return robloxAssets.find((asset) => asset.id === id);
+}
+
+export const robloxItems = robloxAssets.filter(a => a.category === 'item') as RobloxItem[];
+export const robloxBadges = robloxAssets.filter(a => a.category === 'accessory') as RobloxBadge[];
+export const robloxSounds = robloxAssets.filter(a => a.category === 'effect') as RobloxSound[];
+export const robloxLocations = robloxAssets.filter(a => a.category === 'environment') as RobloxLocation[];
+
+export function searchRobloxItems(query: string): RobloxItem[] {
+  return robloxItems.filter(item => item.name.toLowerCase().includes(query.toLowerCase()));
+}
+
+export function searchRobloxBadges(query: string): RobloxBadge[] {
+  return robloxBadges.filter(badge => badge.name.toLowerCase().includes(query.toLowerCase()));
 }

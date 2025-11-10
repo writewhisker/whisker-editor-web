@@ -32,11 +32,16 @@ export interface StoryDiff {
 
 export interface PassageDiff {
   passageId: string;
-  type: 'added' | 'removed' | 'modified';
+  type: 'added' | 'removed' | 'modified' | 'unchanged';
   oldContent?: string;
   newContent?: string;
   changes: string[];
-  status?: 'added' | 'removed' | 'modified';
+  status?: 'added' | 'removed' | 'modified' | 'unchanged';
+  title?: string;
+  leftChoiceCount?: number;
+  rightChoiceCount?: number;
+  leftWordCount?: number;
+  rightWordCount?: number;
 }
 
 // Alias for backward compatibility

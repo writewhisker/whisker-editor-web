@@ -14,7 +14,11 @@ export interface StoryTemplate {
   platform?: 'minecraft' | 'roblox' | 'generic';
   difficulty?: 'easy' | 'medium' | 'hard';
   passages: Partial<Passage>[];
+  icon?: string;
+  tags?: string[];
 }
+
+export type KidsTemplate = StoryTemplate;
 
 export const kidsTemplates: StoryTemplate[] = [
   {

@@ -70,26 +70,22 @@ describe('StoryComparisonView', () => {
     vi.clearAllMocks();
 
     // Create left story
-    leftStory = new Story('Test Story v1');
-    leftStory.metadata.author = 'Author A';
-    leftStory.metadata.version = '1.0';
+    leftStory = new Story({ metadata: { title: 'Test Story v1', author: 'Author A', version: '1.0' } });
 
-    const passage1 = new Passage('p1', 'Passage 1', 'Original content');
-    const passage3 = new Passage('p3', 'Passage 3', 'To be removed');
+    const passage1 = new Passage({ id: 'p1', title: 'Passage 1', content: 'Original content' });
+    const passage3 = new Passage({ id: 'p3', title: 'Passage 3', content: 'To be removed' });
     leftStory.addPassage(passage1);
     leftStory.addPassage(passage3);
-    leftStory.variables.set('score', new Variable('score', 'number', 0));
+    leftStory.variables.set('score', new Variable({ name: 'score', type: 'number', initial: 0 }));
 
     // Create right story
-    rightStory = new Story('Test Story v2');
-    rightStory.metadata.author = 'Author B';
-    rightStory.metadata.version = '2.0';
+    rightStory = new Story({ metadata: { title: 'Test Story v2', author: 'Author B', version: '2.0' } });
 
-    const passage1r = new Passage('p1', 'Passage 1', 'Modified content');
-    const passage2r = new Passage('p2', 'Passage 2', 'New passage');
+    const passage1r = new Passage({ id: 'p1', title: 'Passage 1', content: 'Modified content' });
+    const passage2r = new Passage({ id: 'p2', title: 'Passage 2', content: 'New passage' });
     rightStory.addPassage(passage1r);
     rightStory.addPassage(passage2r);
-    rightStory.variables.set('score', new Variable('score', 'string', '0'));
+    rightStory.variables.set('score', new Variable({ name: 'score', type: 'string', initial: '0' }));
   });
 
   describe('rendering', () => {

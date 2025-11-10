@@ -136,8 +136,8 @@
         <div class="change-summary" onclick={() => toggleDetails(change.id)}>
           <div class="change-info">
             <span class="change-icon">
-              {getChangeIcon(change.changeType)}
-              {getEntityIcon(change.entityType)}
+              {getChangeIcon(change.changeType as any)}
+              {getEntityIcon(change.entityType as any)}
             </span>
             <div class="change-details">
               <div class="change-desc">{change.description}</div>

@@ -35,7 +35,9 @@
   }
 
   function handleRefresh() {
-    analyticsActions.analyzeStory();
+    if ($currentStory) {
+      analyticsActions.analyzeStory($currentStory);
+    }
   }
 
   function handleExport() {
@@ -110,7 +112,7 @@
         <p>Analyzing your story...</p>
       </div>
     {:else if activeTab === 'metrics'}
-      <StoryMetrics metrics={$currentMetrics} />
+      <StoryMetrics metrics={$currentMetrics as any} />
     {:else if activeTab === 'issues'}
       <IssueList issues={$currentMetrics?.issues || []} />
     {:else if activeTab === 'playthroughs'}

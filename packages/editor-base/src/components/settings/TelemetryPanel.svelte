@@ -65,9 +65,7 @@
     sessionDuration = snapshot.sessionDuration;
 
     // Get current quota
-    telemetryService.getCurrentQuota().then(quota => {
-      currentQuota = quota;
-    });
+    currentQuota = telemetryService.getCurrentQuota();
   }
 
   function startUpdates() {

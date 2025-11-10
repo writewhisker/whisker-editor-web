@@ -21,7 +21,7 @@
 
   $: filteredTemplates = selectedPlatform === 'all'
     ? kidsTemplates
-    : kidsTemplates.filter(t => t.platform === selectedPlatform || t.platform === 'both');
+    : kidsTemplates.filter(t => t.platform === selectedPlatform || t.platform === 'generic');
 
   function handleSelectTemplate(template: KidsTemplate) {
     try {

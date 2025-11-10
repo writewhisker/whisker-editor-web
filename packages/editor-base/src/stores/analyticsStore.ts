@@ -11,6 +11,31 @@ export interface AnalyticsData {
   totalPlays: number;
   averageCompletionTime: number;
   completionRate: number;
+  totalPassages?: number;
+  totalChoices?: number;
+  totalVariables?: number;
+  avgChoicesPerPassage?: number;
+  maxDepth?: number;
+  reachablePassages?: number;
+  unreachablePassages?: number;
+  deadEndPassages?: number;
+  issues?: Array<{ type: string; severity: string; message: string }>;
+}
+
+export interface StoryMetrics {
+  totalPassages: number;
+  totalChoices: number;
+  totalVariables: number;
+  avgChoicesPerPassage: number;
+  maxDepth: number;
+  maxBreadth: number;
+  complexityScore: number;
+  estimatedReadingTime: number;
+  reachablePassages: number;
+  unreachablePassages: number;
+  deadEndPassages: number;
+  deadEnds: string[];
+  issues: Array<{ type: string; severity: string; message: string }>;
 }
 
 const defaultData: AnalyticsData = {
@@ -68,5 +93,13 @@ export const analyticsActions = {
       isAnalyzing.set(false);
       lastAnalyzed.set(Date.now());
     }, 100);
+  },
+  analyzeStory: (story: any) => {
+    // Analyze story and return metrics
+    return {};
+  },
+  exportReport: () => {
+    // Export analytics report
+    return {};
   },
 };

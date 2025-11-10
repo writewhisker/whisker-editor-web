@@ -11,6 +11,13 @@ export interface ChangeRecord {
   timestamp: number;
   description: string;
   storySnapshot?: any;
+  user?: string;
+  changeType?: string;
+  entityType?: string;
+  entityName?: string;
+  oldValue?: any;
+  newValue?: any;
+  getFormattedTime?: () => string;
 }
 
 export interface ChangeTrackingState {
@@ -84,4 +91,8 @@ export const changeTrackingActions = {
   recordChange: changeTrackingStore.recordChange,
   markSaved: changeTrackingStore.markSaved,
   clear: changeTrackingStore.clear,
+  clearAll: changeTrackingStore.clear,
+  setTracking: (enabled: boolean) => {
+    // No-op for now
+  },
 };

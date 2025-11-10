@@ -38,8 +38,8 @@ describe('LocalStorageAdapter', () => {
 		});
 
 		it('should throw error if localStorage is not available', async () => {
-			// @ts-expect-error - Simulating missing localStorage
-			global.localStorage = undefined;
+			// Simulating missing localStorage
+			(global as any).localStorage = undefined;
 			const newAdapter = new LocalStorageAdapter();
 
 			await expect(newAdapter.initialize()).rejects.toThrow(StorageError);

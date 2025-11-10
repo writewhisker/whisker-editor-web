@@ -319,7 +319,7 @@ describe('EPUBExporter', () => {
     });
 
     it('should handle empty passage content', async () => {
-      const passage = Array.from(story.passages.values())[0];
+      const passage = Array.from(story.passages.values())[0] as any;
       if (!passage) throw new Error('No passages found');
       passage.content = '';
 
@@ -328,7 +328,7 @@ describe('EPUBExporter', () => {
     });
 
     it('should handle invalid markdown gracefully', async () => {
-      const passage = Array.from(story.passages.values())[0];
+      const passage = Array.from(story.passages.values())[0] as any;
       if (!passage) throw new Error('No passages found');
       passage.content = '**unclosed bold\n\n```unclosed code block';
 
@@ -361,7 +361,7 @@ describe('EPUBExporter', () => {
 
   describe('Warnings', () => {
     it('should add warnings for local image paths', async () => {
-      const passage = Array.from(story.passages.values())[0];
+      const passage = Array.from(story.passages.values())[0] as any;
       if (!passage) throw new Error('No passages found');
       passage.content = '![Local image](./local/path.png)';
 
@@ -415,7 +415,7 @@ describe('EPUBExporter', () => {
     });
 
     it('should escape special XML characters', async () => {
-      const passage = Array.from(story.passages.values())[0];
+      const passage = Array.from(story.passages.values())[0] as any;
       if (!passage) throw new Error('No passages found');
       passage.content = 'Test & < > " \' characters';
 

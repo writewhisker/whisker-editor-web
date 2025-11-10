@@ -498,12 +498,14 @@ describe('StoryComparisonView', () => {
         variableDiffs: [],
         summary: { added: 0, removed: 0, modified: 0 },
         leftStats: {
+          totalPassages: 0,
           passageCount: 0,
           variableCount: 0,
           totalWords: 0,
           totalChoices: 0,
         },
         rightStats: {
+          totalPassages: 0,
           passageCount: 0,
           variableCount: 0,
           totalWords: 0,
@@ -531,12 +533,14 @@ describe('StoryComparisonView', () => {
         variableDiffs: [],
         summary: { added: 0, removed: 0, modified: 0 },
         leftStats: {
+          totalPassages: 0,
           passageCount: 0,
           variableCount: 0,
           totalWords: 0,
           totalChoices: 0,
         },
         rightStats: {
+          totalPassages: 0,
           passageCount: 0,
           variableCount: 0,
           totalWords: 0,

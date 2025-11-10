@@ -34,8 +34,8 @@ describe('GitHubCommitHistory', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetCommitHistory.mockResolvedValue(mockCommits);
-    mockGetFileAtCommit.mockResolvedValue({
+    (mockGetCommitHistory as any).mockResolvedValue(mockCommits);
+    (mockGetFileAtCommit as any).mockResolvedValue({
       path: 'story.json',
       content: '{"title":"Test Story"}',
       sha: 'abc123',
@@ -141,7 +141,7 @@ describe('GitHubCommitHistory', () => {
     it('should display relative time for commits', async () => {
       // Use a recent date to ensure time formatting shows
       const recentDate = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2 hours ago
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           ...mockCommits[0],
           date: recentDate.toISOString(),
@@ -164,7 +164,7 @@ describe('GitHubCommitHistory', () => {
     });
 
     it('should show message when no commits found', async () => {
-      mockGetCommitHistory.mockResolvedValue([]);
+      (mockGetCommitHistory as any).mockResolvedValue([]);
 
       const { getByText } = render(GitHubCommitHistory, {
         props: {
@@ -454,7 +454,7 @@ describe('GitHubCommitHistory', () => {
   describe('time formatting', () => {
     it('should show seconds ago for very recent commits', async () => {
       const now = new Date();
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           sha: 'abc123',
           message: 'Recent commit',
@@ -479,7 +479,7 @@ describe('GitHubCommitHistory', () => {
 
     it('should show minutes ago for commits within an hour', async () => {
       const now = new Date();
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           sha: 'abc123',
           message: 'Recent commit',
@@ -504,7 +504,7 @@ describe('GitHubCommitHistory', () => {
 
     it('should show hours ago for commits within a day', async () => {
       const now = new Date();
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           sha: 'abc123',
           message: 'Recent commit',
@@ -529,7 +529,7 @@ describe('GitHubCommitHistory', () => {
 
     it('should show days ago for commits within a week', async () => {
       const now = new Date();
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           sha: 'abc123',
           message: 'Recent commit',
@@ -572,7 +572,7 @@ describe('GitHubCommitHistory', () => {
     });
 
     it('should handle commit without email', async () => {
-      mockGetCommitHistory.mockResolvedValue([
+      (mockGetCommitHistory as any).mockResolvedValue([
         {
           sha: 'abc123',
           message: 'Test commit',

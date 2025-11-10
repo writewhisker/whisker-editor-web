@@ -29,8 +29,8 @@
   let isDragging = false;
   let notification: { type: 'success' | 'error'; message: string } | null = null;
 
-  $: assets = $currentStory ? Array.from($currentStory.assets.values()) : [];
-  $: filteredAssets = assets.filter(asset => {
+  $: assets = ($currentStory ? Array.from($currentStory.assets.values()) : []) as AssetReference[];
+  $: filteredAssets = assets.filter((asset) => {
     const matchesType = filterType === 'all' || asset.type === filterType;
     const matchesSearch = !searchQuery ||
       asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

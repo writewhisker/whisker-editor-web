@@ -5,7 +5,7 @@
  * This format is compatible with the whisker-core Lua engine.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story, Passage } from '@whisker/core-ts';
 import type {
   ExportContext,
   ExportResult,
@@ -52,7 +52,7 @@ export class WhiskerCoreExporter implements IExporter {
       // Warn if editor extensions are present and not stripped
       if (!stripExtensions) {
         const hasExtensions = Array.from(story.passages.values()).some(
-          p => p.onEnterScript || p.onExitScript || p.color
+          (p: Passage) => p.onEnterScript || p.onExitScript || p.color
         );
         if (hasExtensions) {
           warnings.push(

@@ -92,8 +92,8 @@ describe('Breadcrumb', () => {
 
   describe('rendering with path', () => {
     it('should display path from start to selected passage', () => {
-      const passages = Array.from(story.passages.values());
-      const middlePassage = passages.find(p => p.title === 'Middle');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const middlePassage = passages.find((p: Passage) => p.title === 'Middle');
       selectedPassageId.set(middlePassage!.id);
 
       const { container } = render(Breadcrumb);
@@ -106,8 +106,8 @@ describe('Breadcrumb', () => {
     });
 
     it('should display arrows between passages', () => {
-      const passages = Array.from(story.passages.values());
-      const middlePassage = passages.find(p => p.title === 'Middle');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const middlePassage = passages.find((p: Passage) => p.title === 'Middle');
       selectedPassageId.set(middlePassage!.id);
 
       const { container } = render(Breadcrumb);
@@ -118,8 +118,8 @@ describe('Breadcrumb', () => {
     });
 
     it('should display passage count for multi-passage path', () => {
-      const passages = Array.from(story.passages.values());
-      const endPassage = passages.find(p => p.title === 'End');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const endPassage = passages.find((p: Passage) => p.title === 'End');
       selectedPassageId.set(endPassage!.id);
 
       const { container } = render(Breadcrumb);
@@ -128,8 +128,8 @@ describe('Breadcrumb', () => {
     });
 
     it('should highlight selected passage', () => {
-      const passages = Array.from(story.passages.values());
-      const middlePassage = passages.find(p => p.title === 'Middle');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const middlePassage = passages.find((p: Passage) => p.title === 'Middle');
       selectedPassageId.set(middlePassage!.id);
 
       const { container } = render(Breadcrumb);
@@ -141,8 +141,8 @@ describe('Breadcrumb', () => {
     });
 
     it('should not highlight non-selected passages', () => {
-      const passages = Array.from(story.passages.values());
-      const middlePassage = passages.find(p => p.title === 'Middle');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const middlePassage = passages.find((p: Passage) => p.title === 'Middle');
       selectedPassageId.set(middlePassage!.id);
 
       const { container } = render(Breadcrumb);
@@ -155,8 +155,8 @@ describe('Breadcrumb', () => {
 
   describe('navigation', () => {
     it('should navigate to clicked passage', async () => {
-      const passages = Array.from(story.passages.values());
-      const endPassage = passages.find(p => p.title === 'End');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const endPassage = passages.find((p: Passage) => p.title === 'End');
       const startPassage = story.passages.get(story.startPassage!);
       selectedPassageId.set(endPassage!.id);
 
@@ -173,8 +173,8 @@ describe('Breadcrumb', () => {
     });
 
     it('should have title attribute on buttons', () => {
-      const passages = Array.from(story.passages.values());
-      const middlePassage = passages.find(p => p.title === 'Middle');
+      const passages: Passage[] = Array.from(story.passages.values());
+      const middlePassage = passages.find((p: Passage) => p.title === 'Middle');
       selectedPassageId.set(middlePassage!.id);
 
       const { container } = render(Breadcrumb);

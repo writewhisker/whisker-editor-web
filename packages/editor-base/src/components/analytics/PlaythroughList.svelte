@@ -26,8 +26,8 @@
     }
   }
 
-  function formatDate(isoString: string): string {
-    const date = new Date(isoString);
+  function formatDate(dateValue: string | number): string {
+    const date = new Date(dateValue);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
   }
 

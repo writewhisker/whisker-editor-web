@@ -6,7 +6,9 @@
 -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  // @ts-expect-error - monaco-editor is an optional peer dependency
   import * as monaco from 'monaco-editor';
+  // @ts-expect-error - monaco-editor is an optional peer dependency
   import type { editor, IDisposable } from 'monaco-editor';
 
   interface Props {

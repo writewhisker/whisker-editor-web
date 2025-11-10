@@ -29,7 +29,7 @@ describe('StaticSiteExporter', () => {
       });
 
       // Remove default passage
-      const defaultPassage = Array.from(story.passages.values())[0];
+      const defaultPassage = Array.from(story.passages.values())[0] as any;
       if (defaultPassage) {
         story.passages.delete(defaultPassage.id);
       }
@@ -132,7 +132,7 @@ describe('StaticSiteExporter', () => {
       });
 
       // Remove default passage
-      const defaultPassage = Array.from(story.passages.values())[0];
+      const defaultPassage = Array.from(story.passages.values())[0] as any;
       if (defaultPassage) {
         story.passages.delete(defaultPassage.id);
       }
@@ -182,7 +182,7 @@ describe('StaticSiteExporter', () => {
       });
 
       // Remove default passage
-      const defaultPassage = Array.from(story.passages.values())[0];
+      const defaultPassage = Array.from(story.passages.values())[0] as any;
       if (defaultPassage) {
         story.passages.delete(defaultPassage.id);
       }
@@ -224,7 +224,7 @@ describe('StaticSiteExporter', () => {
       });
 
       // Remove default passage
-      const defaultPassage = Array.from(story.passages.values())[0];
+      const defaultPassage = Array.from(story.passages.values())[0] as any;
       if (defaultPassage) {
         story.passages.delete(defaultPassage.id);
       }

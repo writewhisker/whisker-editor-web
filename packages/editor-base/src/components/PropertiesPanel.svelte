@@ -54,9 +54,9 @@
 
       // Check for duplicates (case-insensitive)
       if (newTitle !== originalTitle) {
-        const duplicate = $currentStory && Array.from($currentStory.passages.values()).find(
+        const duplicate: Passage | undefined = $currentStory ? Array.from($currentStory.passages.values()).find(
           (p: Passage) => p.id !== passage.id && p.title.toLowerCase() === newTitle.toLowerCase()
-        );
+        ) : undefined;
 
         if (duplicate) {
           titleWarning = `A passage named "${duplicate.title}" already exists`;
@@ -333,9 +333,9 @@
     '#EC4899', // pink
   ];
 
-  $: availablePassages = $currentStory
+  $: availablePassages = ($currentStory
     ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.id !== passage?.id)
-    : [];
+    : []) as Passage[];
 
   // All passages for autocomplete (including current passage)
   $: allPassages = $currentStory

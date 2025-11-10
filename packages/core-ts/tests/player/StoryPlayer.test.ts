@@ -133,7 +133,7 @@ describe('StoryPlayer', () => {
     });
   });
 
-  describe.skip('conditional choices', () => {
+  describe('conditional choices', () => {
     beforeEach(() => {
       player.loadStory(story);
 
@@ -542,7 +542,7 @@ describe('StoryPlayer', () => {
     });
   });
 
-  describe.skip('complex conditions', () => {
+  describe('complex conditions', () => {
     beforeEach(() => {
       player.loadStory(story);
 
@@ -589,7 +589,7 @@ describe('StoryPlayer', () => {
     });
   });
 
-  describe.skip('Script Execution and Variable Assignment', () => {
+  describe('Script Execution and Variable Assignment', () => {
     beforeEach(() => {
       player.loadStory(story);
     });

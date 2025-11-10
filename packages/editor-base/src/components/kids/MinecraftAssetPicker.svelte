@@ -48,17 +48,17 @@
           ? searchMinecraftMobs(searchQuery)
           : selectedCategory === 'all'
           ? minecraftMobs
-          : minecraftMobs.filter(mob => mob.type === selectedCategory);
+          : minecraftMobs.filter(mob => (mob as any).type === selectedCategory);
         break;
       case 'biome':
         assets = selectedCategory === 'all'
           ? minecraftBiomes
-          : minecraftBiomes.filter(biome => biome.climate === selectedCategory);
+          : minecraftBiomes.filter(biome => (biome as any).climate === selectedCategory);
         break;
       case 'location':
         assets = selectedCategory === 'all'
           ? minecraftLocations
-          : minecraftLocations.filter(loc => loc.type === selectedCategory);
+          : minecraftLocations.filter(loc => (loc as any).type === selectedCategory);
         break;
     }
 

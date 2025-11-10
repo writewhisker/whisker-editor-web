@@ -15,8 +15,7 @@
 
     isLoading = true;
     try {
-      const analyzer = new StoryFlowAnalyzer($currentStory);
-      metrics = analyzer.analyze();
+      metrics = StoryFlowAnalyzer.analyze($currentStory);
     } catch (error) {
       console.error('Flow analysis error:', error);
       metrics = null;

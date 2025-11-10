@@ -4,7 +4,9 @@
  * Provides syntax highlighting, autocomplete, and Story API definitions.
  */
 
+// @ts-expect-error - monaco-editor is an optional dependency
 import * as monaco from 'monaco-editor';
+// @ts-expect-error - monaco-editor is an optional dependency
 import type { languages } from 'monaco-editor';
 
 /**

@@ -584,7 +584,7 @@ describe('MobileToolbar', () => {
           showSlider: true,
           min: 0,
           max: 100
-        }
+        } as any
       });
 
       const fab = container.querySelector('.fab.primary');

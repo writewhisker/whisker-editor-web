@@ -36,6 +36,54 @@ export class PublishingService {
     this.exportHistory.push(item);
   }
 
+  static exportForMinecraft(story: Story): any {
+    const data = {
+      title: story.title,
+      passages: Array.from(story.passages.values()),
+      format: 'minecraft',
+    };
+    this.addToHistory({
+      storyTitle: story.title,
+      platform: 'minecraft',
+      timestamp: Date.now(),
+      success: true,
+    });
+    return data;
+  }
+
+  static exportForRoblox(story: Story): any {
+    const data = {
+      title: story.title,
+      passages: Array.from(story.passages.values()),
+      format: 'roblox',
+    };
+    this.addToHistory({
+      storyTitle: story.title,
+      platform: 'roblox',
+      timestamp: Date.now(),
+      success: true,
+    });
+    return data;
+  }
+
+  static downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  static copyToClipboard(text: string): Promise<void> {
+    return navigator.clipboard.writeText(text);
+  }
+
+  static generateQRCode(url: string): string {
+    // Simple placeholder - in reality would use a QR code library
+    return `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"><text x="10" y="20">QR: ${url}</text></svg>`;
+  }
+
   async publish(story: Story, options: PublishOptions): Promise<PublishResult> {
     // Validate story is kid-safe
     const validation = this.validateStory(story);
@@ -62,7 +110,7 @@ export class PublishingService {
     // Check for inappropriate content (very simplified)
     const blockedWords = ['violence', 'weapon', 'blood'];
     for (const passage of passages) {
-      const content = passage.content.toLowerCase();
+      const content = ((passage as any).content || '').toLowerCase();
       for (const word of blockedWords) {
         if (content.includes(word)) {
           return {

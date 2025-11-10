@@ -13,6 +13,13 @@ export interface PlaythroughStep {
   choiceText?: string;
 }
 
+export interface PlaythroughChoice {
+  passageId: string;
+  choiceIndex: number;
+  passageTitle?: string;
+  choiceText?: string;
+}
+
 export interface PlaythroughData {
   id?: string;
   storyId: string;
@@ -22,7 +29,7 @@ export interface PlaythroughData {
   endTime?: number;
   completed: boolean;
   steps: PlaythroughStep[];
-  choices?: Array<{ passageId: string; choiceIndex: number }>;
+  choices?: PlaythroughChoice[];
   finalVariables?: Record<string, any>;
   metadata?: Record<string, any>;
 }
@@ -36,7 +43,7 @@ export class Playthrough {
   endTime?: number;
   completed: boolean;
   steps: PlaythroughStep[];
-  choices: Array<{ passageId: string; choiceIndex: number }>;
+  choices: PlaythroughChoice[];
   finalVariables: Record<string, any>;
   metadata: Record<string, any>;
 
@@ -72,7 +79,7 @@ export class Playthrough {
     return end - this.startedAt;
   }
 
-  getChoices(): Array<{ passageId: string; choiceIndex: number }> {
+  getChoices(): PlaythroughChoice[] {
     return this.choices;
   }
 

@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import Quiz from './Quiz.svelte';
-import type { QuizOption } from './Quiz.svelte';
+
+interface QuizOption {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+  feedback?: string;
+}
 
 describe('Quiz', () => {
   const mockOptions: QuizOption[] = [

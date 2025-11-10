@@ -53,7 +53,7 @@ describe('ItchPublisher', () => {
 
     // Mock fetch
     mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
   });
 
   afterEach(() => {

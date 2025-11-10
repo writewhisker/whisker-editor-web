@@ -172,7 +172,7 @@
       <div class="dialog-content">
         {#if publishError}
           <div class="error-message">
-            <strong>Error:</strong> {publishError}
+            <strong>Error: </strong>{publishError}
           </div>
         {/if}
 

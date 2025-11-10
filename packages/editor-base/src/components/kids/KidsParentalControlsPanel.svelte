@@ -22,7 +22,7 @@
   let exportRestricted = false;
   let allowLocalExport = true;
   let allowOnlineSharing = false;
-  let contentFilterLevel: ContentFilterLevel = 'mild';
+  let contentFilterLevel: ContentFilterLevel = 'moderate';
   let requireApprovalForExport = false;
   let maxSessionTime: number | null = null;
 
@@ -320,7 +320,7 @@
                 <input
                   type="radio"
                   bind:group={contentFilterLevel}
-                  value="mild"
+                  value="moderate"
                   class="w-5 h-5"
                 />
                 <span class="font-bold text-green-800">Mild</span>

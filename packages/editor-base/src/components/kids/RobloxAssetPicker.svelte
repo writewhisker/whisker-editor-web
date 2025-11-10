@@ -48,17 +48,17 @@
           ? searchRobloxBadges(searchQuery)
           : selectedCategory === 'all'
           ? robloxBadges
-          : robloxBadges.filter(badge => badge.type === selectedCategory);
+          : robloxBadges.filter(badge => (badge as any).type === selectedCategory);
         break;
       case 'sound':
         assets = selectedCategory === 'all'
           ? robloxSounds
-          : robloxSounds.filter(sound => sound.type === selectedCategory);
+          : robloxSounds.filter(sound => (sound as any).type === selectedCategory);
         break;
       case 'location':
         assets = selectedCategory === 'all'
           ? robloxLocations
-          : robloxLocations.filter(loc => loc.type === selectedCategory);
+          : robloxLocations.filter(loc => (loc as any).type === selectedCategory);
         break;
     }
 

@@ -53,7 +53,7 @@ describe('GitHubPublisher', () => {
 
     // Mock fetch
     mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as any;
 
     // Mock btoa for base64 encoding
     global.btoa = vi.fn((str) => Buffer.from(str, 'binary').toString('base64'));

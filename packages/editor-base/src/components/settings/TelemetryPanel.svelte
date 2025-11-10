@@ -24,6 +24,9 @@
     avgDeleteTime: 0,
     lastOperation: null,
     lastOperationTime: null,
+    used: 0,
+    available: 0,
+    total: 0,
   });
   let performanceHistory = $state<PerformanceMetric[]>([]);
   let errorHistory = $state<ErrorEvent[]>([]);
@@ -65,9 +68,7 @@
     sessionDuration = snapshot.sessionDuration;
 
     // Get current quota
-    telemetryService.getCurrentQuota().then(quota => {
-      currentQuota = quota;
-    });
+    currentQuota = telemetryService.getCurrentQuota();
   }
 
   function startUpdates() {

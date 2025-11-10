@@ -260,7 +260,7 @@ describe('Achievement System Plugin', () => {
       expect(context.storyState.achievements.totalPoints).toBe(0);
       expect(context.storyState.achievements.recentUnlocks).toEqual([]);
       expect(
-        Object.values(context.storyState.achievements.progress).every(p => !p.unlocked)
+        Object.values(context.storyState.achievements.progress).every((p: any) => !p.unlocked)
       ).toBe(true);
     });
   });

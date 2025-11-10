@@ -155,8 +155,8 @@ export class StoryAnalytics {
     for (const passage of passages) {
       if (!reachable.has(passage.id) && passage.id !== story.startPassage) {
         issues.push({
-          severity: 'warning',
-          type: 'unreachable',
+          severity: 'warning' as const,
+          type: 'unreachable' as const,
           passageId: passage.id,
           passageName: passage.title,
           message: `Passage "${passage.title}" is unreachable from the start`,
@@ -175,8 +175,8 @@ export class StoryAnalytics {
 
         if (!isIntentionalEnding) {
           issues.push({
-            severity: 'info',
-            type: 'dead-end',
+            severity: 'info' as const,
+            type: 'dead-end' as const,
             passageId: passage.id,
             passageName: passage.title,
             message: `Passage "${passage.title}" has no choices`,

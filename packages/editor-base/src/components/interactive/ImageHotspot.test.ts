@@ -1,7 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import ImageHotspot from './ImageHotspot.svelte';
-import type { Hotspot } from './ImageHotspot.svelte';
+
+interface Hotspot {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  id: string;
+  tooltip?: string;
+  label?: string;
+  description?: string;
+  action?: string;
+}
 
 describe('ImageHotspot', () => {
   let onImageLoad: ReturnType<typeof vi.fn>;

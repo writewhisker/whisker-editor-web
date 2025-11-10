@@ -30,7 +30,7 @@
   // Get blocks for current category
   let categoryBlocks = $derived(
     Object.entries(BLOCK_TEMPLATES)
-      .filter(([, template]) => template() as any.category === activeCategory)
+      .filter(([, template]) => (template() as any).category === activeCategory)
       .map(([type]) => type as BlockType)
   );
 

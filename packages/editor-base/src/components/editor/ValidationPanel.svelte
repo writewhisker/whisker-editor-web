@@ -14,7 +14,7 @@
     validatorConfig,
     performanceMetrics,
   } from '../../stores/validationStore';
-  import { selectedPassageId } from '../../stores/storyStateStore';
+  import { selectedPassageId } from '../../stores/selectionStore';
   import { viewMode, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '@whisker/core-ts';
 
@@ -778,9 +778,9 @@
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
         on:click|stopPropagation
         role="dialog"
-        tabindex="-1"
         aria-modal="true"
         aria-labelledby="fix-all-confirm-title"
+        tabindex="-1"
       >
         <div class="p-6">
           <h3 id="fix-all-confirm-title" class="text-xl font-bold text-gray-900 mb-4">Confirm Fix All</h3>
@@ -864,7 +864,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
         on:click|stopPropagation
-        role="dialog" tabindex="-1"
+        role="dialog"
         aria-modal="true"
         aria-labelledby="fix-all-summary-title"
         tabindex="-1"

@@ -114,7 +114,7 @@
             </div>
           </div>
 
-          {#if metrics.longestPath}
+          {#if metrics.longestPath && typeof metrics.longestPath === 'object' && 'path' in metrics.longestPath}
             <div class="path-summary">
               <h3>Longest Path</h3>
               <div class="path-length">{metrics.longestPath.length} passages</div>
@@ -129,7 +129,7 @@
             </div>
           {/if}
 
-          {#if metrics.shortestPath}
+          {#if metrics.shortestPath && typeof metrics.shortestPath === 'object' && 'path' in metrics.shortestPath}
             <div class="path-summary">
               <h3>Shortest Path</h3>
               <div class="path-length">{metrics.shortestPath.length} passages</div>

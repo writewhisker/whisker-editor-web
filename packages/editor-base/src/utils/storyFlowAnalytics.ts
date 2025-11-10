@@ -27,7 +27,13 @@ export interface FlowAnalytics {
   totalPaths?: number;
   shortestPath?: number | { length: number; path: string[] };
   longestPath?: number | { length: number; path: string[] };
-  bottlenecks?: string[] | Array<{ passageId: string; bottleneckScore: number }>;
+  bottlenecks?: string[] | Array<{
+    passageId: string;
+    passageTitle?: string;
+    bottleneckScore: number;
+    incomingCount?: number;
+    outgoingCount?: number;
+  }>;
 }
 
 // Alias for backward compatibility

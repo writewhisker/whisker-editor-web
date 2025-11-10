@@ -316,19 +316,19 @@
               on:click={() => filterMode = 'added'}
               class="px-3 py-1 text-sm rounded {filterMode === 'added' ? 'bg-green-600 text-white' : 'bg-green-100 text-green-800 hover:bg-green-200'}"
             >
-              Added ({comparison.summary.added})
+              Added ({typeof comparison.summary === 'object' ? comparison.summary.added : 0})
             </button>
             <button
               on:click={() => filterMode = 'removed'}
               class="px-3 py-1 text-sm rounded {filterMode === 'removed' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-800 hover:bg-red-200'}"
             >
-              Removed ({comparison.summary.removed})
+              Removed ({typeof comparison.summary === 'object' ? comparison.summary.removed : 0})
             </button>
             <button
               on:click={() => filterMode = 'modified'}
               class="px-3 py-1 text-sm rounded {filterMode === 'modified' ? 'bg-yellow-600 text-white' : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'}"
             >
-              Modified ({comparison.summary.modified})
+              Modified ({typeof comparison.summary === 'object' ? comparison.summary.modified : 0})
             </button>
           </div>
 
@@ -434,13 +434,13 @@
       <div class="flex items-center justify-between text-sm">
         <div class="flex gap-4">
           <span class="text-green-600 dark:text-green-400 font-medium">
-            +{comparison.summary.added} added
+            +{typeof comparison.summary === 'object' ? comparison.summary.added : 0} added
           </span>
           <span class="text-red-600 dark:text-red-400 font-medium">
-            -{comparison.summary.removed} removed
+            -{typeof comparison.summary === 'object' ? comparison.summary.removed : 0} removed
           </span>
           <span class="text-yellow-600 dark:text-yellow-400 font-medium">
-            ~{comparison.summary.modified} modified
+            ~{typeof comparison.summary === 'object' ? comparison.summary.modified : 0} modified
           </span>
         </div>
         {#if selectedPassages.size > 0}

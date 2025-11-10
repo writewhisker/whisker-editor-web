@@ -128,9 +128,10 @@ export interface LuaFunctionData {
 }
 
 /**
- * Recorded playthrough session for analytics
+ * Recorded playthrough session for analytics (v2.1 editor format)
+ * Note: This is different from the PlaythroughData used by the Playthrough class
  */
-export interface PlaythroughData {
+export interface EditorPlaythroughData {
   id: string;
   startedAt: string;        // ISO 8601
   completedAt?: string;     // ISO 8601 (if completed)
@@ -222,7 +223,7 @@ export interface EditorData {
   /**
    * Playthrough Analytics
    */
-  playthroughs?: PlaythroughData[];
+  playthroughs?: EditorPlaythroughData[];
 
   /**
    * Test Scenarios

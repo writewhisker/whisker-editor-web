@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { pluginManager } from '../PluginManager';
 import { pluginStoreActions } from '../index';
 import { statsSystem } from './statsSystem';
+import { Passage } from '@whisker/core-ts';
 
 describe('Stats System Plugin', () => {
   beforeEach(() => {
@@ -430,14 +431,13 @@ describe('Stats System Plugin', () => {
     it('should expire modifiers on passage enter', async () => {
       await pluginStoreActions.register(statsSystem);
 
-      const passage = {
+      const passage = new Passage({
         id: 'test',
         title: 'Test',
         content: '',
         tags: [],
         position: { x: 0, y: 0 },
-        links: [],
-      };
+      });
 
       const context = {
         storyState: {

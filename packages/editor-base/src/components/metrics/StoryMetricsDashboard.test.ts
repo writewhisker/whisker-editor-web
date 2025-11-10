@@ -98,8 +98,8 @@ describe('StoryMetricsDashboard', () => {
         title: 'Middle',
         content: 'A short passage.',
         choices: [
-          { text: 'Go left', target: 'End' },
-          { text: 'Go right', target: 'End' }
+          { id: 'choice-1', text: 'Go left', target: 'End' },
+          { id: 'choice-2', text: 'Go right', target: 'End' }
         ]
       }));
 
@@ -193,7 +193,7 @@ describe('StoryMetricsDashboard', () => {
       story.addPassage(new Passage({
         title: 'Start',
         content: 'Beginning',
-        choices: [{ text: 'Continue', target: 'End' }]
+        choices: [{ id: 'choice-1', text: 'Continue', target: 'End' }]
       }));
 
       story.addPassage(new Passage({
@@ -417,8 +417,8 @@ describe('StoryMetricsDashboard', () => {
           title: `Passage ${i}`,
           content: 'Word '.repeat(100), // 100 words
           choices: i < 4 ? [
-            { text: 'Choice 1', target: `Passage ${i + 1}` },
-            { text: 'Choice 2', target: `Passage ${i + 1}` }
+            { id: `choice-${i}-1`, text: 'Choice 1', target: `Passage ${i + 1}` },
+            { id: `choice-${i}-2`, text: 'Choice 2', target: `Passage ${i + 1}` }
           ] : []
         }));
       }
@@ -483,7 +483,7 @@ describe('StoryMetricsDashboard', () => {
       story.addPassage(new Passage({
         title: 'Start',
         content: 'Short story',
-        choices: [{ text: 'End', target: 'End' }]
+        choices: [{ id: 'choice-1', text: 'End', target: 'End' }]
       }));
 
       currentStory.set(story);

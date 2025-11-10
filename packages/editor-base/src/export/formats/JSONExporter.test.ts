@@ -266,6 +266,9 @@ describe('JSONExporter', () => {
         metadata: {
           title: 'Bad Story',
           author: 'Test',
+          version: '1.0.0',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
         },
       } as unknown as Story;
 

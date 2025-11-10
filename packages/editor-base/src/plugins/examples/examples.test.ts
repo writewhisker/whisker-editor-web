@@ -7,6 +7,7 @@ import {
   customActionsPlugin,
   registerExamplePlugins,
 } from './index';
+import { Passage } from '@whisker/core-ts';
 
 describe('Example Plugins', () => {
   beforeEach(() => {
@@ -68,14 +69,13 @@ describe('Example Plugins', () => {
         history: [],
       };
 
-      const passage = {
+      const passage = new Passage({
         id: 'test-passage',
         title: 'Test Passage',
         content: 'Test content',
         tags: [],
         position: { x: 0, y: 0 },
-        links: [],
-      };
+      });
 
       // These should not throw
       await pluginManager.executeHook('onInit', context);

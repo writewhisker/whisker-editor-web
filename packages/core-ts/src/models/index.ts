@@ -8,7 +8,7 @@ export { Choice } from './Choice';
 export { Variable } from './Variable';
 export { LuaFunction } from './LuaFunction';
 export { ScriptBlock } from './ScriptBlock';
-export { Playthrough, PlaythroughStep, type PlaythroughStepData } from './Playthrough';
+export { Playthrough, PlaythroughStep, type PlaythroughStepData, type PlaythroughData } from './Playthrough';
 export { ChangeLog } from './ChangeLog';
 export { Comment, type CommentData } from './Comment';
 export { Collaborator } from './Collaborator';

@@ -560,6 +560,12 @@ export class StoryPlayer {
     console.log(`[Script - ${context}]:`, script);
 
     try {
+      // If no Lua engine available, skip script execution
+      if (!this.luaEngine) {
+        console.warn('No Lua engine available for script execution:', script);
+        return;
+      }
+
       // Sync player variables to Lua engine
       this.variables.forEach((value, key) => {
         this.luaEngine.setVariable(key, value);
@@ -622,6 +628,12 @@ export class StoryPlayer {
     }
 
     try {
+      // If no Lua engine available, return false for safety
+      if (!this.luaEngine) {
+        console.warn('No Lua engine available for condition evaluation:', condition);
+        return false;
+      }
+
       // Sync player variables to Lua engine
       this.variables.forEach((value, key) => {
         this.luaEngine.setVariable(key, value);

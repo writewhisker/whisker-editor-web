@@ -19,7 +19,7 @@
     if (!$currentStory) return;
 
     try {
-      await PublishingService.copyToClipboard($currentStory);
+      await PublishingService.copyToClipboard(JSON.stringify($currentStory.serialize(), null, 2));
       copiedToClipboard = true;
       notificationStore.success('Story copied to clipboard!');
 
@@ -34,7 +34,7 @@
 
   async function generateQRCode() {
     // Placeholder URL - in production this would be a real shareable link
-    const shareUrl = `https://example.com/story/${$currentStory?.id || 'demo'}`;
+    const shareUrl = `https://example.com/story/${$currentStory?.metadata.id || 'demo'}`;
     qrCodeUrl = await PublishingService.generateQRCode(shareUrl);
   }
 

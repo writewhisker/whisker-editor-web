@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import GitHubConflictResolver from './GitHubConflictResolver.svelte';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story, Passage, Variable } from '@whisker/core-ts';
 
 // Mock StoryComparisonView component - return a simple Svelte component mock
 vi.mock('../comparison/StoryComparisonView.svelte', () => ({
@@ -187,9 +186,9 @@ describe('GitHubConflictResolver', () => {
     });
 
     it('should show variables count differences', () => {
-      localStory.variables.set('var1', { name: 'var1', initial: 1, type: 'number' });
-      remoteStory.variables.set('var1', { name: 'var1', initial: 1, type: 'number' });
-      remoteStory.variables.set('var2', { name: 'var2', initial: 2, type: 'number' });
+      localStory.variables.set('var1', new Variable({ name: 'var1', initial: 1, type: 'number' }));
+      remoteStory.variables.set('var1', new Variable({ name: 'var1', initial: 1, type: 'number' }));
+      remoteStory.variables.set('var2', new Variable({ name: 'var2', initial: 2, type: 'number' }));
 
       const { getByText } = render(GitHubConflictResolver, {
         props: {

@@ -554,55 +554,61 @@ export class StoryPlayer {
   }
 
   /**
-   * Execute a script using LuaEngine
+   * Execute a script using LuaEngine or simple JavaScript fallback
    */
   private executeScript(script: string, context: string): void {
     console.log(`[Script - ${context}]:`, script);
 
     try {
-      // Sync player variables to Lua engine
-      this.variables.forEach((value, key) => {
-        this.luaEngine.setVariable(key, value);
-      });
+      // If Lua engine is available, use it
+      if (this.luaEngine) {
+        // Sync player variables to Lua engine
+        this.variables.forEach((value, key) => {
+          this.luaEngine.setVariable(key, value);
+        });
 
-      // Execute the script
-      const result = this.luaEngine.execute(script);
+        // Execute the script
+        const result = this.luaEngine.execute(script);
 
-      // Log any output
-      if (result.output.length > 0) {
-        console.log('Script output:', result.output.join('\n'));
-      }
-
-      // Log any errors
-      if (result.errors.length > 0) {
-        console.warn('Script errors:', result.errors.join('\n'));
-        this.handleError(
-          new Error(`Script execution failed: ${result.errors.join('; ')}`),
-          this.currentPassageId || '',
-          context
-        );
-      }
-
-      // Sync Lua variables back to player
-      const luaVars = this.luaEngine.getAllVariables();
-      Object.entries(luaVars).forEach(([key, value]) => {
-        const oldValue = this.variables.get(key);
-        if (oldValue !== value) {
-          this.variables.set(key, value);
-          console.log(`  → Set ${key} = ${value}`);
-
-          // Emit variable changed event
-          this.emit('variableChanged', {
-            name: key,
-            oldValue,
-            newValue: value,
-            timestamp: Date.now(),
-          });
+        // Log any output
+        if (result.output.length > 0) {
+          console.log('Script output:', result.output.join('\n'));
         }
-      });
 
-      // Emit state changed event
-      this.emit('stateChanged', this.getState());
+        // Log any errors
+        if (result.errors.length > 0) {
+          console.warn('Script errors:', result.errors.join('\n'));
+          this.handleError(
+            new Error(`Script execution failed: ${result.errors.join('; ')}`),
+            this.currentPassageId || '',
+            context
+          );
+        }
+
+        // Sync Lua variables back to player
+        const luaVars = this.luaEngine.getAllVariables();
+        Object.entries(luaVars).forEach(([key, value]) => {
+          const oldValue = this.variables.get(key);
+          if (oldValue !== value) {
+            this.variables.set(key, value);
+            console.log(`  → Set ${key} = ${value}`);
+
+            // Emit variable changed event
+            this.emit('variableChanged', {
+              name: key,
+              oldValue,
+              newValue: value,
+              timestamp: Date.now(),
+            });
+          }
+        });
+
+        // Emit state changed event
+        this.emit('stateChanged', this.getState());
+      } else {
+        // Fallback to simple JavaScript execution for basic scripts
+        this.executeSimpleScript(script);
+      }
     } catch (error) {
       console.warn('Script execution error:', script, error);
       this.handleError(
@@ -614,7 +620,98 @@ export class StoryPlayer {
   }
 
   /**
-   * Evaluate a condition using LuaEngine
+   * Simple JavaScript-based script executor for basic variable assignments
+   * Handles: simple assignments (x = 5), compound assignments (x += 5, x -= 5, x *= 2, x /= 2)
+   */
+  private executeSimpleScript(script: string): void {
+    try {
+      // Parse simple assignment patterns
+      // Handles: varName = value, varName += value, varName -= value, etc.
+      const assignmentPattern = /^\s*(\w+)\s*(=|\+=|-=|\*=|\/=)\s*(.+)\s*$/;
+      const match = script.trim().match(assignmentPattern);
+
+      if (!match) {
+        console.warn('Simple script executor only handles basic assignments:', script);
+        return;
+      }
+
+      const [, varName, operator, valueExpr] = match;
+
+      // Evaluate the right-hand side expression
+      const context: Record<string, any> = {};
+      this.variables.forEach((value, key) => {
+        context[key] = value;
+      });
+
+      const varNames = Object.keys(context);
+      const varValues = Object.values(context);
+
+      // Create function to evaluate the expression
+      const func = new Function(...varNames, `return (${valueExpr});`);
+      let newValue = func(...varValues);
+
+      // Apply the operator
+      const oldValue = this.variables.get(varName);
+      let isNumericOperation = false;
+
+      switch (operator) {
+        case '=':
+          // Direct assignment - keep value as-is
+          break;
+        case '+=':
+          isNumericOperation = true;
+          newValue = (oldValue || 0) + newValue;
+          break;
+        case '-=':
+          isNumericOperation = true;
+          newValue = (oldValue || 0) - newValue;
+          break;
+        case '*=':
+          isNumericOperation = true;
+          newValue = (oldValue || 0) * newValue;
+          break;
+        case '/=':
+          isNumericOperation = true;
+          // Safety check for division by zero
+          if (newValue === 0) {
+            console.warn('Division by zero detected, setting to 0');
+            newValue = 0;
+          } else {
+            newValue = (oldValue || 0) / newValue;
+          }
+          break;
+        default:
+          console.warn('Unsupported operator:', operator);
+          return;
+      }
+
+      // Safety checks for invalid values (only for numeric operations)
+      if (isNumericOperation && !Number.isFinite(newValue)) {
+        console.warn('Invalid numeric result, setting to 0:', newValue);
+        newValue = 0;
+      }
+
+      // Set the variable
+      this.variables.set(varName, newValue);
+      console.log(`  → Set ${varName} = ${newValue}`);
+
+      // Emit variable changed event
+      this.emit('variableChanged', {
+        name: varName,
+        oldValue,
+        newValue,
+        timestamp: Date.now(),
+      });
+
+      // Emit state changed event
+      this.emit('stateChanged', this.getState());
+    } catch (error) {
+      console.warn('Simple script execution failed:', script, error);
+    }
+  }
+
+  /**
+   * Evaluate a condition using LuaEngine or simple JavaScript fallback
    */
   private evaluateCondition(condition: string): boolean {
     if (!condition || condition.trim() === '') {
@@ -622,22 +719,59 @@ export class StoryPlayer {
     }
 
     try {
-      // Sync player variables to Lua engine
-      this.variables.forEach((value, key) => {
-        this.luaEngine.setVariable(key, value);
-      });
+      // If Lua engine is available, use it
+      if (this.luaEngine) {
+        // Sync player variables to Lua engine
+        this.variables.forEach((value, key) => {
+          this.luaEngine.setVariable(key, value);
+        });
 
-      // Evaluate the condition
-      const result = this.luaEngine.evaluate(condition);
+        // Evaluate the condition
+        const result = this.luaEngine.evaluate(condition);
 
-      // Convert to boolean
-      if (result.type === 'nil') return false;
-      if (result.type === 'boolean') return result.value;
-      // Everything else is truthy in Lua
-      return true;
+        // Convert to boolean
+        if (result.type === 'nil') return false;
+        if (result.type === 'boolean') return result.value;
+        // Everything else is truthy in Lua
+        return true;
+      }
+
+      // Fallback to simple JavaScript evaluation for basic conditions
+      return this.evaluateSimpleCondition(condition);
     } catch (error) {
       console.warn('Condition evaluation error:', condition, error);
       return false; // Fail safely
+    }
+  }
+
+  /**
+   * Simple JavaScript-based condition evaluator for basic cases
+   * Handles: variable comparisons, boolean logic, numeric comparisons
+   */
+  private evaluateSimpleCondition(condition: string): boolean {
+    try {
+      // Create a context object with all variables
+      const context: Record<string, any> = {};
+      this.variables.forEach((value, key) => {
+        context[key] = value;
+      });
+
+      // Use Function constructor to safely evaluate the expression
+      // This creates a new function with the variables as parameters
+      const varNames = Object.keys(context);
+      const varValues = Object.values(context);
+
+      // Create function that evaluates the condition
+      const func = new Function(...varNames, `return (${condition});`);
+
+      // Execute with variable values
+      const result = func(...varValues);
+
+      // Convert to boolean
+      return Boolean(result);
+    } catch (error) {
+      console.warn('Simple condition evaluation failed:', condition, error);
+      return false;
     }
   }
 

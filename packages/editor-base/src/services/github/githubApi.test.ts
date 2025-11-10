@@ -11,7 +11,6 @@ import {
   getCommitHistory,
   getFileAtCommit,
 } from './githubApi';
-// @ts-expect-error - @octokit/rest is an optional dependency
 import { Octokit } from '@octokit/rest';
 
 // Mock Octokit

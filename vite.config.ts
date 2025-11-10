@@ -29,7 +29,9 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? '/whisker-editor-web/' : '/',
   resolve: {
     alias: {
-      '$lib': path.resolve('./src/lib')
+      '$lib': path.resolve('./packages/editor-base/src'),
+      '@whisker/core-ts': path.resolve('./packages/core-ts/src'),
+      '@whisker/editor-base': path.resolve('./packages/editor-base/src')
     }
   },
   optimizeDeps: {

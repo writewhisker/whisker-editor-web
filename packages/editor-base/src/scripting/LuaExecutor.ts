@@ -5,7 +5,6 @@
  * Provides Story API bindings for interacting with game state, passages, and variables.
  */
 
-// @ts-expect-error - wasmoon is an optional peer dependency
 import { LuaFactory, type LuaEngine } from 'wasmoon';
 import type { Story } from '@whisker/core-ts';
 import type { Passage } from '@whisker/core-ts';

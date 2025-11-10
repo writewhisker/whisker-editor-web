@@ -5,14 +5,23 @@ import { expect, type Page } from '@playwright/test';
  * Uses proper waits instead of arbitrary timeouts where possible
  */
 export async function createNewProject(page: Page, projectName = 'Test Story') {
+  // Clear storage using Playwright's context API to avoid security errors
+  await page.context().clearCookies();
   await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
   await page.waitForLoadState('networkidle');
 
   // Wait a bit for any initialization
   await page.waitForTimeout(500);
 
-  // Find and click the New Project button with explicit wait
+  // Find and click the Get Started Free button on the landing page with explicit wait
+  const getStartedButton = page.locator('button:has-text("Get Started Free")');
+  await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
+  await getStartedButton.click();
+
+  // Wait for navigation from landing page to editor
+  await page.waitForLoadState('networkidle');
+
+  // Now look for the New Project button in the editor
   const newProjectButton = page.locator('button:has-text("New Project")');
   await newProjectButton.waitFor({ state: 'visible', timeout: 10000 });
   await newProjectButton.click();

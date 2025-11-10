@@ -6,7 +6,7 @@ export { Story } from './Story';
 export { Passage } from './Passage';
 export { Choice } from './Choice';
 export { Variable } from './Variable';
-export { LuaFunction } from './LuaFunction';
+export { LuaFunction, DEFAULT_FUNCTION_TEMPLATES } from './LuaFunction';
 export { ScriptBlock } from './ScriptBlock';
 export { Playthrough, PlaythroughStep, type PlaythroughStepData, type PlaythroughData } from './Playthrough';
 export { ChangeLog } from './ChangeLog';

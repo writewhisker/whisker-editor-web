@@ -38,12 +38,12 @@ export class PublishingService {
 
   static exportForMinecraft(story: Story): any {
     const data = {
-      title: story.title,
+      title: story.metadata.title,
       passages: Array.from(story.passages.values()),
       format: 'minecraft',
     };
     this.addToHistory({
-      storyTitle: story.title,
+      storyTitle: story.metadata.title,
       platform: 'minecraft',
       timestamp: Date.now(),
       success: true,
@@ -53,12 +53,12 @@ export class PublishingService {
 
   static exportForRoblox(story: Story): any {
     const data = {
-      title: story.title,
+      title: story.metadata.title,
       passages: Array.from(story.passages.values()),
       format: 'roblox',
     };
     this.addToHistory({
-      storyTitle: story.title,
+      storyTitle: story.metadata.title,
       platform: 'roblox',
       timestamp: Date.now(),
       success: true,
@@ -98,8 +98,8 @@ export class PublishingService {
     // For now, return a mock result
     return {
       success: true,
-      url: `https://whisker.kids/story/${story.id}`,
-      shareCode: `KIDS-${story.id.substring(0, 8).toUpperCase()}`,
+      url: `https://whisker.kids/story/${story.metadata.id}`,
+      shareCode: `KIDS-${story.metadata.id.substring(0, 8).toUpperCase()}`,
     };
   }
 

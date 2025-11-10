@@ -167,7 +167,7 @@ export class StoryMigration {
       const stories = await this.adapter.listStories();
 
       for (const story of stories) {
-        await this.adapter.deleteStory(story.id || story.metadata?.id);
+        await this.adapter.deleteStory(story.metadata?.id || story.id);
       }
 
       console.log('Migration rolled back successfully');

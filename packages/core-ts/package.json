@@ -35,6 +35,7 @@
     "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "check": "tsc --noEmit"
   },
   "dependencies": {

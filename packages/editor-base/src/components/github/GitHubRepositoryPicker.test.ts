@@ -480,7 +480,7 @@ describe('GitHubRepositoryPicker', () => {
       });
 
       const selectHandler = vi.fn();
-      component.$on('select', selectHandler);
+      (component as any).$on('select', selectHandler);
 
       await waitFor(() => {
         const buttons = container.querySelectorAll('button');
@@ -516,7 +516,7 @@ describe('GitHubRepositoryPicker', () => {
       });
 
       const selectHandler = vi.fn();
-      component.$on('select', selectHandler);
+      (component as any).$on('select', selectHandler);
 
       await waitFor(() => {
         const buttons = container.querySelectorAll('button');

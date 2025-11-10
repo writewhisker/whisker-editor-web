@@ -124,7 +124,7 @@ describe('TextInput', () => {
         variableName: 'userName',
       });
 
-      component.$on('input', onInput);
+      (component as any).$on('input', onInput);
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: 'test' } });
@@ -139,7 +139,7 @@ describe('TextInput', () => {
         variableName: 'userName',
       });
 
-      component.$on('change', onChange);
+      (component as any).$on('change', onChange);
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: 'test' } });
@@ -154,7 +154,7 @@ describe('TextInput', () => {
         variableName: 'userName',
       });
 
-      component.$on('focus', onFocus);
+      (component as any).$on('focus', onFocus);
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.focus(input);
@@ -168,7 +168,7 @@ describe('TextInput', () => {
         variableName: 'userName',
       });
 
-      component.$on('blur', onBlur);
+      (component as any).$on('blur', onBlur);
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: 'test' } });
@@ -184,7 +184,7 @@ describe('TextInput', () => {
         initialValue: 'test',
       });
 
-      component.$on('submit', onSubmit);
+      (component as any).$on('submit', onSubmit);
 
       const submitButton = Array.from(container.querySelectorAll('button'))
         .find(btn => btn.textContent === 'Submit') as HTMLButtonElement;
@@ -201,7 +201,7 @@ describe('TextInput', () => {
         initialValue: 'test',
       });
 
-      component.$on('clear', onClear);
+      (component as any).$on('clear', onClear);
 
       const clearButton = container.querySelector('.clear-btn') as HTMLButtonElement;
       await fireEvent.click(clearButton);
@@ -451,7 +451,7 @@ describe('TextInput', () => {
         required: true,
       });
 
-      component.$on('input', onInput);
+      (component as any).$on('input', onInput);
 
       const input = container.querySelector('input') as HTMLInputElement;
       await fireEvent.input(input, { target: { value: '' } });
@@ -536,7 +536,7 @@ describe('TextInput', () => {
         multiline: true,
       });
 
-      component.$on('input', onInput);
+      (component as any).$on('input', onInput);
 
       const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
       await fireEvent.input(textarea, { target: { value: 'multiline\ntext' } });
@@ -707,7 +707,7 @@ describe('TextInput', () => {
         variableName: 'userName',
       });
 
-      component.$on('input', onInput);
+      (component as any).$on('input', onInput);
 
       const input = container.querySelector('input') as HTMLInputElement;
 

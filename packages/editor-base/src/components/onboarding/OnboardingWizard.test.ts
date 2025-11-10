@@ -332,7 +332,7 @@ describe('OnboardingWizard', () => {
       const { component } = render(OnboardingWizard);
 
       const skipHandler = vi.fn();
-      component.$on('skip', skipHandler);
+      (component as any).$on('skip', skipHandler);
 
       const skipButton = screen.getByText('Skip for now');
       await fireEvent.click(skipButton);
@@ -366,7 +366,7 @@ describe('OnboardingWizard', () => {
       const { component } = render(OnboardingWizard);
 
       const completeHandler = vi.fn();
-      component.$on('complete', completeHandler);
+      (component as any).$on('complete', completeHandler);
 
       // Would need to complete the flow again for this render
       expect(component).toBeTruthy();

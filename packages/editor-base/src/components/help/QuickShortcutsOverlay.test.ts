@@ -481,14 +481,14 @@ describe('QuickShortcutsOverlay', () => {
       expect(overlay).toBeTruthy();
 
       // Toggle to false
-      component.$set({ show: false });
+      (component as any).$set({ show: false });
       await waitFor(() => {
         overlay = container.querySelector('.fixed.inset-0');
         expect(overlay).toBeFalsy();
       });
 
       // Toggle back to true
-      component.$set({ show: true });
+      (component as any).$set({ show: true });
       await waitFor(() => {
         overlay = container.querySelector('.fixed.inset-0');
         expect(overlay).toBeTruthy();

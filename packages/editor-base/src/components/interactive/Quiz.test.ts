@@ -145,7 +145,7 @@ describe('Quiz', () => {
       });
 
       let submittedData: any = null;
-      component.$on('submit', (event) => {
+      (component as any).$on('submit', (event) => {
         submittedData = event.detail;
       });
 
@@ -253,7 +253,7 @@ describe('Quiz', () => {
       });
 
       let submittedData: any = null;
-      component.$on('submit', (event) => {
+      (component as any).$on('submit', (event) => {
         submittedData = event.detail;
       });
 
@@ -278,7 +278,7 @@ describe('Quiz', () => {
       });
 
       let submittedData: any = null;
-      component.$on('submit', (event) => {
+      (component as any).$on('submit', (event) => {
         submittedData = event.detail;
       });
 
@@ -442,7 +442,7 @@ describe('Quiz', () => {
       });
 
       let retryData: any = null;
-      component.$on('retry', (event) => {
+      (component as any).$on('retry', (event) => {
         retryData = event.detail;
       });
 
@@ -747,7 +747,7 @@ describe('Quiz', () => {
       });
 
       let submittedData: any = null;
-      component.$on('submit', (event) => {
+      (component as any).$on('submit', (event) => {
         submittedData = event.detail;
       });
 

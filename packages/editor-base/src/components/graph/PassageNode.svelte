@@ -5,6 +5,7 @@
   import { currentStory } from '../../stores/storyStateStore';
   import { selectedPassageId } from '../../stores/selectionStore';
   import { projectMetadataActions as projectActions } from '../../stores/projectMetadataStore';
+  import { passageOperations } from '../../stores/passageOperationsStore';
 
   import type { ValidationIssue } from '@whisker/core-ts';
   import { tagActions } from '../../stores/tagStore';
@@ -182,9 +183,10 @@
   }
 
   function handleDuplicate() {
-    const duplicated = projectActions.duplicatePassage(passage.id);
+    const duplicated = passageOperations.duplicatePassage(passage.id);
     if (duplicated) {
       notificationStore.success(`Passage "${duplicated.title}" duplicated successfully`);
+      projectActions.markChanged();
     }
     closeContextMenu();
   }

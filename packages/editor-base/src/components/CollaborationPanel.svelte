@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     collaborationStore,
-    currentUser,
+    collaboratingUser as currentUser,
     session,
     isCollaborating,
     activeCollaborators,

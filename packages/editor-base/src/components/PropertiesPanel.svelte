@@ -4,7 +4,7 @@
   import { passageOperations } from '../stores/passageOperationsStore';
   import { projectMetadataActions } from '../stores/projectMetadataStore';
   import { historyIntegration } from '../stores/historyIntegrationStore';
-  import { Choice } from '@whisker/core-ts';
+  import { Choice, Passage } from '@whisker/core-ts';
   import { tagActions } from '../stores/tagStore';
   import TagInput from './TagInput.svelte';
   import { notificationStore } from '../stores/notificationStore';
@@ -55,7 +55,7 @@
       // Check for duplicates (case-insensitive)
       if (newTitle !== originalTitle) {
         const duplicate = $currentStory && Array.from($currentStory.passages.values()).find(
-          p => p.id !== passage.id && p.title.toLowerCase() === newTitle.toLowerCase()
+          (p: Passage) => p.id !== passage.id && p.title.toLowerCase() === newTitle.toLowerCase()
         );
 
         if (duplicate) {
@@ -334,7 +334,7 @@
   ];
 
   $: availablePassages = $currentStory
-    ? Array.from($currentStory.passages.values()).filter(p => p.id !== passage?.id)
+    ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.id !== passage?.id)
     : [];
 
   // All passages for autocomplete (including current passage)

@@ -10,10 +10,8 @@ import {
   validationActions,
 } from '../../stores/validationStore';
 import { currentStory } from '../../stores';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import type { ValidationResult, QualityMetrics } from '@whisker/core-ts'types';
+import { Story, Passage, Choice } from '@whisker/core-ts';
+import type { ValidationResult, QualityMetrics } from '@whisker/core-ts';
 
 describe('ValidationPanel', () => {
   let story: Story;

@@ -16,7 +16,7 @@
   } from '../../stores/validationStore';
   import { selectedPassageId } from '../../stores/storyStateStore';
   import { viewMode, viewPreferencesActions } from '../../stores/viewPreferencesStore';
-  import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '@whisker/core-ts'types';
+  import type { ValidationIssue, ValidationSeverity, ValidationCategory } from '@whisker/core-ts';
 
   // Filter state
   let selectedSeverity: ValidationSeverity | 'all' = 'all';

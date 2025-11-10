@@ -7,7 +7,7 @@
  * - src/lib/services/storage/types.ts (Storage format)
  */
 
-import type { ProjectData as ModelProjectData, StoryData } from '@whisker/core-ts';
+import type { ProjectData as ModelProjectData, StoryData, Passage } from '@whisker/core-ts';
 import type {
 	StoredProject,
 	SerializedStory
@@ -32,7 +32,7 @@ export function modelToStorage(modelData: ModelProjectData): StoredProject {
 			version: storyData.metadata.version,
 			ifid: storyData.metadata.ifid  // Preserve IFID
 		},
-		passages: Object.values(storyData.passages).map(passage => ({
+		passages: Object.values(storyData.passages).map((passage: Passage) => ({
 			id: passage.id,
 			title: passage.title,
 			content: passage.content,

@@ -266,7 +266,7 @@ export const wordGoalStore = createWordGoalStore();
 
 // Derived stores
 export const goals = derived(wordGoalStore, $store => $store.goals);
-export const sessions = derived(wordGoalStore, $store => $store.sessions);
+export const writingSessions = derived(wordGoalStore, $store => $store.sessions);
 export const selectedGoalId = derived(wordGoalStore, $store => $store.selectedGoalId);
 export const selectedGoal = derived(
   wordGoalStore,

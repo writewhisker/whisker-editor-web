@@ -171,7 +171,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate structure section
    */
   private generateStructureSection(story: Story): string {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values() as Iterable<Passage>);
     const totalPassages = passages.length;
     const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
     const totalVariables = story.variables.size;
@@ -188,7 +188,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate passages section
    */
   private generatePassagesSection(story: Story): string {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values() as Iterable<Passage>);
 
     // Sort passages: start first, then alphabetically
     const sortedPassages = passages.sort((a, b) => {

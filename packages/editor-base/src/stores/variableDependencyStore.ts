@@ -11,7 +11,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story } from '@whisker/core-ts';
+import type { Story, Variable } from '@whisker/core-ts';
 import type { Passage } from '@whisker/core-ts';
 
 export type DependencyType = 'reads' | 'writes' | 'depends_on' | 'affects';
@@ -120,7 +120,7 @@ function analyzeStory(story: Story): DependencyGraph {
   // Initialize nodes from story variables
   // Handle both Map (runtime) and array (test) formats
   const variables = story.variables instanceof Map
-    ? Array.from(story.variables.values())
+    ? (Array.from(story.variables.values()) as Variable[])
     : (story.variables as any) || [];
 
   for (const variable of variables) {

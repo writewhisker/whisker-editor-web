@@ -632,7 +632,7 @@ export class TwineImporter implements IImporter {
 
       for (const link of links) {
         // Find target passage by name
-        const targetPassage = Array.from(story.passages.values()).find(
+        const targetPassage = Array.from(story.passages.values() as Iterable<Passage>).find(
           (p) => p.title === link.target
         );
 

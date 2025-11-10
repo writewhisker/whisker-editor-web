@@ -8,7 +8,7 @@ import {
   variableList,
   selectedPassageId,
   currentFilePath,
-} from '../stores/projectStore';
+} from '../stores';
 import { validationResult } from '../stores/validationStore';
 import { canUndo, canRedo, historyCount, historyActions } from '../stores/historyStore';
 import { Story } from '@whisker/core-ts';

@@ -259,7 +259,7 @@ describe('TimedChoice', () => {
       });
 
       let expiredFired = false;
-      component.$on('expired', () => {
+      (component as any).$on('expired', () => {
         expiredFired = true;
       });
 
@@ -279,7 +279,7 @@ describe('TimedChoice', () => {
 
       let selectFired = false;
       let autoSelected = false;
-      component.$on('select', (event) => {
+      (component as any).$on('select', (event) => {
         selectFired = true;
         autoSelected = event.detail.autoSelected;
       });
@@ -298,7 +298,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -315,7 +315,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -335,7 +335,7 @@ describe('TimedChoice', () => {
 
       let selectFired = false;
       let autoSelected = true;
-      component.$on('select', (event) => {
+      (component as any).$on('select', (event) => {
         selectFired = true;
         autoSelected = event.detail.autoSelected;
       });
@@ -370,7 +370,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -393,7 +393,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -411,7 +411,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -427,7 +427,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -443,7 +443,7 @@ describe('TimedChoice', () => {
       });
 
       let selectFired = false;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectFired = true;
       });
 
@@ -496,7 +496,7 @@ describe('TimedChoice', () => {
         expect(timer?.textContent).toBe('9s');
       });
 
-      component.$set({ disabled: true });
+      (component as any).$set({ disabled: true });
 
       const timerBefore = container.querySelector('.choice-timer')?.textContent;
       vi.advanceTimersByTime(1000);
@@ -559,7 +559,7 @@ describe('TimedChoice', () => {
       });
 
       let selectCount = 0;
-      component.$on('select', () => {
+      (component as any).$on('select', () => {
         selectCount++;
       });
 

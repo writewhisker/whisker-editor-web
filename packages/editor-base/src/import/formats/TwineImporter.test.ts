@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { TwineImporter, TwineFormat } from './TwineImporter';
+import type { Passage } from '@whisker/core-ts';
 
 describe('TwineImporter', () => {
   const importer = new TwineImporter();
@@ -90,7 +91,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{score = 10}}');
       expect(passage.content).toContain('{{score}}');
     });
@@ -111,7 +112,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if');
       expect(passage.content).toContain('then}}');
       expect(passage.content).toContain('{{end}}');
@@ -143,7 +144,7 @@ describe('TwineImporter', () => {
       expect(result.story?.metadata.title).toBe('SugarCube Story');
       expect(result.passageCount).toBe(2);
 
-      const startPassage = Array.from(result.story!.passages.values())[0];
+      const startPassage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(startPassage.tags).toContain('intro');
     });
 
@@ -164,7 +165,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{gold = 50}}');
       expect(passage.content).toContain('{{items = ["sword", "shield"]}}');
     });
@@ -185,7 +186,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if {{gold}} > 20 then}}');
       expect(passage.content).toContain('{{end}}');
     });
@@ -206,7 +207,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{name}}');
       expect(passage.content).toContain('{{gold}}');
     });
@@ -255,7 +256,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if');
       expect(passage.content).toContain('{{end}}');
     });
@@ -281,8 +282,8 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const startPassage = Array.from(result.story!.passages.values()).find(
-        (p) => p.title === 'Start'
+      const startPassage: Passage | undefined = Array.from(result.story!.passages.values()).find(
+        (p: Passage) => p.title === 'Start'
       );
       expect(startPassage?.choices.length).toBe(1);
       expect(startPassage?.choices[0].text).toBe('Next Page');
@@ -307,8 +308,8 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const startPassage = Array.from(result.story!.passages.values()).find(
-        (p) => p.title === 'Start'
+      const startPassage: Passage | undefined = Array.from(result.story!.passages.values()).find(
+        (p: Passage) => p.title === 'Start'
       );
       expect(startPassage?.choices.length).toBe(1);
       expect(startPassage?.choices[0].text).toBe('Click here');
@@ -335,8 +336,8 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const startPassage = Array.from(result.story!.passages.values()).find(
-        (p) => p.title === 'Start'
+      const startPassage: Passage | undefined = Array.from(result.story!.passages.values()).find(
+        (p: Passage) => p.title === 'Start'
       );
       expect(startPassage?.choices.length).toBe(2);
     });
@@ -424,7 +425,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.tags).toContain('intro');
       expect(passage.tags).toContain('scene1');
     });
@@ -445,7 +446,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.position.x).toBe(250);
       expect(passage.position.y).toBe(350);
     });
@@ -466,7 +467,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.size?.width).toBe(150);
       expect(passage.size?.height).toBe(200);
     });
@@ -548,7 +549,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('<b>');
       expect(passage.content).toContain('</b>');
       expect(passage.content).toContain('&');
@@ -778,7 +779,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if');
       expect(passage.content).toContain('{{elseif');
       expect(passage.content).toContain('{{else}}');
@@ -802,7 +803,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{temp');
       expect(result.lossReport?.info.some(i => i.feature === 'Temporary Variables')).toBe(true);
     });
@@ -823,7 +824,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{score}}');
     });
   });
@@ -845,7 +846,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{score = 10}}');
     });
 
@@ -865,7 +866,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if');
       expect(passage.content).toContain('{{elseif');
       expect(passage.content).toContain('{{else}}');
@@ -887,7 +888,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).not.toContain('|hookname>');
       expect(passage.content).toContain('[This is hooked content]');
     });
@@ -935,7 +936,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{if');
       expect(passage.content).toContain('{{elseif');
       expect(passage.content).toContain('{{else}}');
@@ -958,7 +959,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(true);
-      const passage = Array.from(result.story!.passages.values())[0];
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
       expect(passage.content).toContain('{{playerName}}');
     });
 
@@ -1050,7 +1051,7 @@ This is the next passage.`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages.find(p => p.title === 'Start');
       expect(startPassage).toBeDefined();
       expect(startPassage!.tags).toContain('intro');
@@ -1068,7 +1069,7 @@ This passage has position metadata.`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages[0];
       expect(startPassage.position.x).toBe(100);
       expect(startPassage.position.y).toBe(200);
@@ -1085,7 +1086,7 @@ Content here.`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages[0];
       expect(startPassage.tags).toEqual(['tag1', 'tag2']);
       expect(startPassage.position.x).toBe(50);
@@ -1129,7 +1130,7 @@ You have $score points.
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages[0];
       // Should convert $score to {{score}}
       expect(startPassage.content).toContain('{{score}}');
@@ -1148,7 +1149,7 @@ Hello, $name!
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages[0];
       // Should convert to Whisker format
       expect(startPassage.content).toContain('{{name}}');
@@ -1172,7 +1173,7 @@ Another passage`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages.find(p => p.title === 'Start');
       expect(startPassage!.content).toContain('Line 1');
       expect(startPassage!.content).toContain('Line 5');
@@ -1192,7 +1193,7 @@ This is second.`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const firstPassage = passages.find(p => p.title === 'FirstPassage');
       expect(result.story!.startPassage).toBe(firstPassage!.id);
     });
@@ -1211,7 +1212,7 @@ Actual content.`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages.find(p => p.title === 'Start');
       expect(result.story!.startPassage).toBe(startPassage!.id);
     });
@@ -1266,7 +1267,7 @@ Content 3`;
       });
 
       expect(result.success).toBe(true);
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const ids = passages.map(p => p.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(passages.length);

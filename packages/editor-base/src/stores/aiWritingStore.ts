@@ -290,7 +290,7 @@ const createAIWritingStore = () => {
 export const aiWritingStore = createAIWritingStore();
 
 // Derived stores
-export const aiConfig = derived(aiWritingStore, $store => $store.config);
+export const aiWritingConfig = derived(aiWritingStore, $store => $store.config);
 export const isAILoading = derived(aiWritingStore, $store => $store.isLoading);
 export const aiHistory = derived(aiWritingStore, $store => $store.history);
 export const lastAIResponse = derived(aiWritingStore, $store => $store.lastResponse);

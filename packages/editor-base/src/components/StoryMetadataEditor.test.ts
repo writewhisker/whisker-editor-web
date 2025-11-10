@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import StoryMetadataEditor from './StoryMetadataEditor.svelte';
-import { currentStory } from '../stores/projectStore';
+import { currentStory } from '../stores';
 import { Story } from '@whisker/core-ts';
 
 // Mock trapFocus utility

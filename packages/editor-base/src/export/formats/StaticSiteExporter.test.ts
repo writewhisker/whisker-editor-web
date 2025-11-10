@@ -39,15 +39,15 @@ describe('StaticSiteExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
+      expect(result.content).toBeDefined();
       expect(result.format).toBe('html-standalone');
       expect(result.filename).toBe('test-story.html');
 
       // Verify HTML structure
-      const html = result.data as string;
+      const html = result.content as string;
       expect(html).toContain('<!DOCTYPE html>');
       expect(html).toContain('<title>Test Story</title>');
       expect(html).toContain('const STORY_DATA =');
@@ -66,10 +66,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('Adventure Game');
       expect(html).toContain('An epic adventure');
@@ -86,10 +86,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('<style>');
       expect(html).toContain('#whisker-player');
@@ -108,10 +108,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('class WhiskerPlayer');
       expect(html).toContain('render()');
@@ -142,10 +142,10 @@ describe('StaticSiteExporter', () => {
       story.addPassage(passage);
       story.startPassage = passage.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       // Check that story data is present (format may vary based on Story.serialize())
       expect(html).toContain('const STORY_DATA =');
@@ -164,7 +164,7 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
       expect(result.filename).toBe('my-cool-story.html');
@@ -201,10 +201,10 @@ describe('StaticSiteExporter', () => {
 
       story.startPassage = passage1.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       // Passages should be in the data
       expect(html).toContain('Start');
@@ -245,10 +245,10 @@ describe('StaticSiteExporter', () => {
 
       story.startPassage = passage1.id;
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       // Choice text should be in the data
       expect(html).toContain('Go to A');
@@ -256,7 +256,7 @@ describe('StaticSiteExporter', () => {
     });
 
     it('should handle null story', async () => {
-      const result = await exporter.export({ story: null as any, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story: null as any, options: { format: 'html-standalone' });
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -274,10 +274,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('<meta name="viewport"');
       expect(html).toContain('width=device-width');
@@ -295,10 +295,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       expect(html).toContain('Story &lt;with&gt; &quot;HTML&quot;');
     });
@@ -314,10 +314,10 @@ describe('StaticSiteExporter', () => {
         },
       });
 
-      const result = await exporter.export({ story, options: {}, format: 'html-standalone' });
+      const result = await exporter.export({ story, options: { format: 'html-standalone' } });
 
       expect(result.success).toBe(true);
-      const html = result.data as string;
+      const html = result.content as string;
 
       // Should generate valid HTML
       expect(html).toContain('<!DOCTYPE html>');

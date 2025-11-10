@@ -49,7 +49,7 @@ export const selectionActions = {
   selectFirstPassage() {
     const story = get(currentStory);
     if (story) {
-      const firstPassage = Array.from(story.passages.values())[0];
+      const firstPassage = Array.from(story.passages.values())[0] as Passage | undefined;
       if (firstPassage) {
         selectedPassageId.set(firstPassage.id);
       }
@@ -72,7 +72,7 @@ export const selectionActions = {
 
     if (currentSelection && story && !story.getPassage(currentSelection)) {
       // Selected passage doesn't exist, select first available passage
-      const firstPassage = Array.from(story.passages.values())[0];
+      const firstPassage = Array.from(story.passages.values())[0] as Passage | undefined;
       if (firstPassage) {
         selectedPassageId.set(firstPassage.id);
       } else {

@@ -16,7 +16,10 @@
   import KidsExportDialog from './KidsExportDialog.svelte';
   import KidsSharePanel from './KidsSharePanel.svelte';
   import KidsParentalControlsPanel from './KidsParentalControlsPanel.svelte';
-  import { currentStory, selectedPassageId, projectActions } from '../../stores/storyStateStore';
+  import { currentStory, projectActions } from '../../stores/storyStateStore';
+  import { selectedPassageId } from '../../stores/selectionStore';
+  import { passageOperations } from '../../stores/passageOperationsStore';
+  import { projectMetadataActions } from '../../stores/projectMetadataStore';
   import { viewMode, panelVisibility, viewPreferencesActions } from '../../stores/viewPreferencesStore';
   import { kidsModePreferences, kidsTheme, kidsAgeGroup } from '../../stores/kidsModeStore';
   import { notificationStore } from '../../stores/notificationStore';
@@ -56,7 +59,8 @@
       }
     }
 
-    projectActions.addPassage();
+    passageOperations.addPassage();
+    projectMetadataActions.markChanged();
   }
 
   function handleDeletePassage(passageId: string) {
@@ -66,7 +70,8 @@
 
     // Simple confirmation (kids-friendly)
     if (confirm(`Do you want to remove "${passage.title}"?`)) {
-      projectActions.deletePassage(passageId);
+      passageOperations.deletePassage(passageId);
+      projectMetadataActions.markChanged();
       notificationStore.success(`"${passage.title}" was removed`);
     }
   }

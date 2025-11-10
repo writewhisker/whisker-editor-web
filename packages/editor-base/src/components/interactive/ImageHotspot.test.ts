@@ -140,7 +140,7 @@ describe('ImageHotspot', () => {
         hotspots: [],
       });
 
-      component.$on('imageLoad', onImageLoad);
+      (component as any).$on('imageLoad', onImageLoad);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);
@@ -167,7 +167,7 @@ describe('ImageHotspot', () => {
         hotspots: [],
       });
 
-      component.$on('imageError', onImageError);
+      (component as any).$on('imageError', onImageError);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.error(img);
@@ -195,7 +195,7 @@ describe('ImageHotspot', () => {
         hotspots: mockHotspots,
       });
 
-      component.$on('hotspotClick', onHotspotClick);
+      (component as any).$on('hotspotClick', onHotspotClick);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);
@@ -215,7 +215,7 @@ describe('ImageHotspot', () => {
         disabled: true,
       });
 
-      component.$on('hotspotClick', onHotspotClick);
+      (component as any).$on('hotspotClick', onHotspotClick);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);
@@ -233,7 +233,7 @@ describe('ImageHotspot', () => {
         highlightOnHover: true,
       });
 
-      component.$on('hotspotHover', onHotspotHover);
+      (component as any).$on('hotspotHover', onHotspotHover);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);
@@ -252,7 +252,7 @@ describe('ImageHotspot', () => {
         highlightOnHover: false,
       });
 
-      component.$on('hotspotHover', onHotspotHover);
+      (component as any).$on('hotspotHover', onHotspotHover);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);
@@ -719,7 +719,7 @@ describe('ImageHotspot', () => {
         highlightOnHover: true,
       });
 
-      component.$on('hotspotHover', onHotspotHover);
+      (component as any).$on('hotspotHover', onHotspotHover);
 
       const img = container.querySelector('img') as HTMLImageElement;
       await fireEvent.load(img);

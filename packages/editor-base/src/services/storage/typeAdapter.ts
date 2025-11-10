@@ -7,7 +7,7 @@
  * - src/lib/services/storage/types.ts (Storage format)
  */
 
-import type { ProjectData as ModelProjectData, StoryData } from '@whisker/core-ts';
+import type { ProjectData as ModelProjectData, StoryData, Passage } from '@whisker/core-ts';
 import type {
 	StoredProject,
 	SerializedStory
@@ -32,7 +32,7 @@ export function modelToStorage(modelData: ModelProjectData): StoredProject {
 			version: storyData.metadata.version,
 			ifid: storyData.metadata.ifid  // Preserve IFID
 		},
-		passages: Object.values(storyData.passages).map(passage => ({
+		passages: Object.values(storyData.passages).map((passage: Passage) => ({
 			id: passage.id,
 			title: passage.title,
 			content: passage.content,
@@ -163,7 +163,7 @@ function generateProjectId(storyData: StoryData): string {
  * Calculate total word count across all passages
  */
 function calculateWordCount(storyData: StoryData): number {
-	return Object.values(storyData.passages).reduce((total, passage) => {
+	return Object.values(storyData.passages).reduce((total: number, passage: any) => {
 		const words = passage.content.trim().split(/\s+/).filter(w => w.length > 0);
 		return total + words.length;
 	}, 0);

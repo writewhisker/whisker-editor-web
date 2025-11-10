@@ -221,7 +221,7 @@ function analyzeStory(story: Story): AccessibilityReport {
 
   // Combine all text for reading level
   let allText = '';
-  const passages = Array.from(story.passages.values());
+  const passages = Array.from(story.passages.values()) as Passage[];
 
   for (const passage of passages) {
     allText += passage.content + ' ';

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import Toolbar from './Toolbar.svelte';
-import { currentStory, unsavedChanges, projectActions } from '../stores/projectStore';
+import { currentStory, unsavedChanges, projectActions } from '../stores';
 import { canUndo, canRedo, historyCount, historyActions } from '../stores/historyStore';
 import { validationResult, errorCount, warningCount, infoCount, isValid } from '../stores/validationStore';
 import { Story } from '@whisker/core-ts';

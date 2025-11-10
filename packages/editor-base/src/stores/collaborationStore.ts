@@ -424,7 +424,7 @@ const createCollaborationStore = () => {
 export const collaborationStore = createCollaborationStore();
 
 // Derived stores
-export const currentUser = derived(collaborationStore, $store => $store.currentUser);
+export const collaboratingUser = derived(collaborationStore, $store => $store.currentUser);
 export const session = derived(collaborationStore, $store => $store.session);
 export const isCollaborating = derived(collaborationStore, $store =>
   $store.session !== null && $store.session.enabled

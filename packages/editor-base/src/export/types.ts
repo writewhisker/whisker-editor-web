@@ -4,9 +4,7 @@
  * Type definitions for the story export and publishing system.
  */
 
-import type { Story } from '@whisker/core-ts';
-import type { ValidationResult } from '@whisker/core-ts';
-import type { QualityMetrics } from '@whisker/core-ts/QualityAnalyzer';
+import type { Story, ValidationResult, QualityMetrics } from '@whisker/core-ts';
 
 /**
  * Supported export formats
@@ -75,6 +73,9 @@ export interface ExportResult {
 
   /** Exported content (string or Blob) */
   content?: string | Blob;
+
+  /** Export format used */
+  format?: ExportFormat;
 
   /** Filename suggestion */
   filename?: string;

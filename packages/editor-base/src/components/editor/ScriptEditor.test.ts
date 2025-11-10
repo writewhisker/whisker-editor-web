@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import ScriptEditor from './ScriptEditor.svelte';
-import { currentStory } from '../../stores/projectStore';
+import { currentStory } from '../../stores';
 import { Story } from '@whisker/core-ts';
 
 describe('ScriptEditor', () => {

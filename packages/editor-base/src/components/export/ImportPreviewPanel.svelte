@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ImportResult } from '../../import/types';
+  import type { Passage } from '@whisker/core-ts';
 
   export let result: ImportResult;
   export let onConfirm: () => void;
@@ -11,6 +12,7 @@
   let showPassageSamples = false;
 
   // Get sample passages (first 3)
+  let samplePassages: Passage[] = [];
   $: samplePassages = result.story
     ? Array.from(result.story.passages.values()).slice(0, 3)
     : [];

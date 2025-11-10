@@ -212,7 +212,7 @@ describe('MobileToolbar', () => {
       });
       await expandToolbar(container);
 
-      component.$set({ currentZoom: 1.5 });
+      (component as any).$set({ currentZoom: 1.5 });
 
       const zoomIndicator = container.querySelector('.zoom-indicator');
       expect(zoomIndicator?.textContent).toBe('150%');
@@ -439,7 +439,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('addPassage', () => {
+      (component as any).$on('addPassage', () => {
         eventDispatched = true;
       });
 
@@ -457,7 +457,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('fitView', () => {
+      (component as any).$on('fitView', () => {
         eventDispatched = true;
       });
 
@@ -475,7 +475,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('zoomIn', () => {
+      (component as any).$on('zoomIn', () => {
         eventDispatched = true;
       });
 
@@ -493,7 +493,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('zoomOut', () => {
+      (component as any).$on('zoomOut', () => {
         eventDispatched = true;
       });
 
@@ -511,7 +511,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('toggleMiniMap', () => {
+      (component as any).$on('toggleMiniMap', () => {
         eventDispatched = true;
       });
 
@@ -529,7 +529,7 @@ describe('MobileToolbar', () => {
       const { container, component } = render(MobileToolbar);
 
       let eventDispatched = false;
-      component.$on('saveStory', () => {
+      (component as any).$on('saveStory', () => {
         eventDispatched = true;
       });
 
@@ -666,7 +666,7 @@ describe('MobileToolbar', () => {
         .find(btn => btn.getAttribute('aria-label')?.includes('minimap'));
       expect(minimapButton?.getAttribute('aria-label')).toBe('Hide minimap');
 
-      component.$set({ showMiniMap: false });
+      (component as any).$set({ showMiniMap: false });
 
       minimapButton = Array.from(container.querySelectorAll('.fab.secondary'))
         .find(btn => btn.getAttribute('aria-label')?.includes('minimap'));

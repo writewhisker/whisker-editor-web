@@ -281,7 +281,7 @@ export const achievementSystem: EditorPlugin = {
         const total = Object.keys(achievements.definitions).length;
         if (total === 0) return false;
 
-        const unlocked = Object.values(achievements.progress).filter(p => p.unlocked).length;
+        const unlocked = Object.values(achievements.progress).filter((p: AchievementProgress) => p.unlocked).length;
         const completionPercent = (unlocked / total) * 100;
 
         switch (params.operator) {
@@ -343,7 +343,7 @@ export const achievementSystem: EditorPlugin = {
       const achievements = context.storyState.achievements;
       if (achievements) {
         const total = Object.keys(achievements.definitions).length;
-        const unlocked = Object.values(achievements.progress).filter(p => p.unlocked).length;
+        const unlocked = Object.values(achievements.progress).filter((p: AchievementProgress) => p.unlocked).length;
         console.log(
           `[Achievement System] Story loaded: ${unlocked}/${total} achievements unlocked`
         );

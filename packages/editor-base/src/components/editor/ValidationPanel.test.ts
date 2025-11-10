@@ -9,11 +9,9 @@ import {
   autoValidate,
   validationActions,
 } from '../../stores/validationStore';
-import { currentStory } from '../../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import type { ValidationResult, QualityMetrics } from '@whisker/core-ts'types';
+import { currentStory } from '../../stores';
+import { Story, Passage, Choice } from '@whisker/core-ts';
+import type { ValidationResult, QualityMetrics } from '@whisker/core-ts';
 
 describe('ValidationPanel', () => {
   let story: Story;

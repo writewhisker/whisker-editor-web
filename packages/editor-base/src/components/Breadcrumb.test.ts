@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import Breadcrumb from './Breadcrumb.svelte';
-import { currentStory, selectedPassageId } from '../stores/projectStore';
+import { currentStory, selectedPassageId } from '../stores';
 import { Story } from '@whisker/core-ts';
 import { Passage } from '@whisker/core-ts';
 

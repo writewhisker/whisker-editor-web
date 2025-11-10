@@ -237,7 +237,7 @@ describe('TemplateGallery', () => {
       const { component, container } = render(TemplateGallery);
 
       let eventFired = false;
-      component.$on('selectTemplate', (event) => {
+      (component as any).$on('selectTemplate', (event) => {
         eventFired = true;
         expect(event.detail.templateId).toBeTruthy();
         expect(event.detail.templateName).toBeTruthy();
@@ -256,7 +256,7 @@ describe('TemplateGallery', () => {
       const { component, getByText } = render(TemplateGallery);
 
       let capturedEvent: any = null;
-      component.$on('selectTemplate', (event) => {
+      (component as any).$on('selectTemplate', (event) => {
         capturedEvent = event.detail;
       });
 
@@ -287,7 +287,7 @@ describe('TemplateGallery', () => {
       const { component, container } = render(TemplateGallery);
 
       let eventFired = false;
-      component.$on('startBlank', () => {
+      (component as any).$on('startBlank', () => {
         eventFired = true;
       });
 
@@ -306,7 +306,7 @@ describe('TemplateGallery', () => {
       const { component, container } = render(TemplateGallery);
 
       let eventFired = false;
-      component.$on('close', () => {
+      (component as any).$on('close', () => {
         eventFired = true;
       });
 

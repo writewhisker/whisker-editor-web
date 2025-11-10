@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TwineImporter } from './TwineImporter';
+import type { Passage } from '@whisker/core-ts';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
@@ -24,7 +25,7 @@ describe('TwineImporter Integration Tests', () => {
       expect(result.passageCount).toBe(10);
 
       // Verify specific passages were imported
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const passageNames = passages.map((p) => p.title);
       expect(passageNames).toContain('Start');
       expect(passageNames).toContain('Forest Path');
@@ -56,7 +57,7 @@ describe('TwineImporter Integration Tests', () => {
       expect(result.passageCount).toBe(17);
 
       // Verify specific passages
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const passageNames = passages.map((p) => p.title);
       expect(passageNames).toContain('Start');
       expect(passageNames).toContain('Village Square');
@@ -88,7 +89,7 @@ describe('TwineImporter Integration Tests', () => {
       expect(result.passageCount).toBe(16);
 
       // Verify passages were imported
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       expect(passages.length).toBe(16);
 
       // Verify specific passages
@@ -120,7 +121,7 @@ describe('TwineImporter Integration Tests', () => {
       expect(result.passageCount).toBeGreaterThan(0);
 
       // Verify specific passages
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const passageNames = passages.map((p) => p.title);
       expect(passageNames).toContain('Awakening');
       expect(passageNames).toContain('Examine Room');
@@ -213,7 +214,7 @@ describe('TwineImporter Integration Tests', () => {
       expect(result.success).toBe(true);
 
       // Check that variables were converted in passage content
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
       const startPassage = passages.find((p) => p.title === 'Start');
       expect(startPassage?.content).toBeDefined();
     });
@@ -260,7 +261,7 @@ describe('TwineImporter Integration Tests', () => {
 
       expect(result.success).toBe(true);
 
-      const passages = Array.from(result.story!.passages.values());
+      const passages = Array.from(result.story!.passages.values()) as Passage[];
 
       // Passages should be imported
       expect(passages.length).toBeGreaterThan(0);

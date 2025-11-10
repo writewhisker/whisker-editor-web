@@ -13,7 +13,7 @@ export class StoryAnalytics {
    * Analyze story and generate comprehensive metrics
    */
   static analyze(story: Story): StoryMetrics {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values()) as Passage[];
     const variables = story.variables;
 
     // Basic counts
@@ -127,7 +127,7 @@ export class StoryAnalytics {
    * Calculate complexity score (0-100)
    */
   private static calculateComplexity(story: Story): number {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values()) as Passage[];
     const totalPassages = passages.length;
     const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
     const totalVariables = story.variables.size;
@@ -149,7 +149,7 @@ export class StoryAnalytics {
    */
   private static detectIssues(story: Story, reachable: Set<string>): AnalyticsIssue[] {
     const issues: AnalyticsIssue[] = [];
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values()) as Passage[];
 
     // Unreachable passages
     for (const passage of passages) {

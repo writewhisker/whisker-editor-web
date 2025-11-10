@@ -104,10 +104,10 @@
     }
 
     // Get filtered passage IDs for quick lookup
-    const filteredIds = new Set($filteredPassages.map(p => p.id));
+    const filteredIds = new Set($filteredPassages.map((p: Passage) => p.id));
 
     // Create nodes from passages (using cached metadata)
-    const flowNodes: Node[] = Array.from($currentStory.passages.values()).map((passage) => {
+    const flowNodes: Node[] = Array.from($currentStory.passages.values()).map((passage: Passage) => {
       const isStart = $currentStory.startPassage === passage.id;
       const isOrphan = isOrphanPassage(passage, $currentStory);
       const isDead = isDeadEndPassage(passage, $currentStory);
@@ -840,7 +840,7 @@
       const newPassageIds: string[] = [];
 
       selectedNodes.forEach(id => {
-        const duplicated = projectActions.duplicatePassage(id);
+        const duplicated = passageOperations.duplicatePassage(id);
         if (duplicated) {
           newPassageIds.push(duplicated.id);
           // Offset duplicates slightly

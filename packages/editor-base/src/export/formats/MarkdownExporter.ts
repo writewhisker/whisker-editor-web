@@ -4,7 +4,7 @@
  * Exports stories as Markdown documentation for readability and sharing.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story, Variable } from '@whisker/core-ts';
 import type { Passage } from '@whisker/core-ts';
 import type { Choice } from '@whisker/core-ts';
 import type {
@@ -171,7 +171,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate structure section
    */
   private generateStructureSection(story: Story): string {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values() as Iterable<Passage>);
     const totalPassages = passages.length;
     const totalChoices = passages.reduce((sum, p) => sum + p.choices.length, 0);
     const totalVariables = story.variables.size;
@@ -188,7 +188,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate passages section
    */
   private generatePassagesSection(story: Story): string {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values() as Iterable<Passage>);
 
     // Sort passages: start first, then alphabetically
     const sortedPassages = passages.sort((a, b) => {
@@ -263,7 +263,7 @@ ${validation.issues.map((issue: any) => `- **[${issue.severity.toUpperCase()}]**
    * Generate variables section
    */
   private generateVariablesSection(story: Story): string {
-    const variables = Array.from(story.variables.values());
+    const variables = Array.from(story.variables.values()) as Variable[];
 
     const varList = variables.map(v => {
       const value = typeof v.initial === 'string' ? `"${v.initial}"` : v.initial;

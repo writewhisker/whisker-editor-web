@@ -43,7 +43,7 @@ export class TwineExporter implements IExporter {
   }
 
   private generateTwineHTML(story: Story): string {
-    const passages = Array.from(story.passages.values());
+    const passages = Array.from(story.passages.values() as Iterable<Passage>);
     const startPassage = story.startPassage || (passages[0]?.id ?? '1');
     const ifid = story.metadata.ifid || nanoid();
 

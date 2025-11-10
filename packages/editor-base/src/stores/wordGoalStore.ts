@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { Story } from '@whisker/core-ts';
+import type { Story, Passage } from '@whisker/core-ts';
 
 export type GoalType = 'daily' | 'weekly' | 'monthly' | 'total';
 export type GoalStatus = 'not_started' | 'in_progress' | 'completed' | 'exceeded';
@@ -153,7 +153,7 @@ const createWordGoalStore = () => {
      * Update goal progress based on current story word count
      */
     updateProgress: (story: Story) => {
-      const totalWords = Array.from(story.passages.values())
+      const totalWords = Array.from(story.passages.values() as Iterable<Passage>)
         .reduce((sum, passage) => sum + (passage.content?.split(/\s+/).filter(w => w.length > 0).length || 0), 0);
 
       update(state => {
@@ -208,7 +208,7 @@ const createWordGoalStore = () => {
         }
 
         const now = new Date().toISOString();
-        const totalWords = Array.from(story.passages.values())
+        const totalWords = Array.from(story.passages.values() as Iterable<Passage>)
           .reduce((sum, passage) => sum + (passage.content?.split(/\s+/).filter(w => w.length > 0).length || 0), 0);
 
         // Calculate words written during session
@@ -266,7 +266,7 @@ export const wordGoalStore = createWordGoalStore();
 
 // Derived stores
 export const goals = derived(wordGoalStore, $store => $store.goals);
-export const sessions = derived(wordGoalStore, $store => $store.sessions);
+export const writingSessions = derived(wordGoalStore, $store => $store.sessions);
 export const selectedGoalId = derived(wordGoalStore, $store => $store.selectedGoalId);
 export const selectedGoal = derived(
   wordGoalStore,

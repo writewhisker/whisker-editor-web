@@ -425,7 +425,7 @@ export const validationActions = {
 
       for (const [category, issues] of Object.entries(grouped)) {
         md += `### ${category.charAt(0).toUpperCase() + category.slice(1)}\n\n`;
-        for (const issue of issues) {
+        for (const issue of issues as typeof result.issues) {
           const icon = issue.severity === 'error' ? '🔴' : issue.severity === 'warning' ? '⚠️' : 'ℹ️';
           md += `${icon} **${issue.message}**\n`;
           if (issue.description) md += `   - ${issue.description}\n`;

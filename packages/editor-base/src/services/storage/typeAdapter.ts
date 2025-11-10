@@ -163,7 +163,7 @@ function generateProjectId(storyData: StoryData): string {
  * Calculate total word count across all passages
  */
 function calculateWordCount(storyData: StoryData): number {
-	return Object.values(storyData.passages).reduce((total, passage) => {
+	return Object.values(storyData.passages).reduce((total: number, passage: any) => {
 		const words = passage.content.trim().split(/\s+/).filter(w => w.length > 0);
 		return total + words.length;
 	}, 0);

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { currentStory } from '../../stores/storyStateStore';
   import { derived } from 'svelte/store';
+  import type { Passage } from '@whisker/core-ts';
 
   interface StoryMetrics {
     content: {
@@ -38,7 +39,7 @@
   const metrics = derived(currentStory, ($story) => {
     if (!$story) return null;
 
-    const passages = Array.from($story.passages.values());
+    const passages = Array.from($story.passages.values() as Iterable<Passage>);
 
     // Content Metrics
     const passageWords = passages.map(p => ({

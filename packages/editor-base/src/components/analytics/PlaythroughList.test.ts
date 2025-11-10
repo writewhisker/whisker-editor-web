@@ -95,25 +95,24 @@ describe('PlaythroughList', () => {
     let mockPlaythroughs: Playthrough[];
 
     beforeEach(() => {
-      const playthrough1 = new Playthrough('story1', 'start');
+      const playthrough1 = new Playthrough({ storyId: 'story1' });
       playthrough1.startTime = new Date('2024-01-01T10:00:00').toISOString();
       playthrough1.completed = true;
       playthrough1.addStep({
         passageId: 'start',
         passageTitle: 'Start',
         choiceText: 'Begin',
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
-      const playthrough2 = new Playthrough('story1', 'start');
+      const playthrough2 = new Playthrough({ storyId: 'story1' });
       playthrough2.startTime = new Date('2024-01-02T14:00:00').toISOString();
       playthrough2.completed = false;
       playthrough2.addStep({
         passageId: 'start',
         passageTitle: 'Start',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -174,13 +173,13 @@ describe('PlaythroughList', () => {
     let mockPlaythrough: Playthrough;
 
     beforeEach(() => {
-      mockPlaythrough = new Playthrough('story1', 'start');
+      mockPlaythrough = new Playthrough({ storyId: 'story1' });
       mockPlaythrough.startTime = new Date('2024-01-01T10:00:00').toISOString();
       mockPlaythrough.addStep({
         passageId: 'start',
         passageTitle: 'Start',
         choiceText: 'Begin',
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -218,26 +217,25 @@ describe('PlaythroughList', () => {
 
   describe('path display', () => {
     beforeEach(() => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.addStep({
         passageId: 'start',
         passageTitle: 'Beginning',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
       playthrough.addStep({
         passageId: 'middle',
         passageTitle: 'Middle',
         choiceText: 'Continue',
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
       playthrough.addStep({
         passageId: 'end',
         passageTitle: 'Ending',
         choiceText: 'Finish',
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -260,15 +258,14 @@ describe('PlaythroughList', () => {
     });
 
     it('should truncate long paths', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
 
       // Add many steps
       for (let i = 0; i < 10; i++) {
         playthrough.addStep({
           passageId: `step${i}`,
           passageTitle: `Step ${i}`,
-          choiceText: null,
-          timestamp: Date.now(),
+          timestamp: new Date().toISOString(),
           variables: {},
         });
       }
@@ -283,13 +280,12 @@ describe('PlaythroughList', () => {
 
   describe('delete functionality', () => {
     beforeEach(() => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.id = 'test-playthrough-id';
       playthrough.addStep({
         passageId: 'start',
         passageTitle: 'Start',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -329,12 +325,11 @@ describe('PlaythroughList', () => {
 
   describe('export functionality', () => {
     beforeEach(() => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.addStep({
         passageId: 'start',
         passageTitle: 'Start',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -370,8 +365,8 @@ describe('PlaythroughList', () => {
 
   describe('clear all functionality', () => {
     beforeEach(() => {
-      const playthrough1 = new Playthrough('story1', 'start');
-      const playthrough2 = new Playthrough('story1', 'start');
+      const playthrough1 = new Playthrough({ storyId: 'story1' });
+      const playthrough2 = new Playthrough({ storyId: 'story1' });
 
       mockGetPlaythroughs.mockReturnValue([playthrough1, playthrough2]);
       vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -420,7 +415,7 @@ describe('PlaythroughList', () => {
 
   describe('details modal', () => {
     beforeEach(() => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.startTime = new Date('2024-01-01T10:00:00').toISOString();
       playthrough.endTime = new Date('2024-01-01T10:05:00').toISOString();
       playthrough.completed = true;
@@ -430,15 +425,14 @@ describe('PlaythroughList', () => {
         passageId: 'start',
         passageTitle: 'Start',
         choiceText: 'Begin',
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
         timeSpent: 30000,
       });
       playthrough.addStep({
         passageId: 'end',
         passageTitle: 'End',
-        choiceText: null,
-        timestamp: Date.now() + 30000,
+        timestamp: new Date(Date.now() + 30000).toISOString(),
         variables: {},
         timeSpent: 30000,
       });
@@ -556,12 +550,11 @@ describe('PlaythroughList', () => {
 
   describe('selection state', () => {
     beforeEach(() => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.addStep({
         passageId: 'start',
         passageTitle: 'Start',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 
@@ -581,7 +574,7 @@ describe('PlaythroughList', () => {
 
   describe('formatting helpers', () => {
     it('should format dates correctly', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.startTime = new Date('2024-01-01T10:00:00').toISOString();
 
       mockGetPlaythroughs.mockReturnValue([playthrough]);
@@ -593,7 +586,7 @@ describe('PlaythroughList', () => {
     });
 
     it('should format durations correctly', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.startTime = new Date('2024-01-01T10:00:00').toISOString();
       playthrough.endTime = new Date('2024-01-01T11:30:00').toISOString();
 
@@ -608,10 +601,10 @@ describe('PlaythroughList', () => {
 
   describe('sorting', () => {
     it('should sort playthroughs by date descending', () => {
-      const playthrough1 = new Playthrough('story1', 'start');
+      const playthrough1 = new Playthrough({ storyId: 'story1' });
       playthrough1.startTime = new Date('2024-01-01T10:00:00').toISOString();
 
-      const playthrough2 = new Playthrough('story1', 'start');
+      const playthrough2 = new Playthrough({ storyId: 'story1' });
       playthrough2.startTime = new Date('2024-01-02T10:00:00').toISOString();
 
       mockGetPlaythroughs.mockReturnValue([playthrough1, playthrough2]);
@@ -637,7 +630,7 @@ describe('PlaythroughList', () => {
     });
 
     it('should handle playthroughs without end time', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.startTime = new Date('2024-01-01T10:00:00').toISOString();
       playthrough.endTime = null;
 
@@ -650,7 +643,7 @@ describe('PlaythroughList', () => {
     });
 
     it('should handle playthroughs without steps', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.steps = [];
 
       mockGetPlaythroughs.mockReturnValue([playthrough]);
@@ -661,7 +654,7 @@ describe('PlaythroughList', () => {
     });
 
     it('should handle playthroughs without variables', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.finalVariables = {};
 
       mockGetPlaythroughs.mockReturnValue([playthrough]);
@@ -676,12 +669,11 @@ describe('PlaythroughList', () => {
     });
 
     it('should handle singular/plural correctly', () => {
-      const playthrough = new Playthrough('story1', 'start');
+      const playthrough = new Playthrough({ storyId: 'story1' });
       playthrough.addStep({
         passageId: 'start',
         passageTitle: 'Start',
-        choiceText: null,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
         variables: {},
       });
 

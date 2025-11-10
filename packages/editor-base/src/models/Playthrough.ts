@@ -9,6 +9,8 @@ export interface PlaythroughStep {
   timestamp: number;
   choiceIndex?: number;
   timeSpent?: number;
+  passageTitle?: string;
+  choiceText?: string;
 }
 
 export interface PlaythroughData {
@@ -72,6 +74,10 @@ export class Playthrough {
 
   getChoices(): Array<{ passageId: string; choiceIndex: number }> {
     return this.choices;
+  }
+
+  getPath(): string[] {
+    return this.steps.map(step => step.passageTitle || step.passageId);
   }
 
   serialize(): PlaythroughData {

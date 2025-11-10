@@ -12,6 +12,7 @@ export interface StoryTemplate {
   ageGroup: string;
   category: string;
   platform?: 'minecraft' | 'roblox' | 'generic';
+  difficulty?: 'easy' | 'medium' | 'hard';
   passages: Partial<Passage>[];
 }
 

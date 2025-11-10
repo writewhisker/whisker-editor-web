@@ -44,6 +44,18 @@ export class LuaFunction {
     this.code = data?.code || '';
   }
 
+  clone(): LuaFunction {
+    return new LuaFunction({
+      name: this.name,
+      description: this.description,
+      category: this.category,
+      tags: [...this.tags],
+      parameters: this.parameters.map(p => ({ ...p })),
+      returnType: this.returnType,
+      code: this.code,
+    });
+  }
+
   serialize(): LuaFunctionData {
     return {
       id: this.id,

@@ -21,6 +21,7 @@ export interface ScriptBlockData {
     name: string;
     type: string;
     value?: any;
+    placeholder?: string;
   }>;
   outputs: Array<{
     name: string;
@@ -30,6 +31,7 @@ export interface ScriptBlockData {
     name: string;
     type: string;
     value?: any;
+    placeholder?: string;
   }>;
   position?: { x: number; y: number };
   metadata?: Record<string, any>;
@@ -44,6 +46,7 @@ export class ScriptBlock {
     name: string;
     type: string;
     value?: any;
+    placeholder?: string;
   }>;
   outputs: Array<{
     name: string;
@@ -53,6 +56,7 @@ export class ScriptBlock {
     name: string;
     type: string;
     value?: any;
+    placeholder?: string;
   }>;
   position: { x: number; y: number };
   metadata: Record<string, any>;
@@ -86,4 +90,52 @@ export class ScriptBlock {
   static deserialize(data: ScriptBlockData): ScriptBlock {
     return new ScriptBlock(data);
   }
+}
+
+// Helper function to create a block
+export function createBlock(type: ScriptBlockType, label?: string): ScriptBlock {
+  return new ScriptBlock({ type, label });
+}
+
+// Block categories for organization
+export type BlockCategory = 'variables' | 'logic' | 'actions' | 'functions' | 'events' | 'other';
+
+export type BlockType = ScriptBlockType;
+
+// Block templates for the visual editor
+export const BLOCK_TEMPLATES: Record<string, () => Partial<ScriptBlockData>> = {
+  setVariable: () => ({
+    type: 'variable',
+    label: 'Set Variable',
+    code: 'variable = value',
+    inputs: [
+      { name: 'variable', type: 'string', placeholder: 'Variable name' },
+      { name: 'value', type: 'any', placeholder: 'Value' }
+    ],
+    outputs: [],
+  }),
+  ifCondition: () => ({
+    type: 'condition',
+    label: 'If Condition',
+    code: 'if condition then',
+    inputs: [
+      { name: 'condition', type: 'boolean', placeholder: 'Condition' }
+    ],
+    outputs: [
+      { name: 'true', type: 'flow' },
+      { name: 'false', type: 'flow' }
+    ],
+  }),
+  comment: () => ({
+    type: 'comment',
+    label: 'Comment',
+    code: '-- Comment',
+    inputs: [],
+    outputs: [],
+  }),
+};
+
+// Convert blocks to Lua code
+export function blocksToLua(blocks: ScriptBlock[]): string {
+  return blocks.map(block => block.code).join('\n');
 }

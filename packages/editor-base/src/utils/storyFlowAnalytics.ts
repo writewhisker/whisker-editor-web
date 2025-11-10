@@ -25,6 +25,9 @@ export interface FlowAnalytics {
   cyclicPaths: boolean;
 }
 
+// Alias for backward compatibility
+export type StoryFlowMetrics = FlowAnalytics;
+
 export function analyzeStoryFlow(story: Story): FlowAnalytics {
   const passages = Array.from(story.passages.values());
   const totalPassages = passages.length;

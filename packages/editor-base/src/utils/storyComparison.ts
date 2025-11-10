@@ -11,7 +11,20 @@ export interface StoryDiff {
   passagesModified: string[];
   metadataChanged: boolean;
   variablesChanged: boolean;
+  passageDiffs?: PassageDiff[];
+  variableDiffs?: any[];
 }
+
+export interface PassageDiff {
+  passageId: string;
+  type: 'added' | 'removed' | 'modified';
+  oldContent?: string;
+  newContent?: string;
+  changes: string[];
+}
+
+// Alias for backward compatibility
+export type StoryComparison = StoryDiff;
 
 export function compareStories(oldStory: Story, newStory: Story): StoryDiff {
   const oldPassageIds = new Set(oldStory.passages.keys());

@@ -13,6 +13,12 @@ export interface ParentalControlSettings {
   maxPlaytimeMinutes?: number;
   requireAdultApproval: boolean;
   exportRestricted?: boolean;
+  allowLocalExport?: boolean;
+  activityLog?: Array<{
+    timestamp: number;
+    action: string;
+    details?: any;
+  }>;
 }
 
 const defaultSettings: ParentalControlSettings = {
@@ -43,3 +49,13 @@ function createParentalControlsStore() {
 }
 
 export const parentalControlsStore = createParentalControlsStore();
+
+// Export actions for convenience
+export const parentalControlsActions = {
+  enable: parentalControlsStore.enable,
+  disable: parentalControlsStore.disable,
+  setContentFilterLevel: parentalControlsStore.setContentFilterLevel,
+  addBlockedWord: parentalControlsStore.addBlockedWord,
+  removeBlockedWord: parentalControlsStore.removeBlockedWord,
+  reset: parentalControlsStore.reset,
+};

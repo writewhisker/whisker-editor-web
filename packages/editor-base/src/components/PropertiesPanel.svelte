@@ -333,9 +333,9 @@
     '#EC4899', // pink
   ];
 
-  $: availablePassages: Passage[] = $currentStory
+  $: availablePassages = ($currentStory
     ? Array.from($currentStory.passages.values()).filter((p: Passage) => p.id !== passage?.id)
-    : [];
+    : []) as Passage[];
 
   // All passages for autocomplete (including current passage)
   $: allPassages = $currentStory

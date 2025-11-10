@@ -51,10 +51,11 @@ function createParentalControlsStore() {
     removeBlockedWord: (word: string) =>
       update((s) => ({ ...s, blockedWords: s.blockedWords.filter((w) => w !== word) })),
     reset: () => set(defaultSettings),
-    applyAgeDefaults: (age: number) => update((s) => {
-      if (age < 13) {
+    applyAgeDefaults: (age: number | string) => update((s) => {
+      const numAge = typeof age === 'string' ? parseInt(age.split('-')[0], 10) : age;
+      if (numAge < 13) {
         return { ...s, contentFilterLevel: 'strict', enabled: true };
-      } else if (age < 18) {
+      } else if (numAge < 18) {
         return { ...s, contentFilterLevel: 'moderate', enabled: true };
       }
       return { ...s, contentFilterLevel: 'permissive' };

@@ -24,6 +24,9 @@
     avgDeleteTime: 0,
     lastOperation: null,
     lastOperationTime: null,
+    used: 0,
+    available: 0,
+    total: 0,
   });
   let performanceHistory = $state<PerformanceMetric[]>([]);
   let errorHistory = $state<ErrorEvent[]>([]);

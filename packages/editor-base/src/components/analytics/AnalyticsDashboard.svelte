@@ -114,7 +114,7 @@
     {:else if activeTab === 'metrics'}
       <StoryMetrics metrics={$currentMetrics as any} />
     {:else if activeTab === 'issues'}
-      <IssueList issues={$currentMetrics?.issues || []} />
+      <IssueList issues={($currentMetrics?.issues as any) || []} />
     {:else if activeTab === 'playthroughs'}
       <PlaythroughAnalyticsPanel />
     {:else if activeTab === 'history'}

@@ -354,7 +354,7 @@ game_state:set_variable("variableName", newValue)`
           <div class="results-body">
             {#if executionResult.error}
               <div class="error-message">
-                <strong>Error:</strong> {executionResult.error}
+                <strong>Error: </strong>{executionResult.error}
               </div>
             {/if}
 

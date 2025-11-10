@@ -37,12 +37,12 @@ describe('StoryFlowAnalyticsPanel', () => {
     vi.clearAllMocks();
 
     // Create a mock story
-    mockStory = new Story('Test Story');
-    const passage1 = new Passage('passage1', 'Start', 'Beginning of story');
-    const passage2 = new Passage('passage2', 'Middle Passage', 'Middle of story');
-    const passage3 = new Passage('passage3', 'End', 'End of story');
-    const passage4 = new Passage('passage4', 'Quick End', 'Quick ending');
-    const passage5 = new Passage('passage5', 'Unreachable', 'Cannot reach');
+    mockStory = new Story({ metadata: { title: 'Test Story' } });
+    const passage1 = new Passage({ id: 'passage1', title: 'Start', content: 'Beginning of story' });
+    const passage2 = new Passage({ id: 'passage2', title: 'Middle Passage', content: 'Middle of story' });
+    const passage3 = new Passage({ id: 'passage3', title: 'End', content: 'End of story' });
+    const passage4 = new Passage({ id: 'passage4', title: 'Quick End', content: 'Quick ending' });
+    const passage5 = new Passage({ id: 'passage5', title: 'Unreachable', content: 'Cannot reach' });
 
     mockStory.addPassage(passage1);
     mockStory.addPassage(passage2);

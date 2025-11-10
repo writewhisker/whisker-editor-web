@@ -8,9 +8,9 @@ import { Playthrough } from '@whisker/core-ts';
 
 // Create mock data
 const createMockPlaythroughs = () => [
-  new Playthrough('story1', 'passage1'),
-  new Playthrough('story1', 'passage1'),
-  new Playthrough('story1', 'passage1'),
+  new Playthrough({ storyId: 'story1' }),
+  new Playthrough({ storyId: 'story1' }),
+  new Playthrough({ storyId: 'story1' }),
 ];
 
 // Mock the PlaythroughRecorder

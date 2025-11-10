@@ -3,6 +3,7 @@
   import { isGenerating, canGenerate, aiActions } from '../../stores/aiStore';
   import { currentStory } from '../../stores/storyStateStore';
   import type { StoryAnalysisResult } from '../../ai/types';
+  import type { Passage, Choice } from '@whisker/core-ts';
 
   // Props
   let {
@@ -55,8 +56,8 @@
   function buildStoryText(): string {
     if (!$currentStory) return '';
 
-    const passages = Array.from($currentStory.passages.values()).map((p) => {
-      const choices = p.choices.map((c) => `  - ${c.text}`).join('\n');
+    const passages = Array.from($currentStory.passages.values()).map((p: Passage) => {
+      const choices = p.choices.map((c: Choice) => `  - ${c.text}`).join('\n');
       return `PASSAGE: ${p.title}\n${p.content}\nCHOICES:\n${choices}\n`;
     }).join('\n\n');
 

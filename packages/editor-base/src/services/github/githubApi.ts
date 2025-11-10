@@ -9,6 +9,7 @@
  * - Commit changes
  */
 
+// @ts-expect-error - @octokit/rest is an optional peer dependency
 import { Octokit } from '@octokit/rest';
 import { githubToken } from './githubAuth';
 import type { GitHubRepository, GitHubFile, GitHubCommit } from './types';

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { recentChanges, changeTrackingActions, isTrackingEnabled } from '../../stores/changeTrackingStore';
-  import type { ChangeLog } from '$lib/models/ChangeLog';
-  import type { ChangeType, EntityType } from '$lib/models/ChangeLog';
+  import type { ChangeLog, ChangeType, EntityType } from '../../models/ChangeLog';
 
   // State
   let filterUser = $state('');

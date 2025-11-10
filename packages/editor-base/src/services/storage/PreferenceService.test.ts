@@ -379,8 +379,8 @@ describe('PreferenceService', () => {
 	describe('error handling', () => {
 		it('should handle missing window gracefully', async () => {
 			const originalWindow = global.window;
-			// @ts-expect-error - Simulating missing window
-			delete global.window;
+			// Simulating missing window
+			delete (global as any).window;
 
 			const newService = new PreferenceService(adapter);
 			await newService.initialize();

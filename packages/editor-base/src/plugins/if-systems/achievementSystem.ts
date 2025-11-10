@@ -257,13 +257,13 @@ export const achievementSystem: EditorPlugin = {
         if (!achievements) return false;
 
         const categoryAchievements = Object.values(achievements.definitions).filter(
-          a => a.category === params.category
+          (a: Achievement) => a.category === params.category
         );
 
         if (categoryAchievements.length === 0) return false;
 
         return categoryAchievements.every(
-          a => achievements.progress[a.id]?.unlocked === true
+          (a: Achievement) => achievements.progress[a.id]?.unlocked === true
         );
       },
     },

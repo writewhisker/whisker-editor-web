@@ -13,20 +13,20 @@
 
   // Reactive values
   let functions = $derived(
-    $currentStory ? Array.from($currentStory.luaFunctions.values()) : []
+    $currentStory ? Array.from($currentStory.luaFunctions.values()) as LuaFunction[] : []
   );
 
   let categories = $derived([
     'All',
-    ...new Set(functions.map(f => f.category))
+    ...new Set(functions.map((f: LuaFunction) => f.category))
   ]);
 
   let filteredFunctions = $derived(
-    functions.filter(f => {
+    functions.filter((f: LuaFunction) => {
       const matchesSearch =
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+        f.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesCategory =
         selectedCategory === 'All' || f.category === selectedCategory;

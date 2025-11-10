@@ -165,16 +165,16 @@
               Your Export History
             </h3>
             <div class="space-y-2 max-h-40 overflow-y-auto">
-              {#each PublishingService.getExportHistory().slice(-5).reverse() as export}
+              {#each PublishingService.getExportHistory().slice(-5).reverse() as exportItem}
                 <div class="flex items-center gap-3 text-sm font-bold">
                   <span class="text-2xl">
-                    {export.platform === 'minecraft' ? '⛏️' : '🎮'}
+                    {exportItem.platform === 'minecraft' ? '⛏️' : '🎮'}
                   </span>
-                  <span class="flex-1 text-gray-700">{export.storyTitle}</span>
+                  <span class="flex-1 text-gray-700">{exportItem.storyTitle}</span>
                   <span class="text-gray-500">
-                    {new Date(export.timestamp).toLocaleDateString()}
+                    {new Date(exportItem.timestamp).toLocaleDateString()}
                   </span>
-                  {#if export.success}
+                  {#if exportItem.success}
                     <span class="text-green-600">✓</span>
                   {:else}
                     <span class="text-red-600">✗</span>

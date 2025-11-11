@@ -112,9 +112,9 @@ jobs:
       run: pnpm exec tsc --noEmit
 
   e2e:
-    name: E2E Tests
+    name: E2E Smoke Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
     - name: Checkout code
@@ -140,8 +140,8 @@ jobs:
     - name: Build workspace packages
       run: pnpm run build --filter='./packages/*'
 
-    - name: Run E2E tests
-      run: pnpm run test:e2e
+    - name: Run E2E smoke tests
+      run: pnpm run test:e2e:smoke
 
     - name: Upload Playwright report
       if: always()

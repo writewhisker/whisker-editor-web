@@ -21,21 +21,17 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   // Wait for navigation from landing page to editor
   await page.waitForLoadState('networkidle');
 
-  // Now look for the New Project button in the editor
-  const newProjectButton = page.locator('button:has-text("New Project")');
-  await newProjectButton.waitFor({ state: 'visible', timeout: 10000 });
-  await newProjectButton.click();
-
-  // Wait for the template selection modal to appear and click "Start with Blank Story"
-  // The modal shows template options, we want the blank story option
+  // After clicking "Get Started Free", a template selection modal appears
+  // We need to click "Start with Blank Story" in this modal
   await page.waitForTimeout(1000);
 
-  // Try to click the blank story template option
-  // Use getByText for more reliable text matching
+  // Find and click the "Start with Blank Story" option in the modal
+  // This modal opens automatically after "Get Started Free"
   const blankStoryText = page.getByText('Start with Blank Story', { exact: false });
-  await blankStoryText.waitFor({ state: 'visible', timeout: 10000 });
+  await blankStoryText.waitFor({ state: 'visible', timeout: 15000 });
 
   // Click on the parent clickable element (card/button containing this text)
+  // Use force: true to bypass any pointer event interception
   await blankStoryText.click({ force: true });
 
   // Wait for the project name input to be visible and interactable

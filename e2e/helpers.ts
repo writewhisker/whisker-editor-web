@@ -26,6 +26,18 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await newProjectButton.waitFor({ state: 'visible', timeout: 10000 });
   await newProjectButton.click();
 
+  // Wait for the template selection modal to appear and click "Start with Blank Story"
+  // The modal shows template options, we want the blank story option
+  await page.waitForTimeout(1000);
+
+  // Try to click the blank story template option
+  // Use getByText for more reliable text matching
+  const blankStoryText = page.getByText('Start with Blank Story', { exact: false });
+  await blankStoryText.waitFor({ state: 'visible', timeout: 10000 });
+
+  // Click on the parent clickable element (card/button containing this text)
+  await blankStoryText.click({ force: true });
+
   // Wait for the project name input to be visible and interactable
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
   await projectNameInput.waitFor({ state: 'visible', timeout: 10000 });

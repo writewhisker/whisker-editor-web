@@ -96,8 +96,23 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
     throw error;
   }
 
-  // Give the app a moment to fully initialize
-  await page.waitForTimeout(1000);
+  // Wait for the Start passage node to be rendered
+  console.log('[E2E] Waiting for Start passage to render');
+  await page.waitForTimeout(2000);
+
+  try {
+    await page.waitForSelector('text=Start', { timeout: 10000 });
+    console.log('[E2E] Found Start passage - project fully initialized');
+  } catch (error) {
+    console.error('[E2E] Failed to find Start passage');
+    await page.screenshot({ path: 'test-results/debug-08-start-not-found.png', fullPage: true });
+
+    // Log what passages exist
+    const bodyText = await page.locator('body').textContent();
+    console.log('[E2E] Page content:', bodyText?.substring(0, 1000));
+    throw error;
+  }
+
   await page.screenshot({ path: 'test-results/debug-09-final-state.png', fullPage: true });
   console.log('[E2E] createNewProject completed successfully');
 }

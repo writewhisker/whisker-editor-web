@@ -158,3 +158,12 @@ jobs:
         name: playwright-results
         path: test-results/
         retention-days: 30
+
+    - name: Upload debug screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-screenshots
+        path: test-results/debug-*.png
+        retention-days: 7
+        if-no-files-found: ignore

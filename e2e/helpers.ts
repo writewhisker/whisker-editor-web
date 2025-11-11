@@ -11,23 +11,30 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await page.waitForLoadState('networkidle');
 
   // Wait a bit for any initialization
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
 
-  // Find and click the Get Started Free button on the landing page with explicit wait
-  const getStartedButton = page.locator('button:has-text("Get Started Free")');
-  await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
-  await getStartedButton.click();
+  // Try to find "New Project" button first (might exist after clearing storage)
+  const newProjectButton = page.locator('button:has-text("New Project")');
+  const hasNewProjectButton = await newProjectButton.count() > 0;
 
-  // Wait for Template Gallery modal to appear
-  // The gallery has a "Start with Blank Story" button
-  await page.waitForTimeout(2000);
+  if (hasNewProjectButton) {
+    // If there's a "New Project" button, use it directly
+    await newProjectButton.click();
+  } else {
+    // Otherwise, use the landing page flow
+    // Find and click the Get Started Free button
+    const getStartedButton = page.locator('button:has-text("Get Started Free")');
+    await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
+    await getStartedButton.click();
 
-  // Find and click the "Start with Blank Story" button in the Template Gallery
-  // This is a <button> element with that exact text
-  const blankStoryButton = page.locator('button').filter({ hasText: 'Start with Blank Story' });
+    // Wait for Template Gallery modal to appear
+    await page.waitForTimeout(2000);
 
-  await blankStoryButton.waitFor({ state: 'visible', timeout: 15000 });
-  await blankStoryButton.click();
+    // Find and click the "Start with Blank Story" button in the Template Gallery
+    const blankStoryButton = page.locator('button').filter({ hasText: 'Start with Blank Story' });
+    await blankStoryButton.waitFor({ state: 'visible', timeout: 15000 });
+    await blankStoryButton.click();
+  }
 
   // Wait for the "New Project" dialog to appear with the project name input
   await page.waitForTimeout(1000);

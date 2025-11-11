@@ -39,8 +39,11 @@ jobs:
     - name: Install dependencies
       run: pnpm install
 
-    - name: Build application
+    - name: Build workspace packages
       run: pnpm run build
+
+    - name: Build main application
+      run: pnpm exec vite build
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3

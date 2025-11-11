@@ -18,40 +18,19 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
   await getStartedButton.click();
 
-  // Wait for navigation from landing page to editor
+  // Wait for navigation from landing page to template gallery
   await page.waitForLoadState('networkidle');
 
-  // After clicking "Get Started Free", wait for any template selection UI
-  // Give a moment for the page transition/modal to appear
-  await page.waitForTimeout(2000);
+  // Wait for Template Gallery modal to appear
+  // The gallery has a "Start with Blank Story" button
+  await page.waitForTimeout(1000);
 
-  // Look for "Start with Blank Story" text - this might be in a modal or on the page
-  // Use a flexible selector that works regardless of the container
-  const blankStoryLocator = page.getByText('Start with Blank Story');
+  // Find and click the "Start with Blank Story" button in the Template Gallery
+  // This is a <button> element with that exact text
+  const blankStoryButton = page.locator('button').filter({ hasText: 'Start with Blank Story' });
 
-  // Wait for it to be visible
-  const isVisible = await blankStoryLocator.isVisible().catch(() => false);
-
-  if (isVisible) {
-    // If we can see the text, try to click it
-    // First try to find a parent button/clickable element
-    const clickableParent = page.locator('button, [role="button"], [class*="card"]').filter({
-      hasText: 'Start with Blank Story'
-    }).first();
-
-    const hasClickable = await clickableParent.count() > 0;
-
-    if (hasClickable) {
-      await clickableParent.click({ timeout: 5000 });
-    } else {
-      // Fall back to clicking the text directly with force
-      await blankStoryLocator.click({ force: true, timeout: 5000 });
-    }
-  } else {
-    // If "Start with Blank Story" is not visible, maybe we're already in the editor
-    // or the flow is different. Just continue.
-    console.log('Template selection not found, continuing...');
-  }
+  await blankStoryButton.waitFor({ state: 'visible', timeout: 10000 });
+  await blankStoryButton.click();
 
   // Wait for the project name input to be visible and interactable
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');

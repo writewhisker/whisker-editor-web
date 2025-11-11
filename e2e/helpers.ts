@@ -23,16 +23,24 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
 
   // After clicking "Get Started Free", a template selection modal appears
   // We need to click "Start with Blank Story" in this modal
-  await page.waitForTimeout(1000);
 
-  // Find and click the "Start with Blank Story" option in the modal
-  // This modal opens automatically after "Get Started Free"
-  const blankStoryText = page.getByText('Start with Blank Story', { exact: false });
-  await blankStoryText.waitFor({ state: 'visible', timeout: 15000 });
+  // Wait for the modal backdrop to be visible and animations to complete
+  await page.waitForSelector('div[role="presentation"]', { state: 'visible', timeout: 15000 });
+  await page.waitForTimeout(1500);
 
-  // Click on the parent clickable element (card/button containing this text)
-  // Use force: true to bypass any pointer event interception
-  await blankStoryText.click({ force: true });
+  // Find the clickable container (card/button) that contains "Start with Blank Story"
+  // Look for the parent element that's actually clickable, not just the text
+  const blankStoryOption = page.locator('[role="button"], button, [class*="card"], [class*="option"]').filter({
+    hasText: 'Start with Blank Story'
+  }).first();
+
+  await blankStoryOption.waitFor({ state: 'visible', timeout: 10000 });
+
+  // Try regular click first, then force if needed
+  await blankStoryOption.click({ timeout: 5000 }).catch(async () => {
+    // If regular click fails, try with force
+    await blankStoryOption.click({ force: true });
+  });
 
   // Wait for the project name input to be visible and interactable
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');

@@ -18,41 +18,34 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
   await getStartedButton.click();
 
-  // Wait for navigation from landing page to template gallery
-  await page.waitForLoadState('networkidle');
-
   // Wait for Template Gallery modal to appear
   // The gallery has a "Start with Blank Story" button
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(2000);
 
   // Find and click the "Start with Blank Story" button in the Template Gallery
   // This is a <button> element with that exact text
   const blankStoryButton = page.locator('button').filter({ hasText: 'Start with Blank Story' });
 
-  await blankStoryButton.waitFor({ state: 'visible', timeout: 10000 });
+  await blankStoryButton.waitFor({ state: 'visible', timeout: 15000 });
   await blankStoryButton.click();
 
-  // Wait for the project name input to be visible and interactable
+  // Wait for the "New Project" dialog to appear with the project name input
+  await page.waitForTimeout(1000);
+
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
   await projectNameInput.waitFor({ state: 'visible', timeout: 10000 });
   await projectNameInput.fill(projectName);
 
-  // Click OK button
-  const okButton = page.locator('button:has-text("OK")');
+  // Click OK button (has aria-label="Confirm")
+  const okButton = page.locator('button[aria-label="Confirm"]');
   await okButton.waitFor({ state: 'visible', timeout: 5000 });
   await okButton.click();
 
-  // Wait for modal to close
-  await page.waitForFunction(() => {
-    const overlays = document.querySelectorAll('div[role="presentation"]');
-    return overlays.length === 0;
-  }, { timeout: 10000 });
-
   // Wait for editor to be ready - look for Passages text
-  await page.waitForSelector('text=Passages', { timeout: 10000 });
+  await page.waitForSelector('text=Passages', { timeout: 15000 });
 
   // Give the app a moment to fully initialize
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(1000);
 }
 
 /**

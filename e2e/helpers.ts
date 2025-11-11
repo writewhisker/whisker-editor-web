@@ -76,6 +76,21 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await page.waitForTimeout(500);
   await page.screenshot({ path: 'test-results/debug-06-after-submit.png', fullPage: true });
 
+  // Check if "Unsaved Changes" dialog appears and handle it
+  console.log('[E2E] Checking for Unsaved Changes dialog');
+  const unsavedChangesDialog = page.locator('text=Unsaved Changes');
+  const hasUnsavedChangesDialog = await unsavedChangesDialog.count() > 0;
+  console.log('[E2E] Has Unsaved Changes dialog:', hasUnsavedChangesDialog);
+
+  if (hasUnsavedChangesDialog) {
+    console.log('[E2E] Clicking Confirm button on Unsaved Changes dialog');
+    const confirmButton = page.locator('button:has-text("Confirm")');
+    await confirmButton.click();
+    console.log('[E2E] Clicked Confirm button');
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: 'test-results/debug-07-after-confirm.png', fullPage: true });
+  }
+
   // Wait for editor to be ready - look for Passages text
   console.log('[E2E] Waiting for Passages text');
   try {

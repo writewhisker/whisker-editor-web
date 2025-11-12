@@ -96,8 +96,17 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   console.log('[E2E] Found OK button');
   await okButton.click();
   console.log('[E2E] Clicked OK button');
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(500);
   await page.screenshot({ path: 'test-results/debug-06-after-submit.png', fullPage: true });
+
+  // Wait for dialog overlays to close
+  console.log('[E2E] Waiting for overlays to close');
+  await page.waitForFunction(() => {
+    const overlays = document.querySelectorAll('div[role="presentation"]');
+    return overlays.length === 0;
+  }, { timeout: 10000 });
+  console.log('[E2E] Overlays closed');
+  await page.screenshot({ path: 'test-results/debug-07-overlays-closed.png', fullPage: true });
 
   // Wait for editor to be ready - look for Passages text
   console.log('[E2E] Waiting for Passages text');

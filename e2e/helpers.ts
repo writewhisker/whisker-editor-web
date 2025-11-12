@@ -90,10 +90,13 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await projectNameInput.fill(projectName);
   console.log('[E2E] Filled project name:', projectName);
 
-  // Press Enter to submit (more reliable than clicking OK)
-  await projectNameInput.press('Enter');
-  console.log('[E2E] Pressed Enter to submit');
-  await page.waitForTimeout(500);
+  // Click OK button to submit
+  const okButton = page.locator('button:has-text("OK")');
+  await okButton.waitFor({ state: 'visible', timeout: 5000 });
+  console.log('[E2E] Found OK button');
+  await okButton.click();
+  console.log('[E2E] Clicked OK button');
+  await page.waitForTimeout(1000);
   await page.screenshot({ path: 'test-results/debug-06-after-submit.png', fullPage: true });
 
   // Wait for editor to be ready - look for Passages text

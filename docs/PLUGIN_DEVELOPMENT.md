@@ -735,7 +735,6 @@ onUnregister: async () => {
 
 - [Plugin System Types](../packages/editor-base/src/plugins/types.ts)
 - [Example Plugins](../packages/editor-base/src/plugins/examples/)
-- [SaaS application Architecture](../../whisker-implementation/phases/guides/ONBOARDFLOW_ARCHITECTURE.md)
 
 ---
 

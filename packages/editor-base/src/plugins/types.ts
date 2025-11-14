@@ -81,7 +81,7 @@ export interface RuntimeContext {
   variables: Map<string, any>;
   currentPassage: Passage | null;
   history: string[]; // Passage IDs
-  // SaaS context (optional, for OnboardFlow and similar)
+  // SaaS context (optional, for multi-tenant applications)
   userId?: string;
   projectId?: string;
   organizationId?: string;
@@ -95,7 +95,7 @@ export interface StorageContext {
   pluginId: string;
 }
 
-// SaaS Plugin Extensions (for OnboardFlow and similar products)
+// SaaS Plugin Extensions (for multi-tenant and SaaS applications)
 export interface SaaSPluginExtensions {
   /** Backend API integration */
   api?: {
@@ -156,7 +156,7 @@ export interface EditorPlugin {
   ui?: PluginUIExtensions;
   runtime?: PluginRuntimeHooks;
 
-  // SaaS extensions (optional, for OnboardFlow and similar)
+  // SaaS extensions (optional, for multi-tenant applications)
   saas?: SaaSPluginExtensions;
 
   // Lifecycle

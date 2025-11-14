@@ -53,11 +53,6 @@ export const storyStateActions = {
       },
     });
 
-    // Create a default "Start" passage for new stories
-    const startPassage = new Passage({ title: 'Start' });
-    story.addPassage(startPassage);
-    story.startPassage = startPassage.id;
-
     currentStory.set(story);
     return story;
   },

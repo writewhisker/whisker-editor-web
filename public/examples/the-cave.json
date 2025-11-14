@@ -13,56 +13,110 @@
       "title": "Start",
       "tags": ["beginning", "tutorial"],
       "content": "You stand at the entrance of a dark cave. A faint glow emanates from deep within.\n\nWhat do you do?\n\n[[Enter the cave -> Inside]]\n[[Walk away -> Leave]]",
-      "position": { "x": 100, "y": 100 }
+      "position": { "x": 100, "y": 100 },
+      "choices": [
+        {
+          "id": "choice-start-1",
+          "text": "Enter the cave",
+          "target": "inside",
+          "conditions": []
+        },
+        {
+          "id": "choice-start-2",
+          "text": "Walk away",
+          "target": "leave",
+          "conditions": []
+        }
+      ]
     },
     {
       "id": "inside",
       "title": "Inside",
       "tags": ["cave", "discovery"],
       "content": "You step into the cave. It's cold and damp. The glow is coming from a pile of gold coins!\n\n[[Take the gold -> TakeGold]]\n[[Leave it alone -> LeaveGold]]",
-      "position": { "x": 400, "y": 100 }
+      "position": { "x": 400, "y": 100 },
+      "choices": [
+        {
+          "id": "choice-inside-1",
+          "text": "Take the gold",
+          "target": "takegold",
+          "conditions": []
+        },
+        {
+          "id": "choice-inside-2",
+          "text": "Leave it alone",
+          "target": "leavegold",
+          "conditions": []
+        }
+      ]
     },
     {
       "id": "leave",
       "title": "Leave",
       "tags": ["ending", "safe"],
       "content": "You decide it's not worth the risk. As you walk away, you wonder what might have been inside...\n\n**THE END**\n\n*(This is a safe ending. You survived, but missed the adventure!)*",
-      "position": { "x": 100, "y": 400 }
+      "position": { "x": 100, "y": 400 },
+      "choices": []
     },
     {
       "id": "takegold",
       "title": "TakeGold",
       "tags": ["cave", "danger", "choice"],
       "content": "{$hasGold = true}\n{$courage += 10}\n\nYou fill your pockets with gold coins. Suddenly, you hear a roar from deeper in the cave...\n\nA dragon appears! What do you do?\n\n[[Fight the dragon -> FightDragon]]\n[[Run away -> RunAway]]",
-      "position": { "x": 700, "y": 50 }
+      "position": { "x": 700, "y": 50 },
+      "choices": [
+        {
+          "id": "choice-takegold-1",
+          "text": "Fight the dragon",
+          "target": "fightdragon",
+          "conditions": []
+        },
+        {
+          "id": "choice-takegold-2",
+          "text": "Run away",
+          "target": "runaway",
+          "conditions": []
+        }
+      ]
     },
     {
       "id": "leavegold",
       "title": "LeaveGold",
       "tags": ["cave", "wise", "secret"],
       "content": "{$hasGold = false}\n{$wisdom += 10}\n\nYou resist the temptation. As you turn to leave, you notice a hidden passage behind the gold.\n\n[[Explore the passage -> SecretExit]]",
-      "position": { "x": 700, "y": 250 }
+      "position": { "x": 700, "y": 250 },
+      "choices": [
+        {
+          "id": "choice-leavegold-1",
+          "text": "Explore the passage",
+          "target": "secretexit",
+          "conditions": []
+        }
+      ]
     },
     {
       "id": "fightdragon",
       "title": "FightDragon",
       "tags": ["combat", "ending", "brave"],
       "content": "{@courage >= 10}\nYour courage gives you strength! You grab a nearby sword and charge at the dragon.\n\nAfter an epic battle, you emerge victorious! The dragon's treasure is yours.\n{:else}\nYou try to fight, but fear overwhelms you. The dragon's flames are too much.\n{/@}\n\n{@courage >= 10}\n**THE END - HERO'S VICTORY**\n\n*(You defeated the dragon and claimed the treasure! Your courage paid off.)*\n{:else}\n**THE END - BRAVE BUT FOOLISH**\n\n*(You fought bravely, but sometimes retreat is the better option.)*\n{/@}",
-      "position": { "x": 1000, "y": 0 }
+      "position": { "x": 1000, "y": 0 },
+      "choices": []
     },
     {
       "id": "runaway",
       "title": "RunAway",
       "tags": ["escape", "ending", "smart"],
       "content": "{$escapedDragon = true}\n\nYou sprint out of the cave as fast as you can. The dragon's roar echoes behind you, but you make it to safety!\n\n{@hasGold}\nYou still have some of the gold you grabbed. Not a bad haul for a close call!\n{:else}\nYou escaped with your life, though you left empty-handed.\n{/@}\n\n**THE END - LIVE TO ADVENTURE ANOTHER DAY**\n\n*(Sometimes the smart choice is to run. You survived with {@hasGold}your treasure{:else}your life{/@}!)*",
-      "position": { "x": 1000, "y": 150 }
+      "position": { "x": 1000, "y": 150 },
+      "choices": []
     },
     {
       "id": "secretexit",
       "title": "SecretExit",
       "tags": ["secret", "ending", "wise"],
       "content": "{$foundSecret = true}\n{$wisdom += 20}\n\nThe hidden passage leads to a secret exit. As you emerge into sunlight, you find a small chest.\n\nInside is an ancient map and a magical amulet!\n\n**THE END - THE WISE PATH**\n\n*(Your wisdom led you to discover the cave's true treasure. Sometimes the best rewards come from patience and observation.)*",
-      "position": { "x": 1000, "y": 300 }
+      "position": { "x": 1000, "y": 300 },
+      "choices": []
     }
   ],
   "variables": [

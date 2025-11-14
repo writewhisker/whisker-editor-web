@@ -132,7 +132,7 @@
       {#each (Array.from(story.passages.entries()) as [string, Passage][]) as [id, passage]}
         {#each passage.choices as choice}
           {@const sourceLayout = passageLayout.get(id)}
-          {@const targetLayout = passageLayout.get(choice.targetPassageId)}
+          {@const targetLayout = passageLayout.get(choice.target)}
           {#if sourceLayout && targetLayout}
             <line
               x1={sourceLayout.x + sourceLayout.width / 2}

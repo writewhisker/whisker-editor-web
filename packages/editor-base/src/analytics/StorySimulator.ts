@@ -201,7 +201,7 @@ export class StorySimulator {
           break;
       }
 
-      const nextPassageId = choices[choiceIndex].targetPassageId;
+      const nextPassageId = choices[choiceIndex].target;
       if (!nextPassageId) {
         break; // No target
       }
@@ -221,12 +221,12 @@ export class StorySimulator {
    * Choose unvisited passage first (breadth-first)
    */
   private chooseBreadthFirst(
-    choices: Array<{ targetPassageId: string }>,
+    choices: Array<{ target: string }>,
     visited: Set<string>
   ): number {
     // Try to find an unvisited passage
     for (let i = 0; i < choices.length; i++) {
-      if (!visited.has(choices[i].targetPassageId)) {
+      if (!visited.has(choices[i].target)) {
         return i;
       }
     }
@@ -239,14 +239,14 @@ export class StorySimulator {
    * Choose the least visited passage
    */
   private chooseLeastVisited(
-    choices: Array<{ targetPassageId: string }>,
+    choices: Array<{ target: string }>,
     visitCounts: Map<string, number>
   ): number {
     let minVisits = Infinity;
     let minIndex = 0;
 
     for (let i = 0; i < choices.length; i++) {
-      const visits = visitCounts.get(choices[i].targetPassageId) || 0;
+      const visits = visitCounts.get(choices[i].target) || 0;
       if (visits < minVisits) {
         minVisits = visits;
         minIndex = i;

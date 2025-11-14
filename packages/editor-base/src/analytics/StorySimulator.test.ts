@@ -18,8 +18,8 @@ describe('StorySimulator', () => {
     const p2 = new Passage({ title: 'Middle' });
     const p3 = new Passage({ title: 'End' });
 
-    p1.addChoice(new Choice({ text: 'Next', targetPassageId: p2.id }));
-    p2.addChoice(new Choice({ text: 'Finish', targetPassageId: p3.id }));
+    p1.addChoice(new Choice({ text: 'Next', target: p2.id }));
+    p2.addChoice(new Choice({ text: 'Finish', target: p3.id }));
 
     linearStory.addPassage(p1);
     linearStory.addPassage(p2);
@@ -33,10 +33,10 @@ describe('StorySimulator', () => {
     const right = new Passage({ title: 'Right Path' });
     const end = new Passage({ title: 'End' });
 
-    start.addChoice(new Choice({ text: 'Go Left', targetPassageId: left.id }));
-    start.addChoice(new Choice({ text: 'Go Right', targetPassageId: right.id }));
-    left.addChoice(new Choice({ text: 'Continue', targetPassageId: end.id }));
-    right.addChoice(new Choice({ text: 'Continue', targetPassageId: end.id }));
+    start.addChoice(new Choice({ text: 'Go Left', target: left.id }));
+    start.addChoice(new Choice({ text: 'Go Right', target: right.id }));
+    left.addChoice(new Choice({ text: 'Continue', target: end.id }));
+    right.addChoice(new Choice({ text: 'Continue', target: end.id }));
 
     branchingStory.addPassage(start);
     branchingStory.addPassage(left);
@@ -52,11 +52,11 @@ describe('StorySimulator', () => {
     const deadEnd = new Passage({ title: 'Dead End' });
     const ending = new Passage({ title: 'Ending' });
 
-    hub.addChoice(new Choice({ text: 'Visit Shop', targetPassageId: shop.id }));
-    hub.addChoice(new Choice({ text: 'Start Quest', targetPassageId: quest.id }));
-    hub.addChoice(new Choice({ text: 'Dead End', targetPassageId: deadEnd.id }));
-    shop.addChoice(new Choice({ text: 'Back to Hub', targetPassageId: hub.id }));
-    quest.addChoice(new Choice({ text: 'Finish', targetPassageId: ending.id }));
+    hub.addChoice(new Choice({ text: 'Visit Shop', target: shop.id }));
+    hub.addChoice(new Choice({ text: 'Start Quest', target: quest.id }));
+    hub.addChoice(new Choice({ text: 'Dead End', target: deadEnd.id }));
+    shop.addChoice(new Choice({ text: 'Back to Hub', target: hub.id }));
+    quest.addChoice(new Choice({ text: 'Finish', target: ending.id }));
     // deadEnd has no choices
 
     complexStory.addPassage(hub);

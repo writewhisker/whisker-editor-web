@@ -235,7 +235,7 @@
               <strong>Leads to:</strong>
               <ul>
                 {#each passage.choices as choice}
-                  {@const targetPassage = story.passages.get(choice.targetPassageId)}
+                  {@const targetPassage = story.passages.get(choice.target)}
                   <li>{targetPassage?.title || 'Unknown'}</li>
                 {/each}
               </ul>

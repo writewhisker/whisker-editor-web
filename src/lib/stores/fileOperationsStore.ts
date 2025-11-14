@@ -87,7 +87,9 @@ export const fileOperations = {
    * Create a new project
    */
   newProject(title?: string) {
+    console.log('[fileOperationsStore] newProject called with title:', title);
     const story = storyStateActions.createStory(title);
+    console.log('[fileOperationsStore] After createStory, story has', story.passages.size, 'passages');
     projectMetadataActions.clearMetadata();
 
     // Reset storage tracking for new project
@@ -97,6 +99,7 @@ export const fileOperations = {
     historyActions.setPresent(story.serialize());
 
     // Select the start passage
+    console.log('[fileOperationsStore] About to selectStartPassage, story.startPassage:', story.startPassage);
     selectionActions.selectStartPassage();
 
     // Auto-save new project to storage

@@ -43,6 +43,7 @@ export const storyStateActions = {
    * Create a new story
    */
   createStory(title?: string): Story {
+    console.log('[storyStateStore] createStory called with title:', title);
     const story = new Story({
       metadata: {
         title: title || 'Untitled Story',
@@ -52,13 +53,17 @@ export const storyStateActions = {
         modified: new Date().toISOString(),
       },
     });
+    console.log('[storyStateStore] Story created, passages before adding Start:', story.passages.size);
 
     // Create a default "Start" passage for new stories
     const startPassage = new Passage({ title: 'Start' });
+    console.log('[storyStateStore] Start passage created with ID:', startPassage.id);
     story.addPassage(startPassage);
+    console.log('[storyStateStore] After addPassage, passages count:', story.passages.size);
     story.startPassage = startPassage.id;
 
     currentStory.set(story);
+    console.log('[storyStateStore] currentStory.set called, returning story');
     return story;
   },
 

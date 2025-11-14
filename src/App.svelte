@@ -76,6 +76,7 @@
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
+  import { importWhiskerFile } from '@whisker/core-ts';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded
@@ -597,7 +598,9 @@
       if (!response.ok) {
         throw new Error('Failed to load template');
       }
-      const data = await response.json();
+      const rawData = await response.json();
+      // Convert whisker-core format (array) to editor format (object) if needed
+      const data = importWhiskerFile(rawData);
       projectActions.loadProject(data, `${templateName} (Template)`);
       fileHandle = null; // Clear file handle since this is a template
 

@@ -96,6 +96,46 @@ describe('TwineImporter', () => {
       expect(passage.content).toContain('{{score}}');
     });
 
+    it('should track Harlowe data structures', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (set: $inventory to (datamap: "sword", 1, "shield", 1))
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.warnings.some(w => w.category === 'data-structure')).toBe(true);
+    });
+
+    it('should track Harlowe transitions', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            (transition: "dissolve")[Fading text]
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.info.some(i => i.category === 'macro' && i.feature === 'Transitions')).toBe(true);
+    });
+
     it('should convert Harlowe if syntax', async () => {
       const html = `
         <tw-storydata name="Test" ifid="123" startnode="1">
@@ -1271,6 +1311,285 @@ Content 3`;
       const ids = passages.map(p => p.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(passages.length);
+    });
+  });
+
+  describe('Snowman Format', () => {
+    it('should detect Snowman format', async () => {
+      const html = `
+        <tw-storydata name="Snowman Story" ifid="ABC123" format="Snowman" format-version="2.0.0" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            Basic passage content.
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.story?.metadata.title).toBe('Snowman Story');
+    });
+
+    it('should track JavaScript code blocks in Snowman', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Snowman" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <script>
+              s.score = 100;
+              window.story.show("Next");
+            </script>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.critical.some(c => c.category === 'javascript' && c.feature === 'JavaScript Code Blocks')).toBe(true);
+    });
+
+    it('should track Snowman inline expressions', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Snowman" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <% if (s.score > 10) { %>
+              You win!
+            <% } %>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.critical.some(c => c.category === 'javascript')).toBe(true);
+    });
+
+    it('should convert simple Snowman print expressions', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Snowman" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            Your score: <%= score %>
+            Your name: <%= s.name %>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const passage = Array.from(result.story!.passages.values())[0] as Passage;
+      expect(passage.content).toContain('{{score}}');
+      expect(passage.content).toContain('{{name}}');
+    });
+
+    it('should provide info message about Snowman conversion', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Snowman" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            Basic content
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.info.some(i => i.feature === 'Snowman Format')).toBe(true);
+    });
+  });
+
+  describe('Variable Type Inference', () => {
+    it('should infer boolean variable types', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            {{gameStarted = true}}
+            {{isDead = false}}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const gameStarted = result.story?.variables.get('gameStarted');
+      const isDead = result.story?.variables.get('isDead');
+      expect(gameStarted?.type).toBe('boolean');
+      expect(gameStarted?.initial).toBe(true);
+      expect(isDead?.type).toBe('boolean');
+      expect(isDead?.initial).toBe(false);
+    });
+
+    it('should infer number variable types', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            {{score = 100}}
+            {{health = 75.5}}
+            {{level = -3}}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const score = result.story?.variables.get('score');
+      const health = result.story?.variables.get('health');
+      const level = result.story?.variables.get('level');
+      expect(score?.type).toBe('number');
+      expect(score?.initial).toBe(100);
+      expect(health?.type).toBe('number');
+      expect(health?.initial).toBe(75.5);
+      expect(level?.type).toBe('number');
+      expect(level?.initial).toBe(-3);
+    });
+
+    it('should infer string variable types from quoted values', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            {{name = "Alice"}}
+            {{location = 'Forest'}}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const name = result.story?.variables.get('name');
+      const location = result.story?.variables.get('location');
+      expect(name?.type).toBe('string');
+      expect(name?.initial).toBe('Alice');
+      expect(location?.type).toBe('string');
+      expect(location?.initial).toBe('Forest');
+    });
+
+    it('should default to string for unquoted expressions', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            {{someVar = complexExpression}}
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const someVar = result.story?.variables.get('someVar');
+      expect(someVar?.type).toBe('string');
+    });
+
+    it('should track variable references without assignments', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            You have {{coins}} coins.
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      const coins = result.story?.variables.get('coins');
+      expect(coins).toBeDefined();
+      expect(coins?.type).toBe('string');
+    });
+  });
+
+  describe('Enhanced Conversion Tracking', () => {
+    it('should track SugarCube interactive macros', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="SugarCube" startnode="1">
+          <tw-passagedata pid="1" name="Start">
+            <<linkreplace "Click me">>Replaced text<</linkreplace>>
+            <<linkappend "Append">>More text<</linkappend>>
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      expect(result.lossReport?.warnings.some(w => w.category === 'interactive')).toBe(true);
+    });
+
+    it('should provide passage-specific issue tracking', async () => {
+      const html = `
+        <tw-storydata name="Test" ifid="123" format="Harlowe" startnode="1">
+          <tw-passagedata pid="1" name="FirstPassage">
+            (datamap: "key", "value")
+          </tw-passagedata>
+          <tw-passagedata pid="2" name="SecondPassage">
+            (random: 1, 10)
+          </tw-passagedata>
+        </tw-storydata>
+      `;
+
+      const result = await importer.import({
+        data: html,
+        options: {},
+        filename: 'test.html',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.lossReport).toBeDefined();
+      const firstPassageIssues = result.lossReport?.warnings.filter(w => w.passageName === 'FirstPassage');
+      const secondPassageIssues = result.lossReport?.warnings.filter(w => w.passageName === 'SecondPassage');
+      expect(firstPassageIssues?.length).toBeGreaterThan(0);
+      expect(secondPassageIssues?.length).toBeGreaterThan(0);
     });
   });
 });

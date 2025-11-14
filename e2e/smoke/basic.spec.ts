@@ -13,6 +13,11 @@ test.describe('Smoke Tests - Basic Functionality', () => {
   });
 
   test('should create a new story', async ({ page }) => {
+    // Listen to console messages
+    page.on('console', msg => {
+      console.log(`[BROWSER ${msg.type()}]:`, msg.text());
+    });
+
     await createNewProject(page);
 
     // Verify we have a story with a start passage

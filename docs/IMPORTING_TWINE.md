@@ -88,10 +88,10 @@ The import process attempts to convert Twine syntax to Whisker syntax. Conversio
 
 | Format | Links | Variables | Conditionals | Macros | Overall Accuracy |
 |--------|-------|-----------|--------------|--------|------------------|
-| **Harlowe** | ✓ Excellent | ✓ Excellent | ✓ Good | ⚠️ Partial | **70-80%** |
-| **SugarCube** | ✓ Excellent | ✓ Excellent | ✓ Excellent | ⚠️ Partial | **75-85%** |
+| **Harlowe** | ✓ Excellent | ✓ Excellent | ✓ Good | ⚠️ Partial | **75-85%** |
+| **SugarCube** | ✓ Excellent | ✓ Excellent | ✓ Excellent | ⚠️ Partial | **80-90%** |
 | **Chapbook** | ✓ Excellent | ✓ Good | ✓ Good | ⚠️ Limited | **60-70%** |
-| **Snowman** | ✓ Excellent | ✓ Good | ⚠️ Limited | ⚠️ Limited | **50-60%** |
+| **Snowman** | ✓ Excellent | ⚠️ Limited | ❌ Not Supported | ❌ Not Supported | **30-40%** |
 | **Twee** | ✓ Excellent | ✓ Excellent | ✓ Excellent | ⚠️ Partial | **85-95%** |
 
 ### What Gets Converted
@@ -105,28 +105,36 @@ The import process attempts to convert Twine syntax to Whisker syntax. Conversio
 
 #### ⚠️ Partially Supported
 - **Conditionals:**
-  - `<<if>>`, `<<elseif>>`, `<<else>>` (SugarCube)
-  - `(if:)`, `(else-if:)`, `(else:)` (Harlowe)
-  - `[if]`, `[else if]`, `[else]` (Chapbook)
+  - `<<if>>`, `<<elseif>>`, `<<else>>` (SugarCube) - Converted to `{{if}}` syntax
+  - `(if:)`, `(else-if:)`, `(else:)` (Harlowe) - Converted to `{{if}}` syntax
+  - `[if]`, `[else if]`, `[else]` (Chapbook) - Converted to `{{if}}` syntax
 - **Variable operations:**
-  - `<<set>>` (SugarCube)
-  - `(set:)`, `(put:)` (Harlowe)
-  - Variable declarations (Chapbook)
+  - `<<set>>` (SugarCube) - Converted to `{{var = value}}`
+  - `(set:)`, `(put:)` (Harlowe) - Converted to `{{var = value}}`
+  - Variable declarations (Chapbook) - Converted with type inference
 - **Display macros:**
-  - `<<print>>` (SugarCube)
-  - String insertion (Harlowe)
+  - `<<print>>`, `<<= >>` (SugarCube) - Converted to `{{var}}`
+  - `(print:)` (Harlowe) - Converted to `{{var}}`
+- **Variable Type Inference:**
+  - Automatically detects boolean, number, and string types from assignments
+  - Infers types from literal values (e.g., `true`, `123`, `"text"`)
 
 #### ❌ Not Supported (Requires Manual Conversion)
-- **UI macros:** `<<textbox>>`, `<<button>>`, `<<cycle>>`
-- **Audio/video:** `<<audio>>`, `<<video>>`
+- **UI macros:** `<<textbox>>`, `<<button>>`, `<<cycle>>`, `<<checkbox>>`
+- **Interactive link macros:** `<<linkreplace>>`, `<<linkappend>>`, `<<linkprepend>>`
+- **Audio/video:** `<<audio>>`, `<<video>>`, `<<cacheaudio>>`
 - **Advanced features:**
   - Widget definitions (`<<widget>>`)
-  - JavaScript code blocks (`<<script>>`)
+  - JavaScript code blocks (`<<script>>`, `<script>`) - **Critical for Snowman**
+  - JavaScript expressions (`<% %>`, `<%= %>`) - **Snowman-specific**
   - Custom macros
-  - Data structures (datamaps, datasets, arrays)
-  - Random/either functionality
+  - Data structures (datamaps, datasets, datarrays in Harlowe)
+  - Random/either functionality (`(random:)`, `(either:)`)
+  - Named hooks and hook references in Harlowe (`|name>`, `?name`)
+  - Live/event macros in Harlowe (`(live:)`, `(event:)`)
+  - Transition effects (`(transition:)`, `(transition-time:)`)
 - **Time-based modifiers:** `[after]`, `[cont]` (Chapbook)
-- **Embed passages:** `{embed passage}` (Chapbook)
+- **Embed passages:** `{embed passage:}` (Chapbook)
 
 ### Conversion Quality Score
 
@@ -286,19 +294,63 @@ If you encounter issues importing Twine stories:
 - HTML entities are automatically decoded
 - Special characters should be preserved
 
+## New Features (v2.0)
+
+Recent improvements to Twine import:
+
+### ✅ Snowman Format Support
+- **Added:** Full Snowman format detection and basic conversion
+- **Limitation:** Snowman relies heavily on JavaScript which cannot be automatically converted
+- **Tracking:** Critical issues are flagged for JavaScript code blocks and expressions
+- **Basic conversion:** Simple `<%= var %>` expressions are converted to `{{var}}`
+- **Recommendation:** Snowman stories require significant manual conversion after import
+
+### ✅ Enhanced Conversion Tracking
+- **Detailed loss reports:** Each conversion issue now includes:
+  - Severity level (critical, warning, info)
+  - Category (macro, syntax, variable, etc.)
+  - Specific passage where issue occurred
+  - Original syntax that couldn't be converted
+  - Suggested manual fix
+- **Passage-specific tracking:** Easily identify which passages need manual work
+- **Conversion quality score:** Overall percentage of successful conversion
+
+### ✅ Variable Type Inference
+- **Automatic type detection:** Variables are no longer all strings
+- **Infers from values:**
+  - `{{score = 100}}` → number type, initial value 100
+  - `{{isAlive = true}}` → boolean type, initial value true
+  - `{{name = "Alice"}}` → string type, initial value "Alice"
+- **Smarter defaults:** Referenced variables without assignments default to appropriate types
+
+### ✅ Improved Format-Specific Conversion
+- **Harlowe:**
+  - Tracks data structures (datamap, dataset, dataarray)
+  - Tracks named hooks and hook references
+  - Tracks transition and live/event macros
+  - Better conversion of nested conditionals
+- **SugarCube:**
+  - Tracks interactive link macros (linkreplace, linkappend, etc.)
+  - Tracks UI macros (button, textbox, etc.)
+  - Better handling of temporary variables (_var)
+  - Improved widget detection
+- **Chapbook:**
+  - Enhanced time-based modifier tracking
+  - Better embed passage detection
+
 ## Future Improvements
 
 Planned enhancements for Twine import:
 
-- [ ] Support for more macro conversions
-- [ ] Better handling of JavaScript code
+- [ ] Limited JavaScript-to-Lua conversion for common patterns
 - [ ] Import of custom styles and themes
 - [ ] Batch import of multiple stories
 - [ ] Import from Twine Archive (.taf) format
-- [ ] Better widget/custom macro detection
+- [ ] Better widget/custom macro conversion
 - [ ] Interactive import wizard for complex stories
+- [ ] Conversion of common SugarCube widgets to Whisker equivalents
 
 ---
 
-**Last updated:** 2025-10-28
-**Version:** 1.0
+**Last updated:** 2025-11-12
+**Version:** 2.0

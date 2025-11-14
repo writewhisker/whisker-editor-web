@@ -85,25 +85,28 @@ export { default as SettingsDialog } from './components/SettingsDialog.svelte';
 
 // Story state
 export {
-  storyStateStore,
   currentStory,
-  passages,
-  variables,
+  storyStateActions,
+  passageList,
+  variableList,
+  passageCount,
   storyMetadata,
 } from './stores/storyStateStore';
 
 // Selection state
 export {
-  selectionStore,
-  selectedPassageIds,
-  selectedChoiceIndex,
+  selectedPassageId,
+  selectionActions,
+  selectedPassage,
+  hasSelection,
 } from './stores/selectionStore';
 
 // History/undo-redo
 export {
-  historyStore,
   canUndo,
   canRedo,
+  historyCount,
+  historyActions,
 } from './stores/historyStore';
 
 // Notifications
@@ -121,12 +124,15 @@ export {
 // ============================================================================
 
 export { StorySimulator } from './analytics/StorySimulator';
+export type {
+  SimulationOptions,
+  SimulationResult,
+} from './analytics/StorySimulator';
+
 export { StoryAnalytics } from './analytics/StoryAnalytics';
 export { PlaythroughRecorder } from './analytics/PlaythroughRecorder';
 
 export type {
-  SimulationOptions,
-  SimulationResult,
   PlaythroughData,
   PassageVisitData,
   StoryMetrics,
@@ -137,12 +143,12 @@ export type {
 // ============================================================================
 
 export { TwineImporter } from './import/formats/TwineImporter';
-export { StoryExporter } from './export/StoryExporter';
 
 export type {
   ImportResult,
-  ConversionWarning,
-  ConversionTracker,
+  ImportOptions,
+  ConversionIssue,
+  LossReport,
 } from './import/types';
 
 export type {
@@ -178,28 +184,23 @@ export {
 } from './adapters';
 
 // ============================================================================
-// UTILITIES
-// ============================================================================
-
-export { generateId } from './utils/generateId';
-export { validatePassage, validateStory } from './utils/validation';
-
-// ============================================================================
 // TYPE GUARDS & HELPERS
 // ============================================================================
+
+import { pluginManager as _pluginManager } from './plugins/PluginManager';
 
 /**
  * Check if a plugin is registered
  */
 export function isPluginRegistered(pluginName: string): boolean {
-  return pluginManager.getPlugin(pluginName) !== null;
+  return _pluginManager.getPlugin(pluginName) !== null;
 }
 
 /**
  * Get plugin version
  */
 export function getPluginVersion(pluginName: string): string | null {
-  const plugin = pluginManager.getPlugin(pluginName);
+  const plugin = _pluginManager.getPlugin(pluginName);
   return plugin?.version || null;
 }
 

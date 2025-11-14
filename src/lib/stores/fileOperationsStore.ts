@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { storyStateActions } from './storyStateStore';
+import { storyStateActions } from '@whisker/editor-base/stores';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions } from './selectionStore';
 import { historyActions } from './historyStore';

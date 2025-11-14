@@ -17,7 +17,7 @@ import {
   variableList,
   passageCount,
   storyMetadata,
-} from './storyStateStore';
+} from '@whisker/editor-base/stores';
 
 import {
   selectedPassageId,

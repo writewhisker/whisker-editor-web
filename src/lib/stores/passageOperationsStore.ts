@@ -1,5 +1,5 @@
 import { get } from 'svelte/store';
-import { currentStory } from './storyStateStore';
+import { currentStory } from '@whisker/editor-base/stores';
 import { selectedPassageId, selectionActions } from './selectionStore';
 import { Passage } from '@whisker/core-ts';
 import { removeConnectionsToPassage } from '../utils/connectionValidator';

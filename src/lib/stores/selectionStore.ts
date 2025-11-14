@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { currentStory } from './storyStateStore';
+import { currentStory } from '@whisker/editor-base/stores';
 import type { Passage } from '@whisker/core-ts';
 
 /**

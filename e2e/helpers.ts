@@ -128,7 +128,7 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
   await page.waitForTimeout(2000);
 
   try {
-    await page.waitForSelector('text=Start', { timeout: 10000 });
+    await page.getByRole('button', { name: 'Passage: Start' }).waitFor({ state: 'visible', timeout: 10000 });
     console.log('[E2E] Found Start passage - project fully initialized');
   } catch (error) {
     console.error('[E2E] Failed to find Start passage');

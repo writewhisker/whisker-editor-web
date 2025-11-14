@@ -21,21 +21,21 @@ test.describe('Smoke Tests - Basic Functionality', () => {
     await createNewProject(page);
 
     // Verify we have a story with a start passage
-    await expect(page.locator('text=Start')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: 'Passage: Start' })).toBeVisible({ timeout: 5000 });
   });
 
   test('should add a new passage', async ({ page }) => {
     await createNewProject(page);
 
     // Click add passage button
-    const addButton = page.locator('button:has-text("+ Add")');
+    const addButton = page.getByTitle('Add new passage');
     await addButton.click();
 
     // Wait for new passage to appear
     await page.waitForTimeout(1000);
 
     // Verify passage was created
-    await expect(page.locator('text=Untitled Passage')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Passage: Untitled Passage' })).toBeVisible();
   });
 
   test('should edit passage content', async ({ page }) => {

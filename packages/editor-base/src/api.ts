@@ -17,10 +17,6 @@
 // ============================================================================
 
 export type {
-  Story,
-  Passage,
-  Choice,
-  Variable,
   StoryMetadata,
   PassagePosition,
 } from '@whisker/core-ts';

@@ -5,48 +5,143 @@ import { expect, type Page } from '@playwright/test';
  * Uses proper waits instead of arbitrary timeouts where possible
  */
 export async function createNewProject(page: Page, projectName = 'Test Story') {
-  // Clear storage using Playwright's context API to avoid security errors
+  console.log('[E2E] Starting createNewProject');
+
+  // Clear all storage to ensure clean state
   await page.context().clearCookies();
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 
-  // Wait a bit for any initialization
-  await page.waitForTimeout(500);
+  // Clear localStorage and IndexedDB
+  await page.evaluate(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    // Clear IndexedDB
+    if (window.indexedDB) {
+      window.indexedDB.databases().then((dbs) => {
+        dbs.forEach((db) => {
+          if (db.name) {
+            window.indexedDB.deleteDatabase(db.name);
+          }
+        });
+      });
+    }
+  });
 
-  // Find and click the Get Started Free button on the landing page with explicit wait
-  const getStartedButton = page.locator('button:has-text("Get Started Free")');
-  await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
-  await getStartedButton.click();
-
-  // Wait for navigation from landing page to editor
+  // Reload the page to start fresh
+  await page.reload();
   await page.waitForLoadState('networkidle');
+  console.log('[E2E] Page loaded with clean state');
+  await page.screenshot({ path: 'test-results/debug-01-initial-load.png', fullPage: true });
 
-  // Now look for the New Project button in the editor
+  // Wait a bit for any initialization
+  await page.waitForTimeout(1000);
+
+  // Try to find "New Project" button first (might exist after clearing storage)
   const newProjectButton = page.locator('button:has-text("New Project")');
-  await newProjectButton.waitFor({ state: 'visible', timeout: 10000 });
-  await newProjectButton.click();
+  const hasNewProjectButton = await newProjectButton.count() > 0;
+  console.log('[E2E] Has New Project button:', hasNewProjectButton);
 
-  // Wait for the project name input to be visible and interactable
+  if (hasNewProjectButton) {
+    // If there's a "New Project" button, use it directly
+    console.log('[E2E] Clicking New Project button directly');
+    await newProjectButton.click();
+    await page.screenshot({ path: 'test-results/debug-02-after-new-project-click.png', fullPage: true });
+  } else {
+    // Otherwise, use the landing page flow
+    console.log('[E2E] Using landing page flow');
+
+    // Find and click the Get Started Free button
+    const getStartedButton = page.locator('button:has-text("Get Started Free")');
+    await getStartedButton.waitFor({ state: 'visible', timeout: 10000 });
+    console.log('[E2E] Found Get Started Free button');
+    await page.screenshot({ path: 'test-results/debug-02-before-get-started.png', fullPage: true });
+
+    await getStartedButton.click();
+    console.log('[E2E] Clicked Get Started Free');
+
+    // Wait for Template Gallery modal to appear
+    await page.waitForTimeout(2000);
+    await page.screenshot({ path: 'test-results/debug-03-after-get-started.png', fullPage: true });
+
+    // Find and click the "Start with Blank Story" button in the Template Gallery
+    const blankStoryButton = page.locator('button').filter({ hasText: 'Start with Blank Story' });
+    console.log('[E2E] Looking for Start with Blank Story button');
+    const blankStoryCount = await blankStoryButton.count();
+    console.log('[E2E] Start with Blank Story button count:', blankStoryCount);
+
+    await blankStoryButton.waitFor({ state: 'visible', timeout: 15000 });
+    console.log('[E2E] Found Start with Blank Story button');
+    await page.screenshot({ path: 'test-results/debug-04-before-blank-story.png', fullPage: true });
+
+    await blankStoryButton.click();
+    console.log('[E2E] Clicked Start with Blank Story');
+  }
+
+  // Wait for the "New Project" dialog to appear with the project name input
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: 'test-results/debug-05-before-project-dialog.png', fullPage: true });
+
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
+  console.log('[E2E] Looking for project name input');
   await projectNameInput.waitFor({ state: 'visible', timeout: 10000 });
-  await projectNameInput.fill(projectName);
+  console.log('[E2E] Found project name input');
 
-  // Click OK button
+  await projectNameInput.fill(projectName);
+  console.log('[E2E] Filled project name:', projectName);
+
+  // Click OK button to submit
   const okButton = page.locator('button:has-text("OK")');
   await okButton.waitFor({ state: 'visible', timeout: 5000 });
+  console.log('[E2E] Found OK button');
   await okButton.click();
+  console.log('[E2E] Clicked OK button');
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: 'test-results/debug-06-after-submit.png', fullPage: true });
 
-  // Wait for modal to close
+  // Wait for dialog overlays to close
+  console.log('[E2E] Waiting for overlays to close');
   await page.waitForFunction(() => {
     const overlays = document.querySelectorAll('div[role="presentation"]');
     return overlays.length === 0;
   }, { timeout: 10000 });
+  console.log('[E2E] Overlays closed');
+  await page.screenshot({ path: 'test-results/debug-07-overlays-closed.png', fullPage: true });
 
   // Wait for editor to be ready - look for Passages text
-  await page.waitForSelector('text=Passages', { timeout: 10000 });
+  console.log('[E2E] Waiting for Passages text');
+  try {
+    await page.waitForSelector('text=Passages', { timeout: 15000 });
+    console.log('[E2E] Found Passages text - editor loaded successfully');
+  } catch (error) {
+    console.error('[E2E] Failed to find Passages text');
+    await page.screenshot({ path: 'test-results/debug-08-passages-not-found.png', fullPage: true });
 
-  // Give the app a moment to fully initialize
-  await page.waitForTimeout(500);
+    // Log what's actually on the page
+    const bodyText = await page.locator('body').textContent();
+    console.log('[E2E] Page content:', bodyText?.substring(0, 500));
+    throw error;
+  }
+
+  // Wait for the Start passage node to be rendered
+  console.log('[E2E] Waiting for Start passage to render');
+  await page.waitForTimeout(2000);
+
+  try {
+    await page.waitForSelector('text=Start', { timeout: 10000 });
+    console.log('[E2E] Found Start passage - project fully initialized');
+  } catch (error) {
+    console.error('[E2E] Failed to find Start passage');
+    await page.screenshot({ path: 'test-results/debug-08-start-not-found.png', fullPage: true });
+
+    // Log what passages exist
+    const bodyText = await page.locator('body').textContent();
+    console.log('[E2E] Page content:', bodyText?.substring(0, 1000));
+    throw error;
+  }
+
+  await page.screenshot({ path: 'test-results/debug-09-final-state.png', fullPage: true });
+  console.log('[E2E] createNewProject completed successfully');
 }
 
 /**

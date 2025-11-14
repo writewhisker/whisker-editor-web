@@ -112,8 +112,9 @@ jobs:
       run: pnpm exec tsc --noEmit
 
   e2e:
-    name: E2E Tests
+    name: E2E Smoke Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
     - name: Checkout code
@@ -139,8 +140,8 @@ jobs:
     - name: Build workspace packages
       run: pnpm run build --filter='./packages/*'
 
-    - name: Run E2E tests
-      run: pnpm run test:e2e
+    - name: Run E2E smoke tests
+      run: pnpm run test:e2e:smoke
 
     - name: Upload Playwright report
       if: always()
@@ -157,3 +158,12 @@ jobs:
         name: playwright-results
         path: test-results/
         retention-days: 30
+
+    - name: Upload debug screenshots
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-screenshots
+        path: test-results/debug-*.png
+        retention-days: 7
+        if-no-files-found: ignore

@@ -52,6 +52,7 @@ export const storyStateActions = {
         modified: new Date().toISOString(),
       },
     });
+
     currentStory.set(story);
     return story;
   },

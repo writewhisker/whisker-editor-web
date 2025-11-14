@@ -78,9 +78,23 @@ export async function createNewProject(page: Page, projectName = 'Test Story') {
     console.log('[E2E] Clicked Start with Blank Story');
   }
 
-  // Wait for the "New Project" dialog to appear with the project name input
+  // Wait for either the template gallery or the project name dialog
   await page.waitForTimeout(1000);
   await page.screenshot({ path: 'test-results/debug-05-before-project-dialog.png', fullPage: true });
+
+  // Check if template gallery appeared (happens when clicking "New" button)
+  const templateGallery = page.locator('text=Choose a Template');
+  const templateGalleryVisible = await templateGallery.isVisible().catch(() => false);
+
+  if (templateGalleryVisible) {
+    console.log('[E2E] Template gallery appeared, looking for Start Blank button');
+    const startBlankButton = page.locator('button:has-text("Start Blank")');
+    await startBlankButton.waitFor({ state: 'visible', timeout: 10000 });
+    console.log('[E2E] Found Start Blank button');
+    await startBlankButton.click();
+    console.log('[E2E] Clicked Start Blank button');
+    await page.waitForTimeout(500);
+  }
 
   const projectNameInput = page.locator('input[placeholder="My Amazing Story"]');
   console.log('[E2E] Looking for project name input');

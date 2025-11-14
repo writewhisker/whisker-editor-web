@@ -219,21 +219,19 @@
     }
   }
 
-  // Handle New Project
+  // Handle New Project - Show template gallery first
   function handleNewProject() {
     if ($currentStory) {
       showConfirm(
         'Unsaved Changes',
         'You have a project open. Any unsaved changes will be lost. Continue?',
         () => {
-          showNewDialog = true;
-          newProjectTitle = '';
+          showTemplateGallery = true;
         },
         'warning'
       );
     } else {
-      showNewDialog = true;
-      newProjectTitle = '';
+      showTemplateGallery = true;
     }
   }
 

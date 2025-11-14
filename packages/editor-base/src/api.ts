@@ -18,7 +18,6 @@
 
 export type {
   StoryMetadata,
-  PassagePosition,
 } from '@whisker/core-ts';
 
 export {

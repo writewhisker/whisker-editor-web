@@ -6,4 +6,5 @@
 export * from './PlaythroughAnalytics';
 export * from './PlaythroughRecorder';
 export * from './StoryAnalytics';
+export * from './StorySimulator';
 export * from './types';

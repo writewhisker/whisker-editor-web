@@ -14,7 +14,7 @@ describe('VisualConditionBuilder', () => {
   beforeEach(() => {
     // Create a test story with variables
     story = new Story({
-      metadata: { title: 'Test Story' }
+      metadata: { title: 'Test Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() }
     });
 
     story.addVariable(new Variable({ name: 'score', type: 'number', initial: 0 }));

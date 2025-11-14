@@ -13,7 +13,7 @@ describe('StorySimulator', () => {
 
   beforeEach(() => {
     // Create a simple linear story
-    linearStory = new Story({ metadata: { title: 'Linear Story' } });
+    linearStory = new Story({ metadata: { title: 'Linear Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
     const p1 = new Passage({ title: 'Start' });
     const p2 = new Passage({ title: 'Middle' });
     const p3 = new Passage({ title: 'End' });
@@ -27,7 +27,7 @@ describe('StorySimulator', () => {
     linearStory.startPassage = p1.id;
 
     // Create a branching story
-    branchingStory = new Story({ metadata: { title: 'Branching Story' } });
+    branchingStory = new Story({ metadata: { title: 'Branching Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
     const start = new Passage({ title: 'Start' });
     const left = new Passage({ title: 'Left Path' });
     const right = new Passage({ title: 'Right Path' });
@@ -45,7 +45,7 @@ describe('StorySimulator', () => {
     branchingStory.startPassage = start.id;
 
     // Create a complex story with loops and dead ends
-    complexStory = new Story({ metadata: { title: 'Complex Story' } });
+    complexStory = new Story({ metadata: { title: 'Complex Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
     const hub = new Passage({ title: 'Hub' });
     const shop = new Passage({ title: 'Shop' });
     const quest = new Passage({ title: 'Quest' });
@@ -229,7 +229,7 @@ describe('StorySimulator', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty story', async () => {
-      const emptyStory = new Story({ metadata: { title: 'Empty' } });
+      const emptyStory = new Story({ metadata: { title: 'Empty', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
       const simulator = new StorySimulator(emptyStory);
 
       const result = await simulator.simulate({ maxSimulations: 10 });
@@ -240,7 +240,7 @@ describe('StorySimulator', () => {
     });
 
     it('should handle single passage story', async () => {
-      const singleStory = new Story({ metadata: { title: 'Single' } });
+      const singleStory = new Story({ metadata: { title: 'Single', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() } });
       const passage = new Passage({ title: 'Only' });
       singleStory.addPassage(passage);
       singleStory.startPassage = passage.id;

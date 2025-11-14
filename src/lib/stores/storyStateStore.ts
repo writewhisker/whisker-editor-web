@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { Story, type ProjectData } from '@whisker/core-ts';
+import { Story, Passage, type ProjectData } from '@whisker/core-ts';
 
 /**
  * Core story state store
@@ -52,6 +52,12 @@ export const storyStateActions = {
         modified: new Date().toISOString(),
       },
     });
+
+    // Create a default "Start" passage for new stories
+    const startPassage = new Passage({ title: 'Start' });
+    story.addPassage(startPassage);
+    story.startPassage = startPassage.id;
+
     currentStory.set(story);
     return story;
   },

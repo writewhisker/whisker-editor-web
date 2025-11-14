@@ -52,6 +52,12 @@ export const storyStateActions = {
         modified: new Date().toISOString(),
       },
     });
+
+    // Create a default "Start" passage for new stories
+    const startPassage = new Passage({ title: 'Start' });
+    story.addPassage(startPassage);
+    story.startPassage = startPassage.id;
+
     currentStory.set(story);
     return story;
   },

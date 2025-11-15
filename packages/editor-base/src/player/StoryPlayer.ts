@@ -3,7 +3,7 @@ import type { Passage } from '@writewhisker/core-ts';
 import type { Choice } from '@writewhisker/core-ts';
 import type { Variable } from '@writewhisker/core-ts';
 import type {
-  PlaythroughStep,
+  PlayerPlaythroughStep,
   PlaythroughRecording,
   VariableChange,
   PlayerError,
@@ -26,7 +26,7 @@ export class StoryPlayer {
   private currentPassageId: string | null = null;
   private variables: Map<string, any> = new Map();
   private visitedPassages: Map<string, number> = new Map();
-  private history: PlaythroughStep[] = [];
+  private history: PlayerPlaythroughStep[] = [];
   private breakpoints: Set<string> = new Set();
   private eventListeners: Map<PlayerEvent, Set<PlayerEventCallback>> = new Map();
   private startTime: number = 0;
@@ -298,7 +298,7 @@ export class StoryPlayer {
   /**
    * Get playthrough history
    */
-  getHistory(): PlaythroughStep[] {
+  getHistory(): PlayerPlaythroughStep[] {
     return [...this.history];
   }
 
@@ -529,7 +529,7 @@ export class StoryPlayer {
     }
 
     // Add to history
-    const step: PlaythroughStep = {
+    const step: PlayerPlaythroughStep = {
       timestamp: Date.now(),
       passageId,
       passageTitle: passage.title,

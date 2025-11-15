@@ -1,189 +1,195 @@
 /**
- * LocalStorage storage backend implementation
- * Uses browser localStorage for persistent storage
+ * localStorage storage backend for simple browser storage
+ * Note: This has size limitations (~5-10MB) but is simpler than IndexedDB
  */
 
-import { IStorageBackend } from '../interfaces/IStorageBackend.js';
+import type { StoryData } from '@writewhisker/core-ts';
+import type { IStorageBackend, StorageMetadata } from '../interfaces/IStorageBackend.js';
+
+const STORAGE_PREFIX = 'whisker:story:';
+const METADATA_PREFIX = 'whisker:metadata:';
+const INDEX_KEY = 'whisker:index';
 
 export class LocalStorageBackend implements IStorageBackend {
-  private prefix: string;
-
-  constructor(prefix: string = 'whisker:') {
-    this.prefix = prefix;
+  private ensureBrowser(): void {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      throw new Error('localStorage is not available');
+    }
   }
 
-  /**
-   * Get the full key with prefix
-   */
-  private getFullKey(key: string): string {
-    return `${this.prefix}${key}`;
+  async initialize(): Promise<void> {
+    this.ensureBrowser();
+    
+    // Ensure index exists
+    if (!localStorage.getItem(INDEX_KEY)) {
+      localStorage.setItem(INDEX_KEY, JSON.stringify([]));
+    }
   }
 
-  /**
-   * Remove prefix from a full key
-   */
-  private stripPrefix(fullKey: string): string {
-    return fullKey.startsWith(this.prefix) ? fullKey.slice(this.prefix.length) : fullKey;
+  private getIndex(): string[] {
+    const indexJson = localStorage.getItem(INDEX_KEY);
+    return indexJson ? JSON.parse(indexJson) : [];
   }
 
-  /**
-   * Save data to localStorage
-   */
-  async save(key: string, data: any): Promise<void> {
+  private updateIndex(ids: string[]): void {
+    localStorage.setItem(INDEX_KEY, JSON.stringify(ids));
+  }
+
+  private addToIndex(id: string): void {
+    const index = this.getIndex();
+    if (!index.includes(id)) {
+      index.push(id);
+      this.updateIndex(index);
+    }
+  }
+
+  private removeFromIndex(id: string): void {
+    const index = this.getIndex();
+    const filtered = index.filter(i => i !== id);
+    this.updateIndex(filtered);
+  }
+
+  async saveStory(id: string, data: StoryData): Promise<void> {
+    this.ensureBrowser();
+    
+    const metadata: StorageMetadata = {
+      id,
+      title: data.title,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      size: JSON.stringify(data).length,
+    };
+
+    // Preserve createdAt if story exists
+    const existingMetadata = localStorage.getItem(METADATA_PREFIX + id);
+    if (existingMetadata) {
+      const existing: StorageMetadata = JSON.parse(existingMetadata);
+      metadata.createdAt = existing.createdAt;
+    }
+
     try {
-      const serialized = JSON.stringify(data);
-      localStorage.setItem(this.getFullKey(key), serialized);
+      localStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(data));
+      localStorage.setItem(METADATA_PREFIX + id, JSON.stringify(metadata));
+      this.addToIndex(id);
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
-        throw new Error(`LocalStorage quota exceeded when saving key "${key}"`);
+        throw new Error('localStorage quota exceeded. Consider using IndexedDB backend instead.');
       }
-      throw new Error(`LocalStorage save error: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
     }
   }
 
-  /**
-   * Load data from localStorage
-   */
-  async load(key: string): Promise<any | null> {
-    try {
-      const serialized = localStorage.getItem(this.getFullKey(key));
-
-      if (serialized === null) {
-        return null;
-      }
-
-      try {
-        return JSON.parse(serialized);
-      } catch (error) {
-        throw new Error(`Failed to parse data for key "${key}": ${error instanceof Error ? error.message : String(error)}`);
-      }
-    } catch (error) {
-      throw new Error(`LocalStorage load error: ${error instanceof Error ? error.message : String(error)}`);
+  async loadStory(id: string): Promise<StoryData> {
+    this.ensureBrowser();
+    
+    const dataJson = localStorage.getItem(STORAGE_PREFIX + id);
+    if (!dataJson) {
+      throw new Error(`Story not found: ${id}`);
     }
+
+    return JSON.parse(dataJson);
   }
 
-  /**
-   * Delete data from localStorage
-   */
-  async delete(key: string): Promise<void> {
-    try {
-      localStorage.removeItem(this.getFullKey(key));
-    } catch (error) {
-      throw new Error(`LocalStorage delete error: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  async deleteStory(id: string): Promise<void> {
+    this.ensureBrowser();
+    
+    localStorage.removeItem(STORAGE_PREFIX + id);
+    localStorage.removeItem(METADATA_PREFIX + id);
+    this.removeFromIndex(id);
   }
 
-  /**
-   * List all keys in localStorage (with this prefix)
-   */
-  async list(): Promise<string[]> {
-    try {
-      const keys: string[] = [];
+  async listStories(): Promise<StorageMetadata[]> {
+    this.ensureBrowser();
+    
+    const index = this.getIndex();
+    const metadata: StorageMetadata[] = [];
 
-      for (let i = 0; i < localStorage.length; i++) {
-        const fullKey = localStorage.key(i);
-        if (fullKey && fullKey.startsWith(this.prefix)) {
-          keys.push(this.stripPrefix(fullKey));
-        }
+    for (const id of index) {
+      const metadataJson = localStorage.getItem(METADATA_PREFIX + id);
+      if (metadataJson) {
+        metadata.push(JSON.parse(metadataJson));
       }
-
-      return keys;
-    } catch (error) {
-      throw new Error(`LocalStorage list error: ${error instanceof Error ? error.message : String(error)}`);
     }
+
+    return metadata.sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
   }
 
-  /**
-   * Check if a key exists in localStorage
-   */
-  async exists(key: string): Promise<boolean> {
-    try {
-      return localStorage.getItem(this.getFullKey(key)) !== null;
-    } catch (error) {
-      throw new Error(`LocalStorage exists error: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  async hasStory(id: string): Promise<boolean> {
+    this.ensureBrowser();
+    return localStorage.getItem(STORAGE_PREFIX + id) !== null;
   }
 
-  /**
-   * Get the size of stored data in bytes
-   */
-  async size(key: string): Promise<number> {
-    try {
-      const serialized = localStorage.getItem(this.getFullKey(key));
-
-      if (serialized === null) {
-        return 0;
-      }
-
-      return new Blob([serialized]).size;
-    } catch (error) {
-      throw new Error(`LocalStorage size error: ${error instanceof Error ? error.message : String(error)}`);
+  async getMetadata(id: string): Promise<StorageMetadata> {
+    this.ensureBrowser();
+    
+    const metadataJson = localStorage.getItem(METADATA_PREFIX + id);
+    if (!metadataJson) {
+      throw new Error(`Story not found: ${id}`);
     }
+
+    return JSON.parse(metadataJson);
   }
 
-  /**
-   * Save multiple entries at once (batch operation)
-   */
-  async saveMany(entries: Record<string, any>): Promise<void> {
-    try {
-      for (const [key, value] of Object.entries(entries)) {
-        const serialized = JSON.stringify(value);
-        localStorage.setItem(this.getFullKey(key), serialized);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        throw new Error('LocalStorage quota exceeded during batch save');
-      }
-      throw new Error(`LocalStorage saveMany error: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  async updateMetadata(id: string, updates: Partial<StorageMetadata>): Promise<void> {
+    this.ensureBrowser();
+    
+    const existing = await this.getMetadata(id);
+    const updated = {
+      ...existing,
+      ...updates,
+      id, // Ensure id doesn't change
+      updatedAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(METADATA_PREFIX + id, JSON.stringify(updated));
   }
 
-  /**
-   * Load multiple entries at once (batch operation)
-   */
-  async loadMany(keys: string[]): Promise<Record<string, any>> {
-    try {
-      const results: Record<string, any> = {};
-
-      for (const key of keys) {
-        const serialized = localStorage.getItem(this.getFullKey(key));
-
-        if (serialized !== null) {
-          try {
-            results[key] = JSON.parse(serialized);
-          } catch (error) {
-            throw new Error(`Failed to parse data for key "${key}": ${error instanceof Error ? error.message : String(error)}`);
-          }
-        }
-      }
-
-      return results;
-    } catch (error) {
-      throw new Error(`LocalStorage loadMany error: ${error instanceof Error ? error.message : String(error)}`);
-    }
+  async exportStory(id: string): Promise<Blob> {
+    const data = await this.loadStory(id);
+    const json = JSON.stringify(data, null, 2);
+    return new Blob([json], { type: 'application/json' });
   }
 
-  /**
-   * Clear all data from localStorage (only items with this prefix)
-   */
+  async importStory(file: Blob | File): Promise<string> {
+    const text = await file.text();
+    const data: StoryData = JSON.parse(text);
+    
+    // Generate new ID if not present
+    const id = data.id || crypto.randomUUID();
+    const storyWithId = { ...data, id };
+    
+    await this.saveStory(id, storyWithId);
+    return id;
+  }
+
+  async getStorageUsage(): Promise<number> {
+    this.ensureBrowser();
+    
+    let total = 0;
+    const index = this.getIndex();
+
+    for (const id of index) {
+      const storyData = localStorage.getItem(STORAGE_PREFIX + id);
+      const metadata = localStorage.getItem(METADATA_PREFIX + id);
+      
+      if (storyData) total += storyData.length;
+      if (metadata) total += metadata.length;
+    }
+
+    return total;
+  }
+
   async clear(): Promise<void> {
-    try {
-      const keysToRemove: string[] = [];
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const fullKey = localStorage.key(i);
-        if (fullKey && fullKey.startsWith(this.prefix)) {
-          keysToRemove.push(fullKey);
-        }
-      }
-
-      for (const fullKey of keysToRemove) {
-        localStorage.removeItem(fullKey);
-      }
-    } catch (error) {
-      throw new Error(`LocalStorage clear error: ${error instanceof Error ? error.message : String(error)}`);
+    this.ensureBrowser();
+    
+    const index = this.getIndex();
+    for (const id of index) {
+      localStorage.removeItem(STORAGE_PREFIX + id);
+      localStorage.removeItem(METADATA_PREFIX + id);
     }
+    
+    this.updateIndex([]);
   }
 }
-
-export default LocalStorageBackend;

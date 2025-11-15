@@ -18,3 +18,10 @@ export {
   createSvelteEditorAdapter,
   createSupabaseEditorAdapter,
 } from './StoreAdapter';
+
+// Storage adapter
+export { SvelteStorageAdapter, storageAdapter, initializeStorage } from './storageAdapter.js';
+
+// App initialization
+export { initializeApp, getMigrationStatus } from './initializeApp.js';
+export type { InitializationOptions, InitializationResult } from './initializeApp.js';

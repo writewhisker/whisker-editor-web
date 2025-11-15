@@ -7,6 +7,14 @@ import type { ValidationResult } from '@writewhisker/core-ts';
 import type { Reporter } from './Reporter.js';
 
 export class ConsoleReporter implements Reporter {
+  private formatIssuePath(issue: any): string | undefined {
+    const parts: string[] = [];
+    if (issue.passageTitle) parts.push(`Passage: ${issue.passageTitle}`);
+    if (issue.choiceId) parts.push(`Choice ID: ${issue.choiceId}`);
+    if (issue.variableName) parts.push(`Variable: ${issue.variableName}`);
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
   format(result: ValidationResult): string {
     const lines: string[] = [];
 
@@ -34,11 +42,12 @@ export class ConsoleReporter implements Reporter {
       lines.push(chalk.red.bold('Errors:'));
       errors.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.red('●')} ${issue.message}`);
-        if (issue.path) {
-          lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);
+        const path = this.formatIssuePath(issue);
+        if (path) {
+          lines.push(`     ${chalk.gray(path)}`);
         }
-        if (issue.suggestion) {
-          lines.push(`     ${chalk.cyan(`💡 ${issue.suggestion}`)}`);
+        if (issue.description) {
+          lines.push(`     ${chalk.cyan(`💡 ${issue.description}`)}`);
         }
       });
       lines.push('');
@@ -49,11 +58,12 @@ export class ConsoleReporter implements Reporter {
       lines.push(chalk.yellow.bold('Warnings:'));
       warnings.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.yellow('⚠')} ${issue.message}`);
-        if (issue.path) {
-          lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);
+        const path = this.formatIssuePath(issue);
+        if (path) {
+          lines.push(`     ${chalk.gray(path)}`);
         }
-        if (issue.suggestion) {
-          lines.push(`     ${chalk.cyan(`💡 ${issue.suggestion}`)}`);
+        if (issue.description) {
+          lines.push(`     ${chalk.cyan(`💡 ${issue.description}`)}`);
         }
       });
       lines.push('');
@@ -64,8 +74,9 @@ export class ConsoleReporter implements Reporter {
       lines.push(chalk.blue.bold('Info:'));
       info.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.blue('ℹ')} ${issue.message}`);
-        if (issue.path) {
-          lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);
+        const path = this.formatIssuePath(issue);
+        if (path) {
+          lines.push(`     ${chalk.gray(path)}`);
         }
       });
       lines.push('');

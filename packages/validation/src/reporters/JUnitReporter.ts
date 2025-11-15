@@ -6,6 +6,14 @@ import type { ValidationResult } from '@writewhisker/core-ts';
 import type { Reporter } from './Reporter.js';
 
 export class JUnitReporter implements Reporter {
+  private formatIssuePath(issue: any): string | undefined {
+    const parts: string[] = [];
+    if (issue.passageTitle) parts.push(`Passage: ${issue.passageTitle}`);
+    if (issue.choiceId) parts.push(`Choice ID: ${issue.choiceId}`);
+    if (issue.variableName) parts.push(`Variable: ${issue.variableName}`);
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
   format(result: ValidationResult): string {
     const errors = result.issues.filter(i => i.severity === 'error');
     const warnings = result.issues.filter(i => i.severity === 'warning');
@@ -26,11 +34,12 @@ export class JUnitReporter implements Reporter {
     errors.forEach((issue) => {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.error">');
       lines.push('    <failure message="' + this.escapeXml(issue.message) + '">');
-      if (issue.path) {
-        lines.push('Path: ' + this.escapeXml(issue.path));
+      const path = this.formatIssuePath(issue);
+      if (path) {
+        lines.push(this.escapeXml(path));
       }
-      if (issue.suggestion) {
-        lines.push('Suggestion: ' + this.escapeXml(issue.suggestion));
+      if (issue.description) {
+        lines.push('Description: ' + this.escapeXml(issue.description));
       }
       lines.push('    </failure>');
       lines.push('  </testcase>');
@@ -41,8 +50,9 @@ export class JUnitReporter implements Reporter {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.warning">');
       lines.push('    <system-out>');
       lines.push('Warning: ' + this.escapeXml(issue.message));
-      if (issue.path) {
-        lines.push('Path: ' + this.escapeXml(issue.path));
+      const path = this.formatIssuePath(issue);
+      if (path) {
+        lines.push(this.escapeXml(path));
       }
       lines.push('    </system-out>');
       lines.push('  </testcase>');
@@ -53,8 +63,9 @@ export class JUnitReporter implements Reporter {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.info">');
       lines.push('    <system-out>');
       lines.push('Info: ' + this.escapeXml(issue.message));
-      if (issue.path) {
-        lines.push('Path: ' + this.escapeXml(issue.path));
+      const path = this.formatIssuePath(issue);
+      if (path) {
+        lines.push(this.escapeXml(path));
       }
       lines.push('    </system-out>');
       lines.push('  </testcase>');

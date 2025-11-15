@@ -7,7 +7,7 @@
 import { Command } from 'commander';
 import { readFile, writeFile } from 'fs/promises';
 import { glob } from 'glob';
-import { createDefaultValidator } from '@writewhisker/core-ts';
+import { createDefaultValidator, Story } from '@writewhisker/core-ts';
 import type { StoryData } from '@writewhisker/core-ts';
 import { createReporter, type ReporterFormat } from './reporters/index.js';
 
@@ -54,9 +54,10 @@ program
       for (const file of expandedFiles) {
         try {
           const content = await readFile(file, 'utf-8');
-          const story: StoryData = JSON.parse(content);
+          const storyData: StoryData = JSON.parse(content);
 
-          // Validate
+          // Convert to Story instance and validate
+          const story = new Story(storyData);
           const result = validator.validate(story);
 
           // Create reporter

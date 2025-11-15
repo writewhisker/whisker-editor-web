@@ -32,14 +32,15 @@ export {
 } from './reporters/index.js';
 
 // Convenience function for validating stories
-import { createDefaultValidator, type StoryData, type ValidationResult } from '@writewhisker/core-ts';
+import { createDefaultValidator, Story, type StoryData, type ValidationResult } from '@writewhisker/core-ts';
 
 /**
  * Validate a story and return the result
  */
 export function validateStory(story: StoryData): ValidationResult {
   const validator = createDefaultValidator();
-  return validator.validate(story);
+  const storyInstance = new Story(story);
+  return validator.validate(storyInstance);
 }
 
 /**

@@ -144,21 +144,32 @@ export class HTMLReporter implements Reporter {
 </html>`;
   }
 
+  private formatIssuePath(issue: any): string | undefined {
+    const parts: string[] = [];
+    if (issue.passageTitle) parts.push(`Passage: ${issue.passageTitle}`);
+    if (issue.choiceId) parts.push(`Choice ID: ${issue.choiceId}`);
+    if (issue.variableName) parts.push(`Variable: ${issue.variableName}`);
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
   private renderIssues(
     title: string,
-    issues: Array<{ message: string; path?: string; suggestion?: string }>,
+    issues: Array<any>,
     sectionClass: string,
     issueClass: string
   ): string {
     if (issues.length === 0) return '';
 
-    const issuesHtml = issues.map(issue => `
+    const issuesHtml = issues.map(issue => {
+      const path = this.formatIssuePath(issue);
+      return `
       <div class="issue ${issueClass}">
         <div class="issue-message">${this.escapeHtml(issue.message)}</div>
-        ${issue.path ? `<div class="issue-path">Path: ${this.escapeHtml(issue.path)}</div>` : ''}
-        ${issue.suggestion ? `<div class="issue-suggestion">💡 ${this.escapeHtml(issue.suggestion)}</div>` : ''}
+        ${path ? `<div class="issue-path">${this.escapeHtml(path)}</div>` : ''}
+        ${issue.description ? `<div class="issue-suggestion">💡 ${this.escapeHtml(issue.description)}</div>` : ''}
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     return `
       <div class="issues-section ${sectionClass}">

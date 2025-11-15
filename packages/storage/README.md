@@ -1,293 +1,141 @@
 # @writewhisker/storage
 
-Framework-agnostic storage layer with event-driven architecture for Whisker.
+Framework-agnostic storage layer for Whisker interactive fiction.
+
+## Features
+
+- **Multiple Backends**: IndexedDB, localStorage, and extensible to filesystem, cloud, and database storage
+- **Event-Driven**: Emits events for all storage operations, enabling reactive UIs
+- **Framework Agnostic**: Works with any UI framework (Svelte, React, Vue, etc.)
+- **Type-Safe**: Full TypeScript support with comprehensive type definitions
+- **Async/Await**: Modern async API for all operations
 
 ## Installation
 
 ```bash
-npm install @writewhisker/storage
+pnpm add @writewhisker/storage
 ```
-
-## Features
-
-- **Event-Driven**: Emit events instead of directly updating state
-- **Framework-Agnostic**: Works with any framework (React, Vue, Svelte, etc.)
-- **Multiple Backends**: IndexedDB, localStorage, in-memory
-- **TypeScript**: Full type safety
-- **Extensible**: Easy to add custom backends
 
 ## Quick Start
 
 ```typescript
-import { StorageService, IndexedDBBackend } from '@writewhisker/storage';
+import { createIndexedDBStorage, StorageEventType } from '@writewhisker/storage';
 
-// Create storage with IndexedDB backend
-const backend = new IndexedDBBackend('my-app');
-const storage = new StorageService(backend);
+// Create storage service with IndexedDB backend
+const storage = createIndexedDBStorage();
+
+// Initialize
+await storage.initialize();
 
 // Listen to events
-storage.on('data-saved', (key, data) => {
-  console.log(`Saved ${key}:`, data);
+storage.on(StorageEventType.STORY_SAVED, (event) => {
+  console.log('Story saved:', event.storyId, event.title);
 });
 
-// Save data
-await storage.save('user', { name: 'Alice', age: 30 });
+// Save a story
+await storage.saveStory('story-1', {
+  id: 'story-1',
+  title: 'My First Story',
+  passages: [],
+  // ... other story data
+});
 
-// Load data
-const user = await storage.load('user');
+// Load a story
+const story = await storage.loadStory('story-1');
+
+// List all stories
+const stories = await storage.listStories();
 ```
 
-## Available Backends
+## Backends
 
-### IndexedDBBackend
+### IndexedDB (Recommended for browsers)
 
-Browser IndexedDB storage (recommended for large data).
+Best for browser environments. No size limitations (unlike localStorage).
 
 ```typescript
-import { IndexedDBBackend } from '@writewhisker/storage';
+import { IndexedDBBackend, StorageService } from '@writewhisker/storage';
 
-const backend = new IndexedDBBackend('database-name');
+const storage = new StorageService(new IndexedDBBackend());
+await storage.initialize();
 ```
 
-### LocalStorageBackend
+### localStorage (Simple alternative)
 
-Browser localStorage (recommended for small data).
+Simple but has ~5-10MB size limit.
 
 ```typescript
-import { LocalStorageBackend } from '@writewhisker/storage';
+import { LocalStorageBackend, StorageService } from '@writewhisker/storage';
 
-const backend = new LocalStorageBackend('app-prefix:');
+const storage = new StorageService(new LocalStorageBackend());
+await storage.initialize();
 ```
 
-### MemoryBackend
+## Events
 
-In-memory storage (recommended for testing).
+The storage service emits events for all operations:
+
+- `STORY_SAVED` - When a story is saved
+- `STORY_LOADED` - When a story is loaded
+- `STORY_DELETED` - When a story is deleted
+- `STORY_CREATED` - When a new story is created
+- `STORY_UPDATED` - When an existing story is updated
+- `METADATA_UPDATED` - When story metadata is updated
+- `STORAGE_CLEARED` - When all storage is cleared
+- `ERROR` - When an error occurs
 
 ```typescript
-import { MemoryBackend } from '@writewhisker/storage';
-
-const backend = new MemoryBackend();
-```
-
-## StorageService API
-
-### Methods
-
-```typescript
-// Save data
-await storage.save(key: string, data: any): Promise<void>
-
-// Load data
-const data = await storage.load(key: string): Promise<any | null>
-
-// Delete data
-await storage.delete(key: string): Promise<void>
-
-// List all keys
-const keys = await storage.list(): Promise<string[]>
-
-// Check if key exists
-const exists = await storage.exists(key: string): Promise<boolean>
-
-// Get size (if supported)
-const size = await storage.size(key: string): Promise<number | undefined>
-
-// Batch operations
-await storage.saveMany(entries: Record<string, any>): Promise<void>
-const data = await storage.loadMany(keys: string[]): Promise<Record<string, any>>
-
-// Clear all data
-await storage.clear(): Promise<void>
-```
-
-### Events
-
-```typescript
-storage.on('data-saved', (key: string, data: any) => {
-  // Called when data is saved
+storage.on(StorageEventType.STORY_SAVED, (event) => {
+  console.log('Story saved:', event);
 });
 
-storage.on('data-loaded', (key: string, data: any) => {
-  // Called when data is loaded
-});
-
-storage.on('data-deleted', (key: string) => {
-  // Called when data is deleted
-});
-
-storage.on('error', (error: Error) => {
-  // Called when an error occurs
+storage.on(StorageEventType.ERROR, (event) => {
+  console.error('Storage error:', event.error, event.operation);
 });
 ```
 
-## Framework Integration
+## API Reference
 
-### React
+### StorageService
 
-```typescript
-import { useState, useEffect } from 'react';
-import { StorageService, IndexedDBBackend } from '@writewhisker/storage';
+#### Methods
 
-const backend = new IndexedDBBackend('my-app');
-const storage = new StorageService(backend);
-
-function App() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    // Load initial data
-    storage.load('user').then(setUser);
-
-    // Listen to changes
-    const handler = (key, data) => {
-      if (key === 'user') setUser(data);
-    };
-    storage.on('data-saved', handler);
-    storage.on('data-loaded', handler);
-
-    return () => {
-      storage.off('data-saved', handler);
-      storage.off('data-loaded', handler);
-    };
-  }, []);
-
-  const saveUser = async (userData) => {
-    await storage.save('user', userData);
-  };
-
-  return (
-    <div>
-      <h1>{user?.name}</h1>
-      <button onClick={() => saveUser({ name: 'Bob', age: 25 })}>
-        Update User
-      </button>
-    </div>
-  );
-}
-```
-
-### Svelte
-
-```typescript
-import { writable } from 'svelte/store';
-import { StorageService, IndexedDBBackend } from '@writewhisker/storage';
-
-const backend = new IndexedDBBackend('my-app');
-const storage = new StorageService(backend);
-
-// Create Svelte store
-const user = writable(null);
-
-// Wire up events to store
-storage.on('data-saved', (key, data) => {
-  if (key === 'user') user.set(data);
-});
-
-storage.on('data-loaded', (key, data) => {
-  if (key === 'user') user.set(data);
-});
-
-// Load initial data
-storage.load('user');
-
-export { storage, user };
-```
-
-```svelte
-<script>
-  import { user, storage } from './storage';
-
-  async function updateUser() {
-    await storage.save('user', { name: 'Charlie', age: 35 });
-  }
-</script>
-
-<h1>{$user?.name}</h1>
-<button on:click={updateUser}>Update User</button>
-```
-
-### Vue
-
-```typescript
-import { ref } from 'vue';
-import { StorageService, IndexedDBBackend } from '@writewhisker/storage';
-
-const backend = new IndexedDBBackend('my-app');
-const storage = new StorageService(backend);
-
-const user = ref(null);
-
-// Wire up events
-storage.on('data-saved', (key, data) => {
-  if (key === 'user') user.value = data;
-});
-
-storage.on('data-loaded', (key, data) => {
-  if (key === 'user') user.value = data;
-});
-
-// Load initial data
-storage.load('user');
-
-export { storage, user };
-```
+- `initialize(): Promise<void>` - Initialize the backend
+- `saveStory(id: string, data: StoryData, isNew?: boolean): Promise<void>` - Save a story
+- `loadStory(id: string): Promise<StoryData>` - Load a story
+- `deleteStory(id: string): Promise<void>` - Delete a story
+- `listStories(): Promise<StorageMetadata[]>` - List all stories
+- `hasStory(id: string): Promise<boolean>` - Check if story exists
+- `getMetadata(id: string): Promise<StorageMetadata>` - Get story metadata
+- `updateMetadata(id: string, metadata: Partial<StorageMetadata>): Promise<void>` - Update metadata
+- `exportStory(id: string): Promise<Blob>` - Export story as JSON blob
+- `importStory(data: Blob | File): Promise<string>` - Import story from file
+- `getStorageUsage(): Promise<number>` - Get storage usage in bytes
+- `clear(): Promise<void>` - Clear all storage
 
 ## Custom Backends
 
-Implement the `IStorageBackend` interface:
+Implement the `IStorageBackend` interface to create custom backends:
 
 ```typescript
-import type { IStorageBackend } from '@writewhisker/storage';
+import type { IStorageBackend, StorageMetadata } from '@writewhisker/storage';
+import type { StoryData } from '@writewhisker/core-ts';
 
 class MyCustomBackend implements IStorageBackend {
-  async save(key: string, data: any): Promise<void> {
-    // Your implementation
+  async initialize(): Promise<void> {
+    // Initialize your backend
   }
 
-  async load(key: string): Promise<any | null> {
-    // Your implementation
+  async saveStory(id: string, data: StoryData): Promise<void> {
+    // Save implementation
   }
 
-  async delete(key: string): Promise<void> {
-    // Your implementation
-  }
-
-  async list(): Promise<string[]> {
-    // Your implementation
-  }
-
-  async exists(key: string): Promise<boolean> {
-    // Your implementation
-  }
+  // Implement other required methods...
 }
 
-const backend = new MyCustomBackend();
-const storage = new StorageService(backend);
-```
-
-## Testing
-
-Use `MemoryBackend` for tests:
-
-```typescript
-import { StorageService, MemoryBackend } from '@writewhisker/storage';
-
-describe('MyComponent', () => {
-  let storage;
-
-  beforeEach(() => {
-    const backend = new MemoryBackend();
-    storage = new StorageService(backend);
-  });
-
-  test('saves data', async () => {
-    await storage.save('test', { value: 42 });
-    const data = await storage.load('test');
-    expect(data.value).toBe(42);
-  });
-});
+const storage = new StorageService(new MyCustomBackend());
 ```
 
 ## License
 
-AGPL-3.0
+MIT

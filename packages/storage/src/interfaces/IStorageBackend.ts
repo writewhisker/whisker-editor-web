@@ -1,62 +1,83 @@
 /**
  * Storage backend interface
- * Defines the contract for all storage implementations
+ * All storage implementations must conform to this interface
  */
 
+import type { StoryData } from '@writewhisker/core-ts';
+
+/**
+ * Metadata for a stored story
+ */
+export interface StorageMetadata {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  size?: number;
+  tags?: string[];
+}
+
+/**
+ * Storage backend interface
+ */
 export interface IStorageBackend {
   /**
-   * Save data to storage
-   * @param key Unique identifier for the data
-   * @param data Data to store (will be serialized)
+   * Initialize the storage backend
    */
-  save(key: string, data: any): Promise<void>;
+  initialize(): Promise<void>;
 
   /**
-   * Load data from storage
-   * @param key Unique identifier for the data
-   * @returns The stored data, or null if not found
+   * Save a story to storage
    */
-  load(key: string): Promise<any | null>;
+  saveStory(id: string, data: StoryData): Promise<void>;
 
   /**
-   * Delete data from storage
-   * @param key Unique identifier for the data
+   * Load a story from storage
    */
-  delete(key: string): Promise<void>;
+  loadStory(id: string): Promise<StoryData>;
 
   /**
-   * List all keys in storage
-   * @returns Array of all keys
+   * Delete a story from storage
    */
-  list(): Promise<string[]>;
+  deleteStory(id: string): Promise<void>;
 
   /**
-   * Check if a key exists in storage
-   * @param key Unique identifier to check
+   * List all stories in storage
    */
-  exists(key: string): Promise<boolean>;
+  listStories(): Promise<StorageMetadata[]>;
 
   /**
-   * Get the size of stored data (in bytes, if applicable)
-   * @param key Unique identifier for the data
+   * Check if a story exists
    */
-  size?(key: string): Promise<number>;
+  hasStory(id: string): Promise<boolean>;
 
   /**
-   * Save multiple entries at once (batch operation)
-   * @param entries Record of key-value pairs to save
+   * Get storage metadata for a story
    */
-  saveMany?(entries: Record<string, any>): Promise<void>;
+  getMetadata(id: string): Promise<StorageMetadata>;
 
   /**
-   * Load multiple entries at once (batch operation)
-   * @param keys Array of keys to load
-   * @returns Record of key-value pairs
+   * Update metadata for a story
    */
-  loadMany?(keys: string[]): Promise<Record<string, any>>;
+  updateMetadata(id: string, metadata: Partial<StorageMetadata>): Promise<void>;
 
   /**
-   * Clear all data from storage
+   * Export a story to a portable format (JSON)
    */
-  clear?(): Promise<void>;
+  exportStory(id: string): Promise<Blob>;
+
+  /**
+   * Import a story from a portable format
+   */
+  importStory(data: Blob | File): Promise<string>;
+
+  /**
+   * Get total storage usage
+   */
+  getStorageUsage(): Promise<number>;
+
+  /**
+   * Clear all storage (careful!)
+   */
+  clear(): Promise<void>;
 }

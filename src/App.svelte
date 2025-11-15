@@ -78,6 +78,7 @@
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
   import { importWhiskerFile, Story } from '@writewhisker/core-ts';
+  import { initializeApp } from '../packages/editor-base/src/adapters/initializeApp';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded
@@ -1141,6 +1142,28 @@
     // Initialize error tracking (Sentry)
     errorTracking.initialize();
 
+    // Initialize new storage system with automatic migration
+    try {
+      const initResult = await initializeApp({
+        onMigrationProgress: (progress) => {
+          console.log(`[Migration] ${progress.current}/${progress.total}: ${progress.currentStory}`);
+        },
+        autoMigrate: true,
+        autoCleanup: true,
+      });
+
+      if (initResult.success) {
+        console.log('Storage initialized successfully');
+        if (initResult.migrationPerformed) {
+          console.log(`Migrated ${initResult.storiesMigrated} stories to new storage system`);
+        }
+      } else {
+        console.error('Storage initialization errors:', initResult.errors);
+      }
+    } catch (error) {
+      console.error('Failed to initialize storage:', error);
+    }
+
     // Initialize plugin system
     await pluginStoreActions.initialize();
     console.log('Plugin system initialized');
@@ -1159,11 +1182,11 @@
     // Initialize mobile detection
     initMobileDetection();
 
-    // Initialize IndexedDB
+    // Initialize old IndexedDB (for GitHub tokens, preferences, sync queue)
     db.initialize().then(() => {
-      console.log('IndexedDB initialized');
+      console.log('IndexedDB (legacy) initialized for GitHub/preferences');
     }).catch(error => {
-      console.error('Failed to initialize IndexedDB:', error);
+      console.error('Failed to initialize IndexedDB (legacy):', error);
     });
 
     // Initialize background sync service if authenticated

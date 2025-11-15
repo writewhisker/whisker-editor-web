@@ -1,187 +1,287 @@
 /**
- * Storage service with event-driven architecture
- * Framework-agnostic storage layer that emits events instead of directly updating state
+ * Main storage service with event-driven architecture
+ * Framework-agnostic, can be used with any UI framework
  */
 
-import { EventEmitter } from 'eventemitter3';
-import type { IStorageBackend } from './interfaces/IStorageBackend.js';
+import EventEmitter from 'eventemitter3';
+import type { StoryData } from '@writewhisker/core-ts';
+import type { IStorageBackend, StorageMetadata } from './interfaces/IStorageBackend.js';
+import { StorageEventType, type StorageEvent } from './events/StorageEvents.js';
 
-export interface StorageServiceEvents {
-  'data-saved': (key: string, data: any) => void;
-  'data-loaded': (key: string, data: any) => void;
-  'data-deleted': (key: string) => void;
-  'error': (error: Error) => void;
-}
+export class StorageService extends EventEmitter<{
+  [StorageEventType.STORY_SAVED]: (event: StorageEvent) => void;
+  [StorageEventType.STORY_LOADED]: (event: StorageEvent) => void;
+  [StorageEventType.STORY_DELETED]: (event: StorageEvent) => void;
+  [StorageEventType.STORY_CREATED]: (event: StorageEvent) => void;
+  [StorageEventType.STORY_UPDATED]: (event: StorageEvent) => void;
+  [StorageEventType.METADATA_UPDATED]: (event: StorageEvent) => void;
+  [StorageEventType.STORAGE_CLEARED]: (event: StorageEvent) => void;
+  [StorageEventType.ERROR]: (event: StorageEvent) => void;
+}> {
+  private backend: IStorageBackend;
+  private initialized = false;
 
-/**
- * Storage service that wraps a backend and emits events
- * This decouples storage from UI state management
- */
-export class StorageService extends EventEmitter<StorageServiceEvents> {
-  constructor(private backend: IStorageBackend) {
+  constructor(backend: IStorageBackend) {
     super();
+    this.backend = backend;
   }
 
   /**
-   * Save data to storage
-   * Emits 'data-saved' event on success
+   * Initialize the storage backend
    */
-  async save(key: string, data: any): Promise<void> {
+  async initialize(): Promise<void> {
     try {
-      await this.backend.save(key, data);
-      this.emit('data-saved', key, data);
+      await this.backend.initialize();
+      this.initialized = true;
     } catch (error) {
-      this.emit('error', error as Error);
+      this.emitError(error as Error, 'initialize');
       throw error;
     }
   }
 
   /**
-   * Load data from storage
-   * Emits 'data-loaded' event if data exists
+   * Save a story to storage
    */
-  async load(key: string): Promise<any | null> {
-    try {
-      const data = await this.backend.load(key);
-      if (data !== null) {
-        this.emit('data-loaded', key, data);
-      }
-      return data;
-    } catch (error) {
-      this.emit('error', error as Error);
-      throw error;
-    }
-  }
+  async saveStory(id: string, data: StoryData, isNew = false): Promise<void> {
+    this.ensureInitialized();
 
-  /**
-   * Delete data from storage
-   * Emits 'data-deleted' event on success
-   */
-  async delete(key: string): Promise<void> {
     try {
-      await this.backend.delete(key);
-      this.emit('data-deleted', key);
-    } catch (error) {
-      this.emit('error', error as Error);
-      throw error;
-    }
-  }
+      const exists = await this.backend.hasStory(id);
+      await this.backend.saveStory(id, data);
 
-  /**
-   * List all keys in storage
-   */
-  async list(): Promise<string[]> {
-    try {
-      return await this.backend.list();
-    } catch (error) {
-      this.emit('error', error as Error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if a key exists
-   */
-  async exists(key: string): Promise<boolean> {
-    try {
-      return await this.backend.exists(key);
-    } catch (error) {
-      this.emit('error', error as Error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get size of stored data (if supported by backend)
-   */
-  async size(key: string): Promise<number | undefined> {
-    try {
-      return this.backend.size ? await this.backend.size(key) : undefined;
-    } catch (error) {
-      this.emit('error', error as Error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save multiple entries (if supported by backend)
-   * Emits 'data-saved' for each entry
-   */
-  async saveMany(entries: Record<string, any>): Promise<void> {
-    try {
-      if (this.backend.saveMany) {
-        await this.backend.saveMany(entries);
+      if (isNew || !exists) {
+        this.emit(StorageEventType.STORY_CREATED, {
+          type: StorageEventType.STORY_CREATED,
+          storyId: id,
+          title: data.title,
+          timestamp: Date.now(),
+        });
       } else {
-        // Fallback to individual saves
-        await Promise.all(
-          Object.entries(entries).map(([key, data]) => this.backend.save(key, data))
-        );
+        this.emit(StorageEventType.STORY_UPDATED, {
+          type: StorageEventType.STORY_UPDATED,
+          storyId: id,
+          title: data.title,
+          timestamp: Date.now(),
+        });
       }
-      // Emit event for each entry
-      Object.entries(entries).forEach(([key, data]) => {
-        this.emit('data-saved', key, data);
+
+      this.emit(StorageEventType.STORY_SAVED, {
+        type: StorageEventType.STORY_SAVED,
+        storyId: id,
+        title: data.title,
+        timestamp: Date.now(),
       });
     } catch (error) {
-      this.emit('error', error as Error);
+      this.emitError(error as Error, 'saveStory', id);
       throw error;
     }
   }
 
   /**
-   * Load multiple entries (if supported by backend)
-   * Emits 'data-loaded' for each entry found
+   * Load a story from storage
    */
-  async loadMany(keys: string[]): Promise<Record<string, any>> {
+  async loadStory(id: string): Promise<StoryData> {
+    this.ensureInitialized();
+
     try {
-      let result: Record<string, any>;
+      const story = await this.backend.loadStory(id);
 
-      if (this.backend.loadMany) {
-        result = await this.backend.loadMany(keys);
-      } else {
-        // Fallback to individual loads
-        const entries = await Promise.all(
-          keys.map(async (key) => {
-            const data = await this.backend.load(key);
-            return [key, data] as const;
-          })
-        );
-        result = Object.fromEntries(entries.filter(([, data]) => data !== null));
-      }
-
-      // Emit event for each loaded entry
-      Object.entries(result).forEach(([key, data]) => {
-        this.emit('data-loaded', key, data);
+      this.emit(StorageEventType.STORY_LOADED, {
+        type: StorageEventType.STORY_LOADED,
+        storyId: id,
+        story,
+        timestamp: Date.now(),
       });
 
-      return result;
+      return story;
     } catch (error) {
-      this.emit('error', error as Error);
+      this.emitError(error as Error, 'loadStory', id);
       throw error;
     }
   }
 
   /**
-   * Clear all data (if supported by backend)
+   * Delete a story from storage
+   */
+  async deleteStory(id: string): Promise<void> {
+    this.ensureInitialized();
+
+    try {
+      await this.backend.deleteStory(id);
+
+      this.emit(StorageEventType.STORY_DELETED, {
+        type: StorageEventType.STORY_DELETED,
+        storyId: id,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      this.emitError(error as Error, 'deleteStory', id);
+      throw error;
+    }
+  }
+
+  /**
+   * List all stories in storage
+   */
+  async listStories(): Promise<StorageMetadata[]> {
+    this.ensureInitialized();
+
+    try {
+      return await this.backend.listStories();
+    } catch (error) {
+      this.emitError(error as Error, 'listStories');
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a story exists
+   */
+  async hasStory(id: string): Promise<boolean> {
+    this.ensureInitialized();
+
+    try {
+      return await this.backend.hasStory(id);
+    } catch (error) {
+      this.emitError(error as Error, 'hasStory', id);
+      throw error;
+    }
+  }
+
+  /**
+   * Get storage metadata for a story
+   */
+  async getMetadata(id: string): Promise<StorageMetadata> {
+    this.ensureInitialized();
+
+    try {
+      return await this.backend.getMetadata(id);
+    } catch (error) {
+      this.emitError(error as Error, 'getMetadata', id);
+      throw error;
+    }
+  }
+
+  /**
+   * Update metadata for a story
+   */
+  async updateMetadata(id: string, metadata: Partial<StorageMetadata>): Promise<void> {
+    this.ensureInitialized();
+
+    try {
+      await this.backend.updateMetadata(id, metadata);
+
+      const updated = await this.backend.getMetadata(id);
+      this.emit(StorageEventType.METADATA_UPDATED, {
+        type: StorageEventType.METADATA_UPDATED,
+        storyId: id,
+        metadata: updated,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      this.emitError(error as Error, 'updateMetadata', id);
+      throw error;
+    }
+  }
+
+  /**
+   * Export a story to a portable format (JSON)
+   */
+  async exportStory(id: string): Promise<Blob> {
+    this.ensureInitialized();
+
+    try {
+      return await this.backend.exportStory(id);
+    } catch (error) {
+      this.emitError(error as Error, 'exportStory', id);
+      throw error;
+    }
+  }
+
+  /**
+   * Import a story from a portable format
+   */
+  async importStory(data: Blob | File): Promise<string> {
+    this.ensureInitialized();
+
+    try {
+      const id = await this.backend.importStory(data);
+
+      const story = await this.backend.loadStory(id);
+      this.emit(StorageEventType.STORY_CREATED, {
+        type: StorageEventType.STORY_CREATED,
+        storyId: id,
+        title: story.title,
+        timestamp: Date.now(),
+      });
+
+      return id;
+    } catch (error) {
+      this.emitError(error as Error, 'importStory');
+      throw error;
+    }
+  }
+
+  /**
+   * Get total storage usage
+   */
+  async getStorageUsage(): Promise<number> {
+    this.ensureInitialized();
+
+    try {
+      return await this.backend.getStorageUsage();
+    } catch (error) {
+      this.emitError(error as Error, 'getStorageUsage');
+      throw error;
+    }
+  }
+
+  /**
+   * Clear all storage (careful!)
    */
   async clear(): Promise<void> {
+    this.ensureInitialized();
+
     try {
-      if (this.backend.clear) {
-        await this.backend.clear();
-      } else {
-        // Fallback: list all keys and delete them
-        const keys = await this.backend.list();
-        await Promise.all(keys.map((key) => this.backend.delete(key)));
-      }
+      await this.backend.clear();
+
+      this.emit(StorageEventType.STORAGE_CLEARED, {
+        type: StorageEventType.STORAGE_CLEARED,
+        timestamp: Date.now(),
+      });
     } catch (error) {
-      this.emit('error', error as Error);
+      this.emitError(error as Error, 'clear');
       throw error;
     }
   }
 
   /**
-   * Get the underlying backend
+   * Get the underlying backend (for advanced use cases)
    */
   getBackend(): IStorageBackend {
     return this.backend;
+  }
+
+  /**
+   * Check if the service is initialized
+   */
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  private ensureInitialized(): void {
+    if (!this.initialized) {
+      throw new Error('StorageService not initialized. Call initialize() first.');
+    }
+  }
+
+  private emitError(error: Error, operation: string, storyId?: string): void {
+    this.emit(StorageEventType.ERROR, {
+      type: StorageEventType.ERROR,
+      error,
+      operation,
+      storyId,
+      timestamp: Date.now(),
+    });
   }
 }

@@ -1,41 +1,46 @@
 {
   "name": "@writewhisker/storage",
-  "version": "1.0.0",
-  "description": "Framework-agnostic storage layer with multiple backend support for Whisker",
-  "license": "AGPL-3.0",
+  "version": "0.1.0",
+  "description": "Framework-agnostic storage layer for Whisker interactive fiction",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./backends/*": "./dist/backends/*.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/core-ts": "workspace:*",
+    "eventemitter3": "^5.0.1",
+    "idb": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "@vitest/coverage-v8": "^1.3.1",
+    "typescript": "^5.3.3",
+    "vite": "^7.1.7",
+    "vitest": "^1.3.1"
   },
   "files": [
     "dist"
   ],
-  "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "dependencies": {
-    "eventemitter3": "^5.0.1"
-  },
-  "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.3",
-    "vitest": "^1.0.0"
-  },
-  "peerDependencies": {
-    "@writewhisker/core-ts": "workspace:*"
-  },
   "keywords": [
     "whisker",
     "storage",
     "indexeddb",
-    "localStorage",
-    "backend",
-    "framework-agnostic"
-  ]
+    "filesystem",
+    "interactive-fiction"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
 }

@@ -1,16 +1,42 @@
 /**
  * @writewhisker/storage
- * Framework-agnostic storage layer with event-driven architecture
+ * Framework-agnostic storage layer for Whisker interactive fiction
  */
 
-// Export main service
+// Core service
 export { StorageService } from './StorageService.js';
-export type { StorageServiceEvents } from './StorageService.js';
 
-// Export interface
-export { IStorageBackend } from './interfaces/IStorageBackend.js';
+// Interfaces
+export type { IStorageBackend, StorageMetadata } from './interfaces/IStorageBackend.js';
 
-// Export backends
+// Backend implementations
 export { IndexedDBBackend } from './backends/IndexedDBBackend.js';
 export { LocalStorageBackend } from './backends/LocalStorageBackend.js';
-export { MemoryBackend } from './backends/MemoryBackend.js';
+
+// Events
+export { StorageEventType } from './events/StorageEvents.js';
+export type {
+  StorageEvent,
+  BaseStorageEvent,
+  StorySavedEvent,
+  StoryLoadedEvent,
+  StoryDeletedEvent,
+  StoryCreatedEvent,
+  StoryUpdatedEvent,
+  MetadataUpdatedEvent,
+  StorageClearedEvent,
+  StorageErrorEvent,
+} from './events/StorageEvents.js';
+
+// Convenience factory functions
+import { StorageService } from './StorageService.js';
+import { IndexedDBBackend } from './backends/IndexedDBBackend.js';
+import { LocalStorageBackend } from './backends/LocalStorageBackend.js';
+
+export function createIndexedDBStorage(): StorageService {
+  return new StorageService(new IndexedDBBackend());
+}
+
+export function createLocalStorageStorage(): StorageService {
+  return new StorageService(new LocalStorageBackend());
+}

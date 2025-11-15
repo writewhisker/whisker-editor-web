@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whisker Player UI - Basic Example</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0a0a0a;
+      min-height: 100vh;
+    }
+    #app {
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    import { WhiskerPlayerUI } from '../dist/index.js';
+    import { Story } from '../../core-ts/dist/index.js';
+
+    // Create a simple demo story
+    const demoStory = {
+      metadata: {
+        title: "Demo Story",
+        author: "Whisker",
+        version: "1.0.0",
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ifid: "demo-story-123"
+      },
+      startPassage: "start",
+      passages: {
+        "start": {
+          id: "start",
+          title: "Welcome",
+          content: "<p>Welcome to your Whisker story!</p><p>This is a demo of the @writewhisker/player-ui package.</p>",
+          choices: [
+            {
+              id: "choice1",
+              text: "Go to the forest",
+              target: "forest"
+            },
+            {
+              id: "choice2",
+              text: "Visit the town",
+              target: "town"
+            }
+          ]
+        },
+        "forest": {
+          id: "forest",
+          title: "The Forest",
+          content: "<p>You enter a dark forest. The trees tower above you.</p>",
+          choices: [
+            {
+              id: "forest-choice1",
+              text: "Continue deeper into the forest",
+              target: "deep-forest"
+            },
+            {
+              id: "forest-choice2",
+              text: "Return to the start",
+              target: "start"
+            }
+          ]
+        },
+        "town": {
+          id: "town",
+          title: "The Town",
+          content: "<p>You arrive at a bustling town square. People are going about their day.</p>",
+          choices: [
+            {
+              id: "town-choice1",
+              text: "Visit the marketplace",
+              target: "marketplace"
+            },
+            {
+              id: "town-choice2",
+              text: "Return to the start",
+              target: "start"
+            }
+          ]
+        },
+        "deep-forest": {
+          id: "deep-forest",
+          title: "Deep in the Forest",
+          content: "<p>You've found a hidden glade with a mysterious fountain.</p><p><strong>The End</strong></p>",
+          choices: []
+        },
+        "marketplace": {
+          id: "marketplace",
+          title: "The Marketplace",
+          content: "<p>The marketplace is full of colorful stalls and interesting people.</p><p><strong>The End</strong></p>",
+          choices: []
+        }
+      },
+      variables: {}
+    };
+
+    // Create story instance
+    const story = new Story(demoStory);
+
+    // Create player with dark theme
+    WhiskerPlayerUI.create('#app', story, {
+      theme: 'dark',
+      showToolbar: true,
+      autoSave: true,
+      saveKey: 'demo-story-save',
+      onPassageChange: (passage) => {
+        console.log('Passage changed:', passage.title);
+      },
+      onComplete: () => {
+        console.log('Story complete!');
+      }
+    });
+  </script>
+</body>
+</html>

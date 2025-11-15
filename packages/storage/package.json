@@ -1,0 +1,41 @@
+{
+  "name": "@writewhisker/storage",
+  "version": "1.0.0",
+  "description": "Framework-agnostic storage layer with multiple backend support for Whisker",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./backends/*": "./dist/backends/*.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "eventemitter3": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@writewhisker/core-ts": "workspace:*"
+  },
+  "keywords": [
+    "whisker",
+    "storage",
+    "indexeddb",
+    "localStorage",
+    "backend",
+    "framework-agnostic"
+  ]
+}

@@ -7,8 +7,11 @@ import type { Reporter } from './Reporter.js';
 
 export class JUnitReporter implements Reporter {
   format(result: ValidationResult): string {
-    const totalTests = result.errors.length + result.warnings.length + result.info.length;
-    const failures = result.errors.length;
+    const errors = result.issues.filter(i => i.severity === 'error');
+    const warnings = result.issues.filter(i => i.severity === 'warning');
+    const info = result.issues.filter(i => i.severity === 'info');
+    const totalTests = errors.length + warnings.length + info.length;
+    const failures = errors.length;
     const timestamp = new Date().toISOString();
 
     const lines: string[] = [];
@@ -20,7 +23,7 @@ export class JUnitReporter implements Reporter {
     lines.push(`<testsuite name="Whisker Story Validation" tests="${totalTests}" failures="${failures}" errors="0" time="0" timestamp="${timestamp}">`);
 
     // Errors as test failures
-    result.errors.forEach((issue) => {
+    errors.forEach((issue) => {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.error">');
       lines.push('    <failure message="' + this.escapeXml(issue.message) + '">');
       if (issue.path) {
@@ -34,7 +37,7 @@ export class JUnitReporter implements Reporter {
     });
 
     // Warnings as passing tests with system-out
-    result.warnings.forEach((issue) => {
+    warnings.forEach((issue) => {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.warning">');
       lines.push('    <system-out>');
       lines.push('Warning: ' + this.escapeXml(issue.message));
@@ -46,7 +49,7 @@ export class JUnitReporter implements Reporter {
     });
 
     // Info as passing tests
-    result.info.forEach((issue) => {
+    info.forEach((issue) => {
       lines.push('  <testcase name="' + this.escapeXml(issue.message) + '" classname="validation.info">');
       lines.push('    <system-out>');
       lines.push('Info: ' + this.escapeXml(issue.message));

@@ -11,5 +11,8 @@ export * from './models';
 // Validation
 export * from './validation';
 
+// Player
+export * from './player';
+
 // Utils
 export * from './utils';

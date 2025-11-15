@@ -16,20 +16,23 @@ export class ConsoleReporter implements Reporter {
     lines.push('');
 
     // Summary
-    const totalIssues = result.errors.length + result.warnings.length + result.info.length;
+    const errors = result.issues.filter(i => i.severity === 'error');
+    const warnings = result.issues.filter(i => i.severity === 'warning');
+    const info = result.issues.filter(i => i.severity === 'info');
+    const totalIssues = errors.length + warnings.length + info.length;
     const status = result.valid ? chalk.green('✓ PASSED') : chalk.red('✗ FAILED');
 
     lines.push(`Status: ${status}`);
     lines.push(`Total Issues: ${totalIssues}`);
-    lines.push(`  ${chalk.red('Errors')}: ${result.errors.length}`);
-    lines.push(`  ${chalk.yellow('Warnings')}: ${result.warnings.length}`);
-    lines.push(`  ${chalk.blue('Info')}: ${result.info.length}`);
+    lines.push(`  ${chalk.red('Errors')}: ${errors.length}`);
+    lines.push(`  ${chalk.yellow('Warnings')}: ${warnings.length}`);
+    lines.push(`  ${chalk.blue('Info')}: ${info.length}`);
     lines.push('');
 
     // Errors
-    if (result.errors.length > 0) {
+    if (errors.length > 0) {
       lines.push(chalk.red.bold('Errors:'));
-      result.errors.forEach((issue, i) => {
+      errors.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.red('●')} ${issue.message}`);
         if (issue.path) {
           lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);
@@ -42,9 +45,9 @@ export class ConsoleReporter implements Reporter {
     }
 
     // Warnings
-    if (result.warnings.length > 0) {
+    if (warnings.length > 0) {
       lines.push(chalk.yellow.bold('Warnings:'));
-      result.warnings.forEach((issue, i) => {
+      warnings.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.yellow('⚠')} ${issue.message}`);
         if (issue.path) {
           lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);
@@ -57,9 +60,9 @@ export class ConsoleReporter implements Reporter {
     }
 
     // Info
-    if (result.info.length > 0) {
+    if (info.length > 0) {
       lines.push(chalk.blue.bold('Info:'));
-      result.info.forEach((issue, i) => {
+      info.forEach((issue, i) => {
         lines.push(`  ${i + 1}. ${chalk.blue('ℹ')} ${issue.message}`);
         if (issue.path) {
           lines.push(`     ${chalk.gray(`Path: ${issue.path}`)}`);

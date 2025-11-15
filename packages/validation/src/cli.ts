@@ -72,9 +72,9 @@ program
           }
 
           // Track totals
-          totalErrors += result.errors.length;
-          totalWarnings += result.warnings.length;
-          totalInfo += result.info.length;
+          totalErrors += result.issues.filter(i => i.severity === 'error').length;
+          totalWarnings += result.issues.filter(i => i.severity === 'warning').length;
+          totalInfo += result.issues.filter(i => i.severity === 'info').length;
 
           // Exit with error if validation failed
           if (!result.valid) {

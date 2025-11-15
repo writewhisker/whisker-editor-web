@@ -48,7 +48,10 @@ export function validateStory(story: StoryData): ValidationResult {
 export function validateStoryOrThrow(story: StoryData): void {
   const result = validateStory(story);
   if (!result.valid) {
-    const errorMessages = result.errors.map(e => e.message).join('\n');
+    const errorMessages = result.issues
+      .filter(i => i.severity === 'error')
+      .map(e => e.message)
+      .join('\n');
     throw new Error(`Story validation failed:\n${errorMessages}`);
   }
 }

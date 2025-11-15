@@ -7,7 +7,10 @@ import type { Reporter } from './Reporter.js';
 
 export class HTMLReporter implements Reporter {
   format(result: ValidationResult): string {
-    const totalIssues = result.errors.length + result.warnings.length + result.info.length;
+    const errors = result.issues.filter(i => i.severity === 'error');
+    const warnings = result.issues.filter(i => i.severity === 'warning');
+    const info = result.issues.filter(i => i.severity === 'info');
+    const totalIssues = errors.length + warnings.length + info.length;
     const timestamp = new Date().toLocaleString();
 
     return `<!DOCTYPE html>
@@ -114,23 +117,23 @@ export class HTMLReporter implements Reporter {
         <p>Total Issues</p>
       </div>
       <div class="summary-card errors">
-        <h2>${result.errors.length}</h2>
+        <h2>${errors.length}</h2>
         <p>Errors</p>
       </div>
       <div class="summary-card warnings">
-        <h2>${result.warnings.length}</h2>
+        <h2>${warnings.length}</h2>
         <p>Warnings</p>
       </div>
       <div class="summary-card info">
-        <h2>${result.info.length}</h2>
+        <h2>${info.length}</h2>
         <p>Info</p>
       </div>
     </div>
 
     <div class="issues">
-      ${this.renderIssues('Errors', result.errors, 'errors', 'error')}
-      ${this.renderIssues('Warnings', result.warnings, 'warnings', 'warning')}
-      ${this.renderIssues('Info', result.info, 'info', 'info')}
+      ${this.renderIssues('Errors', errors, 'errors', 'error')}
+      ${this.renderIssues('Warnings', warnings, 'warnings', 'warning')}
+      ${this.renderIssues('Info', info, 'info', 'info')}
     </div>
 
     <div class="footer">

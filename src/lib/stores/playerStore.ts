@@ -2,7 +2,7 @@ import { writable, derived } from 'svelte/store';
 import { StoryPlayer } from '../player/StoryPlayer';
 import type { Passage } from '@writewhisker/core-ts';
 import type { Choice } from '@writewhisker/core-ts';
-import type { PlayerState, PlaythroughStep, VariableChange } from '../player/types';
+import type { PlayerState, PlayerPlaythroughStep, VariableChange } from '../player/types';
 
 // Create singleton player instance
 const player = new StoryPlayer();
@@ -13,7 +13,7 @@ export const isPlayerPaused = writable<boolean>(false);
 export const currentPreviewPassage = writable<Passage | null>(null);
 export const availableChoices = writable<Choice[]>([]);
 export const playerVariables = writable<Map<string, any>>(new Map());
-export const playthroughHistory = writable<PlaythroughStep[]>([]);
+export const playthroughHistory = writable<PlayerPlaythroughStep[]>([]);
 export const visitedPassages = writable<Map<string, number>>(new Map());
 export const breakpoints = writable<Set<string>>(new Set());
 export const debugMode = writable<boolean>(false);

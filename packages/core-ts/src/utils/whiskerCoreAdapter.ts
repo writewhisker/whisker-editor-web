@@ -277,8 +277,8 @@ export function fromWhiskerCoreFormat(
     };
   });
 
-  // Extract startPassage from settings or use top-level
-  const startPassage = coreData.settings?.startPassage || '';
+  // Extract startPassage from top-level or settings (prioritize top-level for simplified template format)
+  const startPassage = (coreData as any).startPassage || coreData.settings?.startPassage || '';
 
   // Build metadata with ifid
   const metadata = coreData.metadata || {

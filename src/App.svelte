@@ -627,7 +627,7 @@
   // Handle Start Blank from Template Gallery
   function handleStartBlankFromGallery() {
     showTemplateGallery = false;
-    handleNewProject();
+    showNewDialog = true;
   }
 
   // Handle Manage Assets

@@ -76,7 +76,7 @@
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
-  import { importWhiskerFile } from '@writewhisker/core-ts';
+  import { importWhiskerFile, Story } from '@writewhisker/core-ts';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded
@@ -177,14 +177,20 @@
     showTemplateGallery = true;
   }
 
-  function handleTryDemo() {
+  async function handleTryDemo() {
     showLanding = false;
-    // Load a demo story
-    projectActions.newProject();
-    if ($currentStory) {
-      $currentStory.metadata.title = 'Demo Story';
-      $currentStory.metadata.author = 'Whisker Demo';
-      currentStory.set($currentStory);
+    // Load the demo story
+    try {
+      const response = await fetch('/examples/the-cave.json');
+      const demoData = await response.json();
+      const storyData = importWhiskerFile(demoData);
+      currentStory.set(new Story(storyData));
+      notificationStore.success('Demo story loaded! Try the Preview mode to play it.');
+    } catch (error) {
+      console.error('Failed to load demo story:', error);
+      notificationStore.error('Failed to load demo story');
+      // Fallback to blank project
+      projectActions.newProject();
     }
   }
 

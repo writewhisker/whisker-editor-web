@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
 import { currentStory } from './projectStore';
-import type { Passage } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 export type SortOrder = 'custom' | 'title-asc' | 'title-desc' | 'modified' | 'created';
 

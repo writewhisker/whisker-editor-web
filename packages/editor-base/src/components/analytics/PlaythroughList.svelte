@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Playthrough } from '@whisker/core-ts';
+  import type { Playthrough } from '@writewhisker/core-ts';
   import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
   import { currentStory } from '../../stores/storyStateStore';
 

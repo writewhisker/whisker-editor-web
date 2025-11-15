@@ -5,8 +5,8 @@ import TagManager from './TagManager.svelte';
 import { tagRegistry, tagActions } from '../stores/tagStore';
 import { currentStory, projectActions } from '../stores/projectStore';
 import { filterState } from '../stores/filterStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('TagManager', () => {
   let story: Story;

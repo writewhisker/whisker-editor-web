@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import FunctionLibraryPanel from './FunctionLibraryPanel.svelte';
 import { currentStory } from '../../stores';
-import { Story } from '@whisker/core-ts';
-import { LuaFunction } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { LuaFunction } from '@writewhisker/core-ts';
 
 // Mock the stores
 vi.mock('../../stores/projectStore', () => ({

@@ -11,8 +11,8 @@ import {
   criticalIssues,
 } from '../stores/accessibilityStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('AccessibilityPanel', () => {
   let story: Story;

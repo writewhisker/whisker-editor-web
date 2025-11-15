@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/svelte';
 import StorySettingsPanel from './StorySettingsPanel.svelte';
 import { currentStory, projectActions } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 import { get } from 'svelte/store';
 
 describe('StorySettingsPanel', () => {

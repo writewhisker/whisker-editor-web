@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { pluginManager } from '../PluginManager';
 import { pluginStoreActions } from '../index';
 import { statsSystem } from './statsSystem';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('Stats System Plugin', () => {
   beforeEach(() => {

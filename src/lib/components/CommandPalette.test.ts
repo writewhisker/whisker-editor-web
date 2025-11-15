@@ -3,8 +3,8 @@ import { render, fireEvent } from '@testing-library/svelte';
 import { get } from 'svelte/store';
 import CommandPalette from './CommandPalette.svelte';
 import { currentStory, passageList, selectedPassageId } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 // Mock trapFocus utility
 vi.mock('../utils/accessibility', () => ({

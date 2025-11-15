@@ -1,5 +1,5 @@
 /**
- * @whisker/editor-base
+ * @writewhisker/editor-base
  *
  * Editor platform for Whisker.
  * Includes stores, components, services, export/import, and plugin system.

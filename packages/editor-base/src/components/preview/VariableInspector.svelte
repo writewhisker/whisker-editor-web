@@ -1,7 +1,7 @@
 <script lang="ts">
   import { currentStory } from '../../stores/storyStateStore';
   import { playerVariables, playerActions } from '../../stores/playerStore';
-  import type { Variable } from '@whisker/core-ts';
+  import type { Variable } from '@writewhisker/core-ts';
 
   // Get story variables definitions
   $: storyVariables = $currentStory

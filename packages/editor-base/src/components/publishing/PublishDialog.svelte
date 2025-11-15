@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import type { Story } from '@whisker/core-ts';
+  import type { Story } from '@writewhisker/core-ts';
   import type { PublishOptions, PublishPlatform } from '../../publishing/types';
   import { StaticPublisher } from '../../publishing/StaticPublisher';
   import { ItchPublisher } from '../../publishing/ItchPublisher';

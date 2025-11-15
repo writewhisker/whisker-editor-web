@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { WhiskerCoreExporter } from './WhiskerCoreExporter';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 import type { ExportContext, ExportOptions } from '../types';
 
 describe('WhiskerCoreExporter', () => {

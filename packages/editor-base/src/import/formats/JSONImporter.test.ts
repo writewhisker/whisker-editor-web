@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { JSONImporter } from './JSONImporter';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 import type { ImportContext } from '../types';
 
 describe('JSONImporter', () => {

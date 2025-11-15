@@ -11,8 +11,8 @@ import {
   sessionCount,
 } from '../stores/playtestStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('PlaytestPanel', () => {
   let story: Story;

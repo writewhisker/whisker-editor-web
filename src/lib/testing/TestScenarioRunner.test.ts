@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
 import { TestScenario, TestStep, TestStepHelpers } from './TestScenario';
 import { TestRunner } from './TestRunner';
 

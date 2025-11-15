@@ -7,7 +7,7 @@
  */
 
 import type { IPublisher, PublishOptions, PublishResult } from './types';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 
 /**

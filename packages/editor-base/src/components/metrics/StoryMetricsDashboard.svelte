@@ -1,7 +1,7 @@
 <script lang="ts">
   import { currentStory } from '../../stores/storyStateStore';
   import { derived } from 'svelte/store';
-  import type { Passage } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
 
   interface StoryMetrics {
     content: {

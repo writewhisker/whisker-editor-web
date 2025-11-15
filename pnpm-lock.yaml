@@ -20,10 +20,10 @@ importers:
       '@types/jszip':
         specifier: ^3.4.0
         version: 3.4.1
-      '@whisker/core-ts':
+      '@writewhisker/core-ts':
         specifier: workspace:*
         version: link:packages/core-ts
-      '@whisker/editor-base':
+      '@writewhisker/editor-base':
         specifier: workspace:*
         version: link:packages/editor-base
       '@xyflow/svelte':
@@ -169,7 +169,7 @@ importers:
 
   packages/editor-base:
     dependencies:
-      '@whisker/core-ts':
+      '@writewhisker/core-ts':
         specifier: workspace:*
         version: link:../core-ts
       '@xyflow/svelte':

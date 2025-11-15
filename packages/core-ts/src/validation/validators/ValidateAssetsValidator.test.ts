@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ValidateAssetsValidator } from './ValidateAssetsValidator';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 const createStory = () => {
   const story = new Story({

@@ -76,7 +76,7 @@
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
-  import { importWhiskerFile } from '@whisker/core-ts';
+  import { importWhiskerFile } from '@writewhisker/core-ts';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded

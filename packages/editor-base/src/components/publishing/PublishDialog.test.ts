@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest';
 import { StaticPublisher } from '../../publishing/StaticPublisher';
 import { ItchPublisher } from '../../publishing/ItchPublisher';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import type { PublishResult } from '../../publishing/types';
 
 // Mock the publishers

@@ -4,7 +4,7 @@
    *
    * Shows which passages are visited most/least in playthroughs
    */
-  import type { Story, Passage } from '@whisker/core-ts';
+  import type { Story, Passage } from '@writewhisker/core-ts';
   import type { PassageVisitData } from '../../analytics/types';
 
   let {

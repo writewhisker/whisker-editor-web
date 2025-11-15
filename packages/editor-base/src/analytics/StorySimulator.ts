@@ -9,8 +9,8 @@
  * - Measure branching complexity
  */
 
-import type { Story, Passage } from '@whisker/core-ts';
-import { Playthrough, PlaythroughStep } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
+import { Playthrough, PlaythroughStep } from '@writewhisker/core-ts';
 import type { PlaythroughData, PassageVisitData } from './types';
 
 export interface SimulationOptions {

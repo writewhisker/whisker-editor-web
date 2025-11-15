@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { Story, Passage } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 
 export type GoalType = 'daily' | 'weekly' | 'monthly' | 'total';
 export type GoalStatus = 'not_started' | 'in_progress' | 'completed' | 'exceeded';

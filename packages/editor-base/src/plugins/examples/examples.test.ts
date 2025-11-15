@@ -7,7 +7,7 @@ import {
   customActionsPlugin,
   registerExamplePlugins,
 } from './index';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('Example Plugins', () => {
   beforeEach(() => {

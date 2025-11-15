@@ -13,7 +13,7 @@ import { Passage } from './Passage';
 import { Variable } from './Variable';
 import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from './LuaFunction';
 import { nanoid } from 'nanoid';
-import { generateIfid, toWhiskerCoreFormat, toWhiskerFormatV21 } from '@whisker/core-ts';
+import { generateIfid, toWhiskerCoreFormat, toWhiskerFormatV21 } from '@writewhisker/core-ts';
 
 export class Story {
   metadata: StoryMetadata;

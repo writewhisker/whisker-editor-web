@@ -4,8 +4,8 @@
  * Core validation engine with plugin architecture for extensible validation.
  */
 
-import type { Story } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 import type {
   ValidationResult,
   ValidationIssue,

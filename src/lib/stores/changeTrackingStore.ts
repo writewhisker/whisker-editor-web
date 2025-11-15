@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { ChangeLog, type ChangeLogData, type ChangeType, type EntityType } from '@whisker/core-ts';
+import { ChangeLog, type ChangeLogData, type ChangeType, type EntityType } from '@writewhisker/core-ts';
 import { currentStory } from './projectStore';
 import { currentUser } from './commentStore';
 

@@ -29,7 +29,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['svelte', '@whisker/core-ts', '@whisker/core-ts/validation'],
+      external: ['svelte', '@writewhisker/core-ts', '@writewhisker/core-ts/validation'],
     },
   },
   test: {

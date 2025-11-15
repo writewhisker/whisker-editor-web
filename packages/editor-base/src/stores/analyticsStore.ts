@@ -4,7 +4,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Playthrough } from '@whisker/core-ts';
+import type { Playthrough } from '@writewhisker/core-ts';
 
 export interface AnalyticsData {
   playthroughs: Playthrough[];

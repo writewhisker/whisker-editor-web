@@ -11,7 +11,7 @@ import type {
   VariableData,
   EditorData,
   LuaFunctionData
-} from '@whisker/core-ts';
+} from '@writewhisker/core-ts';
 import { nanoid } from 'nanoid';
 
 /**

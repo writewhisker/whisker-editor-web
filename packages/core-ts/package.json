@@ -1,5 +1,5 @@
 {
-  "name": "@whisker/core-ts",
+  "name": "@writewhisker/core-ts",
   "version": "0.2.0",
   "description": "Core TypeScript runtime for Whisker story engine",
   "license": "AGPL-3.0-or-later",

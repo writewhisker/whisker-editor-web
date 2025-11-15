@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { tick } from 'svelte';
-import { Story } from '@whisker/core-ts';
-import { storyStateActions, currentStory } from '@whisker/editor-base/stores';
+import { Story } from '@writewhisker/core-ts';
+import { storyStateActions, currentStory } from '@writewhisker/editor-base/stores';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions, selectedPassageId } from './selectionStore';
 import { historyActions } from './historyStore';

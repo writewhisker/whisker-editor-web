@@ -4,7 +4,7 @@
  * Type definitions for story publishing and sharing functionality.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 
 /**
  * Publishing platforms

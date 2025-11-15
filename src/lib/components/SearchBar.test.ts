@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import SearchBar from './SearchBar.svelte';
 import { filterState, filterActions } from '../stores/filterStore';
 import { currentStory, passageList } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('SearchBar', () => {
   beforeEach(() => {

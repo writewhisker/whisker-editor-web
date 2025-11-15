@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import StoryComparisonView from './StoryComparisonView.svelte';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
 
 // Mock the storyComparison utility
 vi.mock('../../utils/storyComparison', () => ({

@@ -4,8 +4,8 @@
  * Provides statistics and metrics about story playthroughs.
  */
 
-import type { Playthrough } from '@whisker/core-ts';
-import type { Story } from '@whisker/core-ts';
+import type { Playthrough } from '@writewhisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 
 export interface PassageStatistics {
   passageId: string;

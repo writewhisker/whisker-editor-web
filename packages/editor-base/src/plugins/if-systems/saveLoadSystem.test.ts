@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { pluginManager } from '../PluginManager';
 import { pluginStoreActions } from '../index';
 import { saveLoadSystem } from './saveLoadSystem';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('Save/Load System Plugin', () => {
   beforeEach(() => {

@@ -21,8 +21,8 @@
   import PassageNode from './graph/PassageNode.svelte';
   import ConnectionEdge from './graph/ConnectionEdge.svelte';
   import SearchBar from './SearchBar.svelte';
-  import { Choice } from '@whisker/core-ts';
-  import { Passage } from '@whisker/core-ts';
+  import { Choice } from '@writewhisker/core-ts';
+  import { Passage } from '@writewhisker/core-ts';
   import { historyActions } from '../stores/historyStore';
   import {
     getLayoutedElements,
@@ -32,7 +32,7 @@
     type LayoutOptions,
   } from '../utils/graphLayout';
   import { validationResult, validationActions } from '../stores/validationStore';
-  import type { ValidationIssue } from '@whisker/core-ts';
+  import type { ValidationIssue } from '@writewhisker/core-ts';
   import { prefersReducedMotion } from '../utils/motion';
   import GraphViewZoomControl from './graph/GraphViewZoomControl.svelte';
   import MobileToolbar from './graph/MobileToolbar.svelte';

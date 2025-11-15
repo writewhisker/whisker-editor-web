@@ -12,7 +12,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 
 export type CollaboratorStatus = 'active' | 'idle' | 'away' | 'offline';
 

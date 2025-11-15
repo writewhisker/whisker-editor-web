@@ -1,7 +1,7 @@
 <script lang="ts">
   import { currentStory, variableList } from '../stores/storyStateStore';
   import { playerVariables, isPlayerActive } from '../stores/playerStore';
-  import { Variable } from '@whisker/core-ts';
+  import { Variable } from '@writewhisker/core-ts';
 
   let showAddDialog = false;
   let newVarName = '';

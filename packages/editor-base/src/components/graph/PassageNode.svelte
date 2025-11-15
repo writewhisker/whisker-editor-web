@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Handle, Position } from '@xyflow/svelte';
-  import type { Passage } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
   import { currentStory } from '../../stores/storyStateStore';
   import { selectedPassageId } from '../../stores/selectionStore';
   import { projectMetadataActions as projectActions } from '../../stores/projectMetadataStore';
   import { passageOperations } from '../../stores/passageOperationsStore';
 
-  import type { ValidationIssue } from '@whisker/core-ts';
+  import type { ValidationIssue } from '@writewhisker/core-ts';
   import { tagActions } from '../../stores/tagStore';
   import { breakpoints, currentPreviewPassage, visitedPassages, playerActions, debugMode } from '../../stores/playerStore';
   import { setupLongPress, isTouch } from '../../utils/mobile';

@@ -5,7 +5,7 @@
  * without modification. Supports Supabase, Redux, Zustand, and other state solutions.
  */
 
-import type { Story, Passage } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 import type { Writable, Readable } from 'svelte/store';
 
 /**
@@ -153,7 +153,7 @@ export function createSupabaseEditorAdapter(
   projectId: string,
   userId: string
 ): EditorAdapter {
-  const { Passage } = require('@whisker/core-ts');
+  const { Passage } = require('@writewhisker/core-ts');
 
   let currentStoryValue: Story | null = null;
   let selectedPassageIdValue: string | null = null;

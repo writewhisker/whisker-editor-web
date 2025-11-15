@@ -5,7 +5,7 @@
  * This format is compatible with the whisker-core Lua engine.
  */
 
-import type { Story, Passage } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 import type {
   ExportContext,
   ExportResult,

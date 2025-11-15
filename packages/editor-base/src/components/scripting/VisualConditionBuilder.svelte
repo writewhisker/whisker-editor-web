@@ -7,7 +7,7 @@
    */
   import { nanoid } from 'nanoid';
   import { currentStory } from '../../stores/storyStateStore';
-  import { Variable } from '@whisker/core-ts';
+  import { Variable } from '@writewhisker/core-ts';
 
   // Props
   let {

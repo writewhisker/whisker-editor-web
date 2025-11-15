@@ -4,8 +4,8 @@
  * Type definitions for the story import system.
  */
 
-import type { Story } from '@whisker/core-ts';
-import type { ValidationResult } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
+import type { ValidationResult } from '@writewhisker/core-ts';
 
 /**
  * Supported import formats

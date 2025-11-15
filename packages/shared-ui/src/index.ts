@@ -1,5 +1,5 @@
 /**
- * @whisker/shared-ui
+ * @writewhisker/shared-ui
  *
  * Shared UI components and styles for Whisker ecosystem
  */

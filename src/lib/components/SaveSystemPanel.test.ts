@@ -4,7 +4,7 @@ import SaveSystemPanel from './SaveSystemPanel.svelte';
 import { get } from 'svelte/store';
 import { saveSystem, saveSlots } from '../stores/saveSystemStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 describe('SaveSystemPanel', () => {
   beforeEach(() => {

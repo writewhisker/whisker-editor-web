@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { get } from 'svelte/store';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 import { currentStory } from './projectStore';
 import { tagRegistry, tagsByUsage, tagsByName, tagActions, TAG_COLORS } from './tagStore';
 

@@ -17,7 +17,7 @@ import {
   variableList,
   passageCount,
   storyMetadata,
-} from '@whisker/editor-base/stores';
+} from '@writewhisker/editor-base/stores';
 
 import {
   selectedPassageId,
@@ -65,8 +65,8 @@ export {
 };
 
 // Re-export models for convenience
-export { Story } from '@whisker/core-ts';
-export { Passage } from '@whisker/core-ts';
+export { Story } from '@writewhisker/core-ts';
+export { Passage } from '@writewhisker/core-ts';
 
 /**
  * Legacy projectActions object for backward compatibility

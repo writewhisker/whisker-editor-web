@@ -4,7 +4,7 @@ import VersionDiffPanel from './VersionDiffPanel.svelte';
 import { get } from 'svelte/store';
 import { versionDiffStore, snapshots, currentDiff } from '../stores/versionDiffStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 describe('VersionDiffPanel', () => {
   beforeEach(() => {

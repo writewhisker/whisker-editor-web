@@ -5,12 +5,12 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { ValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '@whisker/core-ts';
-import { createDefaultValidator } from '@whisker/core-ts';
-import { createQualityAnalyzer } from '@whisker/core-ts';
-import { createAutoFixer } from '@whisker/core-ts';
+import type { ValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '@writewhisker/core-ts';
+import { createDefaultValidator } from '@writewhisker/core-ts';
+import { createQualityAnalyzer } from '@writewhisker/core-ts';
+import { createAutoFixer } from '@writewhisker/core-ts';
 import { currentStory } from './storyStateStore';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 
 // Settings persistence
 const STORAGE_KEY_OPTIONS = 'whisker_validation_options';

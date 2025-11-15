@@ -17,10 +17,10 @@ import {
   canUndo,
   uniquePassagesVisited,
 } from './playerStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
 
 describe('playerStore', () => {
   let story: Story;

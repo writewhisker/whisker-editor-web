@@ -1,9 +1,9 @@
 import { get } from 'svelte/store';
-import { storyStateActions } from '@whisker/editor-base/stores';
+import { storyStateActions } from '@writewhisker/editor-base/stores';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions } from './selectionStore';
 import { historyActions } from './historyStore';
-import type { ProjectData } from '@whisker/core-ts';
+import type { ProjectData } from '@writewhisker/core-ts';
 import { getDefaultStorageAdapter } from '../services/storage/StorageServiceFactory';
 import type { IStorageAdapter } from '../services/storage/types';
 import { modelToStorage, storageToModel } from '../services/storage/typeAdapter';

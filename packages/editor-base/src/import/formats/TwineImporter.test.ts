@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { TwineImporter, TwineFormat } from './TwineImporter';
-import type { Passage } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 describe('TwineImporter', () => {
   const importer = new TwineImporter();

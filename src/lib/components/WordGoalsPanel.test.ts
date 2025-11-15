@@ -5,8 +5,8 @@ import WordGoalsPanel from './WordGoalsPanel.svelte';
 import { wordGoalStore, goals, activeGoals } from '../stores/wordGoalStore';
 import { currentStory } from '../stores/projectStore';
 import { notificationStore } from '../stores/notificationStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('WordGoalsPanel', () => {
   let story: Story;

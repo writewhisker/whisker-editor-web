@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TwineImporter } from './TwineImporter';
-import type { Passage } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 

@@ -1,5 +1,5 @@
 {
-  "name": "@whisker/editor-base",
+  "name": "@writewhisker/editor-base",
   "version": "0.1.0",
   "description": "Editor platform for Whisker - stores, components, and services",
   "license": "AGPL-3.0",
@@ -83,7 +83,7 @@
     "check": "svelte-check && tsc --noEmit"
   },
   "dependencies": {
-    "@whisker/core-ts": "workspace:*",
+    "@writewhisker/core-ts": "workspace:*",
     "@xyflow/svelte": "^1.4.1",
     "dagre": "^0.8.5",
     "isomorphic-dompurify": "^2.0.0",

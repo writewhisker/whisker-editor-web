@@ -1,5 +1,5 @@
 /**
- * @whisker/editor-base - Public API
+ * @writewhisker/editor-base - Public API
  *
  * This is the stable public API for external consumption.
  * Only exports from this file are guaranteed to maintain backward compatibility.
@@ -13,19 +13,19 @@
  */
 
 // ============================================================================
-// CORE TYPES (from @whisker/core-ts)
+// CORE TYPES (from @writewhisker/core-ts)
 // ============================================================================
 
 export type {
   StoryMetadata,
-} from '@whisker/core-ts';
+} from '@writewhisker/core-ts';
 
 export {
   Story,
   Passage,
   Choice,
   Variable,
-} from '@whisker/core-ts';
+} from '@writewhisker/core-ts';
 
 // ============================================================================
 // PLUGIN SYSTEM (Public Plugin API)

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { StorySimulator } from './StorySimulator';
-import { Story, Passage, Choice, Variable } from '@whisker/core-ts';
+import { Story, Passage, Choice, Variable } from '@writewhisker/core-ts';
 
 describe('StorySimulator', () => {
   let linearStory: Story;

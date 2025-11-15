@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/svelte';
 import VisualConditionBuilder from './VisualConditionBuilder.svelte';
 import { currentStory } from '../../stores/storyStateStore';
-import { Story, Variable } from '@whisker/core-ts';
+import { Story, Variable } from '@writewhisker/core-ts';
 
 describe('VisualConditionBuilder', () => {
   let story: Story;

@@ -1,8 +1,8 @@
 import { writable, derived, get } from 'svelte/store';
 import { currentStory, passageList } from './projectStore';
 import { passageOrderState, sortPassages } from './passageOrderStore';
-import type { Passage } from '@whisker/core-ts';
-import type { Story } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import { commentsByPassage } from './commentStore';
 
 export type PassageTypeFilter = 'start' | 'orphan' | 'dead' | 'normal' | 'with-comments';

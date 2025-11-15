@@ -8,7 +8,7 @@
 
 import { derived, writable, get } from 'svelte/store';
 import { currentStory } from './storyStateStore';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import { getPreferenceService } from '../services/storage/PreferenceService';
 
 // Get preference service instance

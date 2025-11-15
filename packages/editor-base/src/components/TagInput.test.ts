@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import TagInput from './TagInput.svelte';
 import { tagRegistry } from '../stores/tagStore';
 import { currentStory } from '../stores';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('TagInput', () => {
   let story: Story;

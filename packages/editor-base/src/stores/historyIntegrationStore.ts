@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { tick } from 'svelte';
-import { Story, Passage } from '@whisker/core-ts';
+import { Story, Passage } from '@writewhisker/core-ts';
 import { storyStateActions, currentStory } from './storyStateStore';
 import { projectMetadataActions } from './projectMetadataStore';
 import { selectionActions, selectedPassageId } from './selectionStore';

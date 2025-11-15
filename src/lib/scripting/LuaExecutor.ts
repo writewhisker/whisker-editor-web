@@ -6,8 +6,8 @@
  */
 
 import { LuaFactory, type LuaEngine } from 'wasmoon';
-import type { Story } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 /**
  * Execution context for Lua scripts

@@ -7,8 +7,8 @@
   import { filteredPassages, isStartPassage, isOrphanPassage, isDeadEndPassage } from '../stores/filterStore';
   import { validationResult } from '../stores/validationStore';
   import { passageOrderState, passageOrderActions, type SortOrder } from '../stores/passageOrderStore';
-  import type { Passage } from '@whisker/core-ts';
-  import type { Choice } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
+  import type { Choice } from '@writewhisker/core-ts';
   import SearchBar from './SearchBar.svelte';
   import { tagActions } from '../stores/tagStore';
   import VirtualList from 'svelte-virtual-list';

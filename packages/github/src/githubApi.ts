@@ -14,13 +14,7 @@ import { githubToken } from './githubAuth';
 import type { GitHubRepository, GitHubFile, GitHubCommit } from './types';
 import { GitHubApiError } from './types';
 import { get } from 'svelte/store';
-import {
-  withRetry,
-  classifyError,
-  ErrorCategory,
-  isOnline,
-} from '../../utils/errorHandling';
-import { withLoading } from '../../stores/loadingStore';
+import { withRetry, isOnline } from './utils';
 
 let octokit: Octokit | null = null;
 
@@ -53,7 +47,7 @@ function getOctokit(): Octokit {
  * List all repositories for the authenticated user
  */
 export async function listRepositories(): Promise<GitHubRepository[]> {
-  return withLoading('github:list-repos', () => withRetry(async () => {
+  return withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -85,7 +79,7 @@ export async function listRepositories(): Promise<GitHubRepository[]> {
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  }));
+  });
 }
 
 /**
@@ -96,7 +90,6 @@ export async function createRepository(
   description?: string,
   isPrivate: boolean = false
 ): Promise<GitHubRepository> {
-  return withLoading('github:create-repo', async () => {
   try {
     const client = getOctokit();
 
@@ -149,7 +142,6 @@ export async function createRepository(
       error.response
     );
   }
-  });
 }
 
 /**
@@ -161,7 +153,7 @@ export async function getFile(
   path: string,
   branch?: string
 ): Promise<GitHubFile> {
-  return withLoading('github:load-file', () => withRetry(async () => {
+  return withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -219,7 +211,7 @@ export async function getFile(
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  }));
+  });
 }
 
 /**
@@ -281,7 +273,7 @@ export async function saveFile(
   sha?: string,
   branch?: string
 ): Promise<GitHubCommit> {
-  return withLoading('github:save-file', () => withRetry(async () => {
+  return withRetry(async () => {
     try {
       const client = getOctokit();
 
@@ -376,7 +368,7 @@ export async function saveFile(
   }, {
     maxRetries: 2,
     initialDelay: 1000,
-  }));
+  });
 }
 
 /**

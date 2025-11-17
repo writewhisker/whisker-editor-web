@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
-  import { getCommitHistory, getFileAtCommit } from '../../services/github/githubApi';
-  import type { GitHubCommit } from '../../services/github/types';
+  import { getCommitHistory, getFileAtCommit } from '@writewhisker/github';
+  import type { GitHubCommit } from '@writewhisker/github';
 
   export let show = false;
   export let owner: string;

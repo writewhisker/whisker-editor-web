@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { PlaythroughAnalytics, type PlaythroughAnalyticsData } from '../../analytics/PlaythroughAnalytics';
-  import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
+  import { PlaythroughAnalytics, type PlaythroughAnalyticsData } from '@writewhisker/analytics';
+  import { getPlaythroughRecorder } from '@writewhisker/analytics';
   import { currentStory } from '../../stores/storyStateStore';
   import type { Playthrough } from '@writewhisker/core-ts';
   import { untrack } from 'svelte';

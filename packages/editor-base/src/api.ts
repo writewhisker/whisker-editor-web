@@ -118,20 +118,20 @@ export {
 // ANALYTICS SYSTEM
 // ============================================================================
 
-export { StorySimulator } from './analytics/StorySimulator';
+export { StorySimulator } from '@writewhisker/analytics';
 export type {
   SimulationOptions,
   SimulationResult,
-} from './analytics/StorySimulator';
+} from '@writewhisker/analytics';
 
-export { StoryAnalytics } from './analytics/StoryAnalytics';
-export { PlaythroughRecorder } from './analytics/PlaythroughRecorder';
+export { StoryAnalytics } from '@writewhisker/analytics';
+export { PlaythroughRecorder } from '@writewhisker/analytics';
 
 export type {
   PlaythroughData,
   PassageVisitData,
   StoryMetrics,
-} from './analytics/types';
+} from '@writewhisker/analytics';
 
 // ============================================================================
 // IMPORT/EXPORT SERVICES

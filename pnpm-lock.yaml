@@ -289,9 +289,6 @@ importers:
       '@octokit/rest':
         specifier: ^20.0.0
         version: 20.1.2
-      '@writewhisker/editor-base':
-        specifier: workspace:*
-        version: link:../editor-base
       '@writewhisker/storage':
         specifier: workspace:*
         version: link:../storage

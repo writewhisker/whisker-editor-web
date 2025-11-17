@@ -12,9 +12,6 @@ export default defineConfig({
     rollupOptions: {
       external: [
         '@octokit/rest',
-        '@writewhisker/editor-base',
-        '@writewhisker/editor-base/utils',
-        '@writewhisker/editor-base/stores',
         '@writewhisker/storage',
         'svelte',
         'svelte/store',

@@ -6,3 +6,4 @@
 export * from './githubApi';
 export * from './githubAuth';
 export * from './types';
+export * from './utils';

@@ -30,6 +30,15 @@ describe('IndexedDBBackend', () => {
   beforeEach(async () => {
     // Reset IndexedDB for each test
     global.indexedDB = new IDBFactory();
+
+    // Mock navigator.storage for getStorageUsage tests
+    if (!global.navigator) {
+      (global as any).navigator = {};
+    }
+    (global as any).navigator.storage = {
+      estimate: vi.fn().mockResolvedValue({ usage: 1024, quota: 10240 }),
+    };
+
     backend = new IndexedDBBackend();
     await backend.initialize();
   });

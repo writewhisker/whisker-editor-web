@@ -1,0 +1,53 @@
+{
+  "name": "@writewhisker/scripting",
+  "version": "0.1.0",
+  "description": "Lua scripting engine for Whisker interactive fiction",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/core-ts": "workspace:*",
+    "wasmoon": "^1.16.0"
+  },
+  "peerDependencies": {
+    "monaco-editor": "^0.45.0"
+  },
+  "peerDependenciesMeta": {
+    "monaco-editor": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "@vitest/coverage-v8": "^1.3.1",
+    "monaco-editor": "^0.45.0",
+    "typescript": "^5.3.3",
+    "vite": "^7.1.7",
+    "vitest": "^1.3.1"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "whisker",
+    "scripting",
+    "lua",
+    "interactive-fiction"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

@@ -84,6 +84,7 @@
   },
   "dependencies": {
     "@writewhisker/core-ts": "workspace:*",
+    "@writewhisker/scripting": "workspace:*",
     "@writewhisker/storage": "workspace:*",
     "@xyflow/svelte": "^1.4.1",
     "dagre": "^0.8.5",

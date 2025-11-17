@@ -1,8 +1,6 @@
 /**
- * Scripting System
- * Lua execution engine and configuration
+ * Re-export scripting from @writewhisker/scripting package
+ * This maintains backwards compatibility for editor-base exports
  */
 
-export { LuaEngine } from './LuaEngine';
-export { LuaExecutor } from './LuaExecutor';
-export { registerLuaLanguage, registerStoryTheme, initializeLuaSupport } from './luaConfig';
+export * from '@writewhisker/scripting';

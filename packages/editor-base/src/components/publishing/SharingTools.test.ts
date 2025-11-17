@@ -11,7 +11,7 @@ import {
   generateQRCode,
   generateSocialShareUrl,
   generateEmailShareUrl,
-} from '../../publishing/sharingUtils';
+} from '@writewhisker/publishing';
 
 describe('SharingTools - Embed Code Generation', () => {
   it('should generate basic embed code', () => {

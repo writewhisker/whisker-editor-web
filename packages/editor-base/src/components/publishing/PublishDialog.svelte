@@ -1,12 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import type { Story } from '@writewhisker/core-ts';
-  import type { PublishOptions, PublishPlatform } from '../../publishing/types';
-  import { StaticPublisher } from '../../publishing/StaticPublisher';
-  import { ItchPublisher } from '../../publishing/ItchPublisher';
-  import { GitHubPublisher } from '../../publishing/GitHubPublisher';
-  import { getVersionManager } from '../../publishing/versionManager';
-  import type { StoryVersion } from '../../publishing/versionManager';
+  import type { PublishOptions, PublishPlatform } from '@writewhisker/publishing';
+  import { StaticPublisher } from '@writewhisker/publishing';
+  import { ItchPublisher } from '@writewhisker/publishing';
+  import { GitHubPublisher } from '@writewhisker/publishing';
+  import { getVersionManager } from '@writewhisker/publishing';
+  import type { StoryVersion } from '@writewhisker/publishing';
 
   // Props
   let {

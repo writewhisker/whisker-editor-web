@@ -8,7 +8,7 @@
 
 import type { IPublisher, PublishOptions, PublishResult } from './types';
 import type { Story } from '@writewhisker/core-ts';
-import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
+import { StaticSiteExporter } from '@writewhisker/editor-base';
 
 /**
  * GitHub authentication configuration

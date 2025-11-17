@@ -1,6 +1,10 @@
 /**
  * IndexedDB Storage Adapter
  *
+ * @deprecated This adapter is kept only for legacy data migration purposes.
+ * New code should use @writewhisker/storage package instead.
+ * See modernStoryMigration.ts for migration usage.
+ *
  * Provides IndexedDB backend for the storage system.
  * Suitable for larger data sets like stories and project files.
  *

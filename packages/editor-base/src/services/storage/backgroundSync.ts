@@ -6,8 +6,8 @@
 
 import { writable, get } from 'svelte/store';
 import { syncQueue, type SyncQueueEntry } from './syncQueue';
-import { saveFile, getFile } from '../github/githubApi';
-import { isAuthenticated } from '../github/githubAuth';
+import { saveFile, getFile } from '@writewhisker/github';
+import { isAuthenticated } from '@writewhisker/github';
 import {
   handleError,
   classifyError,

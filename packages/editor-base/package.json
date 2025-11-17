@@ -83,6 +83,7 @@
     "check": "svelte-check && tsc --noEmit"
   },
   "dependencies": {
+    "@writewhisker/analytics": "workspace:*",
     "@writewhisker/core-ts": "workspace:*",
     "@writewhisker/scripting": "workspace:*",
     "@writewhisker/storage": "workspace:*",

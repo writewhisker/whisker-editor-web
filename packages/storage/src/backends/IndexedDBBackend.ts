@@ -5,11 +5,15 @@
 import { openDB, type IDBPDatabase } from 'idb';
 import type { StoryData } from '@writewhisker/core-ts';
 import type { IStorageBackend, StorageMetadata } from '../interfaces/IStorageBackend.js';
+import type { PreferenceEntry, SyncQueueEntry, GitHubTokenData } from '../types/ExtendedStorage.js';
 
 const DB_NAME = 'whisker-stories';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'stories';
 const METADATA_STORE = 'metadata';
+const PREFERENCES_STORE = 'preferences';
+const SYNC_QUEUE_STORE = 'syncQueue';
+const GITHUB_TOKEN_STORE = 'githubToken';
 
 interface StoredStory {
   id: string;
@@ -22,7 +26,7 @@ export class IndexedDBBackend implements IStorageBackend {
 
   async initialize(): Promise<void> {
     this.db = await openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         // Create stories store
         if (!db.objectStoreNames.contains(STORE_NAME)) {
           db.createObjectStore(STORE_NAME, { keyPath: 'id' });
@@ -33,6 +37,26 @@ export class IndexedDBBackend implements IStorageBackend {
           const metadataStore = db.createObjectStore(METADATA_STORE, { keyPath: 'id' });
           metadataStore.createIndex('title', 'title', { unique: false });
           metadataStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+
+        // Version 2: Add extended storage stores
+        if (oldVersion < 2) {
+          // Preferences store
+          if (!db.objectStoreNames.contains(PREFERENCES_STORE)) {
+            db.createObjectStore(PREFERENCES_STORE);
+          }
+
+          // Sync queue store
+          if (!db.objectStoreNames.contains(SYNC_QUEUE_STORE)) {
+            const syncStore = db.createObjectStore(SYNC_QUEUE_STORE, { keyPath: 'id' });
+            syncStore.createIndex('storyId', 'storyId', { unique: false });
+            syncStore.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+
+          // GitHub token store (single value, no keyPath needed)
+          if (!db.objectStoreNames.contains(GITHUB_TOKEN_STORE)) {
+            db.createObjectStore(GITHUB_TOKEN_STORE);
+          }
         }
       },
     });
@@ -173,12 +197,79 @@ export class IndexedDBBackend implements IStorageBackend {
 
   async clear(): Promise<void> {
     this.ensureInitialized();
-    
+
     const tx = this.db!.transaction([STORE_NAME, METADATA_STORE], 'readwrite');
     await Promise.all([
       tx.objectStore(STORE_NAME).clear(),
       tx.objectStore(METADATA_STORE).clear(),
       tx.done,
     ]);
+  }
+
+  // Extended storage methods for preferences
+
+  async savePreference(key: string, entry: PreferenceEntry): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.put(PREFERENCES_STORE, entry, key);
+  }
+
+  async loadPreference<T = any>(key: string): Promise<PreferenceEntry<T> | null> {
+    this.ensureInitialized();
+    const entry = await this.db!.get(PREFERENCES_STORE, key);
+    return entry || null;
+  }
+
+  async deletePreference(key: string): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.delete(PREFERENCES_STORE, key);
+  }
+
+  async listPreferences(): Promise<string[]> {
+    this.ensureInitialized();
+    return await this.db!.getAllKeys(PREFERENCES_STORE) as string[];
+  }
+
+  // Extended storage methods for sync queue
+
+  async addToSyncQueue(entry: SyncQueueEntry): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.put(SYNC_QUEUE_STORE, entry);
+  }
+
+  async getSyncQueue(): Promise<SyncQueueEntry[]> {
+    this.ensureInitialized();
+    const entries = await this.db!.getAll(SYNC_QUEUE_STORE);
+    // Sort by timestamp (oldest first)
+    return entries.sort((a, b) => {
+      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    });
+  }
+
+  async removeFromSyncQueue(id: string): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.delete(SYNC_QUEUE_STORE, id);
+  }
+
+  async clearSyncQueue(): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.clear(SYNC_QUEUE_STORE);
+  }
+
+  // Extended storage methods for GitHub token
+
+  async saveGitHubToken(token: GitHubTokenData): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.put(GITHUB_TOKEN_STORE, token, 'token');
+  }
+
+  async loadGitHubToken(): Promise<GitHubTokenData | null> {
+    this.ensureInitialized();
+    const token = await this.db!.get(GITHUB_TOKEN_STORE, 'token');
+    return token || null;
+  }
+
+  async deleteGitHubToken(): Promise<void> {
+    this.ensureInitialized();
+    await this.db!.delete(GITHUB_TOKEN_STORE, 'token');
   }
 }

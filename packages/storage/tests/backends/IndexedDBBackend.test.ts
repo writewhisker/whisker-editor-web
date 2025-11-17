@@ -337,4 +337,243 @@ describe('IndexedDBBackend', () => {
       expect(list).toEqual([]);
     });
   });
+
+  // Extended storage tests
+
+  describe('preferences', () => {
+    it('should save and load a preference', async () => {
+      const entry = {
+        value: { theme: 'dark', fontSize: 14 },
+        scope: 'user' as const,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await backend.savePreference!('editor.settings', entry);
+      const loaded = await backend.loadPreference!('editor.settings');
+
+      expect(loaded).toEqual(entry);
+    });
+
+    it('should return null for non-existent preference', async () => {
+      const loaded = await backend.loadPreference!('non-existent');
+      expect(loaded).toBeNull();
+    });
+
+    it('should delete a preference', async () => {
+      const entry = {
+        value: 'test',
+        scope: 'global' as const,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await backend.savePreference!('test-key', entry);
+      await backend.deletePreference!('test-key');
+
+      const loaded = await backend.loadPreference!('test-key');
+      expect(loaded).toBeNull();
+    });
+
+    it('should list all preference keys', async () => {
+      await backend.savePreference!('key1', {
+        value: 'value1',
+        scope: 'global' as const,
+        updatedAt: new Date().toISOString(),
+      });
+      await backend.savePreference!('key2', {
+        value: 'value2',
+        scope: 'user' as const,
+        updatedAt: new Date().toISOString(),
+      });
+
+      const keys = await backend.listPreferences!();
+      expect(keys).toHaveLength(2);
+      expect(keys).toContain('key1');
+      expect(keys).toContain('key2');
+    });
+
+    it('should update existing preference', async () => {
+      const entry1 = {
+        value: 'original',
+        scope: 'user' as const,
+        updatedAt: new Date().toISOString(),
+      };
+      const entry2 = {
+        value: 'updated',
+        scope: 'user' as const,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await backend.savePreference!('test-key', entry1);
+      await backend.savePreference!('test-key', entry2);
+
+      const loaded = await backend.loadPreference!('test-key');
+      expect(loaded?.value).toBe('updated');
+    });
+  });
+
+  describe('sync queue', () => {
+    it('should add entry to sync queue', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'create' as const,
+        timestamp: new Date().toISOString(),
+        data: { test: 'data' },
+        retryCount: 0,
+      };
+
+      await backend.addToSyncQueue!(entry);
+      const queue = await backend.getSyncQueue!();
+
+      expect(queue).toHaveLength(1);
+      expect(queue[0]).toEqual(entry);
+    });
+
+    it('should get sync queue sorted by timestamp', async () => {
+      const now = new Date();
+      const entry1 = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'create' as const,
+        timestamp: new Date(now.getTime() + 1000).toISOString(),
+        data: {},
+        retryCount: 0,
+      };
+      const entry2 = {
+        id: 'sync-2',
+        storyId: 'story-2',
+        operation: 'update' as const,
+        timestamp: now.toISOString(),
+        data: {},
+        retryCount: 0,
+      };
+
+      await backend.addToSyncQueue!(entry1);
+      await backend.addToSyncQueue!(entry2);
+
+      const queue = await backend.getSyncQueue!();
+      expect(queue).toHaveLength(2);
+      expect(queue[0].id).toBe('sync-2'); // Older timestamp first
+      expect(queue[1].id).toBe('sync-1');
+    });
+
+    it('should remove entry from sync queue', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'delete' as const,
+        timestamp: new Date().toISOString(),
+        data: {},
+        retryCount: 0,
+      };
+
+      await backend.addToSyncQueue!(entry);
+      await backend.removeFromSyncQueue!('sync-1');
+
+      const queue = await backend.getSyncQueue!();
+      expect(queue).toHaveLength(0);
+    });
+
+    it('should clear entire sync queue', async () => {
+      await backend.addToSyncQueue!({
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'create' as const,
+        timestamp: new Date().toISOString(),
+        data: {},
+        retryCount: 0,
+      });
+      await backend.addToSyncQueue!({
+        id: 'sync-2',
+        storyId: 'story-2',
+        operation: 'update' as const,
+        timestamp: new Date().toISOString(),
+        data: {},
+        retryCount: 1,
+      });
+
+      await backend.clearSyncQueue!();
+
+      const queue = await backend.getSyncQueue!();
+      expect(queue).toEqual([]);
+    });
+
+    it('should handle retry count and error', async () => {
+      const entry = {
+        id: 'sync-1',
+        storyId: 'story-1',
+        operation: 'update' as const,
+        timestamp: new Date().toISOString(),
+        data: {},
+        retryCount: 3,
+        lastError: 'Network timeout',
+      };
+
+      await backend.addToSyncQueue!(entry);
+      const queue = await backend.getSyncQueue!();
+
+      expect(queue[0].retryCount).toBe(3);
+      expect(queue[0].lastError).toBe('Network timeout');
+    });
+  });
+
+  describe('GitHub token', () => {
+    it('should save and load GitHub token', async () => {
+      const token = {
+        accessToken: 'ghp_test123',
+        tokenType: 'bearer',
+        scope: 'repo,user',
+        user: {
+          login: 'testuser',
+          id: 12345,
+          name: 'Test User',
+          email: 'test@example.com',
+          avatarUrl: 'https://example.com/avatar.png',
+        },
+      };
+
+      await backend.saveGitHubToken!(token);
+      const loaded = await backend.loadGitHubToken!();
+
+      expect(loaded).toEqual(token);
+    });
+
+    it('should return null when no token exists', async () => {
+      const loaded = await backend.loadGitHubToken!();
+      expect(loaded).toBeNull();
+    });
+
+    it('should delete GitHub token', async () => {
+      const token = {
+        accessToken: 'ghp_test456',
+        tokenType: 'bearer',
+        scope: 'repo',
+      };
+
+      await backend.saveGitHubToken!(token);
+      await backend.deleteGitHubToken!();
+
+      const loaded = await backend.loadGitHubToken!();
+      expect(loaded).toBeNull();
+    });
+
+    it('should overwrite existing token', async () => {
+      const token1 = {
+        accessToken: 'ghp_old',
+        tokenType: 'bearer',
+        scope: 'repo',
+      };
+      const token2 = {
+        accessToken: 'ghp_new',
+        tokenType: 'bearer',
+        scope: 'repo,user',
+      };
+
+      await backend.saveGitHubToken!(token1);
+      await backend.saveGitHubToken!(token2);
+
+      const loaded = await backend.loadGitHubToken!();
+      expect(loaded?.accessToken).toBe('ghp_new');
+    });
+  });
 });

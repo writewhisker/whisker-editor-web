@@ -84,6 +84,7 @@
   },
   "dependencies": {
     "@writewhisker/analytics": "workspace:*",
+    "@writewhisker/audio": "workspace:*",
     "@writewhisker/core-ts": "workspace:*",
     "@writewhisker/scripting": "workspace:*",
     "@writewhisker/storage": "workspace:*",

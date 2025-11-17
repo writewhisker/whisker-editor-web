@@ -1,15 +1,12 @@
 /**
  * Modern Story Migration Utility
  *
- * Migrates story data from:
- * 1. localStorage to new @writewhisker/storage (IndexedDB)
- * 2. Old IndexedDBAdapter to new @writewhisker/storage
+ * Migrates story data from localStorage to new @writewhisker/storage (IndexedDB)
  *
  * This migration utility uses the new storage architecture
  */
 
 import { storageAdapter } from '../../adapters/storageAdapter.js';
-import { IndexedDBAdapter } from './IndexedDBAdapter.js';
 import { Story } from '@writewhisker/core-ts';
 
 export interface MigrationResult {
@@ -28,14 +25,9 @@ export interface MigrationProgress {
 export type ProgressCallback = (progress: MigrationProgress) => void;
 
 export class ModernStoryMigration {
-  private oldAdapter: IndexedDBAdapter;
   private migrationKey = 'whisker-modern-migration-complete';
   private migrationVersionKey = 'whisker-modern-migration-version';
   private currentMigrationVersion = 2; // Version 2 for new storage architecture
-
-  constructor() {
-    this.oldAdapter = new IndexedDBAdapter();
-  }
 
   /**
    * Check if migration is needed
@@ -55,20 +47,7 @@ export class ModernStoryMigration {
 
       // Check for stories in localStorage
       const localStorageKeys = this.findLocalStorageStoryKeys();
-      if (localStorageKeys.length > 0) {
-        return true;
-      }
-
-      // Check for stories in old IndexedDB
-      try {
-        await this.oldAdapter.initialize();
-        const oldStories = await this.oldAdapter.listStories();
-        return oldStories.length > 0;
-      } catch (error) {
-        // If old adapter fails, assume no migration needed
-        console.warn('Could not check old IndexedDB for stories:', error);
-        return false;
-      }
+      return localStorageKeys.length > 0;
     } catch (error) {
       console.error('Error checking migration status:', error);
       return false;
@@ -92,9 +71,6 @@ export class ModernStoryMigration {
 
       // Migrate from localStorage
       await this.migrateFromLocalStorage(result, progressCallback);
-
-      // Migrate from old IndexedDB
-      await this.migrateFromOldIndexedDB(result, progressCallback);
 
       // Mark migration as complete if successful
       if (result.errors.length === 0) {
@@ -175,68 +151,6 @@ export class ModernStoryMigration {
         result.errors.push({ key, error: errorMessage });
         console.error(`Failed to migrate story ${key}:`, error);
       }
-    }
-  }
-
-  /**
-   * Migrate stories from old IndexedDB
-   */
-  private async migrateFromOldIndexedDB(
-    result: MigrationResult,
-    progressCallback?: ProgressCallback
-  ): Promise<void> {
-    try {
-      await this.oldAdapter.initialize();
-      const oldStories = await this.oldAdapter.listStories();
-
-      for (let i = 0; i < oldStories.length; i++) {
-        const oldStoryRef = oldStories[i];
-
-        try {
-          const storyId = oldStoryRef.metadata?.id || oldStoryRef.id;
-
-          // Report progress
-          if (progressCallback) {
-            progressCallback({
-              current: result.storiesMigrated + i + 1,
-              total: oldStories.length,
-              currentStory: storyId,
-            });
-          }
-
-          // Check if already migrated
-          const exists = await storageAdapter.hasStory(storyId);
-          if (exists) {
-            result.skipped++;
-            continue;
-          }
-
-          // Load full story from old adapter
-          const projectData = await this.oldAdapter.loadStory(storyId);
-
-          if (!projectData) {
-            result.skipped++;
-            continue;
-          }
-
-          // Deserialize and save to new storage
-          const story = Story.deserializeProject(projectData);
-          await storageAdapter.saveStory(story, storyId, true);
-          result.storiesMigrated++;
-
-          console.log(`Migrated story from old IndexedDB: ${story.metadata.title || storyId}`);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          result.errors.push({
-            key: oldStoryRef.metadata?.id || oldStoryRef.id || 'unknown',
-            error: errorMessage,
-          });
-          console.error(`Failed to migrate story:`, error);
-        }
-      }
-    } catch (error) {
-      console.error('Could not migrate from old IndexedDB:', error);
-      // Not a fatal error - old IndexedDB might not exist
     }
   }
 

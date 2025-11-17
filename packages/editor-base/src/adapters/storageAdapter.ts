@@ -51,16 +51,17 @@ export class SvelteStorageAdapter {
    */
   private setupEventListeners(): void {
     // Story saved - mark as saved and update file path
-    const onStorySaved = this.storage.on(StorageEventType.STORY_SAVED, (event) => {
+    const onStorySaved = (event: StorageEvent) => {
       unsavedChanges.set(false);
       if ('storyId' in event) {
         currentFilePath.set(event.storyId);
       }
-    });
+    };
+    this.storage.on(StorageEventType.STORY_SAVED, onStorySaved);
     this.eventListeners.push(() => this.storage.off(StorageEventType.STORY_SAVED, onStorySaved));
 
     // Story deleted - clear current story if it matches
-    const onStoryDeleted = this.storage.on(StorageEventType.STORY_DELETED, (event) => {
+    const onStoryDeleted = (event: StorageEvent) => {
       if ('storyId' in event) {
         const current = this.getCurrentStory();
         if (current && current.metadata.id === event.storyId) {
@@ -69,27 +70,30 @@ export class SvelteStorageAdapter {
           unsavedChanges.set(false);
         }
       }
-    });
+    };
+    this.storage.on(StorageEventType.STORY_DELETED, onStoryDeleted);
     this.eventListeners.push(() =>
       this.storage.off(StorageEventType.STORY_DELETED, onStoryDeleted)
     );
 
     // Storage cleared - reset all stores
-    const onStorageCleared = this.storage.on(StorageEventType.STORAGE_CLEARED, () => {
+    const onStorageCleared = () => {
       currentStory.set(null);
       currentFilePath.set(null);
       unsavedChanges.set(false);
-    });
+    };
+    this.storage.on(StorageEventType.STORAGE_CLEARED, onStorageCleared);
     this.eventListeners.push(() =>
       this.storage.off(StorageEventType.STORAGE_CLEARED, onStorageCleared)
     );
 
     // Error handling - log errors for now
-    const onError = this.storage.on(StorageEventType.ERROR, (event) => {
+    const onError = (event: StorageEvent) => {
       if ('error' in event) {
         console.error('Storage error:', event.error, 'Operation:', event.operation);
       }
-    });
+    };
+    this.storage.on(StorageEventType.ERROR, onError);
     this.eventListeners.push(() => this.storage.off(StorageEventType.ERROR, onError));
   }
 
@@ -131,10 +135,7 @@ export class SvelteStorageAdapter {
     // Use provided ID or story's ID
     const storyId = id || story.metadata.id || this.generateStoryId();
 
-    // Ensure the data has the ID
-    if (!data.id) {
-      data.id = storyId;
-    }
+    // Ensure the data has the ID in metadata
     if (!data.metadata.id) {
       data.metadata.id = storyId;
     }
@@ -160,10 +161,7 @@ export class SvelteStorageAdapter {
     // Use provided ID or story's ID
     const storyId = id || story.metadata.id || this.generateStoryId();
 
-    // Ensure the data has the ID
-    if (!data.id) {
-      data.id = storyId;
-    }
+    // Ensure the data has the ID in metadata
     if (!data.metadata.id) {
       data.metadata.id = storyId;
     }

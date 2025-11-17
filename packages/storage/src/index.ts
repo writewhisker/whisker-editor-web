@@ -38,6 +38,10 @@ export type {
   GitHubTokenData,
 } from './types/ExtendedStorage.js';
 
+// Migration utilities
+export { LegacyDataMigration } from './migration/LegacyDataMigration.js';
+export type { MigrationResult } from './migration/LegacyDataMigration.js';
+
 // Convenience factory functions
 import { StorageService } from './StorageService.js';
 import { IndexedDBBackend } from './backends/IndexedDBBackend.js';

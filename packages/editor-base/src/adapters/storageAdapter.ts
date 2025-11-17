@@ -177,7 +177,7 @@ export class SvelteStorageAdapter {
     const data = await this.storage.loadStory(id);
 
     // Deserialize to Story instance
-    const story = Story.deserializeProject(data);
+    const story = Story.deserializeProject(data as ProjectData);
 
     // Update stores
     currentStory.set(story);
@@ -192,7 +192,7 @@ export class SvelteStorageAdapter {
    */
   async getStory(id: string): Promise<Story> {
     const data = await this.storage.loadStory(id);
-    return Story.deserializeProject(data);
+    return Story.deserializeProject(data as ProjectData);
   }
 
   /**

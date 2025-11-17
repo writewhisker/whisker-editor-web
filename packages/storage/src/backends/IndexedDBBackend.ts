@@ -1,276 +1,184 @@
 /**
- * IndexedDB storage backend implementation
- * Uses IndexedDB for browser-based persistent storage
+ * IndexedDB storage backend for browser environments
  */
 
-import { IStorageBackend } from '../interfaces/IStorageBackend.js';
+import { openDB, type IDBPDatabase } from 'idb';
+import type { StoryData } from '@writewhisker/core-ts';
+import type { IStorageBackend, StorageMetadata } from '../interfaces/IStorageBackend.js';
 
-export class IndexedDBBackend implements IStorageBackend {
-  private dbName: string;
-  private storeName = 'storage';
-  private db: IDBDatabase | null = null;
-  private initPromise: Promise<void> | null = null;
+const DB_NAME = 'whisker-stories';
+const DB_VERSION = 1;
+const STORE_NAME = 'stories';
+const METADATA_STORE = 'metadata';
 
-  constructor(dbName: string) {
-    this.dbName = dbName;
-  }
-
-  /**
-   * Initialize the IndexedDB database
-   */
-  private async init(): Promise<void> {
-    if (this.db) return;
-
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    this.initPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
-
-      request.onerror = () => {
-        reject(new Error(`Failed to open IndexedDB: ${request.error?.message}`));
-      };
-
-      request.onsuccess = () => {
-        this.db = request.result;
-        resolve();
-      };
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(this.storeName)) {
-          db.createObjectStore(this.storeName);
-        }
-      };
-    });
-
-    return this.initPromise;
-  }
-
-  /**
-   * Get a transaction for the object store
-   */
-  private async getTransaction(mode: IDBTransactionMode): Promise<IDBObjectStore> {
-    await this.init();
-    if (!this.db) {
-      throw new Error('Database not initialized');
-    }
-    const transaction = this.db.transaction([this.storeName], mode);
-    return transaction.objectStore(this.storeName);
-  }
-
-  /**
-   * Save data to IndexedDB
-   */
-  async save(key: string, data: any): Promise<void> {
-    try {
-      const store = await this.getTransaction('readwrite');
-      const serialized = JSON.stringify(data);
-
-      return new Promise((resolve, reject) => {
-        const request = store.put(serialized, key);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(new Error(`Failed to save key "${key}": ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB save error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Load data from IndexedDB
-   */
-  async load(key: string): Promise<any | null> {
-    try {
-      const store = await this.getTransaction('readonly');
-
-      return new Promise((resolve, reject) => {
-        const request = store.get(key);
-
-        request.onsuccess = () => {
-          if (request.result === undefined) {
-            resolve(null);
-          } else {
-            try {
-              resolve(JSON.parse(request.result));
-            } catch (error) {
-              reject(new Error(`Failed to parse data for key "${key}": ${error instanceof Error ? error.message : String(error)}`));
-            }
-          }
-        };
-
-        request.onerror = () => reject(new Error(`Failed to load key "${key}": ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB load error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Delete data from IndexedDB
-   */
-  async delete(key: string): Promise<void> {
-    try {
-      const store = await this.getTransaction('readwrite');
-
-      return new Promise((resolve, reject) => {
-        const request = store.delete(key);
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(new Error(`Failed to delete key "${key}": ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB delete error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * List all keys in IndexedDB
-   */
-  async list(): Promise<string[]> {
-    try {
-      const store = await this.getTransaction('readonly');
-
-      return new Promise((resolve, reject) => {
-        const request = store.getAllKeys();
-
-        request.onsuccess = () => {
-          resolve(request.result.map(key => String(key)));
-        };
-
-        request.onerror = () => reject(new Error(`Failed to list keys: ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB list error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Check if a key exists in IndexedDB
-   */
-  async exists(key: string): Promise<boolean> {
-    try {
-      const store = await this.getTransaction('readonly');
-
-      return new Promise((resolve, reject) => {
-        const request = store.getKey(key);
-
-        request.onsuccess = () => {
-          resolve(request.result !== undefined);
-        };
-
-        request.onerror = () => reject(new Error(`Failed to check existence of key "${key}": ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB exists error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Get the size of stored data in bytes
-   */
-  async size(key: string): Promise<number> {
-    try {
-      const store = await this.getTransaction('readonly');
-
-      return new Promise((resolve, reject) => {
-        const request = store.get(key);
-
-        request.onsuccess = () => {
-          if (request.result === undefined) {
-            resolve(0);
-          } else {
-            const byteSize = new Blob([request.result]).size;
-            resolve(byteSize);
-          }
-        };
-
-        request.onerror = () => reject(new Error(`Failed to get size of key "${key}": ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB size error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Save multiple entries at once (batch operation)
-   */
-  async saveMany(entries: Record<string, any>): Promise<void> {
-    try {
-      const store = await this.getTransaction('readwrite');
-      const promises: Promise<void>[] = [];
-
-      for (const [key, value] of Object.entries(entries)) {
-        const serialized = JSON.stringify(value);
-        promises.push(
-          new Promise((resolve, reject) => {
-            const request = store.put(serialized, key);
-            request.onsuccess = () => resolve();
-            request.onerror = () => reject(new Error(`Failed to save key "${key}": ${request.error?.message}`));
-          })
-        );
-      }
-
-      await Promise.all(promises);
-    } catch (error) {
-      throw new Error(`IndexedDB saveMany error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Load multiple entries at once (batch operation)
-   */
-  async loadMany(keys: string[]): Promise<Record<string, any>> {
-    try {
-      const store = await this.getTransaction('readonly');
-      const results: Record<string, any> = {};
-      const promises: Promise<void>[] = [];
-
-      for (const key of keys) {
-        promises.push(
-          new Promise((resolve, reject) => {
-            const request = store.get(key);
-
-            request.onsuccess = () => {
-              if (request.result !== undefined) {
-                try {
-                  results[key] = JSON.parse(request.result);
-                } catch (error) {
-                  reject(new Error(`Failed to parse data for key "${key}": ${error instanceof Error ? error.message : String(error)}`));
-                  return;
-                }
-              }
-              resolve();
-            };
-
-            request.onerror = () => reject(new Error(`Failed to load key "${key}": ${request.error?.message}`));
-          })
-        );
-      }
-
-      await Promise.all(promises);
-      return results;
-    } catch (error) {
-      throw new Error(`IndexedDB loadMany error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-
-  /**
-   * Clear all data from IndexedDB
-   */
-  async clear(): Promise<void> {
-    try {
-      const store = await this.getTransaction('readwrite');
-
-      return new Promise((resolve, reject) => {
-        const request = store.clear();
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(new Error(`Failed to clear store: ${request.error?.message}`));
-      });
-    } catch (error) {
-      throw new Error(`IndexedDB clear error: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
+interface StoredStory {
+  id: string;
+  data: StoryData;
+  metadata: StorageMetadata;
 }
 
-export default IndexedDBBackend;
+export class IndexedDBBackend implements IStorageBackend {
+  private db: IDBPDatabase | null = null;
+
+  async initialize(): Promise<void> {
+    this.db = await openDB(DB_NAME, DB_VERSION, {
+      upgrade(db) {
+        // Create stories store
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        }
+
+        // Create metadata store
+        if (!db.objectStoreNames.contains(METADATA_STORE)) {
+          const metadataStore = db.createObjectStore(METADATA_STORE, { keyPath: 'id' });
+          metadataStore.createIndex('title', 'title', { unique: false });
+          metadataStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+      },
+    });
+  }
+
+  private ensureInitialized(): void {
+    if (!this.db) {
+      throw new Error('IndexedDB backend not initialized. Call initialize() first.');
+    }
+  }
+
+  async saveStory(id: string, data: StoryData): Promise<void> {
+    this.ensureInitialized();
+
+    const metadata: StorageMetadata = {
+      id,
+      title: data.metadata.title,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      size: JSON.stringify(data).length,
+    };
+
+    // Check if story exists
+    const existing = await this.db!.get(METADATA_STORE, id);
+    if (existing) {
+      metadata.createdAt = existing.createdAt;
+    }
+
+    const stored: StoredStory = {
+      id,
+      data,
+      metadata,
+    };
+
+    const tx = this.db!.transaction([STORE_NAME, METADATA_STORE], 'readwrite');
+    await Promise.all([
+      tx.objectStore(STORE_NAME).put(stored),
+      tx.objectStore(METADATA_STORE).put(metadata),
+      tx.done,
+    ]);
+  }
+
+  async loadStory(id: string): Promise<StoryData> {
+    this.ensureInitialized();
+    
+    const stored = await this.db!.get(STORE_NAME, id);
+    if (!stored) {
+      throw new Error(`Story not found: ${id}`);
+    }
+
+    return stored.data;
+  }
+
+  async deleteStory(id: string): Promise<void> {
+    this.ensureInitialized();
+    
+    const tx = this.db!.transaction([STORE_NAME, METADATA_STORE], 'readwrite');
+    await Promise.all([
+      tx.objectStore(STORE_NAME).delete(id),
+      tx.objectStore(METADATA_STORE).delete(id),
+      tx.done,
+    ]);
+  }
+
+  async listStories(): Promise<StorageMetadata[]> {
+    this.ensureInitialized();
+    
+    const metadata = await this.db!.getAll(METADATA_STORE);
+    return metadata.sort((a, b) => {
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
+  }
+
+  async hasStory(id: string): Promise<boolean> {
+    this.ensureInitialized();
+    
+    const metadata = await this.db!.get(METADATA_STORE, id);
+    return !!metadata;
+  }
+
+  async getMetadata(id: string): Promise<StorageMetadata> {
+    this.ensureInitialized();
+    
+    const metadata = await this.db!.get(METADATA_STORE, id);
+    if (!metadata) {
+      throw new Error(`Story not found: ${id}`);
+    }
+
+    return metadata;
+  }
+
+  async updateMetadata(id: string, updates: Partial<StorageMetadata>): Promise<void> {
+    this.ensureInitialized();
+    
+    const existing = await this.getMetadata(id);
+    const updated = {
+      ...existing,
+      ...updates,
+      id, // Ensure id doesn't change
+      updatedAt: new Date().toISOString(),
+    };
+
+    await this.db!.put(METADATA_STORE, updated);
+  }
+
+  async exportStory(id: string): Promise<Blob> {
+    const data = await this.loadStory(id);
+    const json = JSON.stringify(data, null, 2);
+    return new Blob([json], { type: 'application/json' });
+  }
+
+  async importStory(file: Blob | File): Promise<string> {
+    const text = await file.text();
+    const data: StoryData = JSON.parse(text);
+
+    // Generate new ID if not present
+    const id = data.metadata.id || crypto.randomUUID();
+    const storyWithId = { ...data, metadata: { ...data.metadata, id } };
+
+    await this.saveStory(id, storyWithId);
+    return id;
+  }
+
+  async getStorageUsage(): Promise<number> {
+    this.ensureInitialized();
+    
+    if (navigator.storage && navigator.storage.estimate) {
+      const estimate = await navigator.storage.estimate();
+      return estimate.usage || 0;
+    }
+
+    // Fallback: calculate approximate size
+    const stories = await this.db!.getAll(STORE_NAME);
+    return stories.reduce((total, story) => {
+      return total + JSON.stringify(story).length;
+    }, 0);
+  }
+
+  async clear(): Promise<void> {
+    this.ensureInitialized();
+    
+    const tx = this.db!.transaction([STORE_NAME, METADATA_STORE], 'readwrite');
+    await Promise.all([
+      tx.objectStore(STORE_NAME).clear(),
+      tx.objectStore(METADATA_STORE).clear(),
+      tx.done,
+    ]);
+  }
+}

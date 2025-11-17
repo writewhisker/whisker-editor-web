@@ -19,7 +19,7 @@ import {
   githubUser,
   isAuthenticated,
 } from './githubAuth';
-import { IndexedDBAdapter } from '../storage/IndexedDBAdapter';
+import { createIndexedDBStorage } from '@writewhisker/storage';
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -65,9 +65,12 @@ describe('GitHub Auth Service', () => {
     await signOut();
 
     // Clear IndexedDB
-    const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
-    await db.initialize();
-    await db.deleteGitHubToken();
+    const storage = createIndexedDBStorage();
+    await storage.initialize();
+    const backend = storage.getBackend();
+    if (backend.deleteGitHubToken) {
+      await backend.deleteGitHubToken();
+    }
   });
 
   describe('Initialization', () => {
@@ -77,13 +80,15 @@ describe('GitHub Auth Service', () => {
     });
 
     it('should restore token from IndexedDB', async () => {
-      const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
-      await db.initialize();
+      const storage = createIndexedDBStorage();
+      await storage.initialize();
+      const backend = storage.getBackend();
 
-      await db.saveGitHubToken({
-        accessToken: 'test-token',
-        tokenType: 'bearer',
-        scope: 'repo user',
+      if (backend.saveGitHubToken) {
+        await backend.saveGitHubToken({
+          accessToken: 'test-token',
+          tokenType: 'bearer',
+          scope: 'repo user',
         user: {
           login: 'testuser',
           id: 123,
@@ -91,7 +96,8 @@ describe('GitHub Auth Service', () => {
           email: 'test@example.com',
           avatarUrl: 'https://example.com/avatar.jpg',
         },
-      });
+        });
+      }
 
       await initializeGitHubAuth();
 
@@ -130,11 +136,12 @@ describe('GitHub Auth Service', () => {
       expect(get(isAuthenticated)).toBe(true);
 
       // Should be migrated to IndexedDB
-      const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
-      await db.initialize();
-      const stored = await db.loadGitHubToken();
+      const storage = createIndexedDBStorage();
+      await storage.initialize();
+      const backend = storage.getBackend();
+      const stored = backend.loadGitHubToken ? await backend.loadGitHubToken() : null;
 
-      expect(stored.accessToken).toBe('old-token');
+      expect(stored?.accessToken).toBe('old-token');
 
       // localStorage should be cleared after migration
       expect(localStorage.getItem('github_access_token')).toBeNull();
@@ -400,18 +407,21 @@ describe('GitHub Auth Service', () => {
     });
 
     it('should clear token from IndexedDB', async () => {
-      const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
-      await db.initialize();
+      const storage = createIndexedDBStorage();
+      await storage.initialize();
+      const backend = storage.getBackend();
 
-      await db.saveGitHubToken({
-        accessToken: 'token-in-db',
-        tokenType: 'bearer',
-        scope: 'repo',
-      });
+      if (backend.saveGitHubToken) {
+        await backend.saveGitHubToken({
+          accessToken: 'token-in-db',
+          tokenType: 'bearer',
+          scope: 'repo',
+        });
+      }
 
       await signOut();
 
-      const stored = await db.loadGitHubToken();
+      const stored = backend.loadGitHubToken ? await backend.loadGitHubToken() : null;
       expect(stored).toBeNull();
     });
 

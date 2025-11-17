@@ -4,32 +4,21 @@
  * Manages the queue of pending sync operations for GitHub
  */
 
-import { IndexedDBAdapter } from './IndexedDBAdapter';
+import { createIndexedDBStorage, type SyncQueueEntry } from '@writewhisker/storage';
 import { handleError } from '../../utils/errorHandling';
 
-export interface SyncQueueEntry {
-  id: string;
-  storyId: string;
-  operation: 'create' | 'update' | 'delete';
-  timestamp: Date;
-  data: any;
-  retryCount: number;
-  lastError?: string;
-}
+// Re-export SyncQueueEntry for backward compatibility
+export type { SyncQueueEntry };
 
 class SyncQueueService {
-  private db: IndexedDBAdapter;
+  private storage = createIndexedDBStorage();
   private initialized = false;
-
-  constructor() {
-    this.db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
-  }
 
   async initialize(): Promise<void> {
     if (this.initialized) return;
 
     try {
-      await this.db.initialize();
+      await this.storage.initialize();
       this.initialized = true;
     } catch (error: any) {
       const appError = handleError(error, 'SyncQueue.initialize', { silent: false });
@@ -44,14 +33,18 @@ class SyncQueueService {
     await this.initialize();
 
     try {
+      const backend = this.storage.getBackend();
+
       const queueEntry: SyncQueueEntry = {
         ...entry,
         id: 'sync-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         retryCount: 0,
       };
 
-      await this.db.addToSyncQueue(queueEntry);
+      if (backend.addToSyncQueue) {
+        await backend.addToSyncQueue(queueEntry);
+      }
     } catch (error: any) {
       const appError = handleError(error, 'SyncQueue.enqueue', { silent: false });
       throw new Error(`Failed to enqueue sync operation: ${appError.userMessage}`);
@@ -65,7 +58,13 @@ class SyncQueueService {
     await this.initialize();
 
     try {
-      const queue = await this.db.getSyncQueue();
+      const backend = this.storage.getBackend();
+
+      if (!backend.getSyncQueue) {
+        return [];
+      }
+
+      const queue = await backend.getSyncQueue();
 
       // Sort by timestamp (oldest first)
       return queue.sort((a, b) =>
@@ -91,7 +90,11 @@ class SyncQueueService {
    */
   async dequeue(id: string): Promise<void> {
     await this.initialize();
-    await this.db.removeFromSyncQueue(id);
+
+    const backend = this.storage.getBackend();
+    if (backend.removeFromSyncQueue) {
+      await backend.removeFromSyncQueue(id);
+    }
   }
 
   /**
@@ -99,7 +102,14 @@ class SyncQueueService {
    */
   async incrementRetry(id: string, error?: string): Promise<void> {
     await this.initialize();
-    const queue = await this.db.getSyncQueue();
+
+    const backend = this.storage.getBackend();
+
+    if (!backend.getSyncQueue || !backend.addToSyncQueue) {
+      return;
+    }
+
+    const queue = await backend.getSyncQueue();
     const entry = queue.find(e => e.id === id);
 
     if (entry) {
@@ -107,7 +117,7 @@ class SyncQueueService {
       if (error) {
         entry.lastError = error;
       }
-      await this.db.addToSyncQueue(entry);
+      await backend.addToSyncQueue(entry);
     }
   }
 
@@ -124,7 +134,11 @@ class SyncQueueService {
    */
   async clearQueue(): Promise<void> {
     await this.initialize();
-    await this.db.clearSyncQueue();
+
+    const backend = this.storage.getBackend();
+    if (backend.clearSyncQueue) {
+      await backend.clearSyncQueue();
+    }
   }
 
   /**

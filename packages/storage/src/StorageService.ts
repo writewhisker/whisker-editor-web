@@ -53,14 +53,14 @@ export class StorageService extends EventEmitter<{
         this.emit(StorageEventType.STORY_CREATED, {
           type: StorageEventType.STORY_CREATED,
           storyId: id,
-          title: data.title,
+          title: data.metadata.title,
           timestamp: Date.now(),
         });
       } else {
         this.emit(StorageEventType.STORY_UPDATED, {
           type: StorageEventType.STORY_UPDATED,
           storyId: id,
-          title: data.title,
+          title: data.metadata.title,
           timestamp: Date.now(),
         });
       }
@@ -68,7 +68,7 @@ export class StorageService extends EventEmitter<{
       this.emit(StorageEventType.STORY_SAVED, {
         type: StorageEventType.STORY_SAVED,
         storyId: id,
-        title: data.title,
+        title: data.metadata.title,
         timestamp: Date.now(),
       });
     } catch (error) {
@@ -211,7 +211,7 @@ export class StorageService extends EventEmitter<{
       this.emit(StorageEventType.STORY_CREATED, {
         type: StorageEventType.STORY_CREATED,
         storyId: id,
-        title: story.title,
+        title: story.metadata.title,
         timestamp: Date.now(),
       });
 

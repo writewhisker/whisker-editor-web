@@ -51,10 +51,10 @@ export class LocalStorageBackend implements IStorageBackend {
 
   async saveStory(id: string, data: StoryData): Promise<void> {
     this.ensureBrowser();
-    
+
     const metadata: StorageMetadata = {
       id,
-      title: data.title,
+      title: data.metadata.title,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       size: JSON.stringify(data).length,
@@ -155,11 +155,11 @@ export class LocalStorageBackend implements IStorageBackend {
   async importStory(file: Blob | File): Promise<string> {
     const text = await file.text();
     const data: StoryData = JSON.parse(text);
-    
+
     // Generate new ID if not present
-    const id = data.id || crypto.randomUUID();
-    const storyWithId = { ...data, id };
-    
+    const id = data.metadata.id || crypto.randomUUID();
+    const storyWithId = { ...data, metadata: { ...data.metadata, id } };
+
     await this.saveStory(id, storyWithId);
     return id;
   }

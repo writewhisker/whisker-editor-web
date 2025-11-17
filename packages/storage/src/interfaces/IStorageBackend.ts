@@ -4,6 +4,7 @@
  */
 
 import type { StoryData } from '@writewhisker/core-ts';
+import type { PreferenceEntry, SyncQueueEntry, GitHubTokenData } from '../types/ExtendedStorage.js';
 
 /**
  * Metadata for a stored story
@@ -80,4 +81,62 @@ export interface IStorageBackend {
    * Clear all storage (careful!)
    */
   clear(): Promise<void>;
+
+  // Optional methods for extended storage functionality
+  // Backends can choose to implement these if they support key-value storage
+
+  /**
+   * Save a preference
+   */
+  savePreference?(key: string, entry: PreferenceEntry): Promise<void>;
+
+  /**
+   * Load a preference
+   */
+  loadPreference?<T = any>(key: string): Promise<PreferenceEntry<T> | null>;
+
+  /**
+   * Delete a preference
+   */
+  deletePreference?(key: string): Promise<void>;
+
+  /**
+   * List all preference keys
+   */
+  listPreferences?(): Promise<string[]>;
+
+  /**
+   * Add an entry to the sync queue
+   */
+  addToSyncQueue?(entry: SyncQueueEntry): Promise<void>;
+
+  /**
+   * Get all sync queue entries
+   */
+  getSyncQueue?(): Promise<SyncQueueEntry[]>;
+
+  /**
+   * Remove an entry from the sync queue
+   */
+  removeFromSyncQueue?(id: string): Promise<void>;
+
+  /**
+   * Clear the entire sync queue
+   */
+  clearSyncQueue?(): Promise<void>;
+
+  /**
+   * Save GitHub authentication token
+   */
+  saveGitHubToken?(token: GitHubTokenData): Promise<void>;
+
+  /**
+   * Load GitHub authentication token
+   */
+  loadGitHubToken?(): Promise<GitHubTokenData | null>;
+
+  /**
+   * Delete GitHub authentication token
+   */
+  deleteGitHubToken?(): Promise<void>;
 }

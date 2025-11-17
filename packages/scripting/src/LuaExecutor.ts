@@ -144,16 +144,16 @@ export class LuaExecutor {
 
     // Create passages API
     engine.global.set('passages', {
-      get: (id: string): Passage | null => {
-        return context.story.passages.get(id) || null;
+      get: (id: string): Passage | undefined => {
+        return context.story.passages.get(id);
       },
 
-      current: (): Passage | null => {
-        if (!context.currentPassageId) return null;
-        return context.story.passages.get(context.currentPassageId) || null;
+      current: (): Passage | undefined => {
+        if (!context.currentPassageId) return undefined;
+        return context.story.passages.get(context.currentPassageId);
       },
 
-      goto: (id: string): void => {
+      navigate: (id: string): void => {
         // This would trigger navigation in the runtime
         context.currentPassageId = id;
         context.history.push(id);
@@ -179,11 +179,11 @@ export class LuaExecutor {
         }
       },
 
-      get: (index: number): string | null => {
+      get: (index: number): string | undefined => {
         if (index >= 0 && index < context.history.length) {
           return context.history[index];
         }
-        return null;
+        return undefined;
       },
 
       list: (): string[] => {
@@ -222,7 +222,7 @@ export class LuaExecutor {
     });
 
     engine.global.set('choice', (arr: any[]): any => {
-      if (!Array.isArray(arr) || arr.length === 0) return null;
+      if (!Array.isArray(arr) || arr.length === 0) return undefined;
       return arr[Math.floor(Math.random() * arr.length)];
     });
 

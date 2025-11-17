@@ -202,7 +202,7 @@ describe('LuaExecutor', () => {
     });
 
     it('should navigate to passage', async () => {
-      await executor.execute('passages.goto("passage-2")', context);
+      await executor.execute('passages.navigate("passage-2")', context);
 
       expect(context.currentPassageId).toBe('passage-2');
       expect(context.history).toContain('passage-2');

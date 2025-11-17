@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isAuthenticated, githubUser } from '../../services/github/githubAuth';
+  import { isAuthenticated, githubUser } from '@writewhisker/github';
   import { writable } from 'svelte/store';
 
   export let repositoryName: string | null = null;

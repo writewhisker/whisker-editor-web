@@ -19,8 +19,8 @@ import {
   classifyError,
   ErrorCategory,
   isOnline,
-} from '../../utils/errorHandling';
-import { withLoading } from '../../stores/loadingStore';
+} from '@writewhisker/editor-base/utils';
+import { withLoading } from '@writewhisker/editor-base/stores';
 
 let octokit: Octokit | null = null;
 

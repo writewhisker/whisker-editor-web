@@ -28,6 +28,16 @@ export type {
   StorageErrorEvent,
 } from './events/StorageEvents.js';
 
+// Extended storage types
+export type {
+  PreferenceScope,
+  PreferenceEntry,
+  SyncQueueEntry,
+  GitHubAuthToken,
+  GitHubUser,
+  GitHubTokenData,
+} from './types/ExtendedStorage.js';
+
 // Convenience factory functions
 import { StorageService } from './StorageService.js';
 import { IndexedDBBackend } from './backends/IndexedDBBackend.js';

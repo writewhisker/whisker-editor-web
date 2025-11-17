@@ -1,10 +1,6 @@
 /**
- * Analytics Module
- * Provides story analytics and playthrough recording
+ * Re-export analytics from @writewhisker/analytics package
+ * This maintains backwards compatibility for editor-base exports
  */
 
-export * from './PlaythroughAnalytics';
-export * from './PlaythroughRecorder';
-export * from './StoryAnalytics';
-export * from './StorySimulator';
-export * from './types';
+export * from '@writewhisker/analytics';

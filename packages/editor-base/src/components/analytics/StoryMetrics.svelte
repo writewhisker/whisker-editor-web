@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StoryMetrics } from '../../analytics/types';
+  import type { StoryMetrics } from '@writewhisker/analytics';
 
   // Props
   let {

@@ -4,7 +4,7 @@
   import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
   import PlaythroughList from './PlaythroughList.svelte';
   import { currentMetrics, isAnalyzing, analyticsActions, lastAnalyzed } from '../../stores/analyticsStore';
-  import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
+  import { getPlaythroughRecorder } from '@writewhisker/analytics';
   import { currentStory } from '../../stores/storyStateStore';
 
   // State

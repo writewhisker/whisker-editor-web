@@ -3,7 +3,7 @@
  * Compare two versions of a story and identify differences
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 
 export interface StoryDiff {
   passagesAdded: string[];

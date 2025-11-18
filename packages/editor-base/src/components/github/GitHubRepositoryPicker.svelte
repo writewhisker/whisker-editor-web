@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, createEventDispatcher } from 'svelte';
-  import { listRepositories, createRepository } from '../../services/github/githubApi';
-  import type { GitHubRepository } from '../../services/github/types';
-  import { isAuthenticated } from '../../services/github/githubAuth';
+  import { listRepositories, createRepository } from '@writewhisker/github';
+  import type { GitHubRepository } from '@writewhisker/github';
+  import { isAuthenticated } from '@writewhisker/github';
 
   const dispatch = createEventDispatcher();
 

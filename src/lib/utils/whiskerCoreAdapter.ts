@@ -11,7 +11,7 @@ import type {
   VariableData,
   EditorData,
   LuaFunctionData
-} from '@whisker/core-ts';
+} from '@writewhisker/core-ts';
 import { nanoid } from 'nanoid';
 
 /**
@@ -353,7 +353,26 @@ export function importWhiskerFile(data: any): StoryData {
     return fromWhiskerCoreFormat(data);
   } else if (isEditorFormat(data)) {
     return data;
+  } else if (isSimplifiedTemplateFormat(data)) {
+    // Handle simplified template format (no format/formatVersion fields)
+    return fromWhiskerCoreFormat(data);
   } else {
     throw new Error('Unknown Whisker format - unable to import');
   }
+}
+
+/**
+ * Detects if data is in simplified template format
+ * (has passages array, metadata, startPassage, but no format/formatVersion)
+ */
+function isSimplifiedTemplateFormat(data: any): boolean {
+  return (
+    data &&
+    typeof data === 'object' &&
+    data.metadata &&
+    typeof data.startPassage === 'string' &&
+    Array.isArray(data.passages) &&
+    !data.format && // No format field
+    !data.formatVersion // No formatVersion field
+  );
 }

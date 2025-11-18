@@ -4,8 +4,8 @@ import ExportPanel from './ExportPanel.svelte';
 import { get } from 'svelte/store';
 import { exportPreferences, exportActions, exportHistory, isExporting, exportError } from '../../stores/exportStore';
 import { currentStory } from '../../stores';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 // Mock URL methods globally
 global.URL.createObjectURL = vi.fn(() => 'blob:mock');

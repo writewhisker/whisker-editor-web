@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ValidateIFIDValidator } from './ValidateIFIDValidator';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 const createStory = (ifid?: string) => {
   return new Story({

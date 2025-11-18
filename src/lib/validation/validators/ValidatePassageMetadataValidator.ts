@@ -4,7 +4,7 @@
  * Validates passage metadata structure and values.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 

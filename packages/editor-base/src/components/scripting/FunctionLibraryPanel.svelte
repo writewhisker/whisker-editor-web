@@ -3,7 +3,7 @@
    * FunctionLibraryPanel - Manage reusable Lua functions
    */
   import { currentStory } from '../../stores/storyStateStore';
-  import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES } from '@whisker/core-ts';
+  import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES } from '@writewhisker/core-ts';
 
   let selectedFunctionId = $state<string | null>(null);
   let searchQuery = $state('');

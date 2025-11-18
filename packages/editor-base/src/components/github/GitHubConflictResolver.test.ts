@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import GitHubConflictResolver from './GitHubConflictResolver.svelte';
-import { Story, Passage, Variable } from '@whisker/core-ts';
+import { Story, Passage, Variable } from '@writewhisker/core-ts';
 
 // Mock StoryComparisonView component - return a simple Svelte component mock
 vi.mock('../comparison/StoryComparisonView.svelte', () => ({

@@ -12,8 +12,8 @@
  * See `src/lib/validation/StoryValidator.ts` and `src/lib/stores/validationStore.ts` instead.
  */
 
-import type { Story } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 /**
  * @deprecated Use ValidationIssue from `src/lib/validation/types.ts` instead

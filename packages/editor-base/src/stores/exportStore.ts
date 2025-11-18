@@ -17,7 +17,7 @@ import { EPUBExporter } from '../export/formats/EPUBExporter';
 import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
 import { JSONImporter } from '../import/formats/JSONImporter';
 import { TwineImporter } from '../import/formats/TwineImporter';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import { getPreferenceService } from '../services/storage/PreferenceService';
 
 /**

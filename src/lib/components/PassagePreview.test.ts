@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import PassagePreview from './PassagePreview.svelte';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 // Mock tagActions
 const mockGetTagColor = vi.fn();

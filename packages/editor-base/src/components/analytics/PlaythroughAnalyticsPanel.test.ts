@@ -3,8 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import PlaythroughAnalyticsPanel from './PlaythroughAnalyticsPanel.svelte';
 import { currentStory } from '../../stores';
-import { Story } from '@whisker/core-ts';
-import { Playthrough } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Playthrough } from '@writewhisker/core-ts';
 
 // Create mock data
 const createMockPlaythroughs = () => [

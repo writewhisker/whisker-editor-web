@@ -9,7 +9,7 @@
   } from '../../stores/testScenarioStore';
   import { currentStory } from '../../stores/storyStateStore';
   import type { TestScenario, TestStep } from '../../player/testScenarioTypes';
-  import type { Passage } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
 
   let view: 'list' | 'create' | 'edit' | 'results' = 'list';
   let editingScenario: TestScenario | null = null;

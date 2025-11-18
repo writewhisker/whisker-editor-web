@@ -1,0 +1,114 @@
+/**
+ * Whisker Shared UI - Base Styles
+ * Reset and base element styles
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--whisker-font-family);
+  font-size: var(--whisker-font-size-base);
+  line-height: var(--whisker-line-height-normal);
+  color: var(--whisker-color-text);
+  background-color: var(--whisker-color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--whisker-font-weight-semibold);
+  line-height: var(--whisker-line-height-tight);
+}
+
+h1 { font-size: var(--whisker-font-size-3xl); }
+h2 { font-size: var(--whisker-font-size-2xl); }
+h3 { font-size: var(--whisker-font-size-xl); }
+h4 { font-size: var(--whisker-font-size-lg); }
+h5 { font-size: var(--whisker-font-size-base); }
+h6 { font-size: var(--whisker-font-size-sm); }
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--whisker-color-primary);
+  text-decoration: none;
+  transition: color var(--whisker-transition-fast);
+}
+
+a:hover {
+  color: var(--whisker-color-primary-hover);
+}
+
+/* Code */
+code, pre {
+  font-family: var(--whisker-font-family-mono);
+  font-size: var(--whisker-font-size-sm);
+}
+
+code {
+  padding: 0.125rem 0.25rem;
+  background: var(--whisker-color-surface);
+  border: 1px solid var(--whisker-color-border);
+  border-radius: var(--whisker-radius-sm);
+}
+
+pre {
+  padding: var(--whisker-space-lg);
+  background: var(--whisker-color-surface);
+  border: 1px solid var(--whisker-color-border);
+  border-radius: var(--whisker-radius-md);
+  overflow-x: auto;
+}
+
+pre code {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+/* Lists */
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Forms */
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--whisker-color-primary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--whisker-color-primary);
+  color: var(--whisker-color-text-inverse);
+}

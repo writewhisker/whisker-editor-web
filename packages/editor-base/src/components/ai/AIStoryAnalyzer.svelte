@@ -3,7 +3,7 @@
   import { isGenerating, canGenerate, aiActions } from '../../stores/aiStore';
   import { currentStory } from '../../stores/storyStateStore';
   import type { StoryAnalysisResult } from '../../ai/types';
-  import type { Passage, Choice } from '@whisker/core-ts';
+  import type { Passage, Choice } from '@writewhisker/core-ts';
 
   // Props
   let {

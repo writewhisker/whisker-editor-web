@@ -5,7 +5,7 @@
  * Provides kid-friendly interfaces and achievement tracking.
  */
 
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import { MinecraftExporter, type MinecraftExportOptions } from '../../export/MinecraftExporter';
 import { RobloxExporter, type RobloxExportOptions } from '../../export/RobloxExporter';
 import { kidsModeActions } from '../../stores/kidsModeStore';

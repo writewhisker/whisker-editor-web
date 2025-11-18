@@ -1,0 +1,42 @@
+{
+  "name": "@writewhisker/validation",
+  "version": "1.0.0",
+  "description": "Story validation CLI and programmatic API for Whisker interactive fiction",
+  "license": "AGPL-3.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "whisker-validate": "./bin/whisker-validate.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "templates"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@writewhisker/core-ts": "workspace:*",
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.0"
+  },
+  "keywords": [
+    "whisker",
+    "interactive-fiction",
+    "validation",
+    "cli",
+    "quality",
+    "testing"
+  ]
+}

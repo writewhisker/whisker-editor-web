@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { githubUser, isAuthenticated, startGitHubAuth } from '../../services/github/githubAuth';
+  import { githubUser, isAuthenticated, startGitHubAuth } from '@writewhisker/github';
 
   const dispatch = createEventDispatcher();
 

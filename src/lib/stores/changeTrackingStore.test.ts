@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { changeLogs, recentChanges, isTrackingEnabled, changeTrackingActions } from './changeTrackingStore';
 import { currentStory } from './projectStore';
 import { currentUser } from './commentStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 describe('changeTrackingStore', () => {
   let mockStory: Story;

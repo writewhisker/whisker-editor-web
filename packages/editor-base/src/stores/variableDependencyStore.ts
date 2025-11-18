@@ -11,8 +11,8 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import type { Story, Variable } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
+import type { Story, Variable } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 export type DependencyType = 'reads' | 'writes' | 'depends_on' | 'affects';
 

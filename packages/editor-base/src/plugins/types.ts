@@ -1,5 +1,5 @@
 import type { ComponentType } from 'svelte';
-import type { Passage } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
 
 /**
  * Plugin System Type Definitions
@@ -57,6 +57,7 @@ export interface PluginUIExtensions {
 
 // Runtime hooks
 export interface PluginRuntimeHooks {
+  // Story lifecycle
   onInit?: (context: RuntimeContext) => void | Promise<void>;
   onStoryLoad?: (context: RuntimeContext) => void | Promise<void>;
   onPassageEnter?: (passage: Passage, context: RuntimeContext) => void | Promise<void>;
@@ -64,6 +65,14 @@ export interface PluginRuntimeHooks {
   onVariableChange?: (name: string, value: any, context: RuntimeContext) => void;
   onSave?: (context: RuntimeContext) => void | Promise<void>;
   onLoad?: (context: RuntimeContext) => void | Promise<void>;
+
+  // SaaS-specific hooks
+  onProjectCreate?: (projectId: string, context: RuntimeContext) => void | Promise<void>;
+  onProjectDelete?: (projectId: string, context: RuntimeContext) => void | Promise<void>;
+  onPublish?: (publishUrl: string, context: RuntimeContext) => void | Promise<void>;
+  onUnpublish?: (context: RuntimeContext) => void | Promise<void>;
+  onUserIdentify?: (userId: string, traits: Record<string, any>) => void | Promise<void>;
+  onAnalyticsEvent?: (eventName: string, properties: Record<string, any>) => void | Promise<void>;
 }
 
 // Runtime context
@@ -72,6 +81,64 @@ export interface RuntimeContext {
   variables: Map<string, any>;
   currentPassage: Passage | null;
   history: string[]; // Passage IDs
+  // SaaS context (optional, for multi-tenant applications)
+  userId?: string;
+  projectId?: string;
+  organizationId?: string;
+  permissions?: string[];
+}
+
+// Storage context for plugin storage operations
+export interface StorageContext {
+  userId: string;
+  projectId: string;
+  pluginId: string;
+}
+
+// SaaS Plugin Extensions (for multi-tenant and SaaS applications)
+export interface SaaSPluginExtensions {
+  /** Backend API integration */
+  api?: {
+    endpoints?: Record<string, (params: any) => Promise<any>>;
+    middleware?: Array<(req: any, res: any, next: any) => void>;
+  };
+
+  /** Subscription/billing checks */
+  permissions?: {
+    requiredPlan?: 'free' | 'starter' | 'pro' | 'enterprise' | string;
+    requiredFeatures?: string[];
+    checkAccess?: (user: any) => Promise<boolean>;
+  };
+
+  /** Storage integration for plugin data */
+  storage?: {
+    save?: (data: any, context: StorageContext) => Promise<void>;
+    load?: (context: StorageContext) => Promise<any>;
+    delete?: (context: StorageContext) => Promise<void>;
+  };
+
+  /** Settings/configuration UI and schema */
+  settings?: {
+    schema?: Record<string, {
+      type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+      label: string;
+      description?: string;
+      default?: any;
+      required?: boolean;
+      validation?: (value: any) => boolean | string;
+    }>;
+    defaults?: Record<string, any>;
+    validateSettings?: (settings: any) => boolean | { valid: boolean; errors: string[] };
+  };
+
+  /** Analytics and tracking configuration */
+  analytics?: {
+    trackingId?: string;
+    events?: Record<string, {
+      name: string;
+      properties?: Record<string, any>;
+    }>;
+  };
 }
 
 // Main plugin interface
@@ -88,6 +155,9 @@ export interface EditorPlugin {
   conditions?: CustomCondition[];
   ui?: PluginUIExtensions;
   runtime?: PluginRuntimeHooks;
+
+  // SaaS extensions (optional, for multi-tenant applications)
+  saas?: SaaSPluginExtensions;
 
   // Lifecycle
   onRegister?: () => void | Promise<void>;

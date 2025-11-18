@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { StaticSiteExporter } from './StaticSiteExporter';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 describe('StaticSiteExporter', () => {
   const exporter = new StaticSiteExporter();

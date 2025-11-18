@@ -1,10 +1,10 @@
-import type { Passage } from '@whisker/core-ts';
-import type { Choice } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Choice } from '@writewhisker/core-ts';
 
 /**
- * Represents a single step in a playthrough
+ * Represents a single step in a runtime playthrough
  */
-export interface PlaythroughStep {
+export interface PlayerPlaythroughStep {
   timestamp: number;
   passageId: string;
   passageTitle: string;
@@ -24,7 +24,7 @@ export interface PlaythroughRecording {
     duration: number;
     completed: boolean;
   };
-  steps: PlaythroughStep[];
+  steps: PlayerPlaythroughStep[];
   finalState: {
     variables: Record<string, any>;
     passagesVisited: string[];
@@ -73,6 +73,6 @@ export interface PlayerState {
   currentPassageId: string | null;
   variables: Record<string, any>;
   visitedPassages: Record<string, number>;
-  history: PlaythroughStep[];
+  history: PlayerPlaythroughStep[];
   timestamp: number;
 }

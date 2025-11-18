@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { handleGitHubCallback } from '../../services/github/githubAuth';
+  import { handleGitHubCallback } from '@writewhisker/github';
 
   export let onComplete: () => void;
   export let code: string;

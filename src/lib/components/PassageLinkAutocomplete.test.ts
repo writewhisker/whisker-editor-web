@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/svelte';
 import PassageLinkAutocomplete from './PassageLinkAutocomplete.svelte';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('PassageLinkAutocomplete', () => {
   const testPassages = [

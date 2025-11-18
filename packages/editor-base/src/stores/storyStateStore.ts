@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import { Story, Passage, Variable, type ProjectData } from '@whisker/core-ts';
+import { Story, Passage, Variable, type ProjectData } from '@writewhisker/core-ts';
 
 /**
  * Core story state store
@@ -52,6 +52,7 @@ export const storyStateActions = {
         modified: new Date().toISOString(),
       },
     });
+
     currentStory.set(story);
     return story;
   },

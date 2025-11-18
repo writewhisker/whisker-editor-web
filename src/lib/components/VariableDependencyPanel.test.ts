@@ -11,9 +11,9 @@ import {
   orphanVariables,
 } from '../stores/variableDependencyStore';
 import { currentStory } from '../stores/projectStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
 
 describe('VariableDependencyPanel', () => {
   let story: Story;

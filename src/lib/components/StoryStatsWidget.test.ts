@@ -4,9 +4,9 @@ import { get } from 'svelte/store';
 import StoryStatsWidget from './StoryStatsWidget.svelte';
 import { currentStory, passageList } from '../stores/projectStore';
 import { viewPreferencesStore } from '../stores/viewPreferencesStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 describe('StoryStatsWidget', () => {
   let story: Story;

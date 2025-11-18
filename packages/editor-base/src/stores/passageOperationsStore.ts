@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { currentStory } from './storyStateStore';
 import { selectedPassageId, selectionActions } from './selectionStore';
-import { Passage } from '@whisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 import { removeConnectionsToPassage } from '../utils/connectionValidator';
 
 /**

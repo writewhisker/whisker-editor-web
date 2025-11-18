@@ -5,10 +5,10 @@
  * Converts Twine passages and links to Whisker format.
  */
 
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 import type {
   ImportContext,
   ImportResult,
@@ -674,6 +674,8 @@ export class TwineImporter implements IImporter {
         return this.convertFromSugarCube(text, warnings, tracker, passageId, passageName);
       case TwineFormat.CHAPBOOK:
         return this.convertFromChapbook(text, warnings, tracker, passageId, passageName);
+      case TwineFormat.SNOWMAN:
+        return this.convertFromSnowman(text, warnings, tracker, passageId, passageName);
       default:
         return text;
     }
@@ -792,6 +794,34 @@ export class TwineImporter implements IImporter {
         return `{{${varName}}}`;
       }
     );
+
+    // Track (transition:) and (transition-time:) macros
+    const transitionMatch = text.match(/\(\s*transition(-time)?:/i);
+    if (transitionMatch) {
+      tracker.addIssue('info', 'macro', 'Transitions',
+        'Harlowe transition effects are not supported', {
+          passageId,
+          passageName,
+          original: transitionMatch[0],
+          suggestion: 'Transitions will be removed from converted text'
+        });
+    }
+
+    // Track (live:) and (event:) macros
+    if (text.match(/\(\s*(live|event):/i)) {
+      tracker.addIssue('warning', 'macro', 'Live/Event Macros',
+        'Harlowe (live:) and (event:) macros are not supported', {
+          passageId,
+          passageName,
+          suggestion: 'Convert to passage-based interactivity'
+        });
+    }
+
+    // Remove transition macros (can't convert)
+    converted = converted.replace(/\(\s*transition(-time)?:[^)]*\)/gi, '');
+
+    // Remove live/event macros (can't convert)
+    converted = converted.replace(/\(\s*(live|event):[^)]*\)/gi, '');
 
     // Remove named hook markers |name> (convert to regular text)
     converted = converted.replace(/\|(\w+)>/g, '');
@@ -922,6 +952,25 @@ export class TwineImporter implements IImporter {
       }
     );
 
+    // Track <<linkreplace>>, <<linkappend>>, etc. (warning - these are interactive)
+    const linkMacros = text.match(/<<(linkreplace|linkappend|linkprepend|replace|append|prepend)[\s>]/gi);
+    if (linkMacros) {
+      linkMacros.forEach((macro) => {
+        const macroName = macro.match(/<<(\w+)/)?.[1] || 'unknown';
+        tracker.addIssue('warning', 'interactive', `<<${macroName}>>`,
+          `Interactive macro <<${macroName}>> will be converted to plain text`, {
+            passageId,
+            passageName,
+            original: macro,
+            suggestion: 'Restructure as separate passages or choices'
+          });
+      });
+    }
+
+    // Remove <<replace>>, <<append>>, <<prepend>> blocks (can't preserve interactivity)
+    converted = converted.replace(/<<(replace|append|prepend)\s+[^>]+>>/gi, '');
+    converted = converted.replace(/<<\/(replace|append|prepend)>>/gi, '');
+
     return converted;
   }
 
@@ -1001,6 +1050,85 @@ export class TwineImporter implements IImporter {
   }
 
   /**
+   * Convert from Snowman syntax
+   */
+  private convertFromSnowman(
+    text: string,
+    warnings: string[],
+    tracker: ConversionTracker,
+    passageId?: string,
+    passageName?: string
+  ): string {
+    let converted = text;
+
+    // Snowman uses JavaScript heavily - track usage
+    const jsBlocks = text.match(/<script[\s\S]*?<\/script>/gi);
+    if (jsBlocks) {
+      tracker.addIssue('critical', 'javascript', 'JavaScript Code Blocks',
+        `Snowman uses JavaScript which is not supported - ${jsBlocks.length} block(s) found`, {
+          passageId,
+          passageName,
+          original: jsBlocks[0],
+          suggestion: 'Rewrite JavaScript logic using Whisker scripting or passage structure'
+        });
+    }
+
+    // Track inline JavaScript expressions
+    const jsExpressions = text.match(/<%[\s\S]*?%>/g);
+    if (jsExpressions) {
+      tracker.addIssue('critical', 'javascript', 'JavaScript Expressions',
+        `Snowman inline JavaScript expressions (<% %>) are not supported - ${jsExpressions.length} found`, {
+          passageId,
+          passageName,
+          original: jsExpressions[0],
+          suggestion: 'Replace with Whisker variable syntax or conditional logic'
+        });
+    }
+
+    // Track print expressions <%= %>
+    const printExpressions = text.match(/<%=[\s\S]*?%>/g);
+    if (printExpressions) {
+      tracker.addIssue('warning', 'javascript', 'Print Expressions',
+        `Snowman print expressions (<%= %>) need manual conversion - ${printExpressions.length} found`, {
+          passageId,
+          passageName,
+          original: printExpressions[0],
+          suggestion: 'Convert to {{variable}} syntax for simple variables'
+        });
+    }
+
+    // Info: Snowman is JavaScript-heavy (only add once per passage)
+    if (text.length > 0 && passageId) {
+      tracker.addIssue('info', 'format', 'Snowman Format',
+        'Snowman is JavaScript-based and requires extensive manual conversion', {
+          passageId,
+          passageName,
+          suggestion: 'Review all JavaScript code and rewrite using Whisker syntax'
+        });
+    }
+
+    // Attempt basic conversions
+
+    // Convert <%= variable %> to {{variable}} (simple cases only)
+    converted = converted.replace(/<%=\s*(\w+)\s*%>/g, (_, varName) => {
+      return `{{${varName}}}`;
+    });
+
+    // Convert <%= s.variable %> to {{variable}}
+    converted = converted.replace(/<%=\s*s\.(\w+)\s*%>/g, (_, varName) => {
+      return `{{${varName}}}`;
+    });
+
+    // Remove <script> blocks (can't convert meaningfully)
+    converted = converted.replace(/<script[\s\S]*?<\/script>/gi, '');
+
+    // Remove <% %> blocks (can't convert without JavaScript interpreter)
+    converted = converted.replace(/<%[\s\S]*?%>/g, '');
+
+    return converted;
+  }
+
+  /**
    * Extract links from passage text
    */
   private extractLinks(text: string): Array<{ text: string; target: string }> {
@@ -1044,37 +1172,84 @@ export class TwineImporter implements IImporter {
   }
 
   /**
-   * Extract and create variables from story content
+   * Extract and create variables from story content with type inference
    */
   private extractVariables(story: Story, warnings: string[]): void {
-    const variableNames = new Set<string>();
+    const variableInfo = new Map<string, { type: string; initial: string | number | boolean }>();
 
-    // Scan all passages for variable references
+    // Scan all passages for variable references and assignments
     story.passages.forEach((passage) => {
       const text = passage.content;
 
-      // Match {{varName}} and {{varName = value}}
-      const varRegex = /\{\{(\w+)(?:\s*=\s*[^}]+)?\}\}/g;
+      // Match {{varName = value}} assignments to infer types
+      const assignRegex = /\{\{(\w+)\s*=\s*([^}]+)\}\}/g;
       let match;
 
-      while ((match = varRegex.exec(text)) !== null) {
-        variableNames.add(match[1]);
+      while ((match = assignRegex.exec(text)) !== null) {
+        const varName = match[1];
+        const value = match[2].trim();
+
+        // Try to infer type from value
+        let type = 'string';
+        let initial: string | number | boolean = '';
+
+        // Check for boolean
+        if (value === 'true' || value === 'false') {
+          type = 'boolean';
+          initial = value === 'true';
+        }
+        // Check for number
+        else if (/^-?\d+(\.\d+)?$/.test(value)) {
+          type = 'number';
+          initial = parseFloat(value);
+        }
+        // Check for string (quoted)
+        else if (/^["'].*["']$/.test(value)) {
+          type = 'string';
+          initial = value.slice(1, -1); // Remove quotes
+        }
+        // Default to string with original value
+        else {
+          type = 'string';
+          initial = value;
+        }
+
+        // Only update if we don't have info yet, or if this is more specific
+        if (!variableInfo.has(varName)) {
+          variableInfo.set(varName, { type, initial });
+        } else {
+          // If we already have this var, prefer number/boolean over string
+          const existing = variableInfo.get(varName)!;
+          if (existing.type === 'string' && (type === 'number' || type === 'boolean')) {
+            variableInfo.set(varName, { type, initial });
+          }
+        }
+      }
+
+      // Match {{varName}} references (without assignment)
+      const refRegex = /\{\{(\w+)\}\}/g;
+      while ((match = refRegex.exec(text)) !== null) {
+        const varName = match[1];
+        // Only add if we don't have it yet
+        if (!variableInfo.has(varName)) {
+          variableInfo.set(varName, { type: 'string', initial: '' });
+        }
       }
     });
 
-    // Create variables with default values
-    variableNames.forEach((name) => {
+    // Create variables with inferred types
+    variableInfo.forEach((info, name) => {
       const variable = new Variable({
         name,
-        type: 'string',
-        initial: '',
+        type: info.type as 'string' | 'number' | 'boolean',
+        initial: info.initial,
       });
       story.addVariable(variable);
     });
 
-    if (variableNames.size > 0) {
+    if (variableInfo.size > 0) {
       warnings.push(
-        `Extracted ${variableNames.size} variable(s) - please verify types and initial values`
+        `Extracted ${variableInfo.size} variable(s) with inferred types - please verify initial values`
       );
     }
   }

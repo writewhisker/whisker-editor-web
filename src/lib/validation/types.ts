@@ -4,8 +4,8 @@
  * Defines types for story validation results and quality metrics.
  */
 
-import type { Passage } from '@whisker/core-ts';
-import type { Variable } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Variable } from '@writewhisker/core-ts';
 
 /**
  * Severity level for validation issues

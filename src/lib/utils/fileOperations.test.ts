@@ -6,7 +6,7 @@ import {
   saveProjectFileAs,
   type FileHandle,
 } from './fileOperations';
-import type { ProjectData } from '@whisker/core-ts';
+import type { ProjectData } from '@writewhisker/core-ts';
 
 describe('fileOperations', () => {
   const mockProjectData: ProjectData = {

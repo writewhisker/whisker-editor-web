@@ -14,7 +14,7 @@ import {
   type CollaborationChange,
   type CollaborationSession,
 } from './collaborationStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 describe('collaborationStore', () => {
   let story: Story;

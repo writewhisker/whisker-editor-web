@@ -4,8 +4,8 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { RobloxExporter } from './RobloxExporter';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('RobloxExporter', () => {
   let story: Story;

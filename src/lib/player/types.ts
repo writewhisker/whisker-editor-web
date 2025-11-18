@@ -1,5 +1,5 @@
-import type { Passage } from '@whisker/core-ts';
-import type { Choice } from '@whisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Choice } from '@writewhisker/core-ts';
 
 /**
  * Represents a single step in a playthrough

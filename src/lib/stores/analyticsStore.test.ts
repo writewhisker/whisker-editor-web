@@ -12,7 +12,7 @@ import {
 } from './analyticsStore';
 import { currentStory } from './projectStore';
 import { StoryAnalytics } from '../analytics/StoryAnalytics';
-import type { Story } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
 import type { StoryMetrics } from '../analytics/types';
 
 // Mock StoryAnalytics

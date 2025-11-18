@@ -4,9 +4,9 @@
  * Exports stories as Markdown documentation for readability and sharing.
  */
 
-import type { Story, Variable } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
-import type { Choice } from '@whisker/core-ts';
+import type { Story, Variable } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Choice } from '@writewhisker/core-ts';
 import type {
   ExportContext,
   ExportResult,

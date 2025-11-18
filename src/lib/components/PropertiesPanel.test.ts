@@ -4,9 +4,9 @@ import { get } from 'svelte/store';
 import PropertiesPanel from './PropertiesPanel.svelte';
 import { currentStory, selectedPassageId, projectActions } from '../stores/projectStore';
 import { tagActions } from '../stores/tagStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 describe('PropertiesPanel', () => {
   let story: Story;

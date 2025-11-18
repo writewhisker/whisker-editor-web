@@ -3,7 +3,7 @@
  * Pre-made story templates suitable for children
  */
 
-import type { Story, Passage } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 
 export interface StoryTemplate {
   id: string;

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import AuthDialog from './AuthDialog.svelte';
-import * as githubAuth from '../../services/github/githubAuth';
+import * as githubAuth from '@writewhisker/github';
 
 // Mock the GitHub auth module
-vi.mock('../../services/github/githubAuth', () => ({
+vi.mock('@writewhisker/github', () => ({
   githubUser: { subscribe: vi.fn(() => () => {}) },
   isAuthenticated: { subscribe: vi.fn(() => () => {}) },
   startGitHubAuth: vi.fn(),

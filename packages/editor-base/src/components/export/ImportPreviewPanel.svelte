@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ImportResult } from '../../import/types';
-  import type { Passage } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
 
   export let result: ImportResult;
   export let onConfirm: () => void;

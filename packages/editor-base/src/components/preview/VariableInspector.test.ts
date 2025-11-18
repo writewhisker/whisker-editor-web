@@ -4,8 +4,8 @@ import { get } from 'svelte/store';
 import VariableInspector from './VariableInspector.svelte';
 import { projectActions, currentStory } from '../../stores';
 import { playerActions, playerVariables } from '../../stores/playerStore';
-import { Story } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
 
 describe('VariableInspector', () => {
   let story: Story;

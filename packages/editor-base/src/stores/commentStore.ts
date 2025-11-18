@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import { Comment, type CommentData } from '@whisker/core-ts';
+import { Comment, type CommentData } from '@writewhisker/core-ts';
 import { currentStory } from './storyStateStore';
 
 // State

@@ -1,7 +1,6 @@
 /**
- * Audio Module
+ * Audio Module - Re-exports from @writewhisker/audio
  * Provides audio management and playback functionality
  */
 
-export * from './AudioManager';
-export * from './types';
+export * from '@writewhisker/audio';

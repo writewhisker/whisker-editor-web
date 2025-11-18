@@ -5,10 +5,10 @@
  * Converts Twine passages and links to Whisker format.
  */
 
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
-import { Variable } from '@whisker/core-ts';
-import { Choice } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 import type {
   ImportContext,
   ImportResult,

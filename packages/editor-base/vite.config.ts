@@ -11,6 +11,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: path.resolve(__dirname, 'src/index.ts'),
+        api: path.resolve(__dirname, 'src/api.ts'),
         stores: path.resolve(__dirname, 'src/stores/index.ts'),
         components: path.resolve(__dirname, 'src/components/index.ts'),
         services: path.resolve(__dirname, 'src/services/index.ts'),
@@ -21,11 +22,14 @@ export default defineConfig({
         analytics: path.resolve(__dirname, 'src/analytics/index.ts'),
         animations: path.resolve(__dirname, 'src/animations/index.ts'),
         publishing: path.resolve(__dirname, 'src/publishing/index.ts'),
+        plugins: path.resolve(__dirname, 'src/plugins/index.ts'),
+        scripting: path.resolve(__dirname, 'src/scripting/index.ts'),
+        adapters: path.resolve(__dirname, 'src/adapters/index.ts'),
       },
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['svelte', '@whisker/core-ts', '@whisker/core-ts/validation'],
+      external: ['svelte', '@writewhisker/core-ts', '@writewhisker/core-ts/validation'],
     },
   },
   test: {

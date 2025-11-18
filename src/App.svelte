@@ -46,7 +46,8 @@
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
-  import { viewMode, panelVisibility, panelSizes, focusMode, viewPreferencesActions } from './lib/stores/viewPreferencesStore';
+  import { viewMode, panelVisibility, panelSizes, focusMode, viewPreferencesActions, type ViewMode } from './lib/stores/viewPreferencesStore';
+  import { selectionActions } from '../packages/editor-base/src/stores/selectionStore';
   import { autoSaveManager, saveToLocalStorage, clearLocalStorage, type AutoSaveData } from './lib/utils/autoSave';
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
@@ -76,6 +77,8 @@
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
+  import { importWhiskerFile, Story } from '@writewhisker/core-ts';
+  import { initializeApp } from '../packages/editor-base/src/adapters/initializeApp';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded
@@ -176,14 +179,20 @@
     showTemplateGallery = true;
   }
 
-  function handleTryDemo() {
+  async function handleTryDemo() {
     showLanding = false;
-    // Load a demo story
-    projectActions.newProject();
-    if ($currentStory) {
-      $currentStory.metadata.title = 'Demo Story';
-      $currentStory.metadata.author = 'Whisker Demo';
-      currentStory.set($currentStory);
+    // Load the demo story
+    try {
+      const response = await fetch('/examples/the-cave.json');
+      const demoData = await response.json();
+      const storyData = importWhiskerFile(demoData);
+      currentStory.set(new Story(storyData));
+      notificationStore.success('Demo story loaded! Try the Preview mode to play it.');
+    } catch (error) {
+      console.error('Failed to load demo story:', error);
+      notificationStore.error('Failed to load demo story');
+      // Fallback to blank project
+      projectActions.newProject();
     }
   }
 
@@ -218,21 +227,19 @@
     }
   }
 
-  // Handle New Project
+  // Handle New Project - Show template gallery first
   function handleNewProject() {
     if ($currentStory) {
       showConfirm(
         'Unsaved Changes',
         'You have a project open. Any unsaved changes will be lost. Continue?',
         () => {
-          showNewDialog = true;
-          newProjectTitle = '';
+          showTemplateGallery = true;
         },
         'warning'
       );
     } else {
-      showNewDialog = true;
-      newProjectTitle = '';
+      showTemplateGallery = true;
     }
   }
 
@@ -597,7 +604,9 @@
       if (!response.ok) {
         throw new Error('Failed to load template');
       }
-      const data = await response.json();
+      const rawData = await response.json();
+      // Convert whisker-core format (array) to editor format (object) if needed
+      const data = importWhiskerFile(rawData);
       projectActions.loadProject(data, `${templateName} (Template)`);
       fileHandle = null; // Clear file handle since this is a template
 
@@ -619,7 +628,7 @@
   // Handle Start Blank from Template Gallery
   function handleStartBlankFromGallery() {
     showTemplateGallery = false;
-    handleNewProject();
+    showNewDialog = true;
   }
 
   // Handle Manage Assets
@@ -1110,11 +1119,50 @@
     hasSetMobileDefault = true;
   }
 
+  // Auto-select first passage when switching to List view if no passage is selected
+  let lastViewMode: ViewMode | null = null;
+  $: if ($viewMode && $viewMode !== lastViewMode) {
+    // View mode changed
+    if ($viewMode === 'list' && $currentStory && !$selectedPassageId) {
+      // Switching to list view with no passage selected
+      const passages = Object.values($currentStory.passages);
+      if (passages.length > 0) {
+        // Select the first passage (or start passage if available)
+        const startPassage = passages.find(p => p.id === $currentStory.startPassage);
+        const passageToSelect = startPassage || passages[0];
+        selectionActions.selectPassage(passageToSelect.id);
+      }
+    }
+    lastViewMode = $viewMode;
+  }
+
   onMount(async () => {
     console.log('Whisker Visual Editor - Phase 10: Performance, Polish & Documentation');
 
     // Initialize error tracking (Sentry)
     errorTracking.initialize();
+
+    // Initialize new storage system with automatic migration
+    try {
+      const initResult = await initializeApp({
+        onMigrationProgress: (progress) => {
+          console.log(`[Migration] ${progress.current}/${progress.total}: ${progress.currentStory}`);
+        },
+        autoMigrate: true,
+        autoCleanup: true,
+      });
+
+      if (initResult.success) {
+        console.log('Storage initialized successfully');
+        if (initResult.migrationPerformed) {
+          console.log(`Migrated ${initResult.storiesMigrated} stories to new storage system`);
+        }
+      } else {
+        console.error('Storage initialization errors:', initResult.errors);
+      }
+    } catch (error) {
+      console.error('Failed to initialize storage:', error);
+    }
 
     // Initialize plugin system
     await pluginStoreActions.initialize();
@@ -1134,11 +1182,11 @@
     // Initialize mobile detection
     initMobileDetection();
 
-    // Initialize IndexedDB
+    // Initialize old IndexedDB (for GitHub tokens, preferences, sync queue)
     db.initialize().then(() => {
-      console.log('IndexedDB initialized');
+      console.log('IndexedDB (legacy) initialized for GitHub/preferences');
     }).catch(error => {
-      console.error('Failed to initialize IndexedDB:', error);
+      console.error('Failed to initialize IndexedDB (legacy):', error);
     });
 
     // Initialize background sync service if authenticated
@@ -1287,7 +1335,7 @@
           class="px-3 py-1 text-sm rounded {$viewMode === 'list' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('list')}
           aria-label="Switch to list view (Ctrl+1)"
-          title="List View (Ctrl+1)"
+          title="List View - Three-panel layout: passage list, editor, and tools (Ctrl+1)"
         >
           📋 List
         </button>
@@ -1296,7 +1344,7 @@
           class="px-3 py-1 text-sm rounded {$viewMode === 'graph' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('graph')}
           aria-label="Switch to graph view (Ctrl+2)"
-          title="Graph View (Ctrl+2)"
+          title="Graph View - Full-screen visual story map (Ctrl+2)"
         >
           🗺️ Graph
         </button>
@@ -1305,7 +1353,7 @@
           class="px-3 py-1 text-sm rounded {$viewMode === 'split' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'}"
           on:click={() => viewPreferencesActions.setViewMode('split')}
           aria-label="Switch to split view (Ctrl+3)"
-          title="Split View (Ctrl+3)"
+          title="Split View - Story graph with editor sidebar (Ctrl+3)"
         >
           ⚡ Split
         </button>
@@ -1681,9 +1729,20 @@
           <!-- Show message if all panels hidden -->
           {#if !$panelVisibility.passageList && !$panelVisibility.properties && !$panelVisibility.variables && !$panelVisibility.validation && !$panelVisibility.tagManager && !$panelVisibility.statistics}
             <div class="flex-1 flex items-center justify-center text-gray-400">
-              <div class="text-center">
-                <p class="text-lg mb-2">All panels hidden</p>
-                <p class="text-sm">Use the panel toggles above to show panels</p>
+              <div class="text-center max-w-md px-4">
+                <div class="text-5xl mb-4">👀</div>
+                <p class="text-lg mb-2 font-semibold text-gray-600 dark:text-gray-300">List View - All Panels Hidden</p>
+                <p class="text-sm mb-4 text-gray-500 dark:text-gray-400">
+                  List view shows a three-panel layout for detailed editing:
+                </p>
+                <ul class="text-sm text-left space-y-2 mb-6 text-gray-600 dark:text-gray-300">
+                  <li>• <strong>Left:</strong> Passage list for navigation</li>
+                  <li>• <strong>Center:</strong> Passage editor with full controls</li>
+                  <li>• <strong>Right:</strong> Variables, validation, and more</li>
+                </ul>
+                <p class="text-sm text-blue-600 dark:text-blue-400">
+                  Use the panel toggles in the toolbar above to show panels
+                </p>
               </div>
             </div>
           {/if}

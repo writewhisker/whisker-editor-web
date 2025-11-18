@@ -5,8 +5,8 @@ import Toolbar from './Toolbar.svelte';
 import { currentStory, unsavedChanges, projectActions } from '../stores/projectStore';
 import { canUndo, canRedo, historyCount, historyActions } from '../stores/historyStore';
 import { validationResult, errorCount, warningCount, infoCount, isValid } from '../stores/validationStore';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('Toolbar', () => {
   let onNew: ReturnType<typeof vi.fn>;

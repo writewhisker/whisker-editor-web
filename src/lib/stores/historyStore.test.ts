@@ -7,7 +7,7 @@ import {
   historyCount,
   historyActions,
 } from './historyStore';
-import type { StoryData } from '@whisker/core-ts';
+import type { StoryData } from '@writewhisker/core-ts';
 
 describe('historyStore', () => {
   // Mock story data helper

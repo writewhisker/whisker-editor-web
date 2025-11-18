@@ -1,0 +1,109 @@
+<tw-storydata name="Snowman Sample Story" startnode="1" creator="Twine" creator-version="2.8.1" format="Snowman" format-version="2.0.3" ifid="E7A3C8D4-1234-5678-9ABC-DEF012345678" zoom="1" options="" hidden><style role="stylesheet" id="twine-user-stylesheet" type="text/twine-css"></style><script role="script" id="twine-user-script" type="text/twine-javascript"></script><tw-passagedata pid="1" name="Start" tags="" position="100,100" size="100,100">You find yourself at a crossroads in the forest.
+
+&lt;%= s.playerName || &quot;Adventurer&quot; %&gt;, which path will you choose?
+
+[[Go left->LeftPath]]
+[[Go right->RightPath]]
+
+&lt;script&gt;
+  // Initialize story state
+  if (!s.visited) {
+    s.visited = [];
+  }
+  s.visited.push(&quot;Start&quot;);
+  s.playerName = s.playerName || &quot;Stranger&quot;;
+&lt;/script&gt;</tw-passagedata><tw-passagedata pid="2" name="LeftPath" tags="" position="250,100" size="100,100">You take the left path and discover an ancient temple.
+
+&lt;% if (s.hasKey) { %&gt;
+  You use your key to unlock the temple door.
+  [[Enter the temple->TempleInside]]
+&lt;% } else { %&gt;
+  The temple door is locked. You need a key.
+  [[Go back->Start]]
+  [[Search the area->FindKey]]
+&lt;% } %&gt;</tw-passagedata><tw-passagedata pid="3" name="RightPath" tags="" position="250,200" size="100,100">You take the right path and encounter a mysterious merchant.
+
+&lt;script&gt;
+  s.metMerchant = true;
+&lt;/script&gt;
+
+The merchant offers you various items:
+- A shiny key (10 gold)
+- A mysterious potion (5 gold)
+
+You have &lt;%= s.gold || 0 %&gt; gold pieces.
+
+&lt;% if (s.gold &gt;= 10) { %&gt;
+  [[Buy the key->BuyKey]]
+&lt;% } %&gt;
+&lt;% if (s.gold &gt;= 5) { %&gt;
+  [[Buy the potion->BuyPotion]]
+&lt;% } %&gt;
+[[Leave without buying->Start]]</tw-passagedata><tw-passagedata pid="4" name="FindKey" tags="" position="400,100" size="100,100">&lt;script&gt;
+  // Searching for the key
+  var found = Math.random() &gt; 0.5;
+  if (found) {
+    s.hasKey = true;
+    s.foundKey = true;
+  }
+&lt;/script&gt;
+
+&lt;% if (s.foundKey) { %&gt;
+  You search carefully and find a rusty key hidden under a rock!
+  [[Take the key and return->LeftPath]]
+&lt;% } else { %&gt;
+  You search the area but find nothing useful.
+  [[Keep searching->FindKey]]
+  [[Give up and go back->Start]]
+&lt;% } %&gt;</tw-passagedata><tw-passagedata pid="5" name="BuyKey" tags="" position="400,200" size="100,100">&lt;script&gt;
+  s.gold -= 10;
+  s.hasKey = true;
+&lt;/script&gt;
+
+You purchase the shiny key from the merchant.
+Your remaining gold: &lt;%= s.gold %&gt;
+
+[[Continue->Start]]</tw-passagedata><tw-passagedata pid="6" name="BuyPotion" tags="" position="400,250" size="100,100">&lt;script&gt;
+  s.gold -= 5;
+  s.hasPotion = true;
+&lt;/script&gt;
+
+You purchase the mysterious potion from the merchant.
+Your remaining gold: &lt;%= s.gold %&gt;
+
+[[Continue->Start]]</tw-passagedata><tw-passagedata pid="7" name="TempleInside" tags="" position="550,100" size="100,100">Inside the temple, you find an ancient artifact glowing with power.
+
+&lt;% if (s.hasPotion) { %&gt;
+  You drink the potion and feel power coursing through you.
+  You carefully take the artifact.
+
+  &lt;script&gt;
+    s.hasArtifact = true;
+    s.victory = true;
+  &lt;/script&gt;
+
+  [[Victory!->Victory]]
+&lt;% } else { %&gt;
+  As you reach for the artifact, a magical barrier shocks you!
+  You need something to protect yourself.
+
+  [[Try again->TempleInside]]
+  [[Leave->Start]]
+&lt;% } %&gt;</tw-passagedata><tw-passagedata pid="8" name="Victory" tags="" position="700,100" size="100,100">Congratulations, &lt;%= s.playerName %&gt;!
+
+You have successfully retrieved the ancient artifact!
+
+Your adventure stats:
+- Places visited: &lt;%= s.visited.length %&gt;
+- Gold remaining: &lt;%= s.gold || 0 %&gt;
+- Items collected:
+  &lt;% if (s.hasKey) { %&gt;Key &lt;% } %&gt;
+  &lt;% if (s.hasPotion) { %&gt;Potion &lt;% } %&gt;
+  &lt;% if (s.hasArtifact) { %&gt;Ancient Artifact &lt;% } %&gt;
+
+THE END
+
+&lt;script&gt;
+  // Game over - could save stats here
+  console.log(&quot;Game completed!&quot;);
+&lt;/script&gt;</tw-passagedata></tw-storydata>

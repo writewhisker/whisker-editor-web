@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { PlaythroughAnalytics, type PlaythroughAnalyticsData } from '../../analytics/PlaythroughAnalytics';
-  import { getPlaythroughRecorder } from '../../analytics/PlaythroughRecorder';
+  import { PlaythroughAnalytics, type PlaythroughAnalyticsData } from '@writewhisker/analytics';
+  import { getPlaythroughRecorder } from '@writewhisker/analytics';
   import { currentStory } from '../../stores/storyStateStore';
-  import type { Playthrough } from '@whisker/core-ts';
+  import type { Playthrough } from '@writewhisker/core-ts';
   import { untrack } from 'svelte';
 
   // State
@@ -224,7 +224,7 @@
                 </tr>
               </thead>
               <tbody>
-                {#each Array.from(analytics.passages.entries()).sort((a, b) => b[1].visitCount - a[1].visitCount) as [passageId, stats]}
+                {#each [...analytics!.passages.entries()].sort((a, b) => b[1].visitCount - a[1].visitCount) as [passageId, stats]}
                   <tr>
                     <td class="passage-title">{stats.passageTitle || passageId}</td>
                     <td>{stats.visitCount}</td>

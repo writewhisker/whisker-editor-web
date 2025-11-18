@@ -4,7 +4,7 @@
   import { passageOperations } from '../stores/passageOperationsStore';
   import { projectMetadataActions } from '../stores/projectMetadataStore';
   import { historyIntegration } from '../stores/historyIntegrationStore';
-  import { Choice, Passage } from '@whisker/core-ts';
+  import { Choice, Passage } from '@writewhisker/core-ts';
   import { tagActions } from '../stores/tagStore';
   import TagInput from './TagInput.svelte';
   import { notificationStore } from '../stores/notificationStore';

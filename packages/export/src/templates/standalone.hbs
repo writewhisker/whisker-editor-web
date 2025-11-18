@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  {{#if includeMetadata}}
+  <meta name="author" content="{{author}}">
+  {{#if description}}
+  <meta name="description" content="{{description}}">
+  {{/if}}
+  {{#if metadata.created}}
+  <meta name="created" content="{{metadata.created}}">
+  {{/if}}
+  {{#if metadata.modified}}
+  <meta name="modified" content="{{metadata.modified}}">
+  {{/if}}
+  {{#if metadata.version}}
+  <meta name="version" content="{{metadata.version}}">
+  {{/if}}
+  {{#if metadata.ifid}}
+  <meta name="ifid" content="{{metadata.ifid}}">
+  {{/if}}
+  {{/if}}
+  <style>
+{{{css}}}
+  </style>
+</head>
+<body>
+  <div id="story-container">
+    <!-- Story content will be rendered here by the player -->
+    <div id="loading">Loading story...</div>
+  </div>
+
+  <script>
+{{{playerJS}}}
+  </script>
+
+  <script>
+    // Embedded story data
+    const STORY_DATA = {{{storyData}}};
+
+    // Initialize and start the player
+    (function() {
+      'use strict';
+
+      try {
+        // Check if player loaded correctly
+        if (typeof WhiskerPlayer === 'undefined') {
+          throw new Error('WhiskerPlayer not loaded');
+        }
+
+        // Remove loading indicator
+        const loadingEl = document.getElementById('loading');
+        if (loadingEl) {
+          loadingEl.remove();
+        }
+
+        // Create and start player
+        const player = new WhiskerPlayer(STORY_DATA, 'story-container');
+        player.start();
+      } catch (error) {
+        console.error('Failed to initialize story:', error);
+        document.getElementById('story-container').innerHTML =
+          '<div style="color: red; padding: 20px;">Error loading story: ' + error.message + '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

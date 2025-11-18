@@ -1,9 +1,9 @@
-import type { Story } from '@whisker/core-ts';
-import type { Passage } from '@whisker/core-ts';
-import type { Choice } from '@whisker/core-ts';
-import type { Variable } from '@whisker/core-ts';
+import type { Story } from '@writewhisker/core-ts';
+import type { Passage } from '@writewhisker/core-ts';
+import type { Choice } from '@writewhisker/core-ts';
+import type { Variable } from '@writewhisker/core-ts';
 import type {
-  PlaythroughStep,
+  PlayerPlaythroughStep,
   PlaythroughRecording,
   VariableChange,
   PlayerError,
@@ -11,8 +11,8 @@ import type {
   PlayerEventCallback,
   PlayerState,
 } from './types';
-import { getPlaythroughRecorder, type PlaythroughRecorder } from '../analytics/PlaythroughRecorder';
-import type { Playthrough } from '@whisker/core-ts';
+import { getPlaythroughRecorder, type PlaythroughRecorder } from '@writewhisker/analytics';
+import type { Playthrough } from '@writewhisker/core-ts';
 import { getLuaEngine, type LuaEngine } from '../scripting/LuaEngine';
 
 /**
@@ -26,7 +26,7 @@ export class StoryPlayer {
   private currentPassageId: string | null = null;
   private variables: Map<string, any> = new Map();
   private visitedPassages: Map<string, number> = new Map();
-  private history: PlaythroughStep[] = [];
+  private history: PlayerPlaythroughStep[] = [];
   private breakpoints: Set<string> = new Set();
   private eventListeners: Map<PlayerEvent, Set<PlayerEventCallback>> = new Map();
   private startTime: number = 0;
@@ -298,7 +298,7 @@ export class StoryPlayer {
   /**
    * Get playthrough history
    */
-  getHistory(): PlaythroughStep[] {
+  getHistory(): PlayerPlaythroughStep[] {
     return [...this.history];
   }
 
@@ -529,7 +529,7 @@ export class StoryPlayer {
     }
 
     // Add to history
-    const step: PlaythroughStep = {
+    const step: PlayerPlaythroughStep = {
       timestamp: Date.now(),
       passageId,
       passageTitle: passage.title,

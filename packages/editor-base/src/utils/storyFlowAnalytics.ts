@@ -3,7 +3,7 @@
  * Analyze story structure and flow patterns
  */
 
-import type { Story, Passage } from '@whisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 
 export class StoryFlowAnalyzer {
   static analyze(story: Story): FlowAnalytics {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { TwineExporter } from './TwineExporter';
-import { Story } from '@whisker/core-ts';
-import { Passage } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
 
 describe('TwineExporter', () => {
   const exporter = new TwineExporter();

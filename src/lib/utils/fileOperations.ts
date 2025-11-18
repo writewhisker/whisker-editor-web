@@ -1,4 +1,4 @@
-import type { ProjectData } from '@whisker/core-ts';
+import type { ProjectData } from '@writewhisker/core-ts';
 
 export interface FileHandle {
   name: string;

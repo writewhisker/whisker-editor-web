@@ -10,7 +10,7 @@ import {
   type PlaytestSession,
   type PlaytestAction,
 } from './playtestStore';
-import { Story } from '@whisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 describe('playtestStore', () => {
   let story: Story;

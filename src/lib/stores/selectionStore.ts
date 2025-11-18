@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
-import { currentStory } from './storyStateStore';
-import type { Passage } from '@whisker/core-ts';
+import { currentStory } from '@writewhisker/editor-base/stores';
+import type { Passage } from '@writewhisker/core-ts';
 
 /**
  * Selection state store

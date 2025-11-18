@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { backgroundSync } from './backgroundSync';
 import { syncQueue } from './syncQueue';
-import * as githubApi from '../github/githubApi';
-import { isAuthenticated } from '../github/githubAuth';
+import * as githubApi from '@writewhisker/github';
+import { isAuthenticated } from '@writewhisker/github';
 import { get } from 'svelte/store';
 
 // Mock IndexedDB

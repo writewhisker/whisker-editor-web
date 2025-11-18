@@ -4,9 +4,9 @@
  * Type definitions for the story export and publishing system.
  */
 
-import type { Story } from '@whisker/core-ts';
-import type { ValidationResult } from '@whisker/core-ts'types';
-import type { QualityMetrics } from '@whisker/core-ts'QualityAnalyzer';
+import type { Story } from '@writewhisker/core-ts';
+import type { ValidationResult } from '@writewhisker/core-ts'types';
+import type { QualityMetrics } from '@writewhisker/core-ts'QualityAnalyzer';
 
 /**
  * Supported export formats

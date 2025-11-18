@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Passage } from '@whisker/core-ts';
+  import type { Passage } from '@writewhisker/core-ts';
   import { createEventDispatcher, onMount } from 'svelte';
 
   export let passages: Passage[] = [];

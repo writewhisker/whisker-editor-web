@@ -28,7 +28,9 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@writewhisker/core-ts": "workspace:*",
+    "@writewhisker/core-ts": "workspace:*"
+  },
+  "peerDependencies": {
     "@writewhisker/editor-base": "workspace:*"
   },
   "devDependencies": {

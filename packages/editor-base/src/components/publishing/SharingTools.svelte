@@ -5,7 +5,7 @@
     generateQRCode,
     generateSocialShareUrl,
     generateEmailShareUrl,
-  } from '@writewhisker/publishing';
+  } from '../../publishing/sharingUtils';
 
   // Props
   let {

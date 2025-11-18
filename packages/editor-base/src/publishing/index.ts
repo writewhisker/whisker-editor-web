@@ -4,3 +4,4 @@
  */
 
 export * from '@writewhisker/publishing';
+export * from './sharingUtils';

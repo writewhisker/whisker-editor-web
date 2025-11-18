@@ -16,7 +16,10 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['@writewhisker/core-ts', '@writewhisker/editor-base'],
+      external: [
+        '@writewhisker/core-ts',
+        '@writewhisker/editor-base',
+      ],
     },
     sourcemap: true,
     emptyOutDir: true,

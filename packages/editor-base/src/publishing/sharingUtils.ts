@@ -4,7 +4,22 @@
  * Helper functions for sharing published stories.
  */
 
-import type { SharingOptions } from './types';
+export interface SharingOptions {
+  /** Type of share */
+  type: 'link' | 'embed' | 'qr' | 'email' | 'social';
+  /** The URL to share */
+  url: string;
+  /** Title for the shared content */
+  title?: string;
+  /** Description for the shared content */
+  description?: string;
+  /** Width for embed code */
+  embedWidth?: number;
+  /** Height for embed code */
+  embedHeight?: number;
+  /** Social platform to share on */
+  platform?: 'twitter' | 'facebook' | 'reddit';
+}
 
 /**
  * Generate embed code for iframe

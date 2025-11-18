@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { githubUser, isAuthenticated, startGitHubAuth, signOut } from '../../services/github/githubAuth';
+  import { githubUser, isAuthenticated, startGitHubAuth, signOut } from '@writewhisker/github';
 </script>
 
 {#if $isAuthenticated && $githubUser}

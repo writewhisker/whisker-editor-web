@@ -6,6 +6,7 @@
  */
 
 import { nanoid } from 'nanoid';
+import type { PreferenceScope } from '@writewhisker/storage';
 import type {
 	IStorageAdapter,
 	StoredProject,
@@ -13,7 +14,6 @@ import type {
 	AutoSaveData,
 	SaveResult,
 	ProjectFilter,
-	PreferenceScope,
 	SerializedStory
 } from './types';
 import {

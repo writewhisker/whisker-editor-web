@@ -5,7 +5,8 @@
  * Supports offline-first operation with sync queue.
  */
 
-import type { IStorageAdapter, PreferenceScope } from './types';
+import type { PreferenceScope } from '@writewhisker/storage';
+import type { IStorageAdapter } from './types';
 import { LocalStorageAdapter } from './LocalStorageAdapter';
 
 export interface CloudStorageConfig {

@@ -73,7 +73,8 @@ describe('EPUBExporter', () => {
       const result = await exporter.export(context);
 
       expect(result.success).toBe(true);
-      expect(result.content).toBeInstanceOf(Blob);
+      // In Node.js, JSZip returns Buffer; in browsers, it returns Blob
+      expect(result.content).toBeDefined();
       expect(result.mimeType).toBe('application/epub+zip');
       expect(result.filename).toContain('.epub');
     });
@@ -82,8 +83,8 @@ describe('EPUBExporter', () => {
       const result = await exporter.export(context);
       expect(result.success).toBe(true);
 
-      // Unzip and check contents
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      // Unzip and check contents (JSZip accepts both Blob and Buffer)
+      const zip = await JSZip.loadAsync(result.content as any);
 
       // Check required files
       expect(zip.file('mimetype')).toBeTruthy();
@@ -96,7 +97,7 @@ describe('EPUBExporter', () => {
 
     it('should have correct mimetype content', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const mimetypeContent = await zip.file('mimetype')?.async('string');
       expect(mimetypeContent).toBe('application/epub+zip');
@@ -104,7 +105,7 @@ describe('EPUBExporter', () => {
 
     it('should generate chapters for all passages', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       // Should have 3 chapter files
       expect(zip.file('EPUB/chapter_0001.xhtml')).toBeTruthy();
@@ -116,7 +117,7 @@ describe('EPUBExporter', () => {
   describe('Metadata', () => {
     it('should include story metadata in content.opf', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const contentOPF = await zip.file('EPUB/content.opf')?.async('string');
       expect(contentOPF).toContain('<dc:title>Test Story</dc:title>');
@@ -132,7 +133,7 @@ describe('EPUBExporter', () => {
       const result = await exporter.export(context);
       expect(result.success).toBe(true);
 
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
       const contentOPF = await zip.file('EPUB/content.opf')?.async('string');
 
       expect(contentOPF).toContain('<dc:title>Untitled Story</dc:title>');
@@ -143,7 +144,7 @@ describe('EPUBExporter', () => {
   describe('Markdown Rendering', () => {
     it('should render markdown headers', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       expect(chapter).toContain('<h1>Welcome</h1>');
@@ -151,7 +152,7 @@ describe('EPUBExporter', () => {
 
     it('should render markdown bold text', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       expect(chapter).toContain('<strong>beginning</strong>');
@@ -159,7 +160,7 @@ describe('EPUBExporter', () => {
 
     it('should render markdown italic text', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0002.xhtml')?.async('string');
       expect(chapter).toContain('<em>left</em>');
@@ -167,7 +168,7 @@ describe('EPUBExporter', () => {
 
     it('should render markdown lists', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0002.xhtml')?.async('string');
       expect(chapter).toContain('<ul>');
@@ -178,7 +179,7 @@ describe('EPUBExporter', () => {
 
     it('should render markdown blockquotes', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0003.xhtml')?.async('string');
       expect(chapter).toContain('<blockquote>');
@@ -189,7 +190,7 @@ describe('EPUBExporter', () => {
   describe('Choices', () => {
     it('should include choices in chapters', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       expect(chapter).toContain('<div class="choices">');
@@ -199,7 +200,7 @@ describe('EPUBExporter', () => {
 
     it('should link choices to correct chapters', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       // Should have links to other chapters
@@ -226,7 +227,7 @@ describe('EPUBExporter', () => {
       story.addPassage(secretPassage);
 
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       expect(chapter).toContain('Requires:');
@@ -238,7 +239,7 @@ describe('EPUBExporter', () => {
   describe('Cover Page', () => {
     it('should generate a cover page', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const cover = await zip.file('EPUB/cover.xhtml')?.async('string');
       expect(cover).toBeTruthy();
@@ -247,7 +248,7 @@ describe('EPUBExporter', () => {
 
     it('should include title and author on cover', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const cover = await zip.file('EPUB/cover.xhtml')?.async('string');
       expect(cover).toContain('Test Story');
@@ -256,7 +257,7 @@ describe('EPUBExporter', () => {
 
     it('should include description on cover if present', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const cover = await zip.file('EPUB/cover.xhtml')?.async('string');
       expect(cover).toContain('A test story for EPUB export');
@@ -266,7 +267,7 @@ describe('EPUBExporter', () => {
   describe('Navigation', () => {
     it('should generate table of contents', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const nav = await zip.file('EPUB/nav.xhtml')?.async('string');
       expect(nav).toContain('Table of Contents');
@@ -277,7 +278,7 @@ describe('EPUBExporter', () => {
 
     it('should have correct navigation links', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const nav = await zip.file('EPUB/nav.xhtml')?.async('string');
       expect(nav).toContain('chapter_0001.xhtml');
@@ -289,7 +290,7 @@ describe('EPUBExporter', () => {
   describe('CSS Styling', () => {
     it('should include comprehensive CSS styles', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const css = await zip.file('EPUB/styles.css')?.async('string');
       expect(css).toContain('body {');
@@ -300,7 +301,7 @@ describe('EPUBExporter', () => {
 
     it('should style markdown elements', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const css = await zip.file('EPUB/styles.css')?.async('string');
       expect(css).toContain('blockquote');
@@ -376,7 +377,7 @@ describe('EPUBExporter', () => {
   describe('Content.opf Structure', () => {
     it('should include cover in spine', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const contentOPF = await zip.file('EPUB/content.opf')?.async('string');
       expect(contentOPF).toContain('<spine>');
@@ -385,7 +386,7 @@ describe('EPUBExporter', () => {
 
     it('should include all chapters in manifest', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const contentOPF = await zip.file('EPUB/content.opf')?.async('string');
       expect(contentOPF).toContain('id="chapter_1"');
@@ -395,7 +396,7 @@ describe('EPUBExporter', () => {
 
     it('should include navigation in manifest', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const contentOPF = await zip.file('EPUB/content.opf')?.async('string');
       expect(contentOPF).toContain('id="nav"');
@@ -406,7 +407,7 @@ describe('EPUBExporter', () => {
   describe('XHTML Validity', () => {
     it('should generate valid XHTML for chapters', async () => {
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapter = await zip.file('EPUB/chapter_0001.xhtml')?.async('string');
       expect(chapter).toContain('<?xml version="1.0" encoding="UTF-8"?>');
@@ -420,7 +421,7 @@ describe('EPUBExporter', () => {
       passage.content = 'Test & < > " \' characters';
 
       const result = await exporter.export(context);
-      const zip = await JSZip.loadAsync(result.content as Blob);
+      const zip = await JSZip.loadAsync(result.content as any);
 
       const chapters = zip.file(/chapter_\d+\.xhtml/);
       expect(chapters.length).toBeGreaterThan(0);

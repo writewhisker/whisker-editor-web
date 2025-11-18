@@ -1,11 +1,7 @@
 /**
- * Import functionality
+ * Import functionality - Re-exports from @writewhisker/import
  *
  * Import systems for JSON and Twine formats.
  */
 
-// Export types
-export * from './types';
-
-// Export formats
-export * from './formats';
+export * from '@writewhisker/import';

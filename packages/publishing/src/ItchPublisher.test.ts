@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ItchPublisher } from './ItchPublisher';
 import type { Story } from '@writewhisker/core-ts';
 import type { PublishOptions } from './types';
-import { StaticSiteExporter } from '../export/formats/StaticSiteExporter';
+import { StaticSiteExporter } from '@writewhisker/editor-base';
 
 // Mock StaticSiteExporter
 vi.mock('../export/formats/StaticSiteExporter');

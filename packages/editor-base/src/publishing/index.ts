@@ -1,11 +1,6 @@
 /**
  * Publishing Module
- * Provides publishing and distribution functionality
+ * Provides sharing and distribution utilities
  */
 
-export * from './GitHubPublisher';
-export * from './ItchPublisher';
-export * from './StaticPublisher';
 export * from './sharingUtils';
-export * from './versionManager';
-export * from './types';

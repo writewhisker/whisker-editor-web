@@ -5,6 +5,9 @@
  * Based on /whisker-implementation/backend-architecture/IMPLEMENTATION_INTERFACES.md
  */
 
+// Import types from @writewhisker/storage for consistency
+import type { PreferenceScope } from '@writewhisker/storage';
+
 /**
  * Serialized story data for storage
  */
@@ -134,10 +137,7 @@ export interface ProjectFilter {
 	offset?: number;
 }
 
-/**
- * Preference scope
- */
-export type PreferenceScope = 'global' | 'user' | 'project';
+// PreferenceScope is now imported from @writewhisker/storage (see top of file)
 
 /**
  * Asset metadata

@@ -7,21 +7,16 @@
  * Phase 4 implementation - Store refactoring to use storage adapter
  */
 
-import type { IStorageAdapter, PreferenceScope } from './types';
+import type { IStorageAdapter } from './types';
+import type { PreferenceScope } from '@writewhisker/storage';
 import { getDefaultStorageAdapter } from './StorageServiceFactory';
-
-export interface PreferenceEntry<T = any> {
-	value: T;
-	scope: PreferenceScope;
-	updatedAt: Date;
-}
 
 /**
  * Service for managing application preferences with storage adapter integration
  */
 export class PreferenceService {
 	private adapter: IStorageAdapter | null = null;
-	private cache: Map<string, PreferenceEntry> = new Map();
+	private cache: Map<string, { value: any; scope: PreferenceScope }> = new Map();
 	private ready = false;
 	private initPromise: Promise<void> | null = null;
 
@@ -103,7 +98,6 @@ export class PreferenceService {
 					this.cache.set(key, {
 						value: storedValue,
 						scope,
-						updatedAt: new Date(),
 					});
 					return storedValue as T;
 				}
@@ -130,7 +124,6 @@ export class PreferenceService {
 		this.cache.set(key, {
 			value,
 			scope,
-			updatedAt: new Date(),
 		});
 
 		// Persist to storage
@@ -168,7 +161,6 @@ export class PreferenceService {
 					this.cache.set(key, {
 						value: parsed,
 						scope: 'global',
-						updatedAt: new Date(),
 					});
 					return parsed as T;
 				}
@@ -189,8 +181,7 @@ export class PreferenceService {
 		this.cache.set(key, {
 			value,
 			scope,
-			updatedAt: new Date(),
-		});
+			});
 
 		// Save to localStorage immediately for backward compatibility
 		if (typeof window !== 'undefined' && window.localStorage) {

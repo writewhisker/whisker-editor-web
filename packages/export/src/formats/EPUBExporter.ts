@@ -94,16 +94,17 @@ export class EPUBExporter implements IExporter {
         zip.file(`EPUB/${image.filename}`, image.data, { base64: true });
       }
 
-      // Generate EPUB blob
+      // Generate EPUB blob/buffer (use nodebuffer for Node.js, blob for browsers)
+      const isNode = typeof process !== 'undefined' && process.versions && process.versions.node;
       const blob = await zip.generateAsync({
-        type: 'blob',
+        type: isNode ? 'nodebuffer' : 'blob',
         mimeType: this.mimeType,
         compression: 'DEFLATE',
         compressionOptions: { level: 9 },
       });
 
       // Calculate file size
-      const size = blob.size;
+      const size = isNode ? (blob as Buffer).length : (blob as Blob).size;
 
       // Generate filename
       const timestamp = new Date().toISOString().split('T')[0];

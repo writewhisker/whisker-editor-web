@@ -86,6 +86,7 @@
     "@writewhisker/analytics": "workspace:*",
     "@writewhisker/core-ts": "workspace:*",
     "@writewhisker/github": "workspace:*",
+    "@writewhisker/publishing": "workspace:*",
     "@writewhisker/scripting": "workspace:*",
     "@writewhisker/storage": "workspace:*",
     "@xyflow/svelte": "^1.4.1",

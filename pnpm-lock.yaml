@@ -200,9 +200,6 @@ importers:
       '@writewhisker/github':
         specifier: workspace:*
         version: link:../github
-      '@writewhisker/publishing':
-        specifier: workspace:*
-        version: link:../publishing
       '@writewhisker/scripting':
         specifier: workspace:*
         version: link:../scripting

@@ -1,7 +1,6 @@
 /**
- * Publishing Module - Re-exports from @writewhisker/publishing
- * Provides publishing and distribution functionality
+ * Publishing Module
+ * Provides sharing and distribution utilities
  */
 
-export * from '@writewhisker/publishing';
 export * from './sharingUtils';

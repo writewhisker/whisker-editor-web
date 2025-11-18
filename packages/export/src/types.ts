@@ -71,8 +71,8 @@ export interface ExportResult {
   /** Export success status */
   success: boolean;
 
-  /** Exported content (string or Blob) */
-  content?: string | Blob;
+  /** Exported content (string, Blob, or Buffer for Node.js environments) */
+  content?: string | Blob | Buffer;
 
   /** Export format used */
   format?: ExportFormat;

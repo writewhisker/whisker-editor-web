@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
-  import { AudioManager } from '../../audio/AudioManager';
-  import type { AudioTrack } from '../../audio/types';
+  import { AudioManager } from '@writewhisker/audio';
+  import type { AudioTrack } from '@writewhisker/audio';
 
   // Props
   let {

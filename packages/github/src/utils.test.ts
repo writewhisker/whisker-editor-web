@@ -62,8 +62,10 @@ describe('GitHub Utils', () => {
 
       const promise = withRetry(fn, { maxRetries: 2, initialDelay: 100 });
 
+      // Handle rejection expectation first to avoid unhandled rejection warning
+      const expectation = expect(promise).rejects.toThrow('fail');
       await vi.runAllTimersAsync();
-      await expect(promise).rejects.toThrow('fail');
+      await expectation;
       expect(fn).toHaveBeenCalledTimes(3); // initial + 2 retries
     });
   });

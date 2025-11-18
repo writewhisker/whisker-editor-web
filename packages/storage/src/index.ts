@@ -6,6 +6,10 @@
 // Core service
 export { StorageService } from './StorageService.js';
 
+// Services
+export { SyncQueueService } from './services/SyncQueueService.js';
+export type { ErrorHandler } from './services/SyncQueueService.js';
+
 // Interfaces
 export type { IStorageBackend, StorageMetadata } from './interfaces/IStorageBackend.js';
 

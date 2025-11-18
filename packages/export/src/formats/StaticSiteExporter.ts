@@ -35,6 +35,7 @@ export class StaticSiteExporter implements IExporter {
       return {
         success: true,
         content: html,
+        format: this.format,
         filename: `${this.sanitizeFilename(story.metadata.title || 'story')}.html`,
       };
     } catch (error) {

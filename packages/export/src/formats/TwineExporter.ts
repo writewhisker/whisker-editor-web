@@ -30,6 +30,7 @@ export class TwineExporter implements IExporter {
       return {
         success: true,
         content: html,
+        format: this.format,
         filename: `${story.metadata.title || 'story'}.html`,
         mimeType: this.mimeType,
         size: html.length,

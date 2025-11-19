@@ -57,7 +57,7 @@
   import TemplateGallery from '../packages/editor-base/src/components/onboarding/TemplateGallery.svelte';
   import AssetManager from '../packages/editor-base/src/components/editor/AssetManager.svelte';
   import AudioControls from '../packages/editor-base/src/components/audio/AudioControls.svelte';
-  import { AudioManager } from './lib/audio/AudioManager';
+  import { AudioManager } from '@writewhisker/audio';
   import AnimationControls from '../packages/editor-base/src/components/animation/AnimationControls.svelte';
   import StylesheetEditor from '../packages/editor-base/src/components/editor/StylesheetEditor.svelte';
   import { initMobileDetection, isMobile } from './lib/utils/mobile';

@@ -1,0 +1,362 @@
+/**
+ * Lua Runtime for Story Player (Browser Version)
+ *
+ * A lightweight Lua interpreter implementation for executing story scripts.
+ * Supports basic Lua operations needed for story logic.
+ */
+
+class LuaRuntime {
+  constructor() {
+    this.enabled = true;
+    this.globalScope = new Map();
+    this.initializeStandardLibrary();
+  }
+
+  /**
+   * Initialize standard Lua library functions
+   */
+  initializeStandardLibrary() {
+    // Math library
+    this.globalScope.set('math', {
+      abs: Math.abs,
+      ceil: Math.ceil,
+      floor: Math.floor,
+      max: Math.max,
+      min: Math.min,
+      random: Math.random,
+      sqrt: Math.sqrt,
+      pow: Math.pow,
+      pi: Math.PI,
+    });
+
+    // String library basics
+    this.globalScope.set('string', {
+      len: (s) => s.length,
+      upper: (s) => s.toUpperCase(),
+      lower: (s) => s.toLowerCase(),
+      sub: (s, i, j) => s.substring(i - 1, j),
+    });
+
+    // Print function
+    this.globalScope.set('print', (...args) => {
+      console.log(...args);
+    });
+  }
+
+  /**
+   * Sync JavaScript variables to Lua globals
+   */
+  syncVariablesToLua(variables) {
+    if (!this.enabled) return;
+
+    variables.forEach((value, name) => {
+      this.globalScope.set(name, value);
+    });
+  }
+
+  /**
+   * Sync Lua globals back to JavaScript variables
+   */
+  syncVariablesFromLua(variables) {
+    if (!this.enabled) return;
+
+    variables.forEach((value, name) => {
+      if (this.globalScope.has(name)) {
+        const luaValue = this.globalScope.get(name);
+        if (luaValue !== value) {
+          variables.set(name, luaValue);
+        }
+      }
+    });
+  }
+
+  /**
+   * Execute Lua code
+   */
+  execute(code) {
+    if (!this.enabled) {
+      return { success: false, error: 'Lua runtime not available' };
+    }
+
+    try {
+      // Parse and execute the Lua code
+      const result = this.evaluateExpression(code);
+      return { success: true, value: result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Evaluate a Lua condition expression
+   */
+  evaluateCondition(condition) {
+    if (!this.enabled || !condition || condition.trim() === '') {
+      return true;
+    }
+
+    try {
+      const result = this.evaluateExpression(condition);
+      return Boolean(result);
+    } catch (error) {
+      console.error('Condition evaluation error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Execute a passage script with context
+   */
+  executePassageScript(script, passageId, passageTitle) {
+    if (!this.enabled || !script || script.trim() === '') {
+      return { success: true };
+    }
+
+    try {
+      // Set passage context
+      this.globalScope.set('currentPassageId', passageId);
+      this.globalScope.set('currentPassageTitle', passageTitle);
+
+      return this.execute(script);
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  }
+
+  /**
+   * Evaluate a Lua expression
+   */
+  evaluateExpression(expr) {
+    const trimmed = expr.trim();
+
+    // Handle return statements
+    if (trimmed.startsWith('return ')) {
+      const returnExpr = trimmed.substring(7).trim();
+      const unwrapped = returnExpr.startsWith('(') && returnExpr.endsWith(')')
+        ? returnExpr.slice(1, -1)
+        : returnExpr;
+      return this.evaluateExpression(unwrapped);
+    }
+
+    // Handle assignment
+    if (trimmed.includes('=') && !this.isComparison(trimmed)) {
+      return this.handleAssignment(trimmed);
+    }
+
+    // Handle comparison operators
+    if (this.hasComparisonOperator(trimmed)) {
+      return this.evaluateComparison(trimmed);
+    }
+
+    // Handle logical operators
+    if (trimmed.includes(' and ') || trimmed.includes(' or ') || trimmed.startsWith('not ')) {
+      return this.evaluateLogical(trimmed);
+    }
+
+    // Handle arithmetic
+    if (this.hasArithmeticOperator(trimmed)) {
+      return this.evaluateArithmetic(trimmed);
+    }
+
+    // Handle string concatenation
+    if (trimmed.includes('..')) {
+      return this.evaluateStringConcat(trimmed);
+    }
+
+    // Handle literals and variables
+    return this.evaluateLiteral(trimmed);
+  }
+
+  isComparison(expr) {
+    return /[<>!=]=|[<>]/.test(expr);
+  }
+
+  hasComparisonOperator(expr) {
+    return /==|~=|<=|>=|<|>/.test(expr);
+  }
+
+  hasArithmeticOperator(expr) {
+    return /[+\-*/%]/.test(expr);
+  }
+
+  handleAssignment(expr) {
+    const parts = expr.split('=').map(p => p.trim());
+    if (parts.length !== 2) {
+      throw new Error('Invalid assignment');
+    }
+
+    const [varName, valueExpr] = parts;
+    const value = this.evaluateExpression(valueExpr);
+    this.globalScope.set(varName, value);
+    return value;
+  }
+
+  evaluateComparison(expr) {
+    if (expr.includes('==')) {
+      const [left, right] = expr.split('==').map(p => this.evaluateExpression(p.trim()));
+      return left === right;
+    }
+
+    if (expr.includes('~=')) {
+      const [left, right] = expr.split('~=').map(p => this.evaluateExpression(p.trim()));
+      return left !== right;
+    }
+
+    if (expr.includes('<=')) {
+      const [left, right] = expr.split('<=').map(p => this.evaluateExpression(p.trim()));
+      return Number(left) <= Number(right);
+    }
+
+    if (expr.includes('>=')) {
+      const [left, right] = expr.split('>=').map(p => this.evaluateExpression(p.trim()));
+      return Number(left) >= Number(right);
+    }
+
+    if (expr.includes('<')) {
+      const [left, right] = expr.split('<').map(p => this.evaluateExpression(p.trim()));
+      return Number(left) < Number(right);
+    }
+
+    if (expr.includes('>')) {
+      const [left, right] = expr.split('>').map(p => this.evaluateExpression(p.trim()));
+      return Number(left) > Number(right);
+    }
+
+    throw new Error('Unknown comparison operator');
+  }
+
+  evaluateLogical(expr) {
+    if (expr.startsWith('not ')) {
+      const operand = expr.substring(4).trim();
+      return !this.evaluateExpression(operand);
+    }
+
+    if (expr.includes(' and ')) {
+      const parts = expr.split(' and ');
+      return parts.every(p => Boolean(this.evaluateExpression(p.trim())));
+    }
+
+    if (expr.includes(' or ')) {
+      const parts = expr.split(' or ');
+      return parts.some(p => Boolean(this.evaluateExpression(p.trim())));
+    }
+
+    return Boolean(this.evaluateExpression(expr));
+  }
+
+  evaluateArithmetic(expr) {
+    const jsExpr = expr.replace(/\b(\w+)\b/g, (match) => {
+      if (this.globalScope.has(match)) {
+        const val = this.globalScope.get(match);
+        return typeof val === 'string' ? `"${val}"` : String(val);
+      }
+      return match;
+    });
+
+    try {
+      return Function(`"use strict"; return (${jsExpr})`)();
+    } catch (error) {
+      throw new Error(`Arithmetic evaluation failed: ${error}`);
+    }
+  }
+
+  evaluateStringConcat(expr) {
+    const parts = expr.split('..').map(p => {
+      const val = this.evaluateExpression(p.trim());
+      return String(val);
+    });
+    return parts.join('');
+  }
+
+  evaluateLiteral(expr) {
+    if (expr === 'nil') {
+      return null;
+    }
+
+    if (expr === 'true') {
+      return true;
+    }
+    if (expr === 'false') {
+      return false;
+    }
+
+    if (/^-?\d+\.?\d*$/.test(expr)) {
+      return parseFloat(expr);
+    }
+
+    if ((expr.startsWith('"') && expr.endsWith('"')) ||
+        (expr.startsWith("'") && expr.endsWith("'"))) {
+      return expr.slice(1, -1);
+    }
+
+    if (expr.includes('.')) {
+      const parts = expr.split('.');
+      let current = this.globalScope.get(parts[0]);
+
+      for (let i = 1; i < parts.length; i++) {
+        if (current && typeof current === 'object') {
+          current = current[parts[i]];
+        } else {
+          return undefined;
+        }
+      }
+
+      return current;
+    }
+
+    if (expr.includes('(') && expr.includes(')')) {
+      return this.evaluateFunctionCall(expr);
+    }
+
+    if (this.globalScope.has(expr)) {
+      return this.globalScope.get(expr);
+    }
+
+    return undefined;
+  }
+
+  evaluateFunctionCall(expr) {
+    const openParen = expr.indexOf('(');
+    const closeParen = expr.lastIndexOf(')');
+
+    if (openParen === -1 || closeParen === -1) {
+      throw new Error('Invalid function call syntax');
+    }
+
+    const funcName = expr.substring(0, openParen).trim();
+    const argsStr = expr.substring(openParen + 1, closeParen).trim();
+
+    let func;
+    if (funcName.includes('.')) {
+      func = this.evaluateLiteral(funcName);
+    } else {
+      func = this.globalScope.get(funcName);
+    }
+
+    if (typeof func !== 'function') {
+      throw new Error(`${funcName} is not a function`);
+    }
+
+    const args = argsStr ? argsStr.split(',').map(arg => this.evaluateExpression(arg.trim())) : [];
+
+    return func(...args);
+  }
+
+  getVariable(name) {
+    return this.globalScope.get(name);
+  }
+
+  setVariable(name, value) {
+    this.globalScope.set(name, value);
+  }
+
+  isEnabled() {
+    return this.enabled;
+  }
+}

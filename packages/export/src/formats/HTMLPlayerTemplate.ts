@@ -190,9 +190,128 @@ export function generateHTMLPlayer(
   </div>
   <div id="app"></div>
 
+  <!-- Fengari Lua Runtime -->
+  <script src="https://cdn.jsdelivr.net/npm/fengari-web@0.1.4/dist/fengari-web.js" crossorigin="anonymous"></script>
+
   <script>
     // Story Data (embedded)
     const STORY_DATA = ${storyData};
+
+    // Lua Runtime Manager
+    class LuaRuntime {
+      constructor() {
+        this.enabled = typeof fengari !== 'undefined';
+        if (this.enabled) {
+          this.lua = fengari.lua;
+          this.lauxlib = fengari.lauxlib;
+          this.lualib = fengari.lualib;
+          this.L = this.lauxlib.luaL_newstate();
+          this.lualib.luaL_openlibs(this.L);
+        } else {
+          console.warn('Fengari Lua runtime not available - Lua features disabled');
+        }
+      }
+
+      syncVariablesToLua(variables) {
+        if (!this.enabled) return;
+        variables.forEach((value, name) => {
+          try {
+            if (typeof value === 'number') {
+              this.lua.lua_pushnumber(this.L, value);
+            } else if (typeof value === 'boolean') {
+              this.lua.lua_pushboolean(this.L, value);
+            } else {
+              this.lua.lua_pushstring(this.L, fengari.to_luastring(String(value)));
+            }
+            this.lua.lua_setglobal(this.L, fengari.to_luastring(name));
+          } catch (error) {
+            console.error(\`Failed to sync variable '\${name}' to Lua:\`, error);
+          }
+        });
+      }
+
+      syncVariablesFromLua(variables) {
+        if (!this.enabled) return;
+        variables.forEach((value, name) => {
+          try {
+            this.lua.lua_getglobal(this.L, fengari.to_luastring(name));
+            const type = this.lua.lua_type(this.L, -1);
+            let newValue = value;
+            if (type === this.lua.LUA_TNUMBER) {
+              newValue = this.lua.lua_tonumber(this.L, -1);
+            } else if (type === this.lua.LUA_TBOOLEAN) {
+              newValue = this.lua.lua_toboolean(this.L, -1);
+            } else if (type === this.lua.LUA_TSTRING) {
+              newValue = fengari.to_jsstring(this.lua.lua_tostring(this.L, -1));
+            }
+            this.lua.lua_pop(this.L, 1);
+            if (newValue !== value) {
+              variables.set(name, newValue);
+            }
+          } catch (error) {
+            console.error(\`Failed to sync variable '\${name}' from Lua:\`, error);
+          }
+        });
+      }
+
+      execute(code) {
+        if (!this.enabled) return { success: false, error: 'Lua runtime not available' };
+        try {
+          const result = this.lauxlib.luaL_dostring(this.L, fengari.to_luastring(code));
+          if (result !== this.lua.LUA_OK) {
+            const errorMsg = fengari.to_jsstring(this.lua.lua_tostring(this.L, -1));
+            this.lua.lua_pop(this.L, 1);
+            throw new Error(errorMsg);
+          }
+          let returnValue = undefined;
+          if (this.lua.lua_gettop(this.L) > 0) {
+            const type = this.lua.lua_type(this.L, -1);
+            if (type === this.lua.LUA_TNUMBER) {
+              returnValue = this.lua.lua_tonumber(this.L, -1);
+            } else if (type === this.lua.LUA_TBOOLEAN) {
+              returnValue = this.lua.lua_toboolean(this.L, -1);
+            } else if (type === this.lua.LUA_TSTRING) {
+              returnValue = fengari.to_jsstring(this.lua.lua_tostring(this.L, -1));
+            }
+            this.lua.lua_pop(this.L, 1);
+          }
+          return { success: true, value: returnValue };
+        } catch (error) {
+          console.error('Lua execution error:', error);
+          return { success: false, error: error.message };
+        }
+      }
+
+      evaluateCondition(condition) {
+        if (!this.enabled || !condition || condition.trim() === '') return true;
+        try {
+          const code = \`return (\${condition})\`;
+          const result = this.execute(code);
+          if (!result.success) {
+            console.error(\`Condition evaluation failed: \${condition}\`, result.error);
+            return true;
+          }
+          return Boolean(result.value);
+        } catch (error) {
+          console.error(\`Failed to evaluate condition: \${condition}\`, error);
+          return true;
+        }
+      }
+
+      executePassageScript(script, passageId, passageTitle) {
+        if (!this.enabled || !script || script.trim() === '') return { success: true };
+        try {
+          this.lua.lua_pushstring(this.L, fengari.to_luastring(passageId));
+          this.lua.lua_setglobal(this.L, fengari.to_luastring('currentPassageId'));
+          this.lua.lua_pushstring(this.L, fengari.to_luastring(passageTitle));
+          this.lua.lua_setglobal(this.L, fengari.to_luastring('currentPassageTitle'));
+          return this.execute(script);
+        } catch (error) {
+          console.error('Passage script execution error:', error);
+          return { success: false, error: error.message };
+        }
+      }
+    }
 
     // Simple Story Player
     class StoryPlayer {
@@ -202,6 +321,7 @@ export function generateHTMLPlayer(
         this.variables = new Map();
         this.history = [];
         this.appEl = document.getElementById('app');
+        this.lua = new LuaRuntime();
 
         // Initialize variables
         if (this.story.variables) {
@@ -209,6 +329,9 @@ export function generateHTMLPlayer(
             this.variables.set(name, data.value);
           });
         }
+
+        // Sync initial variables to Lua
+        this.lua.syncVariablesToLua(this.variables);
       }
 
       start() {

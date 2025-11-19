@@ -45,8 +45,9 @@ export class HTMLExporter implements IExporter {
         (context.options.embedAssets ? 'embed' : 'external');
       const maxEmbedSize = context.options.maxEmbedSize || 1024 * 1024; // 1MB
 
+      const assetsArray = context.story.assets ? Array.from(context.story.assets.values()) : [];
       const processedAssets = await this.assetProcessor.processAssets(
-        context.story.assets,
+        assetsArray,
         assetMode,
         maxEmbedSize
       );

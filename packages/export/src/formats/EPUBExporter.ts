@@ -56,8 +56,9 @@ export class EPUBExporter implements IExporter {
       }
 
       // Process assets for bundling (EPUB always bundles)
+      const assetsArray = context.story.assets ? Array.from(context.story.assets.values()) : [];
       const processedAssets = await this.assetProcessor.processAssets(
-        context.story.assets,
+        assetsArray,
         'bundle',  // EPUB always bundles assets
         Infinity   // No size limit for bundling
       );

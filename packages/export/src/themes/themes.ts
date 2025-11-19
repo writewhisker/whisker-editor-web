@@ -175,6 +175,156 @@ export const BUILTIN_THEMES: Record<string, HTMLTheme> = {
       }
     `,
   },
+
+  darkModern: {
+    name: 'Dark Modern',
+    description: 'Modern dark theme with subtle gradients',
+    colors: {
+      bgPrimary: '#121212',
+      bgSecondary: '#1e1e1e',
+      textPrimary: '#e0e0e0',
+      textSecondary: '#a0a0a0',
+      accent: '#64b5f6',
+      accentHover: '#42a5f5',
+      border: '#2a2a2a',
+    },
+    fonts: {
+      body: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      heading: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    },
+    customStyles: `
+      body {
+        background: linear-gradient(135deg, #121212 0%, #1a1a1a 100%);
+      }
+      .choice {
+        background: linear-gradient(135deg, #1e1e1e 0%, #252525 100%);
+        transition: all 0.3s ease;
+      }
+      .choice:hover {
+        transform: translateX(5px);
+      }
+    `,
+  },
+
+  mobileOptimized: {
+    name: 'Mobile Optimized',
+    description: 'Optimized for mobile reading with large text',
+    colors: {
+      bgPrimary: '#ffffff',
+      bgSecondary: '#f5f5f5',
+      textPrimary: '#212121',
+      textSecondary: '#757575',
+      accent: '#1976d2',
+      accentHover: '#1565c0',
+      border: '#e0e0e0',
+    },
+    fonts: {
+      body: 'system-ui, -apple-system, sans-serif',
+      heading: 'system-ui, -apple-system, sans-serif',
+    },
+    customStyles: `
+      body {
+        font-size: 18px;
+        line-height: 1.8;
+        -webkit-text-size-adjust: 100%;
+      }
+      .choice {
+        padding: 1rem 1.25rem;
+        font-size: 1.1rem;
+        min-height: 44px;
+        touch-action: manipulation;
+      }
+      .passage {
+        max-width: 100%;
+        padding: 1.5rem 1rem;
+      }
+      @media (max-width: 768px) {
+        body {
+          font-size: 16px;
+        }
+        .choice {
+          font-size: 1rem;
+        }
+      }
+    `,
+  },
+
+  printFriendly: {
+    name: 'Print Friendly',
+    description: 'Optimized for printing with minimal ink usage',
+    colors: {
+      bgPrimary: '#ffffff',
+      bgSecondary: '#ffffff',
+      textPrimary: '#000000',
+      textSecondary: '#333333',
+      accent: '#0066cc',
+      accentHover: '#0052a3',
+      border: '#cccccc',
+    },
+    fonts: {
+      body: 'Georgia, "Times New Roman", serif',
+      heading: 'Georgia, "Times New Roman", serif',
+    },
+    customStyles: `
+      @media print {
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        .choice {
+          border: 1px solid #000 !important;
+          background: white !important;
+          box-shadow: none !important;
+          page-break-inside: avoid;
+        }
+        .choice:hover {
+          border: 1px solid #000 !important;
+        }
+        .passage {
+          page-break-inside: avoid;
+        }
+        a {
+          color: #000 !important;
+          text-decoration: underline !important;
+        }
+      }
+      @media screen {
+        body {
+          max-width: 8.5in;
+          margin: 0 auto;
+          padding: 1in;
+          box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+      }
+    `,
+  },
+
+  nord: {
+    name: 'Nord',
+    description: 'Arctic-inspired theme with cool colors',
+    colors: {
+      bgPrimary: '#2e3440',
+      bgSecondary: '#3b4252',
+      textPrimary: '#eceff4',
+      textSecondary: '#d8dee9',
+      accent: '#88c0d0',
+      accentHover: '#81a1c1',
+      border: '#4c566a',
+    },
+    fonts: {
+      body: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+    },
+    customStyles: `
+      .choice {
+        background: #3b4252;
+        border-left: 3px solid #88c0d0;
+      }
+      .choice:hover {
+        background: #434c5e;
+        border-left: 3px solid #81a1c1;
+      }
+    `,
+  },
 };
 
 /**

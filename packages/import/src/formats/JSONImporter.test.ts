@@ -209,7 +209,7 @@ describe('JSONImporter', () => {
       const result = await importer.import(context);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Invalid JSON format');
+      expect(result.error).toContain('Invalid Whisker JSON file');
     });
 
     it('should include passage and variable counts', async () => {
@@ -263,30 +263,30 @@ describe('JSONImporter', () => {
     it('should detect missing metadata', () => {
       const data = { story: { passages: {} } };
       const errors = importer.validate(data);
-      expect(errors).toContain('Missing story metadata');
+      expect(errors.some(e => e.includes('Missing story metadata'))).toBe(true);
     });
 
     it('should detect missing passages', () => {
       const data = { story: { metadata: {} } };
       const errors = importer.validate(data);
-      expect(errors).toContain('Missing story passages');
+      expect(errors.some(e => e.includes('Missing story passages'))).toBe(true);
     });
 
     it('should detect invalid passages format', () => {
       const data = { story: { metadata: {}, passages: 'invalid' } };
       const errors = importer.validate(data);
-      expect(errors).toContain('Invalid passages format');
+      expect(errors.some(e => e.includes('Invalid passages format'))).toBe(true);
     });
 
     it('should detect invalid variables format', () => {
       const data = { story: { metadata: {}, passages: {}, variables: 'invalid' } };
       const errors = importer.validate(data);
-      expect(errors).toContain('Invalid variables format');
+      expect(errors.some(e => e.includes('Invalid variables format'))).toBe(true);
     });
 
     it('should detect invalid JSON', () => {
       const errors = importer.validate('invalid json {');
-      expect(errors).toContain('Invalid JSON format');
+      expect(errors.some(e => e.includes('Invalid JSON format'))).toBe(true);
     });
   });
 

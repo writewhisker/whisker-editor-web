@@ -608,7 +608,7 @@ describe('TwineImporter', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('Not a valid Twine HTML or Twee file');
+      expect(result.error).toContain('Invalid Twine file format');
     });
 
     it('should reject empty passage list', async () => {

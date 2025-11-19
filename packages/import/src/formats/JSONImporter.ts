@@ -31,9 +31,18 @@ export class JSONImporter implements IImporter {
 
     try {
       // Parse JSON
-      const data = typeof context.data === 'string'
-        ? JSON.parse(context.data)
-        : context.data;
+      let data;
+      try {
+        data = typeof context.data === 'string'
+          ? JSON.parse(context.data)
+          : context.data;
+      } catch (parseError) {
+        throw new Error(
+          'Invalid JSON format: Failed to parse file content. ' +
+          'This file may be corrupted or not a valid JSON file. ' +
+          `Parse error: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+        );
+      }
 
       // Detect format and extract story data
       let storyData;
@@ -56,7 +65,12 @@ export class JSONImporter implements IImporter {
         // Direct story data format (could be editor or core format with Record)
         storyData = importWhiskerFile(data);
       } else {
-        throw new Error('Invalid JSON format: missing story data');
+        throw new Error(
+          'Invalid Whisker JSON file: Missing required story data structure. ' +
+          'This file does not appear to be a Whisker story export. ' +
+          'Expected a "story" field or story data with "metadata" and "passages". ' +
+          'Please ensure you are importing a file exported from Whisker.'
+        );
       }
 
       // Deserialize story
@@ -137,22 +151,32 @@ export class JSONImporter implements IImporter {
       const storyData = parsed.story || parsed;
 
       if (!storyData.metadata) {
-        errors.push('Missing story metadata');
+        errors.push(
+          'Missing story metadata: Story must have a "metadata" object with title, author, and version information.'
+        );
       }
 
       if (!storyData.passages) {
-        errors.push('Missing story passages');
+        errors.push(
+          'Missing story passages: Story must have a "passages" object containing at least one passage.'
+        );
       }
 
       if (storyData.passages && typeof storyData.passages !== 'object') {
-        errors.push('Invalid passages format');
+        errors.push(
+          'Invalid passages format: Expected "passages" to be an object mapping passage IDs to passage data.'
+        );
       }
 
       if (storyData.variables && typeof storyData.variables !== 'object') {
-        errors.push('Invalid variables format');
+        errors.push(
+          'Invalid variables format: Expected "variables" to be an object mapping variable names to variable data.'
+        );
       }
     } catch (error) {
-      errors.push('Invalid JSON format');
+      errors.push(
+        `Invalid JSON format: ${error instanceof Error ? error.message : 'Failed to parse JSON file'}`
+      );
     }
 
     return errors;

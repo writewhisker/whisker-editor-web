@@ -157,7 +157,12 @@ export class TwineImporter implements IImporter {
       } else if (this.isTwee(text)) {
         twineStory = this.parseTwee(text);
       } else {
-        throw new Error('Not a valid Twine HTML or Twee file');
+        throw new Error(
+          'Invalid Twine file format: This file does not appear to be a valid Twine 2 HTML or Twee file. ' +
+          'Expected to find <tw-storydata> tags (Twine 2 HTML) or :: passage markers (Twee format). ' +
+          'This may be a Twine 1 file (not supported), a different file format, or a corrupted file. ' +
+          'Try exporting your story again from Twine 2.'
+        );
       }
 
       // Log conversion options as info
@@ -171,7 +176,11 @@ export class TwineImporter implements IImporter {
       }
 
       if (twineStory.passages.length === 0) {
-        throw new Error('No passages found in Twine HTML');
+        throw new Error(
+          'No passages found in Twine file: The story structure was parsed but contains no passages. ' +
+          'This usually means the file is empty or corrupted. ' +
+          'Please ensure your Twine story has at least one passage and try exporting again.'
+        );
       }
 
       // Detect story format
@@ -187,7 +196,11 @@ export class TwineImporter implements IImporter {
 
       // Validate story structure
       if (story.passages.size === 0) {
-        throw new Error('Conversion resulted in no passages');
+        throw new Error(
+          'Conversion failed: No passages were successfully converted from the Twine file. ' +
+          'This may indicate a problem with the file format or an unsupported story structure. ' +
+          'Please check that your Twine file is valid and contains passages.'
+        );
       }
 
       const duration = Date.now() - startTime;
@@ -235,21 +248,31 @@ export class TwineImporter implements IImporter {
       const html = typeof data === 'string' ? data : JSON.stringify(data);
 
       if (!this.isTwineHTML(html)) {
-        errors.push('Not a valid Twine HTML file');
+        errors.push(
+          'Not a valid Twine 2 HTML file: Missing <tw-storydata> element. ' +
+          'This file may be Twine 1 format (not supported), a different file format, or corrupted. ' +
+          'Try exporting your story from Twine 2.'
+        );
         return errors;
       }
 
       const twineStory = this.parseTwineHTML(html);
 
       if (!twineStory.title) {
-        errors.push('Story has no title');
+        errors.push('Story has no title: The story metadata is missing a title field.');
       }
 
       if (twineStory.passages.length === 0) {
-        errors.push('No passages found');
+        errors.push(
+          'No passages found: The file was parsed but contains no <tw-passagedata> elements. ' +
+          'Ensure your story has at least one passage.'
+        );
       }
     } catch (error) {
-      errors.push('Failed to parse Twine HTML');
+      errors.push(
+        `Failed to parse Twine HTML: ${error instanceof Error ? error.message : 'Unknown parsing error'}. ` +
+        'The file may be corrupted or not a valid Twine 2 export.'
+      );
     }
 
     return errors;

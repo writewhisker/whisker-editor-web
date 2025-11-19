@@ -180,6 +180,24 @@ export function generateHTMLPlayer(
 
     ${customCSS}
   </style>
+
+  <!-- Story Stylesheets -->
+  <script>
+    // Parse story data to inject stylesheets
+    try {
+      const storyDataParsed = ${storyData};
+      if (storyDataParsed.stylesheets && Array.isArray(storyDataParsed.stylesheets)) {
+        storyDataParsed.stylesheets.forEach((css, index) => {
+          const style = document.createElement('style');
+          style.setAttribute('data-story-stylesheet', index.toString());
+          style.textContent = css;
+          document.head.appendChild(style);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to inject story stylesheets:', error);
+    }
+  </script>
 </head>
 <body>
   <div class="meta-bar">
@@ -196,6 +214,33 @@ export function generateHTMLPlayer(
   <script>
     // Story Data (embedded)
     const STORY_DATA = ${storyData};
+
+    // Execute story-wide scripts on load
+    if (STORY_DATA.scripts && Array.isArray(STORY_DATA.scripts)) {
+      // Wait for Fengari to be available, then execute scripts
+      if (typeof fengari !== 'undefined') {
+        const lua = fengari.lua;
+        const lauxlib = fengari.lauxlib;
+        const lualib = fengari.lualib;
+        const L = lauxlib.luaL_newstate();
+        lualib.luaL_openlibs(L);
+
+        STORY_DATA.scripts.forEach((script, index) => {
+          try {
+            const result = lauxlib.luaL_dostring(L, fengari.to_luastring(script));
+            if (result !== lua.LUA_OK) {
+              const errorMsg = fengari.to_jsstring(lua.lua_tostring(L, -1));
+              lua.lua_pop(L, 1);
+              console.error(\`Story script \${index} failed:\`, errorMsg);
+            }
+          } catch (error) {
+            console.error(\`Failed to execute story script \${index}:\`, error);
+          }
+        });
+      } else {
+        console.warn('Fengari not available - story scripts not executed');
+      }
+    }
 
     // Lua Runtime Manager
     class LuaRuntime {
@@ -364,6 +409,20 @@ export function generateHTMLPlayer(
 
         if (!choice) return;
 
+        // Execute passage onExit script before leaving
+        if (passage.onExitScript) {
+          this.lua.syncVariablesToLua(this.variables);
+          const result = this.lua.executePassageScript(
+            passage.onExitScript,
+            passage.id,
+            passage.title
+          );
+          if (!result.success) {
+            console.error('onExit script failed:', result.error);
+          }
+          this.lua.syncVariablesFromLua(this.variables);
+        }
+
         // Save to history
         this.history.push({
           passageId: this.currentPassageId,
@@ -390,10 +449,38 @@ export function generateHTMLPlayer(
 
         const passage = this.story.passages[this.currentPassageId];
 
+        // Sync variables to Lua before executing scripts
+        this.lua.syncVariablesToLua(this.variables);
+
+        // Execute passage onEnter script
+        if (passage.onEnterScript) {
+          const result = this.lua.executePassageScript(
+            passage.onEnterScript,
+            passage.id,
+            passage.title
+          );
+          if (!result.success) {
+            console.error('onEnter script failed:', result.error);
+          }
+        }
+
+        // Sync variables back from Lua after script execution
+        this.lua.syncVariablesFromLua(this.variables);
+
         // Substitute variables in content
         let content = passage.content || '';
         this.variables.forEach((value, name) => {
           content = content.replace(new RegExp(\`{{\\\\s*\${name}\\\\s*}}\`, 'g'), value);
+        });
+
+        // Evaluate choice conditions and filter visible choices
+        const visibleChoices = passage.choices.filter(choice => {
+          if (!choice.condition) return true;
+
+          // Sync variables before evaluating condition
+          this.lua.syncVariablesToLua(this.variables);
+          const isVisible = this.lua.evaluateCondition(choice.condition);
+          return isVisible;
         });
 
         // Render passage
@@ -402,7 +489,7 @@ export function generateHTMLPlayer(
             <div class="passage-title">\${this.escapeHTML(passage.title)}</div>
             <div class="passage-content">\${this.escapeHTML(content)}</div>
             <div class="choices">
-              \${passage.choices.map(choice => \`
+              \${visibleChoices.map(choice => \`
                 <button class="choice" onclick="player.makeChoice('\${choice.id}')">
                   \${this.escapeHTML(choice.text)}
                 </button>

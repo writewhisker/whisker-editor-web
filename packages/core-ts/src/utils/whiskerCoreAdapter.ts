@@ -32,7 +32,7 @@ export function generateIfid(): string {
  * - Preserves typed variables (v2.0) or converts to simple (v1.0)
  * - Preserves choice IDs
  * - Generates ifid if missing
- * - Includes stylesheets, scripts, and assets
+ * - Includes stylesheets, scripts, assets, and luaFunctions
  * - Strips editor-specific extensions (color, created, modified) if requested
  */
 export function toWhiskerCoreFormat(
@@ -111,6 +111,9 @@ export function toWhiskerCoreFormat(
   }
   if (data.assets && data.assets.length > 0) {
     result.assets = [...data.assets];
+  }
+  if (data.luaFunctions && Object.keys(data.luaFunctions).length > 0) {
+    result.luaFunctions = data.luaFunctions as Record<string, LuaFunctionData>;
   }
 
   return result;

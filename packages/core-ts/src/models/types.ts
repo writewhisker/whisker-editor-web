@@ -107,6 +107,7 @@ export interface WhiskerCoreFormat {
   stylesheets?: string[];   // CSS code blocks
   scripts?: string[];       // Story-wide Lua scripts
   assets?: AssetReference[];  // Media references
+  luaFunctions?: Record<string, LuaFunctionData>;  // Reusable Lua functions
 }
 
 // ============================================================================

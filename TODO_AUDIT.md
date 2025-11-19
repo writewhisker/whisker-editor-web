@@ -238,14 +238,31 @@ The following TODOs document future enhancements and should remain in code:
 
 ---
 
-## Next Steps
+## GitHub Issues Created ✅
 
-1. Create GitHub issues for:
-   - Template selection modal
-   - Authentication implementation (email + OAuth)
-   - Audio package test coverage
-   - GitHub package test coverage
+The following GitHub issues have been created for critical TODOs:
 
-2. Validate enhancement TODOs remain as useful inline docs
+1. **Issue #135**: Replace browser prompt() with proper template selection modal
+   - URL: https://github.com/writewhisker/whisker-editor-web/issues/135
+   - Priority: High
+   - Category: UI/UX Enhancement
 
-3. Complete Phase 2C audit
+2. **Issue #136**: Decide authentication implementation strategy
+   - URL: https://github.com/writewhisker/whisker-editor-web/issues/136
+   - Priority: High
+   - Category: Architecture Decision
+   - Covers both email auth and Google OAuth stubs
+
+3. **Issue #137**: Add comprehensive unit tests for Audio package
+   - URL: https://github.com/writewhisker/whisker-editor-web/issues/137
+   - Priority: Medium
+   - Category: Testing
+
+4. **Issue #138**: Add comprehensive unit tests for GitHub integration package
+   - URL: https://github.com/writewhisker/whisker-editor-web/issues/138
+   - Priority: Medium
+   - Category: Testing
+
+## Phase 2C Complete ✅
+
+All critical TODOs have been converted to tracked GitHub issues. Enhancement TODOs remain as inline documentation for future reference.

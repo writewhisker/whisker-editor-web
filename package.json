@@ -36,6 +36,7 @@
     "@octokit/rest": "^22.0.0",
     "@sentry/svelte": "^10.22.0",
     "@types/jszip": "^3.4.0",
+    "@writewhisker/audio": "workspace:*",
     "@writewhisker/core-ts": "workspace:*",
     "@writewhisker/editor-base": "workspace:*",
     "@xyflow/svelte": "^1.3.1",

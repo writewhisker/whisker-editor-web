@@ -1,0 +1,136 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   DUPLICATE FILE MIGRATION ANALYSIS                        ║
+║                        /src/lib/ → /packages/                              ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  📊 OVERALL STATISTICS                                                     ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║   Total Duplicate Files:              62                                  ║
+║   Exact Duplicates (Identical):       19 files  (~80KB)   ✅              ║
+║   Diverged Files (Need Review):       43 files  (~250KB)  ⚠️              ║
+║   Unique to src/lib:                  25+ files            📦              ║
+║   Unique to packages:                 10+ files            📦              ║
+║                                                                            ║
+║   Total Cleanup Potential:            330KB of duplicate code             ║
+║   Migration Progress:                 60-70% complete                     ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  📁 BY CATEGORY                                                            ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   Category      Files    Identical  Diverged   Status          Risk       ║
+║   ──────────────────────────────────────────────────────────────────────   ║
+║   Audio           2          2         0       ✅ Complete      🟢 None    ║
+║   Models         12          8         4       ✅ Near Done    🟢 Low     ║
+║   Scripting       3          2         1       ✅ Near Done    🟢 Low     ║
+║   Publishing      5          2         3       ✅ Near Done    🟢 Low     ║
+║   Export         10          3         7       ⚠️  Mostly      🟡 Med     ║
+║   Import          3          1         2       🔴 Needs Merge  🔴 High    ║
+║   Validation     17          2        15       ⚠️  Imports     🟡 Med     ║
+║   Analytics       4          3         1       ✅ Near Done    🟢 Low     ║
+║   Player          4          2         2       🔴 Investigate  🔴 High    ║
+║   Utils           2          1         1       ✅ Near Done    🟢 Low     ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  🚀 PHASE 1: IMMEDIATE REMOVAL (ZERO RISK)                                ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   19 files can be deleted immediately after updating imports:             ║
+║                                                                            ║
+║   ✅ Audio                    (2 files)   - 100% identical                ║
+║   ✅ Models                   (8 files)   - Core domain models            ║
+║   ✅ Export                   (3 files)   - HTML/template exporters       ║
+║   ✅ Scripting                (2 files)   - Lua engine core               ║
+║   ✅ Publishing               (2 files)   - Types & version mgmt          ║
+║   ✅ Import                   (1 file)    - JSON importer                 ║
+║   ✅ Utils                    (1 file)    - ID generator                  ║
+║                                                                            ║
+║   Impact: ~80KB immediate cleanup, zero risk                              ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  ⚠️  CRITICAL ITEMS REQUIRING ATTENTION                                    ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   🔴 import/formats/TwineImporter.ts                                      ║
+║      • Divergence: 203 lines (largest divergence)                         ║
+║      • Package version has Snowman support + better macro handling        ║
+║      • Action: Manual merge required                                      ║
+║      • Priority: HIGH                                                     ║
+║                                                                            ║
+║   🔴 player/StoryPlayer.ts                                                ║
+║      • Status: Diverged (extent unknown)                                  ║
+║      • Action: Investigate if src is app-specific or outdated             ║
+║      • Priority: HIGH                                                     ║
+║                                                                            ║
+║   🔴 player/types.ts                                                      ║
+║      • Status: Diverged                                                   ║
+║      • Action: Investigate differences                                    ║
+║      • Priority: MEDIUM                                                   ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  📦 FILES TO KEEP IN SRC/LIB (App-Specific)                               ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   These should NOT be migrated to core packages:                          ║
+║                                                                            ║
+║   • MinecraftExporter.ts        - Game-specific exporter                  ║
+║   • RobloxExporter.ts           - Game-specific exporter                  ║
+║   • sharingUtils.ts             - UI sharing utilities                    ║
+║   • 15+ util files              - Editor/UI-specific                      ║
+║   • 3 testing files             - Test runner UI components               ║
+║   • Data assets                 - Game assets (Minecraft, Roblox)         ║
+║                                                                            ║
+║   Consider: Move to /packages/editor-base/ for better organization        ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  🎯 IMPORT STATEMENT CHANGES                                              ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   Before:  import { Story } from '$lib/models/Story'                      ║
+║   After:   import { Story } from '@writewhisker/core-ts'                  ║
+║                                                                            ║
+║   Before:  import { HTMLExporter } from '$lib/export/formats/...'         ║
+║   After:   import { HTMLExporter } from '@writewhisker/export'            ║
+║                                                                            ║
+║   Before:  import { LuaEngine } from '$lib/scripting/LuaEngine'           ║
+║   After:   import { LuaEngine } from '@writewhisker/scripting'            ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  📋 EXECUTION TIMELINE                                                     ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   Week 1:  Phase 1 - Remove 19 identical files                 (✅ Ready) ║
+║   Week 2:  Phase 2 - Merge validation/export/models            (Low Risk) ║
+║   Week 3:  Phase 2 - Merge publishing/scripting/analytics      (Low Risk) ║
+║   Week 4:  Phase 3 - Resolve critical divergences              (High Att) ║
+║   Week 5:  Phase 4 - Organize app-specific code                (Planning) ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  ✅ EXPECTED BENEFITS                                                      ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   • Remove ~330KB of duplicate code                                       ║
+║   • Single source of truth for core models                                ║
+║   • Packages independently testable and publishable                       ║
+║   • Cleaner dependency graph                                              ║
+║   • Reduced maintenance burden                                            ║
+║   • Better code organization                                              ║
+║                                                                            ║
+╠════════════════════════════════════════════════════════════════════════════╣
+║                                                                            ║
+║  📄 DOCUMENTATION FILES                                                    ║
+║  ────────────────────────────────────────────────────────────────────────  ║
+║                                                                            ║
+║   • MIGRATION_MAPPING.md     - Comprehensive 23KB detailed guide          ║
+║   • migration_mapping.json   - 25KB structured data for tooling           ║
+║   • MIGRATION_SUMMARY.txt    - 12KB quick reference guide                 ║
+║   • QUICK_STATS.txt          - This visual overview                       ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝

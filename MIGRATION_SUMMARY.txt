@@ -1,0 +1,252 @@
+================================================================================
+FILE DUPLICATION ANALYSIS SUMMARY
+/src/lib/ → /packages/
+================================================================================
+
+Analysis Date: 2025-11-18
+Total Files Analyzed: 100+
+
+DUPLICATION OVERVIEW
+────────────────────────────────────────────────────────────────────────────────
+✅ Exact Duplicates (Identical):        19 files (~80KB)
+⚠️  Diverged Files (Need Merge):        43 files (~250KB)
+📦 Unique to src/lib:                   25+ files
+📦 Unique to packages:                  10+ files
+────────────────────────────────────────────────────────────────────────────────
+TOTAL DUPLICATES:                       62 files (~330KB of duplicate code)
+
+MIGRATION STATUS BY CATEGORY
+────────────────────────────────────────────────────────────────────────────────
+Category          Status              Identical    Diverged    Risk Level
+────────────────────────────────────────────────────────────────────────────────
+Audio             ✅ COMPLETE         2            0           🟢 None
+Models            ✅ NEAR COMPLETE    8            4           🟢 Low
+Scripting         ✅ NEAR COMPLETE    2            1           🟢 Low
+Publishing        ✅ NEAR COMPLETE    2            3           🟢 Low
+Export            ⚠️  MOSTLY DONE     3            7           🟡 Medium
+Import            🔴 NEEDS MERGE      1            2           🔴 High
+Validation        ⚠️  IMPORT PATHS    2            15          🟡 Medium
+Analytics         ✅ NEAR COMPLETE    3            1           🟢 Low
+Player            🔴 INVESTIGATE      2            2           🔴 High
+────────────────────────────────────────────────────────────────────────────────
+
+IMMEDIATE ACTIONS - PHASE 1 (ZERO RISK)
+────────────────────────────────────────────────────────────────────────────────
+Action: Update imports from $lib/* to @writewhisker/* then delete src files
+
+19 FILES CAN BE SAFELY REMOVED:
+
+1. Audio (100% complete - delete entire directory)
+   ✅ AudioManager.ts (4,892 bytes)
+   ✅ types.ts (84 bytes)
+
+2. Models (8 identical files)
+   ✅ Collaborator.ts (991 bytes)
+   ✅ ChangeLog.ts (2,175 bytes)
+   ✅ Playthrough.ts (5,014 bytes)
+   ✅ Variable.ts (710 bytes)
+   ✅ LuaFunction.ts (7,568 bytes)
+   ✅ Choice.ts (1,562 bytes)
+   ✅ ScriptBlock.ts (12,268 bytes)
+   ✅ Comment.ts (1,714 bytes)
+
+3. Export (3 identical files)
+   ✅ formats/HTMLExporter.ts (3,314 bytes)
+   ✅ formats/HTMLPlayerTemplate.ts (8,043 bytes)
+   ✅ themes/themes.ts (5,102 bytes)
+
+4. Scripting (2 identical files)
+   ✅ LuaEngine.ts (39,850 bytes)
+   ✅ luaConfig.ts (14,106 bytes)
+
+5. Publishing (2 identical files)
+   ✅ types.ts (2,863 bytes)
+   ✅ versionManager.ts (7,935 bytes)
+
+6. Import (1 identical file)
+   ✅ formats/JSONImporter.ts (4,630 bytes)
+
+7. Utils (1 identical file)
+   ✅ idGenerator.ts (420 bytes)
+
+IMPACT: Removes ~80KB of duplicate code with ZERO RISK
+
+────────────────────────────────────────────────────────────────────────────────
+
+REQUIRES ATTENTION - CRITICAL DIVERGENCES
+────────────────────────────────────────────────────────────────────────────────
+
+🔴 HIGH PRIORITY
+
+1. import/formats/TwineImporter.ts
+   - Divergence: 203 lines (6,636 byte difference)
+   - Package version: 37,674 bytes
+   - Src version: 31,038 bytes
+   - Issue: Package has Snowman format support, better Harlowe macro handling
+   - Action: Manual merge - use package as base, check src for customizations
+
+2. player/StoryPlayer.ts
+   - Status: Diverged (extent unknown)
+   - Action: Investigate differences, determine if src is app-specific
+
+3. player/types.ts
+   - Status: Diverged (extent unknown)
+   - Action: Investigate differences
+
+────────────────────────────────────────────────────────────────────────────────
+
+LOW RISK MERGES (Import Path Changes Only)
+────────────────────────────────────────────────────────────────────────────────
+
+These files differ only in import statements (using package imports vs relative):
+
+✓ All Validation files (17 files: 2-4 line diffs each)
+✓ All Export files (7 files: 2-11 line diffs)
+✓ All Publishing files (3 files: 2 line diffs each)
+✓ Models: types.ts, index.ts, Passage.ts, Story.ts (2-22 line diffs)
+✓ Scripting: LuaExecutor.ts (18 line diff)
+✓ Utils: whiskerCoreAdapter.ts (7 line diff)
+✓ Analytics: StoryAnalytics.ts (14 line diff)
+
+Recommendation: Use package versions (they have correct package imports)
+
+────────────────────────────────────────────────────────────────────────────────
+
+FILES TO KEEP IN SRC/LIB (Application-Specific)
+────────────────────────────────────────────────────────────────────────────────
+
+These files are editor/app-specific and should NOT be migrated to core packages:
+
+Export:
+  - MinecraftExporter.ts (~18KB)
+  - RobloxExporter.ts (~15KB)
+
+Publishing:
+  - sharingUtils.ts (~3KB)
+
+Utils (UI/Editor-specific - 15 files):
+  - graphLayout.ts
+  - errorHandling.ts
+  - accessibility.ts
+  - fileOperations.ts
+  - passageTemplates.ts
+  - connectionValidator.ts
+  - recentFiles.ts
+  - storageUtils.ts
+  - motion.ts
+  - autoSave.ts
+  - storyComparison.ts
+  - folderManager.ts
+  - mobile.ts
+  - gridSnap.ts
+  - storyFlowAnalytics.ts
+
+Testing (Editor test UI - 3 files):
+  - TestRunner.ts (13,234 bytes)
+  - TestScenario.ts (7,470 bytes)
+  - testScenarioAdapter.ts (7,266 bytes)
+
+Data:
+  - minecraftAssets.ts
+  - robloxAssets.ts
+
+Services:
+  - storage/syncQueue.ts
+  - storage/migration.ts
+
+Templates:
+  - kidsTemplates.ts
+
+Option: Consider moving these to /packages/editor-base/ for better organization
+
+────────────────────────────────────────────────────────────────────────────────
+
+RECOMMENDED EXECUTION PLAN
+────────────────────────────────────────────────────────────────────────────────
+
+Week 1: Phase 1 - Immediate Wins (19 files)
+  [ ] Create branch: feature/deduplicate-packages
+  [ ] Run automated import updater script (see MIGRATION_MAPPING.md)
+  [ ] Update imports: $lib/* → @writewhisker/*
+  [ ] Delete 19 identical files from src/lib
+  [ ] Run full test suite
+  [ ] Verify bundle size
+  [ ] Create PR
+
+Week 2: Phase 2 - Low Risk Merges (Validation, Export, Models)
+  [ ] Review package versions of validation files
+  [ ] Update validation imports
+  [ ] Review package versions of export files
+  [ ] Update export imports
+  [ ] Review models divergences (types.ts, index.ts, Passage.ts, Story.ts)
+  [ ] Update models imports
+  [ ] Run tests
+  [ ] Create PR
+
+Week 3: Phase 2 - Low Risk Merges (Publishing, Scripting, Utils, Analytics)
+  [ ] Update publishing imports
+  [ ] Update scripting imports
+  [ ] Update analytics imports
+  [ ] Review whiskerCoreAdapter.ts divergence
+  [ ] Run tests
+  [ ] Create PR
+
+Week 4: Phase 3 - Critical Merges
+  [ ] INVESTIGATE: TwineImporter.ts divergence
+  [ ] Merge TwineImporter.ts (manual)
+  [ ] INVESTIGATE: Player directory divergences
+  [ ] Resolve player divergences
+  [ ] Run comprehensive tests
+  [ ] Create PR
+
+Week 5: Phase 4 - Code Organization
+  [ ] Decide: Keep app-specific in src/lib OR move to editor-base?
+  [ ] Decide: Game exporters → separate package?
+  [ ] Execute chosen organization strategy
+  [ ] Update documentation
+  [ ] Final cleanup
+
+────────────────────────────────────────────────────────────────────────────────
+
+EXPECTED BENEFITS
+────────────────────────────────────────────────────────────────────────────────
+
+✓ Remove ~330KB of duplicate code
+✓ Single source of truth for core models
+✓ Packages independently testable
+✓ Cleaner dependency graph
+✓ Easier to publish standalone tools
+✓ Reduced maintenance burden
+✓ Better code organization
+
+────────────────────────────────────────────────────────────────────────────────
+
+FILES GENERATED
+────────────────────────────────────────────────────────────────────────────────
+
+1. MIGRATION_MAPPING.md     - Comprehensive documentation (23KB)
+2. migration_mapping.json    - Structured data for tooling (25KB)
+3. MIGRATION_SUMMARY.txt     - This quick reference guide
+
+────────────────────────────────────────────────────────────────────────────────
+
+QUESTIONS TO RESOLVE
+────────────────────────────────────────────────────────────────────────────────
+
+1. Why did TwineImporter.ts diverge by 203 lines?
+   - Package has Snowman support, better macro tracking
+   - Are there src-specific customizations to preserve?
+
+2. What are the Player/StoryPlayer.ts differences?
+   - Is src version app-specific or outdated?
+
+3. Should game exporters be in a separate @writewhisker/game-exporters package?
+
+4. Should editor utils move to @writewhisker/editor-base?
+
+────────────────────────────────────────────────────────────────────────────────
+
+For detailed information, see MIGRATION_MAPPING.md
+For programmatic access, see migration_mapping.json
+
+================================================================================

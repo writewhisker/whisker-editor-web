@@ -1,0 +1,604 @@
+{
+  "metadata": {
+    "analysis_date": "2025-11-18T23:26:01Z",
+    "source_directory": "/src/lib/",
+    "target_directory": "/packages/",
+    "total_duplicates": 62,
+    "total_identical": 19,
+    "total_diverged": 43,
+    "total_unique_src": 25,
+    "total_unique_pkg": 10
+  },
+  "summary": {
+    "immediate_removal_candidates": 19,
+    "bytes_can_remove_immediately": 80000,
+    "total_potential_cleanup": 330000,
+    "migration_completion": "60-70%"
+  },
+  "categories": {
+    "models": {
+      "mapping": "/src/lib/models/ → /packages/core-ts/src/models/",
+      "status": "near_complete",
+      "identical": [
+        {
+          "file": "Collaborator.ts",
+          "size": 991,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Collaborator.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Collaborator.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "ChangeLog.ts",
+          "size": 2175,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/ChangeLog.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/ChangeLog.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "Playthrough.ts",
+          "size": 5014,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Playthrough.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Playthrough.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "Variable.ts",
+          "size": 710,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Variable.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Variable.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "LuaFunction.ts",
+          "size": 7568,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/LuaFunction.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/LuaFunction.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "Choice.ts",
+          "size": 1562,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Choice.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Choice.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "ScriptBlock.ts",
+          "size": 12268,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/ScriptBlock.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/ScriptBlock.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "Comment.ts",
+          "size": 1714,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Comment.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Comment.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {
+          "file": "types.ts",
+          "src_size": 7606,
+          "pkg_size": 7721,
+          "diff_lines": 7,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/types.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/types.ts",
+          "reason": "PlaythroughData renamed to EditorPlaythroughData",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "index.ts",
+          "src_size": 309,
+          "pkg_size": 581,
+          "diff_lines": 22,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/index.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/index.ts",
+          "reason": "Package has more comprehensive exports",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "Passage.ts",
+          "src_size": 3430,
+          "pkg_size": 3418,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Passage.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Passage.ts",
+          "reason": "Minor implementation differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "Story.ts",
+          "src_size": 12232,
+          "pkg_size": 12234,
+          "diff_lines": 4,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/models/Story.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/models/Story.ts",
+          "reason": "Very minor differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ]
+    },
+    "export": {
+      "mapping": "/src/lib/export/ → /packages/export/src/",
+      "status": "mostly_complete",
+      "identical": [
+        {
+          "file": "HTMLExporter.ts",
+          "size": 3314,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/HTMLExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/HTMLExporter.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "HTMLPlayerTemplate.ts",
+          "size": 8043,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/HTMLPlayerTemplate.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/HTMLPlayerTemplate.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "themes.ts",
+          "size": 5102,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/themes/themes.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/themes/themes.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {
+          "file": "WhiskerCoreExporter.ts",
+          "src_size": 3525,
+          "pkg_size": 3545,
+          "diff_lines": 4,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/WhiskerCoreExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/WhiskerCoreExporter.ts",
+          "reason": "Minor import differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "StaticSiteExporter.ts",
+          "src_size": 17380,
+          "pkg_size": 17346,
+          "diff_lines": 7,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/StaticSiteExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/StaticSiteExporter.ts",
+          "reason": "Small implementation tweaks",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "JSONExporter.ts",
+          "src_size": 5420,
+          "pkg_size": 5414,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/JSONExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/JSONExporter.ts",
+          "reason": "Minimal differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "EPUBExporter.ts",
+          "src_size": 19552,
+          "pkg_size": 19774,
+          "diff_lines": 7,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/EPUBExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/EPUBExporter.ts",
+          "reason": "Minor updates in package",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "TwineExporter.ts",
+          "src_size": 3737,
+          "pkg_size": 3787,
+          "diff_lines": 3,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/TwineExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/TwineExporter.ts",
+          "reason": "Small differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "MarkdownExporter.ts",
+          "src_size": 8976,
+          "pkg_size": 9042,
+          "diff_lines": 8,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/formats/MarkdownExporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/formats/MarkdownExporter.ts",
+          "reason": "Minor divergence",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "types.ts",
+          "src_size": 4598,
+          "pkg_size": 4583,
+          "diff_lines": 11,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/types.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/export/src/types.ts",
+          "reason": "Import path differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ],
+      "unique_to_src": [
+        {
+          "file": "MinecraftExporter.ts",
+          "size": 18000,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/MinecraftExporter.ts",
+          "reason": "Game-specific exporter",
+          "recommendation": "keep_in_src_or_create_game_exporters_package"
+        },
+        {
+          "file": "RobloxExporter.ts",
+          "size": 15000,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/export/RobloxExporter.ts",
+          "reason": "Game-specific exporter",
+          "recommendation": "keep_in_src_or_create_game_exporters_package"
+        }
+      ]
+    },
+    "import": {
+      "mapping": "/src/lib/import/ → /packages/import/src/",
+      "status": "needs_merge",
+      "identical": [
+        {
+          "file": "JSONImporter.ts",
+          "size": 4630,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/import/formats/JSONImporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/import/src/formats/JSONImporter.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {
+          "file": "TwineImporter.ts",
+          "src_size": 31038,
+          "pkg_size": 37674,
+          "diff_lines": 203,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/import/formats/TwineImporter.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/import/src/formats/TwineImporter.ts",
+          "reason": "Package has Snowman support, better macro handling, type safety improvements",
+          "recommendation": "manual_merge_prefer_package",
+          "risk": "high",
+          "notes": "Package version is more feature-complete. Check src for app-specific customizations."
+        },
+        {
+          "file": "types.ts",
+          "src_size": 5931,
+          "pkg_size": 5925,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/import/types.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/import/src/types.ts",
+          "reason": "Import path differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ]
+    },
+    "scripting": {
+      "mapping": "/src/lib/scripting/ → /packages/scripting/src/",
+      "status": "near_complete",
+      "identical": [
+        {
+          "file": "LuaEngine.ts",
+          "size": 39850,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/scripting/LuaEngine.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/scripting/src/LuaEngine.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "luaConfig.ts",
+          "size": 14106,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/scripting/luaConfig.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/scripting/src/luaConfig.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {
+          "file": "LuaExecutor.ts",
+          "src_size": 7536,
+          "pkg_size": 7554,
+          "diff_lines": 18,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/scripting/LuaExecutor.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/scripting/src/LuaExecutor.ts",
+          "reason": "Very minor divergence",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ]
+    },
+    "publishing": {
+      "mapping": "/src/lib/publishing/ → /packages/publishing/src/",
+      "status": "near_complete",
+      "identical": [
+        {
+          "file": "types.ts",
+          "size": 2863,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/types.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/publishing/src/types.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "versionManager.ts",
+          "size": 7935,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/versionManager.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/publishing/src/versionManager.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {
+          "file": "GitHubPublisher.ts",
+          "src_size": 12071,
+          "pkg_size": 12060,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/GitHubPublisher.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/publishing/src/GitHubPublisher.ts",
+          "reason": "Import path differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "ItchPublisher.ts",
+          "src_size": 6693,
+          "pkg_size": 6682,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/ItchPublisher.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/publishing/src/ItchPublisher.ts",
+          "reason": "Import path differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        },
+        {
+          "file": "StaticPublisher.ts",
+          "src_size": 1914,
+          "pkg_size": 1903,
+          "diff_lines": 2,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/StaticPublisher.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/publishing/src/StaticPublisher.ts",
+          "reason": "Import path differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ],
+      "unique_to_src": [
+        {
+          "file": "sharingUtils.ts",
+          "size": 3000,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/publishing/sharingUtils.ts",
+          "reason": "App-specific UI sharing utilities",
+          "recommendation": "keep_in_src_or_move_to_editor_base"
+        }
+      ]
+    },
+    "audio": {
+      "mapping": "/src/lib/audio/ → /packages/audio/src/",
+      "status": "complete",
+      "identical": [
+        {
+          "file": "types.ts",
+          "size": 84,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/audio/types.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/audio/src/types.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "AudioManager.ts",
+          "size": 4892,
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/audio/AudioManager.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/audio/src/AudioManager.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [],
+      "notes": "100% migrated - safe to remove entire directory"
+    },
+    "validation": {
+      "mapping": "/src/lib/validation/ → /packages/core-ts/src/validation/",
+      "status": "import_paths_only",
+      "identical": [
+        {
+          "file": "defaultValidator.ts",
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/validation/defaultValidator.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/validation/defaultValidator.ts",
+          "action": "delete_src_update_imports"
+        },
+        {
+          "file": "validators/index.ts",
+          "src": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/src/lib/validation/validators/index.ts",
+          "pkg": "/Users/jims/code/github.com/writewhisker/whisker-editor-web/packages/core-ts/src/validation/validators/index.ts",
+          "action": "delete_src_update_imports"
+        }
+      ],
+      "diverged": [
+        {"file": "AutoFixer.ts", "diff_lines": 3, "reason": "import_paths"},
+        {"file": "QualityAnalyzer.ts", "diff_lines": 4, "reason": "import_paths"},
+        {"file": "StoryValidator.ts", "diff_lines": 4, "reason": "import_paths"},
+        {"file": "types.ts", "diff_lines": 4, "reason": "import_paths"},
+        {"file": "DeadLinksValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "EmptyPassagesValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "MissingStartPassageValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "UndefinedVariablesValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "UnreachablePassagesValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "UnusedVariablesValidator.ts", "diff_lines": 4, "reason": "import_paths"},
+        {"file": "ValidateAssetsValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "ValidateIFIDValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "ValidatePassageMetadataValidator.ts", "diff_lines": 2, "reason": "import_paths"},
+        {"file": "ValidateScriptsValidator.ts", "diff_lines": 4, "reason": "import_paths"},
+        {"file": "ValidateStylesheetsValidator.ts", "diff_lines": 2, "reason": "import_paths"}
+      ],
+      "recommendation": "use_package_versions",
+      "risk": "low",
+      "notes": "All divergences are import path changes to use package imports"
+    },
+    "analytics": {
+      "mapping": "/src/lib/analytics/ → /packages/analytics/src/",
+      "status": "near_complete",
+      "identical": [
+        {"file": "PlaythroughAnalytics.ts"},
+        {"file": "PlaythroughRecorder.ts"},
+        {"file": "types.ts"}
+      ],
+      "diverged": [
+        {
+          "file": "StoryAnalytics.ts",
+          "diff_lines": 14,
+          "reason": "minor_differences",
+          "recommendation": "use_package_version",
+          "risk": "low"
+        }
+      ]
+    },
+    "player": {
+      "mapping": "/src/lib/player/ → /packages/core-ts/src/player/",
+      "status": "needs_investigation",
+      "identical": [
+        {"file": "testScenarioTypes.ts"},
+        {"file": "TestScenarioRunner.ts"}
+      ],
+      "diverged": [
+        {
+          "file": "StoryPlayer.ts",
+          "recommendation": "investigate_differences",
+          "risk": "medium"
+        },
+        {
+          "file": "types.ts",
+          "recommendation": "investigate_differences",
+          "risk": "medium"
+        }
+      ]
+    }
+  },
+  "migration_phases": {
+    "phase_1_immediate": {
+      "name": "Safe & Immediate (0 Risk)",
+      "action": "Update imports, delete src files",
+      "files": 19,
+      "estimated_bytes": 80000,
+      "files_list": [
+        "audio/*",
+        "models/Collaborator.ts",
+        "models/ChangeLog.ts",
+        "models/Playthrough.ts",
+        "models/Variable.ts",
+        "models/LuaFunction.ts",
+        "models/Choice.ts",
+        "models/ScriptBlock.ts",
+        "models/Comment.ts",
+        "export/formats/HTMLExporter.ts",
+        "export/formats/HTMLPlayerTemplate.ts",
+        "export/themes/themes.ts",
+        "scripting/LuaEngine.ts",
+        "scripting/luaConfig.ts",
+        "publishing/types.ts",
+        "publishing/versionManager.ts",
+        "import/formats/JSONImporter.ts",
+        "utils/idGenerator.ts"
+      ]
+    },
+    "phase_2_low_risk": {
+      "name": "Low Risk (Minor Merge Required)",
+      "action": "Review diff, use package version, update imports",
+      "files": 34,
+      "categories": [
+        "models (4 files)",
+        "export (7 files)",
+        "publishing (3 files)",
+        "scripting (1 file)",
+        "utils (1 file)",
+        "validation (17 files)",
+        "analytics (1 file)"
+      ]
+    },
+    "phase_3_medium_risk": {
+      "name": "Medium Risk (Significant Divergence)",
+      "action": "Careful merge, preserve features from both versions",
+      "files": 3,
+      "files_list": [
+        "import/formats/TwineImporter.ts",
+        "player/StoryPlayer.ts",
+        "player/types.ts"
+      ]
+    },
+    "phase_4_keep_in_src": {
+      "name": "Keep in src/lib (Application-Specific)",
+      "action": "Do nothing OR migrate to /packages/editor-base/",
+      "files": 25,
+      "categories": [
+        "Game Exporters (2 files)",
+        "Publishing Utils (1 file)",
+        "Utils (15 files)",
+        "Testing (3 files)",
+        "Data (2 files)",
+        "Services (2+ files)"
+      ]
+    }
+  },
+  "import_updates": {
+    "models": {
+      "old": "import { Story } from '$lib/models/Story'",
+      "new": "import { Story } from '@writewhisker/core-ts'"
+    },
+    "export": {
+      "old": "import { HTMLExporter } from '$lib/export/formats/HTMLExporter'",
+      "new": "import { HTMLExporter } from '@writewhisker/export'"
+    },
+    "import": {
+      "old": "import { TwineImporter } from '$lib/import/formats/TwineImporter'",
+      "new": "import { TwineImporter } from '@writewhisker/import'"
+    },
+    "scripting": {
+      "old": "import { LuaEngine } from '$lib/scripting/LuaEngine'",
+      "new": "import { LuaEngine } from '@writewhisker/scripting'"
+    },
+    "publishing": {
+      "old": "import { GitHubPublisher } from '$lib/publishing/GitHubPublisher'",
+      "new": "import { GitHubPublisher } from '@writewhisker/publishing'"
+    },
+    "audio": {
+      "old": "import { AudioManager } from '$lib/audio/AudioManager'",
+      "new": "import { AudioManager } from '@writewhisker/audio'"
+    },
+    "validation": {
+      "old": "import { StoryValidator } from '$lib/validation/StoryValidator'",
+      "new": "import { StoryValidator } from '@writewhisker/core-ts'"
+    },
+    "analytics": {
+      "old": "import { PlaythroughRecorder } from '$lib/analytics/PlaythroughRecorder'",
+      "new": "import { PlaythroughRecorder } from '@writewhisker/analytics'"
+    }
+  },
+  "open_questions": [
+    {
+      "question": "Why did TwineImporter.ts diverge by 203 lines?",
+      "priority": "high",
+      "impact": "Affects import functionality"
+    },
+    {
+      "question": "What are the differences in Player/StoryPlayer.ts?",
+      "priority": "high",
+      "impact": "Need to understand if src is app-specific or outdated"
+    },
+    {
+      "question": "Should game exporters (Minecraft/Roblox) be in a separate package?",
+      "priority": "medium",
+      "impact": "Code organization"
+    },
+    {
+      "question": "Should editor-specific utils move to @writewhisker/editor-base?",
+      "priority": "medium",
+      "impact": "Better package separation"
+    }
+  ]
+}

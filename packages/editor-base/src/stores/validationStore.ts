@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { EditorValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '@writewhisker/core-ts';
+import type { ValidationResult, QualityMetrics, ValidationOptions, AutoFixResult } from '@writewhisker/core-ts';
 import { createDefaultValidator } from '@writewhisker/core-ts';
 import { createQualityAnalyzer } from '@writewhisker/core-ts';
 import { createAutoFixer } from '@writewhisker/core-ts';
@@ -82,7 +82,7 @@ function loadValidatorConfig(): ValidatorConfigMap {
 }
 
 // Validation state
-export const validationResult = writable<EditorValidationResult | null>(null);
+export const validationResult = writable<ValidationResult | null>(null);
 export const qualityMetrics = writable<QualityMetrics | null>(null);
 export const isValidating = writable<boolean>(false);
 export const autoValidate = writable<boolean>(loadAutoValidate());
@@ -90,7 +90,7 @@ export const validationOptions = writable<ValidationOptions>(loadOptions());
 export const validatorConfig = writable<ValidatorConfigMap>(loadValidatorConfig());
 
 // Validation history
-export const validationHistory = writable<EditorValidationResult[]>([]);
+export const validationHistory = writable<ValidationResult[]>([]);
 const MAX_HISTORY = 20; // Keep last 20 validation results
 
 // Derived stores
@@ -754,7 +754,7 @@ export const validationActions = {
         throw new Error('Invalid validation data format');
       }
 
-      const imported = data.validation as EditorValidationResult;
+      const imported = data.validation as ValidationResult;
 
       // Basic validation of required fields
       if (typeof imported.timestamp !== 'number' ||

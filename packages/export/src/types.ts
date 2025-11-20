@@ -57,8 +57,8 @@ export interface ExportOptions {
   /** Include source map for debugging */
   includeSourceMap?: boolean;
 
-  /** whisker-core format version (1.0 or 2.0) */
-  whiskerCoreVersion?: '1.0' | '2.0';
+  /** whisker-core format version (1.0 or 2.0 or 2.1) */
+  whiskerCoreVersion?: '1.0' | '2.0' | '2.1';
 
   /** Strip editor-specific extensions for whisker-core export */
   stripExtensions?: boolean;

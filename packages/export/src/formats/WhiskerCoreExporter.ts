@@ -44,10 +44,17 @@ export class WhiskerCoreExporter implements IExporter {
       const stripExtensions = options.stripExtensions !== false; // Default to true
 
       // Serialize to whisker-core format
-      const coreData = story.serializeWhiskerCore({
-        formatVersion,
-        stripExtensions
-      });
+      let coreData;
+      if (formatVersion === '2.1') {
+        coreData = story.serializeWhiskerV21({
+          stripExtensions
+        });
+      } else {
+        coreData = story.serializeWhiskerCore({
+          formatVersion,
+          stripExtensions
+        });
+      }
 
       // Warn if editor extensions are present and not stripped
       if (!stripExtensions) {
@@ -105,8 +112,9 @@ export class WhiskerCoreExporter implements IExporter {
 
     if (options.whiskerCoreVersion &&
         options.whiskerCoreVersion !== '1.0' &&
-        options.whiskerCoreVersion !== '2.0') {
-      errors.push('whiskerCoreVersion must be "1.0" or "2.0"');
+        options.whiskerCoreVersion !== '2.0' &&
+        options.whiskerCoreVersion !== '2.1') {
+      errors.push('whiskerCoreVersion must be "1.0", "2.0", or "2.1"');
     }
 
     return errors;

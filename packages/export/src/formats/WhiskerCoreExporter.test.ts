@@ -266,7 +266,7 @@ describe('WhiskerCoreExporter', () => {
       };
 
       const errors = exporter.validateOptions(options);
-      expect(errors).toContain('whiskerCoreVersion must be "1.0" or "2.0"');
+      expect(errors).toContain('whiskerCoreVersion must be "1.0", "2.0", or "2.1"');
     });
   });
 

@@ -9,4 +9,5 @@ export { TwineExporter } from './TwineExporter';
 export { StaticSiteExporter } from './StaticSiteExporter';
 export { EPUBExporter } from './EPUBExporter';
 export { WhiskerCoreExporter } from './WhiskerCoreExporter';
+export { PDFExporter } from './PDFExporter';
 export { generateHTMLPlayer } from './HTMLPlayerTemplate';

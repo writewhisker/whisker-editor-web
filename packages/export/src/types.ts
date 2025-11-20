@@ -9,7 +9,7 @@ import type { Story, ValidationResult, QualityMetrics } from '@writewhisker/core
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'html-standalone' | 'markdown' | 'package' | 'epub' | 'twine';
+export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'html-standalone' | 'markdown' | 'package' | 'epub' | 'twine' | 'pdf';
 
 /**
  * Export options configuration
@@ -71,6 +71,31 @@ export interface ExportOptions {
 
   /** Embed assets as base64 data URLs (shorthand for assetMode: 'embed') */
   embedAssets?: boolean;
+
+  // PDF Export Options
+  /** PDF page format */
+  pdfFormat?: 'a4' | 'letter' | 'legal';
+
+  /** PDF orientation */
+  pdfOrientation?: 'portrait' | 'landscape';
+
+  /** Include table of contents in PDF */
+  pdfIncludeTOC?: boolean;
+
+  /** Include story graph visualization in PDF */
+  pdfIncludeGraph?: boolean;
+
+  /** PDF export mode: 'playable' (interactive playthrough), 'manuscript' (printable text), 'outline' (structure view) */
+  pdfMode?: 'playable' | 'manuscript' | 'outline';
+
+  /** Font size for PDF (in points) */
+  pdfFontSize?: number;
+
+  /** Line height for PDF */
+  pdfLineHeight?: number;
+
+  /** Margin size for PDF (in mm) */
+  pdfMargin?: number;
 }
 
 /**

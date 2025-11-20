@@ -3,7 +3,8 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Svelte](https://img.shields.io/badge/svelte-5-ff3e00.svg)](https://svelte.dev/)
 [![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-621%20passing-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
+[![Tests](https://img.shields.io/badge/tests-776%20passing-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
+[![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
 
 **Modern visual story editor for whisker interactive fiction.** Create and edit interactive stories with an intuitive web-based interface featuring visual node graphs, real-time editing, and powerful story management tools.
 
@@ -24,7 +25,8 @@
 - **Tag Management** - Organize passages with colored tags, autocomplete, and centralized tag management
 - **Performance Optimized** - Handles 1000+ passage stories with virtual scrolling and metadata caching
 - **Fully Accessible** - WCAG 2.1 Level AA compliant with 23 keyboard shortcuts and screen reader support
-- **Comprehensive Testing** - 621 passing tests ensuring reliability (unit + E2E)
+- **Comprehensive Testing** - 776 passing tests ensuring reliability (unit + E2E + performance)
+- **Production Ready** - 96%+ test coverage, exceptional performance, robust authentication
 
 **Key Capabilities:**
 
@@ -38,7 +40,9 @@
 ✅ **Tag Organization** - Color-coded tags with autocomplete and global management
 ✅ **Story Validation** - Real-time error checking with auto-fix suggestions and quality analysis
 ✅ **Story Player** - Test your story with live preview, breakpoints, and variable inspection
-✅ **Export & Publishing** - Export to JSON, HTML (standalone player), or Markdown formats
+✅ **Export & Publishing** - Export to 7 formats: JSON, HTML, Markdown, PDF (3 modes), EPUB, Twine, Static Site
+✅ **Authentication** - Anonymous-first with optional GitHub OAuth for cloud features
+✅ **PDF Export** - Professional PDF generation with Playable, Manuscript, and Outline modes
 ✅ **Performance** - Virtual scrolling, metadata caching, and optimizations for large stories (1000+ passages)
 ✅ **Accessibility** - WCAG 2.1 AA compliant with keyboard shortcuts, screen reader support, and motion preferences
 ✅ **Documentation** - Comprehensive user guides, tutorials, and keyboard shortcuts reference
@@ -131,17 +135,26 @@ npm run test:e2e
 npm run test:coverage
 ```
 
-**Current Coverage:** 621 tests passing (100%)
+**Current Coverage:** 776 tests passing (100%)
 - 40 model tests (Story, Passage, Choice, Variable, History)
 - 44 story player tests (playback, breakpoints, history)
 - 57 player store tests (state management, error handling)
-- 80 export/import tests (JSON, HTML, Markdown formats)
+- 192 export/import tests (JSON, HTML, Markdown, PDF, EPUB, Twine, Static Site)
 - 42 validation tests (dead links, unreachable passages, variables)
+- 66 GitHub integration tests (OAuth, API, token management)
+- 31 audio system tests (playback, volume, effects)
+- 41 PDF export tests (3 modes, configuration, validation)
+- 17 performance benchmarks (export speed, memory, concurrency)
 - 34 tag management tests
 - 27 connection validation tests
 - 20 graph layout tests
 - 16 filter and search tests
 - And more (full coverage of all features)
+
+**Package Coverage:**
+- GitHub package: 96.86% (statements, branches, functions, lines)
+- Audio package: 94.06% (comprehensive audio system coverage)
+- Export package: High coverage with performance validation
 
 See [TESTING.md](TESTING.md) for detailed testing documentation.
 

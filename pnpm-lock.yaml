@@ -257,9 +257,6 @@ importers:
       nanoid:
         specifier: ^5.0.0
         version: 5.1.6
-      svelte:
-        specifier: ^5.0.0
-        version: 5.43.4
       svelte-virtual-list:
         specifier: ^3.0.1
         version: 3.0.1
@@ -276,6 +273,9 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.24
+      svelte:
+        specifier: ^5.0.0
+        version: 5.43.4
       svelte-check:
         specifier: ^4.0.0
         version: 4.3.3(picomatch@4.0.3)(svelte@5.43.4)(typescript@5.9.3)
@@ -294,15 +294,9 @@ importers:
       '@writewhisker/core-ts':
         specifier: workspace:*
         version: link:../core-ts
-      html2canvas:
-        specifier: ^1.4.1
-        version: 1.4.1
       isomorphic-dompurify:
         specifier: ^2.0.0
         version: 2.31.0
-      jspdf:
-        specifier: ^3.0.4
-        version: 3.0.4
       jszip:
         specifier: ^3.10.0
         version: 3.10.1
@@ -331,6 +325,13 @@ importers:
       vitest:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.24)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2)
+    optionalDependencies:
+      html2canvas:
+        specifier: ^1.4.1
+        version: 1.4.1
+      jspdf:
+        specifier: ^3.0.4
+        version: 3.0.4
 
   packages/game-systems:
     dependencies:
@@ -365,9 +366,6 @@ importers:
       '@writewhisker/storage':
         specifier: workspace:*
         version: link:../storage
-      svelte:
-        specifier: ^5.0.0
-        version: 5.43.4
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -375,6 +373,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^1.6.1
         version: 1.6.1(vitest@1.6.1(@types/node@20.19.24)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2))
+      svelte:
+        specifier: ^5.0.0
+        version: 5.43.4
       svelte-check:
         specifier: ^4.0.0
         version: 4.3.3(picomatch@4.0.3)(svelte@5.43.4)(typescript@5.9.3)
@@ -4903,7 +4904,8 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
-  '@types/pako@2.0.4': {}
+  '@types/pako@2.0.4':
+    optional: true
 
   '@types/qs@6.14.0': {}
 
@@ -5223,7 +5225,8 @@ snapshots:
 
   balanced-match@1.0.2: {}
 
-  base64-arraybuffer@1.0.2: {}
+  base64-arraybuffer@1.0.2:
+    optional: true
 
   baseline-browser-mapping@2.8.25: {}
 
@@ -5387,6 +5390,7 @@ snapshots:
   css-line-break@2.1.0:
     dependencies:
       utrie: 1.0.2
+    optional: true
 
   css-tree@3.1.0:
     dependencies:
@@ -5700,6 +5704,7 @@ snapshots:
       '@types/pako': 2.0.4
       iobuffer: 5.4.0
       pako: 2.1.0
+    optional: true
 
   fastq@1.19.1:
     dependencies:
@@ -5871,6 +5876,7 @@ snapshots:
     dependencies:
       css-line-break: 2.1.0
       text-segmentation: 1.0.3
+    optional: true
 
   http-errors@2.0.0:
     dependencies:
@@ -5923,7 +5929,8 @@ snapshots:
 
   inherits@2.0.4: {}
 
-  iobuffer@5.4.0: {}
+  iobuffer@5.4.0:
+    optional: true
 
   ipaddr.js@1.9.1: {}
 
@@ -6088,6 +6095,7 @@ snapshots:
       core-js: 3.47.0
       dompurify: 3.3.0
       html2canvas: 1.4.1
+    optional: true
 
   jszip@3.10.1:
     dependencies:
@@ -6341,7 +6349,8 @@ snapshots:
 
   pako@1.0.11: {}
 
-  pako@2.1.0: {}
+  pako@2.1.0:
+    optional: true
 
   parse5@7.3.0:
     dependencies:
@@ -6796,6 +6805,7 @@ snapshots:
   text-segmentation@1.0.3:
     dependencies:
       utrie: 1.0.2
+    optional: true
 
   tinybench@2.9.0: {}
 
@@ -6926,6 +6936,7 @@ snapshots:
   utrie@1.0.2:
     dependencies:
       base64-arraybuffer: 1.0.2
+    optional: true
 
   vary@1.1.2: {}
 

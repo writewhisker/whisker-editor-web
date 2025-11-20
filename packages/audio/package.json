@@ -4,6 +4,7 @@
   "description": "Audio management and playback for Whisker interactive fiction",
   "license": "AGPL-3.0",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Lua scripting engine for Whisker interactive fiction",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Export system for Whisker - JSON, HTML, Markdown, Twine, EPUB, and Static Site exporters",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -32,6 +33,10 @@
     "jszip": "^3.10.0",
     "marked": "^12.0.0",
     "nanoid": "^5.0.0"
+  },
+  "optionalDependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

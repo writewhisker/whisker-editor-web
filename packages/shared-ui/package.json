@@ -4,6 +4,7 @@
   "description": "Shared UI components and styles for Whisker ecosystem",
   "license": "AGPL-3.0",
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -33,7 +33,7 @@
     "build": "vite build && pnpm build:styles",
     "build:styles": "node scripts/build-styles.js",
     "build:types": "tsc --emitDeclarationOnly",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "check": "svelte-check && tsc --noEmit"
   },

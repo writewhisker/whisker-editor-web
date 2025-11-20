@@ -6,5 +6,6 @@
 export * from './GitHubPublisher';
 export * from './ItchPublisher';
 export * from './StaticPublisher';
+export * from './butler';
 export * from './versionManager';
 export * from './types';

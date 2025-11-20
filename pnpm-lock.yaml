@@ -233,9 +233,6 @@ importers:
       '@writewhisker/import':
         specifier: workspace:*
         version: link:../import
-      '@writewhisker/publishing':
-        specifier: workspace:*
-        version: link:../publishing
       '@writewhisker/scripting':
         specifier: workspace:*
         version: link:../scripting

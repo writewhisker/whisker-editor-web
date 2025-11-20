@@ -36,9 +36,6 @@ export * from '@writewhisker/scripting';
 // GitHub integration
 export * from '@writewhisker/github';
 
-// Publishing tools
-export * from '@writewhisker/publishing';
-
 // ============================================================================
 // EDITOR-SPECIFIC EXPORTS
 // ============================================================================

@@ -160,7 +160,7 @@ export class PDFExporter implements IExporter {
 
     const metadata = [
       `Passages: ${story.passages.size}`,
-      `Created: ${new Date(story.metadata.createdAt).toLocaleDateString()}`,
+      `Created: ${new Date(story.metadata.created).toLocaleDateString()}`,
       `Exported: ${new Date().toLocaleDateString()}`,
     ];
 
@@ -245,8 +245,8 @@ export class PDFExporter implements IExporter {
 
       // Add linked passages to queue
       for (const choice of passage.choices) {
-        if (choice.targetPassageId) {
-          const target = story.passages.get(choice.targetPassageId);
+        if (choice.target) {
+          const target = story.passages.get(choice.target);
           if (target && !visited.has(target.id)) {
             queue.push(target);
           }
@@ -295,8 +295,8 @@ export class PDFExporter implements IExporter {
             yPos = margin;
           }
 
-          const target = choice.targetPassageId ? story.passages.get(choice.targetPassageId) : undefined;
-          const targetName = target ? target.name : '[No target]';
+          const target = choice.target ? story.passages.get(choice.target) : undefined;
+          const targetName = target ? target.title : '[No target]';
           const choiceText = `• ${choice.text} → ${targetName}`;
 
           const choiceLines = pdf.splitTextToSize(choiceText, maxWidth - 5);
@@ -454,8 +454,8 @@ export class PDFExporter implements IExporter {
             yPos = margin;
           }
 
-          const target = choice.targetPassageId ? story.passages.get(choice.targetPassageId) : undefined;
-          const targetName = target ? target.name : '[No target]';
+          const target = choice.target ? story.passages.get(choice.target) : undefined;
+          const targetName = target ? target.title : '[No target]';
           const choiceText = `    → ${choice.text} (to: ${targetName})`;
 
           const lines = pdf.splitTextToSize(choiceText, maxWidth - 10);

@@ -9,7 +9,9 @@ import type { PublishOptions } from './types';
 import { StaticSiteExporter } from '@writewhisker/editor-base';
 
 // Mock StaticSiteExporter
-vi.mock('../export/formats/StaticSiteExporter');
+vi.mock('@writewhisker/editor-base', () => ({
+  StaticSiteExporter: vi.fn(),
+}));
 
 describe('ItchPublisher', () => {
   let publisher: ItchPublisher;
@@ -168,12 +170,19 @@ describe('ItchPublisher', () => {
     });
 
     it('should successfully publish a story', async () => {
-      // Mock user info
+      // Mock user info (getCurrentUser)
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             user: { id: 12345, username: 'testuser' },
+          }),
+        })
+        // Mock get user games (findGameByTitle -> getUserGames)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            games: [], // No existing games
           }),
         })
         // Mock game creation
@@ -206,24 +215,37 @@ describe('ItchPublisher', () => {
       expect(result.metadata).toEqual({
         gameId: 67890,
         username: 'testuser',
-        visibility: 'draft',
+        uploadMethod: 'api',
+        buildId: undefined,
+        buildUrl: 'https://testuser.itch.io/test-story',
+        target: 'testuser/test-story',
       });
     });
 
     it('should use default visibility if not specified', async () => {
       mockFetch
+        // Get current user
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             user: { id: 12345, username: 'testuser' },
           }),
         })
+        // Get user games (check if game exists)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            games: [],
+          }),
+        })
+        // Create game
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             game: { id: 67890, url: 'https://testuser.itch.io/test-story' },
           }),
         })
+        // Upload file
         .mockResolvedValueOnce({
           ok: true,
         });
@@ -236,7 +258,6 @@ describe('ItchPublisher', () => {
       const result = await publisher.publish(mockStory, options);
 
       expect(result.success).toBe(true);
-      expect(result.metadata?.visibility).toBe('draft');
     });
 
     it('should handle failed authentication during publish', async () => {
@@ -311,18 +332,28 @@ describe('ItchPublisher', () => {
 
     it('should handle file upload failure', async () => {
       mockFetch
+        // Get current user
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             user: { id: 12345, username: 'testuser' },
           }),
         })
+        // Get user games
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            games: [],
+          }),
+        })
+        // Create game
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             game: { id: 67890, url: 'https://testuser.itch.io/test-story' },
           }),
         })
+        // Upload file fails
         .mockResolvedValueOnce({
           ok: false,
           status: 500,

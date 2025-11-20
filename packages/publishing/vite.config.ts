@@ -19,6 +19,11 @@ export default defineConfig({
       external: [
         '@writewhisker/core-ts',
         '@writewhisker/editor-base',
+        'child_process',
+        'util',
+        'fs/promises',
+        'path',
+        'os',
       ],
     },
     sourcemap: true,

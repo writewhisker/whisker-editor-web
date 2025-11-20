@@ -281,14 +281,14 @@ describe('ConflictDetector', () => {
       });
 
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear(); localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (remoteStory as any).passages = [passage1, passage2]; // Added new passage
+      remoteStory.passages.clear(); remoteStory.passages.set(passage1.id, passage1); remoteStory.passages.set(passage2.id, passage2); // Added new passage
 
       const context: MergeContext = {
         local: localStory,
@@ -299,7 +299,7 @@ describe('ConflictDetector', () => {
 
       expect(result.success).toBe(true);
       expect(result.mergedStory).toBeDefined();
-      expect(result.mergedStory?.passages.length).toBe(2);
+      expect(result.mergedStory?.passages.size).toBe(2);
     });
 
     it('should fail auto-merge when conflicts exist', () => {
@@ -315,14 +315,14 @@ describe('ConflictDetector', () => {
       });
 
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear(); localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (remoteStory as any).passages = [passage2];
+      remoteStory.passages.clear(); remoteStory.passages.set(passage2.id, passage2);
 
       const context: MergeContext = {
         local: localStory,
@@ -351,14 +351,14 @@ describe('ConflictDetector', () => {
       });
 
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear(); localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: new Date().toISOString(), modified: new Date().toISOString() },
       });
-      (remoteStory as any).passages = [passage2];
+      remoteStory.passages.clear(); remoteStory.passages.set(passage2.id, passage2);
 
       const context: MergeContext = {
         local: localStory,
@@ -370,7 +370,8 @@ describe('ConflictDetector', () => {
       expect(result.success).toBe(true);
       expect(result.mergedStory).toBeDefined();
       // Position should be resolved to remote value
-      expect(result.mergedStory?.passages[0].position).toEqual({ x: 200, y: 200 });
+      const mergedPassage = Array.from(result.mergedStory!.passages.values())[0] as Passage;
+      expect(mergedPassage.position).toEqual({ x: 200, y: 200 });
     });
   });
 });

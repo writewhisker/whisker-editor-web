@@ -16,7 +16,7 @@ import type { Passage } from '@writewhisker/core-ts';
 
 export type DependencyType = 'reads' | 'writes' | 'depends_on' | 'affects';
 
-export interface VariableUsage {
+export interface EditorVariableUsage {
   variableName: string;
   passageId: string;
   passageTitle: string;
@@ -38,7 +38,7 @@ export interface VariableNode {
   type: 'string' | 'number' | 'boolean' | 'object' | 'unknown';
   readCount: number;
   writeCount: number;
-  usages: VariableUsage[];
+  usages: EditorVariableUsage[];
   dependencies: {
     reads: string[];      // Variables this variable reads from
     writes: string[];     // Variables this variable writes to
@@ -114,7 +114,7 @@ function parseVariableReferences(text: string): {
 // Analyze story for variable dependencies
 function analyzeStory(story: Story): DependencyGraph {
   const nodes = new Map<string, VariableNode>();
-  const usageMap = new Map<string, VariableUsage[]>();
+  const usageMap = new Map<string, EditorVariableUsage[]>();
   const dependencyMap = new Map<string, Set<string>>();
 
   // Initialize nodes from story variables
@@ -170,7 +170,7 @@ function analyzeStory(story: Story): DependencyGraph {
         node.passagesUsed.push(passage.id);
       }
 
-      const usage: VariableUsage = {
+      const usage: EditorVariableUsage = {
         variableName: varName,
         passageId: passage.id,
         passageTitle: passage.title,
@@ -201,7 +201,7 @@ function analyzeStory(story: Story): DependencyGraph {
         node.passagesUsed.push(passage.id);
       }
 
-      const usage: VariableUsage = {
+      const usage: EditorVariableUsage = {
         variableName: varName,
         passageId: passage.id,
         passageTitle: passage.title,
@@ -220,7 +220,7 @@ function analyzeStory(story: Story): DependencyGraph {
         node.passagesUsed.push(passage.id);
       }
 
-      const usage: VariableUsage = {
+      const usage: EditorVariableUsage = {
         variableName: varName,
         passageId: passage.id,
         passageTitle: passage.title,

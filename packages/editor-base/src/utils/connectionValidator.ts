@@ -30,9 +30,9 @@ export interface ConnectionIssue {
 }
 
 /**
- * @deprecated Use ValidationResult from `src/lib/validation/types.ts` instead
+ * @deprecated Use EditorValidationResult from `src/lib/validation/types.ts` instead
  */
-export interface ValidationResult {
+export interface EditorValidationResult {
   isValid: boolean;
   issues: ConnectionIssue[];
   errorCount: number;
@@ -44,7 +44,7 @@ export interface ValidationResult {
  * Validates all connections in a story
  * @deprecated Use validationStore.validate() or StoryValidator from `src/lib/validation/` instead
  */
-export function validateConnections(story: Story): ValidationResult {
+export function validateConnections(story: Story): EditorValidationResult {
   const issues: ConnectionIssue[] = [];
 
   // Check each passage for various issues

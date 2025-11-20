@@ -229,16 +229,16 @@
         <div class="merge-summary">
           <div class="summary-item">
             <strong>Local passages:</strong>
-            <span>{context.local.passages.length}</span>
+            <span>{context.local.passages.size}</span>
           </div>
           <div class="summary-item">
             <strong>Remote passages:</strong>
-            <span>{context.remote.passages.length}</span>
+            <span>{context.remote.passages.size}</span>
           </div>
           {#if autoMergeResult.mergedStory}
             <div class="summary-item">
               <strong>Merged passages:</strong>
-              <span>{autoMergeResult.mergedStory.passages.length}</span>
+              <span>{autoMergeResult.mergedStory.passages.size}</span>
             </div>
           {/if}
         </div>

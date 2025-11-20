@@ -14,3 +14,4 @@ export * from './utils';
 export * from './plugins';
 export * from './analytics';
 export * from './scripting';
+export * from './types';

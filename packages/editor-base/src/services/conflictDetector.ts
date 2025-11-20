@@ -4,7 +4,7 @@
  * Detects conflicts between local and remote story versions
  */
 
-import type { Story, Passage } from '@writewhisker/core-ts';
+import { Story, type Passage } from '@writewhisker/core-ts';
 import type {
   Conflict,
   ConflictType,
@@ -361,8 +361,34 @@ export class ConflictDetector {
     context: MergeContext,
     conflicts: Conflict[]
   ): Story {
-    // Start with local story
-    const merged = { ...context.local };
+    // Create a new Story instance from local story
+    const merged = new Story({
+      metadata: context.local.metadata,
+      startPassage: context.local.startPassage,
+      settings: context.local.settings,
+      stylesheets: context.local.stylesheets,
+      scripts: context.local.scripts,
+    });
+
+    // Copy passages from local
+    for (const [id, passage] of context.local.passages) {
+      merged.passages.set(id, passage);
+    }
+
+    // Copy variables from local
+    for (const [name, variable] of context.local.variables) {
+      merged.variables.set(name, variable);
+    }
+
+    // Copy assets from local
+    for (const [id, asset] of context.local.assets) {
+      merged.assets.set(id, asset);
+    }
+
+    // Copy lua functions from local
+    for (const [id, luaFunc] of context.local.luaFunctions) {
+      merged.luaFunctions.set(id, luaFunc);
+    }
 
     // Add new remote passages
     for (const [id, remotePassage] of context.remote.passages) {

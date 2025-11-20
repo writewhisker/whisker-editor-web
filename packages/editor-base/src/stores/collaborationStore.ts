@@ -16,7 +16,8 @@ import type { Story } from '@writewhisker/core-ts';
 
 export type CollaboratorStatus = 'active' | 'idle' | 'away' | 'offline';
 
-export interface Collaborator {
+// Renamed to avoid conflict with core-ts Collaborator
+export interface EditorCollaborator {
   id: string;
   name: string;
   color: string;              // Hex color for cursor/selection
@@ -44,13 +45,13 @@ export interface CollaborationSession {
   id: string;
   storyId: string;
   started: string;
-  collaborators: Record<string, Collaborator>;
+  collaborators: Record<string, EditorCollaborator>;
   changes: CollaborationChange[];
   enabled: boolean;
 }
 
 export interface CollaborationStoreState {
-  currentUser: Collaborator | null;
+  currentUser: EditorCollaborator | null;
   session: CollaborationSession | null;
   pendingChanges: CollaborationChange[];
   conflictedChanges: CollaborationChange[];
@@ -69,7 +70,7 @@ function generateCollaboratorColor(): string {
 }
 
 // Load or create current user
-function loadCurrentUser(): Collaborator {
+function loadCurrentUser(): EditorCollaborator {
   const saved = localStorage.getItem(USER_KEY);
   if (saved) {
     try {
@@ -85,7 +86,7 @@ function loadCurrentUser(): Collaborator {
   }
 
   // Create new user
-  const newUser: Collaborator = {
+  const newUser: EditorCollaborator = {
     id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     name: 'Anonymous',
     color: generateCollaboratorColor(),
@@ -98,7 +99,7 @@ function loadCurrentUser(): Collaborator {
 }
 
 // Save current user
-function saveCurrentUser(user: Collaborator): void {
+function saveCurrentUser(user: EditorCollaborator): void {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
@@ -209,7 +210,7 @@ const createCollaborationStore = () => {
     /**
      * Update current user profile
      */
-    updateUser: (updates: Partial<Omit<Collaborator, 'id'>>) => {
+    updateUser: (updates: Partial<Omit<EditorCollaborator, 'id'>>) => {
       update(state => {
         if (!state.currentUser) return state;
 

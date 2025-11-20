@@ -8,7 +8,7 @@
     pendingChanges,
     conflictedChanges,
     hasConflicts,
-    type Collaborator,
+    type EditorCollaborator,
   } from '../stores/collaborationStore';
   import { currentStory } from '../stores/storyStateStore';
 
@@ -47,7 +47,7 @@
   }
 
   // Get status color
-  function getStatusColor(status: Collaborator['status']): string {
+  function getStatusColor(status: EditorCollaborator['status']): string {
     switch (status) {
       case 'active': return 'bg-green-500';
       case 'idle': return 'bg-yellow-500';

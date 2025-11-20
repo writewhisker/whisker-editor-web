@@ -14,6 +14,9 @@ describe('ConflictDetector', () => {
         metadata: {
           title: 'Test Story',
           author: 'Author',
+          version: '1.0.0',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
         },
       });
 
@@ -27,10 +30,14 @@ describe('ConflictDetector', () => {
     });
 
     it('should detect metadata title conflict', () => {
+      const now = new Date().toISOString();
       const localStory = new Story({
         metadata: {
           title: 'Local Title',
           author: 'Author',
+          version: '1.0.0',
+          created: now,
+          modified: now,
         },
       });
 
@@ -38,6 +45,9 @@ describe('ConflictDetector', () => {
         metadata: {
           title: 'Remote Title',
           author: 'Author',
+          version: '1.0.0',
+          created: now,
+          modified: now,
         },
       });
 
@@ -68,15 +78,18 @@ describe('ConflictDetector', () => {
         content: 'Remote content',
       });
 
+      const now = new Date().toISOString();
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear();
+      localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (remoteStory as any).passages = [passage2];
+      remoteStory.passages.clear();
+      remoteStory.passages.set(passage2.id, passage2);
 
       const context: MergeContext = {
         local: localStory,
@@ -100,15 +113,17 @@ describe('ConflictDetector', () => {
         content: 'Content',
       });
 
+      const now = new Date().toISOString();
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (localStory as any).passages = [passage];
+      localStory.passages.clear();
+      localStory.passages.set(passage.id, passage);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (remoteStory as any).passages = []; // Passage deleted remotely
+      remoteStory.passages.clear(); // Passage deleted remotely
 
       const context: MergeContext = {
         local: localStory,
@@ -139,15 +154,18 @@ describe('ConflictDetector', () => {
         position: { x: 200, y: 200 },
       });
 
+      const now = new Date().toISOString();
       const localStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear();
+      localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Story' },
+        metadata: { title: 'Story', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (remoteStory as any).passages = [passage2];
+      remoteStory.passages.clear();
+      remoteStory.passages.set(passage2.id, passage2);
 
       const context: MergeContext = {
         local: localStory,
@@ -176,15 +194,18 @@ describe('ConflictDetector', () => {
         content: 'Remote content',
       });
 
+      const now = new Date().toISOString();
       const localStory = new Story({
-        metadata: { title: 'Local Title' },
+        metadata: { title: 'Local Title', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (localStory as any).passages = [passage1];
+      localStory.passages.clear();
+      localStory.passages.set(passage1.id, passage1);
 
       const remoteStory = new Story({
-        metadata: { title: 'Remote Title' },
+        metadata: { title: 'Remote Title', author: '', version: '1.0.0', created: now, modified: now },
       });
-      (remoteStory as any).passages = [passage2];
+      remoteStory.passages.clear();
+      remoteStory.passages.set(passage2.id, passage2);
 
       const context: MergeContext = {
         local: localStory,

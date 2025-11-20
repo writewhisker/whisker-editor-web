@@ -36,6 +36,14 @@ export { default as AdaptiveDifficultyPanel } from './AdaptiveDifficultyPanel.sv
 export { default as AIWritingPanel } from './AIWritingPanel.svelte';
 export { default as CharacterManager } from './CharacterManager.svelte';
 export { default as CollaborationPanel } from './CollaborationPanel.svelte';
+
+// Collaboration components (Phase 4D)
+export { default as ChangeHistory } from './collaboration/ChangeHistory.svelte';
+export { default as CommentPanel } from './collaboration/CommentPanel.svelte';
+export { default as CommentThread } from './collaboration/CommentThread.svelte';
+export { default as DiffViewer } from './collaboration/DiffViewer.svelte';
+export { default as ConflictResolutionDialog } from './collaboration/ConflictResolutionDialog.svelte';
+export { default as MergeTool } from './collaboration/MergeTool.svelte';
 export { default as MobileExportPanel } from './MobileExportPanel.svelte';
 export { default as PacingAnalyzerPanel } from './PacingAnalyzerPanel.svelte';
 export { default as PlaytestPanel } from './PlaytestPanel.svelte';

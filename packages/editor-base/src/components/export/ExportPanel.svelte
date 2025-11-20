@@ -49,7 +49,8 @@
       markdown: '.md',
       package: '.zip',
       epub: '.epub',
-      twine: '.html'
+      twine: '.html',
+      pdf: '.pdf'
     };
     customFilename = `${storyTitle}${extensions[selectedFormat]}`;
   }

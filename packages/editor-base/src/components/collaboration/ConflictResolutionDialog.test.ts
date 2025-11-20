@@ -131,14 +131,13 @@ describe('ConflictResolutionDialog', () => {
   it('should emit resolve event when Apply Resolution clicked', async () => {
     const handleResolve = vi.fn();
 
-    const { component, getByText } = render(ConflictResolutionDialog, {
+    const { getByText } = render(ConflictResolutionDialog, {
       props: {
         conflicts: mockConflicts,
         open: true,
+        onresolve: handleResolve,
       },
     });
-
-    component.$on('resolve', handleResolve);
 
     // Resolve first conflict
     const useLocalBtn = getByText('Use Local');
@@ -146,20 +145,19 @@ describe('ConflictResolutionDialog', () => {
 
     // Note: In real implementation, we'd need to resolve all conflicts
     // For this test, we're just checking the event is set up correctly
-    expect(component).toBeTruthy();
+    expect(handleResolve).toBeDefined();
   });
 
   it('should emit cancel event when cancel clicked', async () => {
     const handleCancel = vi.fn();
 
-    const { component, getByText } = render(ConflictResolutionDialog, {
+    const { getByText } = render(ConflictResolutionDialog, {
       props: {
         conflicts: mockConflicts,
         open: true,
+        oncancel: handleCancel,
       },
     });
-
-    component.$on('cancel', handleCancel);
 
     const cancelBtn = getByText('Cancel');
     await fireEvent.click(cancelBtn);

@@ -7,9 +7,11 @@
   interface Props {
     conflicts: Conflict[];
     open?: boolean;
+    onresolve?: (event: CustomEvent<{ conflicts: Conflict[] }>) => void;
+    oncancel?: (event: CustomEvent<void>) => void;
   }
 
-  let { conflicts, open = true }: Props = $props();
+  let { conflicts, open = true, onresolve, oncancel }: Props = $props();
 
   // Events
   const dispatch = createEventDispatcher<{

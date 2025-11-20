@@ -110,7 +110,11 @@ async function saveUser(user: User): Promise<void> {
     const backend = storage.getBackend();
 
     if (backend.savePreference) {
-      await backend.savePreference(USER_STORAGE_KEY, 'global', user);
+      await backend.savePreference(USER_STORAGE_KEY, {
+        value: user,
+        scope: 'global',
+        updatedAt: new Date().toISOString(),
+      });
     } else {
       // Fallback to localStorage
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
@@ -131,8 +135,8 @@ async function loadUser(): Promise<User | null> {
     const backend = storage.getBackend();
 
     if (backend.loadPreference) {
-      const user = await backend.loadPreference<User>(USER_STORAGE_KEY, 'global');
-      return user || null;
+      const entry = await backend.loadPreference<User>(USER_STORAGE_KEY);
+      return entry?.value || null;
     } else {
       // Fallback to localStorage
       const stored = localStorage.getItem(USER_STORAGE_KEY);
@@ -161,7 +165,7 @@ async function deleteUser(): Promise<void> {
     const backend = storage.getBackend();
 
     if (backend.deletePreference) {
-      await backend.deletePreference(USER_STORAGE_KEY, 'global');
+      await backend.deletePreference(USER_STORAGE_KEY);
     }
   } catch (error) {
     console.error('Failed to delete user:', error);

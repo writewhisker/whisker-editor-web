@@ -16,7 +16,53 @@
 export * from '@writewhisker/core-ts';
 
 // Storage adapters and persistence
-export * from '@writewhisker/storage';
+// Note: Avoid duplicates with ./services/storage
+export {
+  // Core service
+  StorageService,
+
+  // Services
+  SyncQueueService,
+  PreferenceManager,
+
+  // Backend implementations
+  IndexedDBBackend,
+  LocalStorageBackend,
+
+  // Factory functions
+  createIndexedDBStorage,
+  createLocalStorageStorage,
+
+  // Events
+  StorageEventType,
+
+  // Types (excluding duplicates)
+  type IStorageBackend,
+  type StorageMetadata,
+  type PreferenceScope,
+  type PreferenceEntry,
+  type SyncQueueEntry,
+  type GitHubAuthToken,
+  type GitHubUser,
+  type GitHubTokenData,
+
+  // Event types
+  type StorageEvent,
+  type BaseStorageEvent,
+  type StorySavedEvent,
+  type StoryLoadedEvent,
+  type StoryDeletedEvent,
+  type StoryCreatedEvent,
+  type StoryUpdatedEvent,
+  type MetadataUpdatedEvent,
+  type StorageClearedEvent,
+  type StorageErrorEvent,
+
+  // Migration from storage package (renamed to avoid conflict)
+  LegacyDataMigration,
+  type MigrationResult as StorageMigrationResult,
+  type ErrorHandler,
+} from '@writewhisker/storage';
 
 // Import formats
 export * from '@writewhisker/import';
@@ -34,7 +80,50 @@ export * from '@writewhisker/audio';
 export * from '@writewhisker/scripting';
 
 // GitHub integration
-export * from '@writewhisker/github';
+// Note: Avoid duplicates with ./utils/errorHandling (RetryOptions, isOnline, withRetry)
+export {
+  // Auth stores
+  githubToken,
+  githubUser,
+  isAuthenticated as isGitHubAuthenticated,
+
+  // Auth functions
+  initializeGitHubAuth,
+  startGitHubAuth,
+  handleGitHubCallback,
+  getAccessToken,
+  checkAuthenticated as checkGitHubAuthenticated,
+  signOut as signOutGitHub,
+  validateToken,
+
+  // API functions
+  listRepositories,
+  createRepository,
+  getFile,
+  listFiles,
+  saveFile,
+  deleteFile,
+  getDefaultBranch,
+  hasWriteAccess,
+  getCommitHistory,
+  getFileAtCommit,
+
+  // Types
+  type GitHubAuthToken as GitHubAuthTokenType,  // Avoid conflict
+  type GitHubUser as GitHubUserType,            // Avoid conflict
+  type GitHubRepository,
+  type GitHubFile,
+  type GitHubCommit,
+  type GitHubBranch,
+  type CommitOptions,
+  type CreateRepositoryOptions,
+  type SyncStatus,
+  type GitHubSyncMetadata,
+  type GitHubError,
+  GitHubApiError,
+
+  // Excluding: RetryOptions, isOnline, withRetry (defined in ./utils/errorHandling)
+} from '@writewhisker/github';
 
 // ============================================================================
 // EDITOR-SPECIFIC EXPORTS

@@ -122,8 +122,8 @@ export class ConflictDetector {
     const localPassagesList = local.getPassages ? local.getPassages() : (local as any).passages || [];
     const remotePassagesList = remote.getPassages ? remote.getPassages() : (remote as any).passages || [];
 
-    const localPassages = new Map(localPassagesList.map((p: any) => [p.id, p]));
-    const remotePassages = new Map(remotePassagesList.map((p: any) => [p.id, p]));
+    const localPassages = new Map<string, Passage>(localPassagesList.map((p: Passage) => [p.id, p]));
+    const remotePassages = new Map<string, Passage>(remotePassagesList.map((p: Passage) => [p.id, p]));
 
     // Check for modified passages
     for (const [id, localPassage] of localPassages) {
@@ -135,7 +135,7 @@ export class ConflictDetector {
           id: generateId(),
           type: 'deletion',
           path: `passages.${id}`,
-          description: `Passage "${localPassage.name}" was deleted remotely`,
+          description: `Passage "${localPassage.title}" was deleted remotely`,
           localValue: localPassage,
           remoteValue: null,
           localTimestamp: Date.now(),
@@ -148,14 +148,14 @@ export class ConflictDetector {
       }
 
       // Check name conflict
-      if (localPassage.name !== remotePassage.name) {
+      if (localPassage.title !== remotePassage.title) {
         conflicts.push({
           id: generateId(),
           type: 'metadata',
           path: `passages.${id}.name`,
           description: `Passage name conflict`,
-          localValue: localPassage.name,
-          remoteValue: remotePassage.name,
+          localValue: localPassage.title,
+          remoteValue: remotePassage.title,
           localTimestamp: Date.now(),
           remoteTimestamp: Date.now(),
           localUser,
@@ -178,7 +178,7 @@ export class ConflictDetector {
           id: generateId(),
           type: 'content',
           path: `passages.${id}.content`,
-          description: `Content conflict in passage "${localPassage.name}"`,
+          description: `Content conflict in passage "${localPassage.title}"`,
           localValue: localPassage.content,
           remoteValue: remotePassage.content,
           localTimestamp: Date.now(),
@@ -199,7 +199,7 @@ export class ConflictDetector {
           id: generateId(),
           type: 'structure',
           path: `passages.${id}.position`,
-          description: `Position conflict for passage "${localPassage.name}"`,
+          description: `Position conflict for passage "${localPassage.title}"`,
           localValue: localPassage.position,
           remoteValue: remotePassage.position,
           localTimestamp: Date.now(),

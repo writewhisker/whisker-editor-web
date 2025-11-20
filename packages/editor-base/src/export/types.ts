@@ -5,11 +5,13 @@
  */
 
 import type { Story, ValidationResult, QualityMetrics } from '@writewhisker/core-ts';
+import type { ExportFormat as ExportFormatBase } from '@writewhisker/export';
 
 /**
  * Supported export formats
+ * Re-export from @writewhisker/export to ensure type compatibility
  */
-export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'html-standalone' | 'markdown' | 'package' | 'epub' | 'twine';
+export type ExportFormat = ExportFormatBase;
 
 /**
  * Export options configuration

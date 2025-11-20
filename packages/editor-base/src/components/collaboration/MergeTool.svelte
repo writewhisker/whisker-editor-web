@@ -3,7 +3,7 @@
   import { ConflictDetector } from '../../services/conflictDetector';
   import ConflictResolutionDialog from './ConflictResolutionDialog.svelte';
   import { createEventDispatcher } from 'svelte';
-  import type { Story } from '@writewhisker/core-ts';
+  import { Story } from '@writewhisker/core-ts';
 
   // Props
   interface Props {
@@ -77,7 +77,30 @@
   }
 
   function applyResolvedConflicts(baseStory: Story, resolvedConflicts: any[]): Story {
-    let merged = { ...baseStory };
+    // Create a new Story instance from baseStory
+    const merged = new Story({
+      metadata: baseStory.metadata,
+      startPassage: baseStory.startPassage,
+      settings: baseStory.settings,
+      stylesheets: baseStory.stylesheets,
+      scripts: baseStory.scripts,
+    });
+
+    // Copy all passages from baseStory
+    for (const [id, passage] of baseStory.passages) {
+      merged.passages.set(id, passage);
+    }
+
+    // Copy other properties
+    for (const [name, variable] of baseStory.variables) {
+      merged.variables.set(name, variable);
+    }
+    for (const [id, asset] of baseStory.assets) {
+      merged.assets.set(id, asset);
+    }
+    for (const [name, fn] of baseStory.luaFunctions) {
+      merged.luaFunctions.set(name, fn);
+    }
 
     for (const conflict of resolvedConflicts) {
       if (!conflict.resolution || !conflict.resolvedValue) continue;
@@ -94,15 +117,15 @@
         const passageId = pathParts[1];
         const field = pathParts[2];
 
-        const passageIndex = merged.passages.findIndex((p) => p.id === passageId);
+        const passage = merged.passages.get(passageId);
 
-        if (passageIndex >= 0) {
+        if (passage) {
           if (field === 'content') {
-            merged.passages[passageIndex].content = conflict.resolvedValue;
+            passage.content = conflict.resolvedValue;
           } else if (field === 'name') {
-            merged.passages[passageIndex].name = conflict.resolvedValue;
+            passage.name = conflict.resolvedValue;
           } else if (field === 'position') {
-            merged.passages[passageIndex].position = conflict.resolvedValue;
+            passage.position = conflict.resolvedValue;
           }
         }
       }

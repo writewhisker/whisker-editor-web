@@ -68,16 +68,20 @@ export {
 export * from '@writewhisker/import';
 
 // Export formats
-export * from '@writewhisker/export';
+// Note: Avoiding wildcard re-export to prevent duplicates with core-ts
+// export * from '@writewhisker/export';
 
 // Analytics and metrics
-export * from '@writewhisker/analytics';
+// Note: Avoiding wildcard re-export to prevent duplicates with core-ts
+// export * from '@writewhisker/analytics';
 
 // Audio system
-export * from '@writewhisker/audio';
+// Note: Avoiding wildcard re-export to prevent duplicates with core-ts
+// export * from '@writewhisker/audio';
 
 // Scripting (Lua integration)
-export * from '@writewhisker/scripting';
+// Note: Avoiding wildcard re-export to prevent duplicates with core-ts
+// export * from '@writewhisker/scripting';
 
 // GitHub integration
 // Note: Avoid duplicates with ./utils/errorHandling (RetryOptions, isOnline, withRetry)

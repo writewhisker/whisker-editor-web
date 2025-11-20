@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ErrorBoundary from '../packages/editor-base/src/components/ErrorBoundary.svelte';
+  import { ErrorBoundary } from '@writewhisker/editor-base';
   import App from './App.svelte';
 </script>
 

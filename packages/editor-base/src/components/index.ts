@@ -72,3 +72,33 @@ export { default as AutoSaveRecovery } from './AutoSaveRecovery.svelte';
 
 // GitHub integration (Phase 2e-5)
 export { default as GitHubConnect } from './github/GitHubConnect.svelte';
+export { default as GitHubCallback } from './github/GitHubCallback.svelte';
+export { default as GitHubCommitHistory } from './github/GitHubCommitHistory.svelte';
+export { default as GitHubConflictResolver } from './github/GitHubConflictResolver.svelte';
+export { default as GitHubRepositoryPicker } from './github/GitHubRepositoryPicker.svelte';
+export { default as GitHubSyncStatus } from './github/GitHubSyncStatus.svelte';
+
+// Export/Import (Phase 3a)
+export { default as ExportPanel } from './export/ExportPanel.svelte';
+export { default as ImportDialog } from './export/ImportDialog.svelte';
+
+// Help/Documentation
+export { default as KeyboardShortcutsHelp } from './help/KeyboardShortcutsHelp.svelte';
+export { default as QuickShortcutsOverlay } from './help/QuickShortcutsOverlay.svelte';
+
+// Onboarding
+export { default as TemplateGallery } from './onboarding/TemplateGallery.svelte';
+
+// Kids Mode
+export { default as KidsModeApp } from './kids/KidsModeApp.svelte';
+
+// Editor Tools
+export { default as ValidationPanel } from './editor/ValidationPanel.svelte';
+export { default as AssetManager } from './editor/AssetManager.svelte';
+export { default as StylesheetEditor } from './editor/StylesheetEditor.svelte';
+
+// Audio
+export { default as AudioControls } from './audio/AudioControls.svelte';
+
+// Animation
+export { default as AnimationControls } from './animation/AnimationControls.svelte';

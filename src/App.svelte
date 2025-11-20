@@ -1,84 +1,87 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { errorTracking } from './lib/services/errorTracking';
-  import MenuBar from '../packages/editor-base/src/components/MenuBar.svelte';
-  import Toolbar from '../packages/editor-base/src/components/Toolbar.svelte';
-  import StatusBar from '../packages/editor-base/src/components/StatusBar.svelte';
-  import FileDialog from '../packages/editor-base/src/components/FileDialog.svelte';
-  import ExportPanel from '../packages/editor-base/src/components/export/ExportPanel.svelte';
-  import ImportDialog from '../packages/editor-base/src/components/export/ImportDialog.svelte';
-  import PassageList from '../packages/editor-base/src/components/PassageList.svelte';
-  import PropertiesPanel from '../packages/editor-base/src/components/PropertiesPanel.svelte';
-  import VariableManager from '../packages/editor-base/src/components/VariableManager.svelte';
-  import ValidationPanel from '../packages/editor-base/src/components/editor/ValidationPanel.svelte';
-  import StoryStatisticsPanel from '../packages/editor-base/src/components/StoryStatisticsPanel.svelte';
-  import TagManager from '../packages/editor-base/src/components/TagManager.svelte';
-  import SnippetsPanel from '../packages/editor-base/src/components/SnippetsPanel.svelte';
-  import CharacterManager from '../packages/editor-base/src/components/CharacterManager.svelte';
-  import WordGoalsPanel from '../packages/editor-base/src/components/WordGoalsPanel.svelte';
-  import CollaborationPanel from '../packages/editor-base/src/components/CollaborationPanel.svelte';
-  import PacingAnalyzerPanel from '../packages/editor-base/src/components/PacingAnalyzerPanel.svelte';
-  import AccessibilityPanel from '../packages/editor-base/src/components/AccessibilityPanel.svelte';
-  import PlaytestPanel from '../packages/editor-base/src/components/PlaytestPanel.svelte';
-  import VariableDependencyPanel from '../packages/editor-base/src/components/VariableDependencyPanel.svelte';
-  import SaveSystemPanel from '../packages/editor-base/src/components/SaveSystemPanel.svelte';
-  import AchievementPanel from '../packages/editor-base/src/components/AchievementPanel.svelte';
-  import AdaptiveDifficultyPanel from '../packages/editor-base/src/components/AdaptiveDifficultyPanel.svelte';
-  import VersionDiffPanel from '../packages/editor-base/src/components/VersionDiffPanel.svelte';
-  import MobileExportPanel from '../packages/editor-base/src/components/MobileExportPanel.svelte';
-  import AIWritingPanel from '../packages/editor-base/src/components/AIWritingPanel.svelte';
-  import GraphView from '../packages/editor-base/src/components/GraphView.svelte';
+
+  // All components from @writewhisker/editor-base
+  import {
+    MenuBar,
+    Toolbar,
+    StatusBar,
+    FileDialog,
+    ExportPanel,
+    ImportDialog,
+    PassageList,
+    PropertiesPanel,
+    VariableManager,
+    ValidationPanel,
+    StoryStatisticsPanel,
+    TagManager,
+    SnippetsPanel,
+    CharacterManager,
+    WordGoalsPanel,
+    CollaborationPanel,
+    PacingAnalyzerPanel,
+    AccessibilityPanel,
+    PlaytestPanel,
+    VariableDependencyPanel,
+    SaveSystemPanel,
+    AchievementPanel,
+    AdaptiveDifficultyPanel,
+    VersionDiffPanel,
+    MobileExportPanel,
+    AIWritingPanel,
+    GraphView,
+    Breadcrumb,
+    PreviewPanel,
+    KeyboardShortcutsHelp,
+    QuickShortcutsOverlay,
+    AutoSaveRecovery,
+    LoadingSpinner,
+    ConfirmDialog,
+    CommandPalette,
+    AboutDialog,
+    FindReplaceDialog,
+    StoryMetadataEditor,
+    SettingsDialog,
+    ResizeHandle,
+    NotificationToast,
+    TemplateGallery,
+    AssetManager,
+    AudioControls,
+    AnimationControls,
+    StylesheetEditor,
+    GitHubCallback,
+    GitHubRepositoryPicker,
+    GitHubSyncStatus,
+    GitHubCommitHistory,
+    GitHubConflictResolver,
+    StoryStatsWidget,
+    KidsModeApp,
+  } from '@writewhisker/editor-base';
+
   import { SvelteFlowProvider } from '@xyflow/svelte';
-  import Breadcrumb from '../packages/editor-base/src/components/Breadcrumb.svelte';
-  import PreviewPanel from '../packages/editor-base/src/components/PreviewPanel.svelte';
-  import KeyboardShortcutsHelp from '../packages/editor-base/src/components/help/KeyboardShortcutsHelp.svelte';
-  import QuickShortcutsOverlay from '../packages/editor-base/src/components/help/QuickShortcutsOverlay.svelte';
-  import AutoSaveRecovery from '../packages/editor-base/src/components/AutoSaveRecovery.svelte';
-  import LoadingSpinner from '../packages/editor-base/src/components/LoadingSpinner.svelte';
-  import ConfirmDialog from '../packages/editor-base/src/components/ConfirmDialog.svelte';
-  import CommandPalette from '../packages/editor-base/src/components/CommandPalette.svelte';
-  import AboutDialog from '../packages/editor-base/src/components/AboutDialog.svelte';
-  import FindReplaceDialog from '../packages/editor-base/src/components/FindReplaceDialog.svelte';
-  import StoryMetadataEditor from '../packages/editor-base/src/components/StoryMetadataEditor.svelte';
-  import SettingsDialog from '../packages/editor-base/src/components/SettingsDialog.svelte';
-  import ResizeHandle from '../packages/editor-base/src/components/ResizeHandle.svelte';
-  import NotificationToast from '../packages/editor-base/src/components/NotificationToast.svelte';
   import { projectActions, currentStory, currentFilePath, selectedPassageId, passageList } from './lib/stores/projectStore';
   import { openProjectFile, saveProjectFile, saveProjectFileAs } from './lib/utils/fileOperations';
   import type { FileHandle } from './lib/utils/fileOperations';
   import { viewMode, panelVisibility, panelSizes, focusMode, viewPreferencesActions, type ViewMode } from './lib/stores/viewPreferencesStore';
-  import { selectionActions } from '../packages/editor-base/src/stores/selectionStore';
+  import { selectionActions } from '@writewhisker/editor-base/stores';
   import { autoSaveManager, saveToLocalStorage, clearLocalStorage, type AutoSaveData } from './lib/utils/autoSave';
   import { theme, applyTheme } from './lib/stores/themeStore';
   import { validationActions } from './lib/stores/validationStore';
   import { addRecentFile, type RecentFile } from './lib/utils/recentFiles';
-  import { pluginStoreActions } from '../packages/editor-base/src/plugins';
+  import { pluginStoreActions } from '@writewhisker/editor-base/plugins';
   import { notificationStore } from './lib/stores/notificationStore';
-  import TemplateGallery from '../packages/editor-base/src/components/onboarding/TemplateGallery.svelte';
-  import AssetManager from '../packages/editor-base/src/components/editor/AssetManager.svelte';
-  import AudioControls from '../packages/editor-base/src/components/audio/AudioControls.svelte';
   import { AudioManager } from '@writewhisker/audio';
-  import AnimationControls from '../packages/editor-base/src/components/animation/AnimationControls.svelte';
-  import StylesheetEditor from '../packages/editor-base/src/components/editor/StylesheetEditor.svelte';
   import { initMobileDetection, isMobile } from './lib/utils/mobile';
-  import GitHubCallback from '../packages/editor-base/src/components/github/GitHubCallback.svelte';
-  import GitHubRepositoryPicker from '../packages/editor-base/src/components/github/GitHubRepositoryPicker.svelte';
-  import GitHubSyncStatus from '../packages/editor-base/src/components/github/GitHubSyncStatus.svelte';
-  import GitHubCommitHistory from '../packages/editor-base/src/components/github/GitHubCommitHistory.svelte';
-  import GitHubConflictResolver from '../packages/editor-base/src/components/github/GitHubConflictResolver.svelte';
-  import StoryStatsWidget from '../packages/editor-base/src/components/StoryStatsWidget.svelte';
-  import { isAuthenticated } from './lib/services/github/githubAuth';
-  import { saveFile, getFile } from './lib/services/github/githubApi';
-  import type { GitHubRepository } from './lib/services/github/types';
+  import { isAuthenticated, saveFile, getFile, type GitHubRepository } from '@writewhisker/github';
   import { backgroundSync } from './lib/services/storage/backgroundSync';
   import { syncQueue } from './lib/services/storage/syncQueue';
-  import { IndexedDBAdapter } from './lib/services/storage/IndexedDBAdapter';
-  import KidsModeApp from '../packages/editor-base/src/components/kids/KidsModeApp.svelte';
+  import { IndexedDBBackend } from '@writewhisker/storage';
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';
   import KidsLanding from './routes/KidsLanding.svelte';
   import { importWhiskerFile, Story } from '@writewhisker/core-ts';
-  import { initializeApp } from '../packages/editor-base/src/adapters/initializeApp';
+  import { initializeApp } from '@writewhisker/editor-base/adapters';
 
   // Landing page state
   let showLanding = !$currentStory; // Show landing if no story loaded
@@ -105,7 +108,7 @@
   let githubRepositoryName: string | null = null;
 
   // IndexedDB adapter for local storage
-  const db = new IndexedDBAdapter({ dbName: 'whisker-storage', version: 1 });
+  const db = new IndexedDBBackend({ dbName: 'whisker-storage', version: 1 });
 
   // GitHub commit history
   let showCommitHistory = false;

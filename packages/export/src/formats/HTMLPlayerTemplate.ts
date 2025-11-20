@@ -154,6 +154,11 @@ export function generateHTMLPlayer(
       z-index: 10;
     }
 
+    .meta-bar .controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
     .meta-bar button {
       background: var(--bg-primary);
       border: 1px solid var(--border);
@@ -162,10 +167,16 @@ export function generateHTMLPlayer(
       cursor: pointer;
       color: var(--text-primary);
       font-size: 0.875rem;
+      transition: all 0.2s;
     }
 
-    .meta-bar button:hover {
+    .meta-bar button:hover:not(:disabled) {
       background: var(--border);
+    }
+
+    .meta-bar button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
 
     .game-over {
@@ -176,6 +187,148 @@ export function generateHTMLPlayer(
     .game-over h2 {
       font-size: 2rem;
       margin-bottom: 1rem;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .save-slot {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .save-slot:hover {
+      border-color: var(--accent);
+    }
+
+    .save-slot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .save-slot-title {
+      font-weight: bold;
+    }
+
+    .save-slot-date {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .save-slot-info {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .save-slot.empty {
+      opacity: 0.6;
+    }
+
+    .debug-panel {
+      display: none;
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      max-width: 400px;
+      max-height: 400px;
+      overflow-y: auto;
+      z-index: 50;
+      font-size: 0.875rem;
+    }
+
+    .debug-panel.active {
+      display: block;
+    }
+
+    .debug-panel h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1rem;
+    }
+
+    .debug-section {
+      margin-bottom: 1rem;
+    }
+
+    .debug-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .debug-label {
+      font-weight: bold;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .debug-value {
+      font-family: monospace;
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     ${customCSS}
@@ -202,11 +355,40 @@ export function generateHTMLPlayer(
 <body>
   <div class="meta-bar">
     <div id="story-title">${escapeHTML(title)}</div>
-    <div>
+    <div class="controls">
+      <button id="undo-btn" onclick="player.undo()" disabled>Undo</button>
+      <button id="redo-btn" onclick="player.redo()" disabled>Redo</button>
+      <button onclick="player.showSaveModal()">Save</button>
+      <button onclick="player.showLoadModal()">Load</button>
       <button onclick="player.restart()">Restart</button>
     </div>
   </div>
   <div id="app"></div>
+
+  <!-- Save Modal -->
+  <div id="save-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Save Game</h3>
+        <button class="modal-close" onclick="player.closeModal('save-modal')">&times;</button>
+      </div>
+      <div id="save-slots-container"></div>
+    </div>
+  </div>
+
+  <!-- Load Modal -->
+  <div id="load-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Load Game</h3>
+        <button class="modal-close" onclick="player.closeModal('load-modal')">&times;</button>
+      </div>
+      <div id="load-slots-container"></div>
+    </div>
+  </div>
+
+  <!-- Debug Panel -->
+  <div id="debug-panel" class="debug-panel"></div>
 
   <script>
     // Story Data (embedded)
@@ -591,6 +773,23 @@ export function generateHTMLPlayer(
         this.appEl = document.getElementById('app');
         this.lua = new LuaRuntime();
 
+        // Initialize undo/redo system
+        this.historyStates = [];
+        this.historyIndex = -1;
+        this.undoLimit = (this.story.settings && this.story.settings.undoLimit) || 50;
+
+        // Initialize save/load system
+        this.storyId = this.generateStoryId();
+        this.saveSlots = 3;
+
+        // Initialize auto-save
+        this.autoSave = (this.story.settings && this.story.settings.autoSave !== undefined)
+          ? this.story.settings.autoSave
+          : true;
+
+        // Initialize debug mode
+        this.debugMode = (this.story.settings && this.story.settings.debugMode) || false;
+
         // Initialize variables
         if (this.story.variables) {
           Object.entries(this.story.variables).forEach(([name, data]) => {
@@ -600,6 +799,32 @@ export function generateHTMLPlayer(
 
         // Sync initial variables to Lua
         this.lua.syncVariablesToLua(this.variables);
+
+        // Setup keyboard shortcuts
+        this.setupKeyboardShortcuts();
+
+        // Try to load auto-save if exists
+        if (this.autoSave) {
+          const autoSaveData = this.loadGame(0, true);
+          if (autoSaveData) {
+            console.log('Auto-save loaded');
+          }
+        }
+      }
+
+      generateStoryId() {
+        const title = (this.story.metadata && this.story.metadata.title) || 'untitled';
+        return 'whisker_' + title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      }
+
+      setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+          // Ctrl+D or Cmd+D to toggle debug panel
+          if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+            e.preventDefault();
+            this.toggleDebug();
+          }
+        });
       }
 
       start() {
@@ -608,13 +833,20 @@ export function generateHTMLPlayer(
           const firstPassage = Object.keys(this.story.passages)[0];
           this.currentPassageId = firstPassage;
         }
+
+        // Save initial state
+        this.saveHistoryState();
+
         this.render();
+        this.updateDebugPanel();
       }
 
       restart() {
         this.currentPassageId = null;
         this.variables.clear();
         this.history = [];
+        this.historyStates = [];
+        this.historyIndex = -1;
 
         // Re-initialize variables
         if (this.story.variables) {
@@ -624,6 +856,297 @@ export function generateHTMLPlayer(
         }
 
         this.start();
+      }
+
+      // Undo/Redo System
+      saveHistoryState() {
+        // Remove any states after current index (when making new choice after undo)
+        if (this.historyIndex < this.historyStates.length - 1) {
+          this.historyStates = this.historyStates.slice(0, this.historyIndex + 1);
+        }
+
+        // Create state snapshot
+        const state = {
+          passageId: this.currentPassageId,
+          variables: new Map(this.variables),
+          timestamp: Date.now()
+        };
+
+        this.historyStates.push(state);
+
+        // Enforce undo limit
+        if (this.historyStates.length > this.undoLimit) {
+          this.historyStates.shift();
+        } else {
+          this.historyIndex++;
+        }
+
+        this.updateUndoRedoButtons();
+      }
+
+      canUndo() {
+        return this.historyIndex > 0;
+      }
+
+      canRedo() {
+        return this.historyIndex < this.historyStates.length - 1;
+      }
+
+      undo() {
+        if (!this.canUndo()) return;
+
+        this.historyIndex--;
+        this.restoreHistoryState(this.historyStates[this.historyIndex]);
+        this.updateUndoRedoButtons();
+      }
+
+      redo() {
+        if (!this.canRedo()) return;
+
+        this.historyIndex++;
+        this.restoreHistoryState(this.historyStates[this.historyIndex]);
+        this.updateUndoRedoButtons();
+      }
+
+      restoreHistoryState(state) {
+        this.currentPassageId = state.passageId;
+        this.variables = new Map(state.variables);
+        this.lua.syncVariablesToLua(this.variables);
+        this.render();
+        this.updateDebugPanel();
+      }
+
+      updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+
+        if (undoBtn) undoBtn.disabled = !this.canUndo();
+        if (redoBtn) redoBtn.disabled = !this.canRedo();
+      }
+
+      // Save/Load System
+      saveGame(slot) {
+        const saveData = {
+          passageId: this.currentPassageId,
+          variables: Array.from(this.variables.entries()),
+          historyStates: this.historyStates.map(state => ({
+            passageId: state.passageId,
+            variables: Array.from(state.variables.entries()),
+            timestamp: state.timestamp
+          })),
+          historyIndex: this.historyIndex,
+          timestamp: Date.now()
+        };
+
+        const key = this.storyId + '_save_' + slot;
+        try {
+          localStorage.setItem(key, JSON.stringify(saveData));
+          console.log('Game saved to slot ' + slot);
+          return true;
+        } catch (error) {
+          console.error('Failed to save game:', error);
+          return false;
+        }
+      }
+
+      loadGame(slot, silent) {
+        const key = this.storyId + '_save_' + slot;
+        try {
+          const data = localStorage.getItem(key);
+          if (!data) {
+            if (!silent) console.log('No save data found in slot ' + slot);
+            return null;
+          }
+
+          const saveData = JSON.parse(data);
+
+          this.currentPassageId = saveData.passageId;
+          this.variables = new Map(saveData.variables);
+          this.historyIndex = saveData.historyIndex;
+          this.historyStates = saveData.historyStates.map(state => ({
+            passageId: state.passageId,
+            variables: new Map(state.variables),
+            timestamp: state.timestamp
+          }));
+
+          this.lua.syncVariablesToLua(this.variables);
+          this.render();
+          this.updateUndoRedoButtons();
+          this.updateDebugPanel();
+
+          if (!silent) console.log('Game loaded from slot ' + slot);
+          return saveData;
+        } catch (error) {
+          console.error('Failed to load game:', error);
+          return null;
+        }
+      }
+
+      getSaveSlots() {
+        const slots = [];
+        for (let i = 0; i < this.saveSlots; i++) {
+          const key = this.storyId + '_save_' + i;
+          try {
+            const data = localStorage.getItem(key);
+            if (data) {
+              const saveData = JSON.parse(data);
+              const passage = this.story.passages[saveData.passageId];
+              slots.push({
+                slot: i,
+                exists: true,
+                timestamp: saveData.timestamp,
+                passageTitle: passage ? passage.title : 'Unknown',
+                passageId: saveData.passageId
+              });
+            } else {
+              slots.push({
+                slot: i,
+                exists: false
+              });
+            }
+          } catch (error) {
+            slots.push({
+              slot: i,
+              exists: false
+            });
+          }
+        }
+        return slots;
+      }
+
+      deleteSave(slot) {
+        const key = this.storyId + '_save_' + slot;
+        try {
+          localStorage.removeItem(key);
+          console.log('Save deleted from slot ' + slot);
+          return true;
+        } catch (error) {
+          console.error('Failed to delete save:', error);
+          return false;
+        }
+      }
+
+      autoSaveGame() {
+        if (this.autoSave) {
+          this.saveGame(0);
+        }
+      }
+
+      // Modal Management
+      showSaveModal() {
+        const modal = document.getElementById('save-modal');
+        const container = document.getElementById('save-slots-container');
+        const slots = this.getSaveSlots();
+
+        let html = '';
+        slots.forEach(slot => {
+          if (slot.exists) {
+            const date = new Date(slot.timestamp);
+            html += '<div class="save-slot" onclick="player.handleSaveSlot(' + slot.slot + ')">';
+            html += '  <div class="save-slot-header">';
+            html += '    <div class="save-slot-title">Slot ' + (slot.slot + 1) + '</div>';
+            html += '    <div class="save-slot-date">' + date.toLocaleString() + '</div>';
+            html += '  </div>';
+            html += '  <div class="save-slot-info">' + this.escapeHTML(slot.passageTitle) + '</div>';
+            html += '</div>';
+          } else {
+            html += '<div class="save-slot empty" onclick="player.handleSaveSlot(' + slot.slot + ')">';
+            html += '  <div class="save-slot-title">Slot ' + (slot.slot + 1) + ' - Empty</div>';
+            html += '</div>';
+          }
+        });
+
+        container.innerHTML = html;
+        modal.classList.add('active');
+      }
+
+      showLoadModal() {
+        const modal = document.getElementById('load-modal');
+        const container = document.getElementById('load-slots-container');
+        const slots = this.getSaveSlots();
+
+        let html = '';
+        slots.forEach(slot => {
+          if (slot.exists) {
+            const date = new Date(slot.timestamp);
+            html += '<div class="save-slot" onclick="player.handleLoadSlot(' + slot.slot + ')">';
+            html += '  <div class="save-slot-header">';
+            html += '    <div class="save-slot-title">Slot ' + (slot.slot + 1) + '</div>';
+            html += '    <div class="save-slot-date">' + date.toLocaleString() + '</div>';
+            html += '  </div>';
+            html += '  <div class="save-slot-info">' + this.escapeHTML(slot.passageTitle) + '</div>';
+            html += '</div>';
+          } else {
+            html += '<div class="save-slot empty">';
+            html += '  <div class="save-slot-title">Slot ' + (slot.slot + 1) + ' - Empty</div>';
+            html += '</div>';
+          }
+        });
+
+        container.innerHTML = html;
+        modal.classList.add('active');
+      }
+
+      handleSaveSlot(slot) {
+        this.saveGame(slot);
+        this.closeModal('save-modal');
+      }
+
+      handleLoadSlot(slot) {
+        this.loadGame(slot);
+        this.closeModal('load-modal');
+      }
+
+      closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+      }
+
+      // Debug Mode
+      toggleDebug() {
+        const panel = document.getElementById('debug-panel');
+        if (panel.classList.contains('active')) {
+          panel.classList.remove('active');
+        } else {
+          panel.classList.add('active');
+          this.updateDebugPanel();
+        }
+      }
+
+      updateDebugPanel() {
+        if (!this.debugMode && !document.getElementById('debug-panel').classList.contains('active')) {
+          return;
+        }
+
+        const panel = document.getElementById('debug-panel');
+        const passage = this.story.passages[this.currentPassageId];
+
+        let html = '<h4>Debug Info</h4>';
+
+        html += '<div class="debug-section">';
+        html += '  <div class="debug-label">Current Passage:</div>';
+        html += '  <div class="debug-value">' + (passage ? this.escapeHTML(passage.title) : 'None') + ' (' + this.currentPassageId + ')</div>';
+        html += '</div>';
+
+        html += '<div class="debug-section">';
+        html += '  <div class="debug-label">Variables:</div>';
+        html += '  <div class="debug-value">';
+        if (this.variables.size > 0) {
+          this.variables.forEach((value, name) => {
+            html += name + ': ' + JSON.stringify(value) + '\\n';
+          });
+        } else {
+          html += 'No variables';
+        }
+        html += '  </div>';
+        html += '</div>';
+
+        html += '<div class="debug-section">';
+        html += '  <div class="debug-label">History:</div>';
+        html += '  <div class="debug-value">States: ' + this.historyStates.length + ', Index: ' + this.historyIndex + '</div>';
+        html += '</div>';
+
+        panel.innerHTML = html;
       }
 
       makeChoice(choiceId) {
@@ -654,7 +1177,15 @@ export function generateHTMLPlayer(
 
         // Navigate to target
         this.currentPassageId = choice.target;
+
+        // Save state for undo/redo
+        this.saveHistoryState();
+
+        // Auto-save after choice
+        this.autoSaveGame();
+
         this.render();
+        this.updateDebugPanel();
       }
 
       render() {

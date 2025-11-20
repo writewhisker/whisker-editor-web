@@ -119,11 +119,9 @@ export class ConflictDetector {
     const conflicts: Conflict[] = [];
     const { local, remote, localUser, remoteUser } = context;
 
-    const localPassagesList = local.getPassages ? local.getPassages() : (local as any).passages || [];
-    const remotePassagesList = remote.getPassages ? remote.getPassages() : (remote as any).passages || [];
-
-    const localPassages = new Map<string, Passage>(localPassagesList.map((p: Passage) => [p.id, p]));
-    const remotePassages = new Map<string, Passage>(remotePassagesList.map((p: Passage) => [p.id, p]));
+    // Story.passages is already a Map<string, Passage>
+    const localPassages = local.passages;
+    const remotePassages = remote.passages;
 
     // Check for modified passages
     for (const [id, localPassage] of localPassages) {
@@ -366,20 +364,10 @@ export class ConflictDetector {
     // Start with local story
     const merged = { ...context.local };
 
-    // Get passages lists
-    const remotePassagesList = context.remote.getPassages ? context.remote.getPassages() : (context.remote as any).passages || [];
-    const localPassagesList = merged.getPassages ? merged.getPassages() : (merged as any).passages || [];
-
-    // Apply remote changes that don't conflict
-    const remotePassages = new Map(remotePassagesList.map((p: any) => [p.id, p]));
-    const localPassages = new Map(localPassagesList.map((p: any) => [p.id, p]));
-
     // Add new remote passages
-    for (const [id, remotePassage] of remotePassages) {
-      if (!localPassages.has(id)) {
-        if (Array.isArray((merged as any).passages)) {
-          (merged as any).passages.push(remotePassage);
-        }
+    for (const [id, remotePassage] of context.remote.passages) {
+      if (!merged.passages.has(id)) {
+        merged.passages.set(id, remotePassage);
       }
     }
 
@@ -388,10 +376,9 @@ export class ConflictDetector {
       if (conflict.autoMergeable && conflict.type === 'structure') {
         // For position conflicts, prefer remote (last writer wins)
         const passageId = conflict.path.split('.')[1];
-        const passages = (merged as any).passages || [];
-        const passageIndex = passages.findIndex((p: any) => p.id === passageId);
-        if (passageIndex >= 0 && Array.isArray(passages)) {
-          passages[passageIndex].position = conflict.remoteValue;
+        const passage = merged.passages.get(passageId);
+        if (passage) {
+          passage.position = conflict.remoteValue;
         }
       }
     }

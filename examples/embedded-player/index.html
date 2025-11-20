@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whisker Embedded Player Example</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      .demo {
+        margin: 2rem 0;
+        padding: 2rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+      }
+      h2 {
+        color: #4a9eff;
+      }
+      code {
+        background: #f5f5f5;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Whisker Embedded Player</h1>
+    <p>
+      Framework-agnostic Web Component for embedding Whisker stories anywhere.
+    </p>
+
+    <div class="demo">
+      <h2>Basic Usage</h2>
+      <p>
+        Use the <code>&lt;whisker-player&gt;</code> custom element with a story
+        URL:
+      </p>
+
+      <whisker-player
+        story-url="https://example.com/story.json"
+        theme="dark"
+      ></whisker-player>
+    </div>
+
+    <div class="demo">
+      <h2>With Demo Story</h2>
+      <p>Omit <code>story-url</code> to use the built-in demo story:</p>
+
+      <whisker-player theme="light"></whisker-player>
+    </div>
+
+    <script type="module" src="/src/whisker-player.ts"></script>
+  </body>
+</html>

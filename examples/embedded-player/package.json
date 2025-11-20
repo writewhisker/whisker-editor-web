@@ -1,0 +1,22 @@
+{
+  "name": "@whisker-examples/embedded-player",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Embeddable Web Component player for Whisker stories",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@writewhisker/core-ts": "workspace:*",
+    "@writewhisker/player-ui": "workspace:*",
+    "lit": "^3.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}

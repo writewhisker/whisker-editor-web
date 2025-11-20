@@ -74,6 +74,9 @@ This document provides a comprehensive reference for all import and export capab
 - ✅ Version information
 - ✅ Export timestamp
 - ✅ Round-trip compatibility (import ↔ export)
+- ✅ v2.1 format support with EditorData preservation
+- ✅ Lua functions export
+- ✅ Asset references export
 
 #### HTML Export (HTMLExporter)
 - ✅ Embedded story player
@@ -83,6 +86,11 @@ This document provides a comprehensive reference for all import and export capab
 - ✅ Responsive design
 - ✅ No external dependencies
 - ✅ Works offline
+- ✅ Lua scripting support (via Fengari runtime)
+- ✅ Player features: undo/redo, save/load, auto-save, debug mode
+- ✅ Asset embedding (base64, configurable size limits)
+- ✅ Choice condition evaluation
+- ✅ Passage lifecycle scripts (onEnter/onExit)
 
 #### Markdown Export (MarkdownExporter)
 - ✅ Readable story structure
@@ -109,6 +117,7 @@ This document provides a comprehensive reference for all import and export capab
 - ✅ Choice condition display
 - ✅ Professional styling
 - ✅ E-reader compatible
+- ✅ Asset bundling (all media types)
 
 #### Static Site Export (StaticSiteExporter)
 - ✅ Standalone HTML files
@@ -231,6 +240,10 @@ interface LossReport {
    - **Mitigation:** Use minification option, consider Static Site export
 2. **Browser Compatibility** - Requires modern browser (ES6+)
    - **Mitigation:** Target 2020+ browsers
+3. **Embedded Assets** - Large assets increase file size significantly
+   - **Mitigation:** Configurable size limits, external asset option
+4. **Lua Runtime** - Fengari adds ~200KB to HTML file
+   - **Mitigation:** Loaded from CDN, cached by browser
 
 **EPUB Export:**
 1. **Interactivity** - Limited compared to web version
@@ -528,6 +541,13 @@ const epubResult = await epubExporter.export({
 ---
 
 ## Version History
+
+### Version 1.1 (November 2025)
+- Added Lua scripting support in HTML exports
+- Added player features: undo/redo, save/load, auto-save, debug mode
+- Added asset embedding/bundling for HTML and EPUB
+- Added v2.1 format support with EditorData preservation
+- Enhanced HTML player with full whisker-core feature parity
 
 ### Version 1.0 (November 2025)
 - Initial documentation

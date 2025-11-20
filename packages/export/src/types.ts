@@ -62,6 +62,15 @@ export interface ExportOptions {
 
   /** Strip editor-specific extensions for whisker-core export */
   stripExtensions?: boolean;
+
+  /** Asset processing mode: 'embed' (base64), 'bundle' (separate files), 'external' (keep URLs) */
+  assetMode?: 'embed' | 'bundle' | 'external';
+
+  /** Maximum asset size for embedding in bytes (default: 1MB) */
+  maxEmbedSize?: number;
+
+  /** Embed assets as base64 data URLs (shorthand for assetMode: 'embed') */
+  embedAssets?: boolean;
 }
 
 /**

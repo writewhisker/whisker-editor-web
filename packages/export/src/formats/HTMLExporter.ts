@@ -12,6 +12,7 @@ import type {
   IExporter,
 } from '../types';
 import { generateHTMLPlayer } from './HTMLPlayerTemplate';
+import { AssetProcessor, type AssetMode } from '../utils/assetProcessor';
 
 /**
  * HTML Exporter
@@ -23,6 +24,8 @@ export class HTMLExporter implements IExporter {
   readonly format = 'html' as const;
   readonly extension = '.html';
   readonly mimeType = 'text/html';
+
+  private assetProcessor = new AssetProcessor();
 
   /**
    * Export a story to HTML
@@ -37,18 +40,39 @@ export class HTMLExporter implements IExporter {
         warnings.push('Story has no start passage set');
       }
 
+      // Process assets if present
+      const assetMode: AssetMode = context.options.assetMode ||
+        (context.options.embedAssets ? 'embed' : 'external');
+      const maxEmbedSize = context.options.maxEmbedSize || 1024 * 1024; // 1MB
+
+      const assetsArray = context.story.assets ? Array.from(context.story.assets.values()) : [];
+      const processedAssets = await this.assetProcessor.processAssets(
+        assetsArray,
+        assetMode,
+        maxEmbedSize
+      );
+
+      // Add asset warnings
+      const assetWarnings = this.assetProcessor.generateWarnings(processedAssets);
+      warnings.push(...assetWarnings);
+
       // Serialize story data
-      const storyData = context.story.serialize();
+      let storyData = context.story.serialize();
       const storyJSON = JSON.stringify(storyData);
 
       // Generate HTML
-      const html = generateHTMLPlayer(storyJSON, context.story.metadata.title, {
+      let html = generateHTMLPlayer(storyJSON, context.story.metadata.title, {
         theme: context.options.theme,
         customTheme: context.options.customTheme,
         customCSS: context.options.customCSS,
         customJS: context.options.customJS,
         language: context.options.language || 'en',
       });
+
+      // Replace asset URLs with embedded data if applicable
+      if (processedAssets.length > 0) {
+        html = this.assetProcessor.replaceAssetUrls(html, processedAssets);
+      }
 
       // Minify if requested
       let content = html;

@@ -22,6 +22,7 @@ import type {
 import JSZip from 'jszip';
 import { marked } from 'marked';
 import DOMPurify from 'isomorphic-dompurify';
+import { AssetProcessor } from '../utils/assetProcessor';
 
 /**
  * EPUB Exporter
@@ -34,6 +35,8 @@ export class EPUBExporter implements IExporter {
   readonly format = 'epub' as const;
   readonly extension = '.epub';
   readonly mimeType = 'application/epub+zip';
+
+  private assetProcessor = new AssetProcessor();
 
   /**
    * Export a story to EPUB
@@ -51,6 +54,14 @@ export class EPUBExporter implements IExporter {
           duration: Date.now() - startTime,
         };
       }
+
+      // Process assets for bundling (EPUB always bundles)
+      const assetsArray = context.story.assets ? Array.from(context.story.assets.values()) : [];
+      const processedAssets = await this.assetProcessor.processAssets(
+        assetsArray,
+        'bundle',  // EPUB always bundles assets
+        Infinity   // No size limit for bundling
+      );
 
       // Create EPUB structure
       const zip = new JSZip();
@@ -89,9 +100,20 @@ export class EPUBExporter implements IExporter {
         zip.file(`EPUB/${chapter.filename}`, chapter.content);
       }
 
-      // Add embedded images
+      // Add embedded images (from content processing)
       for (const [url, image] of embeddedImages) {
         zip.file(`EPUB/${image.filename}`, image.data, { base64: true });
+      }
+
+      // Add bundled assets from story.assets
+      for (const asset of processedAssets) {
+        if (asset.bundledPath && asset.originalPath.startsWith('data:')) {
+          // Extract base64 data from data URL
+          const base64Data = asset.originalPath.split(',')[1];
+          if (base64Data) {
+            zip.file(`EPUB/${asset.bundledPath}`, base64Data, { base64: true });
+          }
+        }
       }
 
       // Generate EPUB blob/buffer (use nodebuffer for Node.js, blob for browsers)

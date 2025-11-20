@@ -300,4 +300,193 @@ describe('WhiskerCoreExporter', () => {
       expect(estimatedSize).toBeLessThan(result.size! * 2);
     });
   });
+
+  describe('luaFunctions export', () => {
+    it('should export story without luaFunctions (field omitted)', async () => {
+      const story = createTestStory();
+      const options: ExportOptions = {
+        format: 'whisker-core',
+        whiskerCoreVersion: '2.0'
+      };
+
+      const context: ExportContext = {
+        story,
+        options
+      };
+
+      const result = await exporter.export(context);
+      const data = JSON.parse(result.content as string);
+
+      expect(result.success).toBe(true);
+      expect(data.luaFunctions).toBeUndefined();
+    });
+
+    it('should export story with luaFunctions in v2.0 format', async () => {
+      const story = createTestStory();
+
+      // Add Lua functions using the Story API
+      const func1 = story.addLuaFunction();
+      func1.name = 'calculateDamage';
+      func1.description = 'Calculate combat damage';
+      func1.code = 'function calculateDamage(attacker, defender)\n  return attacker.strength - defender.defense\nend';
+      func1.category = 'Combat';
+      func1.parameters = 'attacker, defender';
+      func1.returnType = 'number';
+      func1.tags = ['combat', 'utility'];
+
+      const func2 = story.addLuaFunction();
+      func2.name = 'checkInventory';
+      func2.description = 'Check if player has item';
+      func2.code = 'function checkInventory(item)\n  return inventory[item] ~= nil\nend';
+      func2.category = 'Inventory';
+      func2.parameters = 'item';
+      func2.returnType = 'boolean';
+
+      const options: ExportOptions = {
+        format: 'whisker-core',
+        whiskerCoreVersion: '2.0'
+      };
+
+      const context: ExportContext = {
+        story,
+        options
+      };
+
+      const result = await exporter.export(context);
+      const data = JSON.parse(result.content as string);
+
+      expect(result.success).toBe(true);
+      expect(data.formatVersion).toBe('2.0');
+      expect(data.luaFunctions).toBeDefined();
+      expect(typeof data.luaFunctions).toBe('object');
+      expect(Object.keys(data.luaFunctions)).toHaveLength(2);
+
+      // Verify first function
+      const exportedFunc1 = data.luaFunctions[func1.id];
+      expect(exportedFunc1).toBeDefined();
+      expect(exportedFunc1.name).toBe('calculateDamage');
+      expect(exportedFunc1.description).toBe('Calculate combat damage');
+      expect(exportedFunc1.code).toContain('calculateDamage');
+      expect(exportedFunc1.category).toBe('Combat');
+      expect(exportedFunc1.parameters).toBe('attacker, defender');
+      expect(exportedFunc1.returnType).toBe('number');
+      expect(exportedFunc1.tags).toEqual(['combat', 'utility']);
+      expect(exportedFunc1.created).toBeDefined();
+      expect(exportedFunc1.modified).toBeDefined();
+
+      // Verify second function
+      const exportedFunc2 = data.luaFunctions[func2.id];
+      expect(exportedFunc2).toBeDefined();
+      expect(exportedFunc2.name).toBe('checkInventory');
+      expect(exportedFunc2.description).toBe('Check if player has item');
+      expect(exportedFunc2.code).toContain('checkInventory');
+      expect(exportedFunc2.category).toBe('Inventory');
+    });
+
+    it('should export luaFunctions in v1.0 format for backward compatibility', async () => {
+      const story = createTestStory();
+
+      const func = story.addLuaFunction();
+      func.name = 'testFunction';
+      func.code = 'function testFunction()\n  return true\nend';
+
+      const options: ExportOptions = {
+        format: 'whisker-core',
+        whiskerCoreVersion: '1.0'
+      };
+
+      const context: ExportContext = {
+        story,
+        options
+      };
+
+      const result = await exporter.export(context);
+      const data = JSON.parse(result.content as string);
+
+      expect(result.success).toBe(true);
+      expect(data.formatVersion).toBe('1.0');
+      // v1.0 should still include luaFunctions for forward compatibility
+      expect(data.luaFunctions).toBeDefined();
+      expect(data.luaFunctions[func.id]).toBeDefined();
+      expect(data.luaFunctions[func.id].name).toBe('testFunction');
+    });
+
+    it('should preserve all luaFunction fields during export', async () => {
+      const story = createTestStory();
+
+      const func = story.addLuaFunction();
+      const funcData = {
+        name: 'complexFunction',
+        description: 'A complex test function',
+        code: 'function complexFunction(a, b, c)\n  return a + b * c\nend',
+        category: 'Math',
+        parameters: 'a, b, c',
+        returnType: 'number',
+        tags: ['math', 'test', 'complex']
+      };
+
+      Object.assign(func, funcData);
+
+      const options: ExportOptions = {
+        format: 'whisker-core',
+        whiskerCoreVersion: '2.0'
+      };
+
+      const context: ExportContext = {
+        story,
+        options
+      };
+
+      const result = await exporter.export(context);
+      const data = JSON.parse(result.content as string);
+
+      const exported = data.luaFunctions[func.id];
+      expect(exported.name).toBe(funcData.name);
+      expect(exported.description).toBe(funcData.description);
+      expect(exported.code).toBe(funcData.code);
+      expect(exported.category).toBe(funcData.category);
+      expect(exported.parameters).toBe(funcData.parameters);
+      expect(exported.returnType).toBe(funcData.returnType);
+      expect(exported.tags).toEqual(funcData.tags);
+    });
+
+    it('should handle multiple luaFunctions correctly', async () => {
+      const story = createTestStory();
+
+      // Add 5 different functions
+      const functions = [];
+      for (let i = 0; i < 5; i++) {
+        const func = story.addLuaFunction();
+        func.name = `testFunction${i}`;
+        func.description = `Test function ${i}`;
+        func.code = `function testFunction${i}()\n  return ${i}\nend`;
+        func.category = `Category${i % 2}`;
+        functions.push(func);
+      }
+
+      const options: ExportOptions = {
+        format: 'whisker-core',
+        whiskerCoreVersion: '2.0'
+      };
+
+      const context: ExportContext = {
+        story,
+        options
+      };
+
+      const result = await exporter.export(context);
+      const data = JSON.parse(result.content as string);
+
+      expect(data.luaFunctions).toBeDefined();
+      expect(Object.keys(data.luaFunctions)).toHaveLength(5);
+
+      // Verify all functions are present
+      functions.forEach((func, i) => {
+        const exported = data.luaFunctions[func.id];
+        expect(exported).toBeDefined();
+        expect(exported.name).toBe(`testFunction${i}`);
+        expect(exported.description).toBe(`Test function ${i}`);
+      });
+    });
+  });
 });

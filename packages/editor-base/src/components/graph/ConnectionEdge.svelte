@@ -60,7 +60,7 @@
   }
 </script>
 
-<g on:contextmenu={handleContextMenu}>
+<g oncontextmenu={handleContextMenu}>
   <BaseEdge path={edgePath} {markerEnd} style="{edgeStyle} {style || ''}" />
 
   <!-- Edge label with background -->

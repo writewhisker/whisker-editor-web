@@ -314,15 +314,15 @@
   role="button"
   tabindex="0"
   aria-label={getAccessibleLabel()}
-  on:keydown={handleKeydown}
-  on:contextmenu={handleContextMenu}
+  onkeydown={handleKeydown}
+  oncontextmenu={handleContextMenu}
 >
   <!-- Breakpoint Indicator -->
   {#if $debugMode}
     <button
       type="button"
       class="absolute -top-2 -left-2 z-10 w-6 h-6 rounded-full flex items-center justify-center transition-all {hasBreakpoint ? 'bg-red-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600 hover:bg-red-400 hover:text-white'}"
-      on:click={toggleBreakpoint}
+      onclick={toggleBreakpoint}
       title={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
       aria-label={hasBreakpoint ? 'Remove breakpoint' : 'Add breakpoint'}
       aria-pressed={hasBreakpoint}
@@ -437,44 +437,44 @@
     <!-- Corner handles -->
     <div
       class="resize-handle resize-se"
-      on:mousedown={(e) => handleResizeStart(e, 'se')}
+      onmousedown={(e) => handleResizeStart(e, 'se')}
       title="Resize"
     />
     <div
       class="resize-handle resize-sw"
-      on:mousedown={(e) => handleResizeStart(e, 'sw')}
+      onmousedown={(e) => handleResizeStart(e, 'sw')}
       title="Resize"
     />
     <div
       class="resize-handle resize-ne"
-      on:mousedown={(e) => handleResizeStart(e, 'ne')}
+      onmousedown={(e) => handleResizeStart(e, 'ne')}
       title="Resize"
     />
     <div
       class="resize-handle resize-nw"
-      on:mousedown={(e) => handleResizeStart(e, 'nw')}
+      onmousedown={(e) => handleResizeStart(e, 'nw')}
       title="Resize"
     />
 
     <!-- Edge handles -->
     <div
       class="resize-handle resize-e"
-      on:mousedown={(e) => handleResizeStart(e, 'e')}
+      onmousedown={(e) => handleResizeStart(e, 'e')}
       title="Resize"
     />
     <div
       class="resize-handle resize-w"
-      on:mousedown={(e) => handleResizeStart(e, 'w')}
+      onmousedown={(e) => handleResizeStart(e, 'w')}
       title="Resize"
     />
     <div
       class="resize-handle resize-s"
-      on:mousedown={(e) => handleResizeStart(e, 's')}
+      onmousedown={(e) => handleResizeStart(e, 's')}
       title="Resize"
     />
     <div
       class="resize-handle resize-n"
-      on:mousedown={(e) => handleResizeStart(e, 'n')}
+      onmousedown={(e) => handleResizeStart(e, 'n')}
       title="Resize"
     />
   </div>
@@ -485,14 +485,14 @@
   <div
     class="fixed bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded shadow-lg z-50 py-1 min-w-[150px]"
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
-    on:click|stopPropagation
-    on:touchend|stopPropagation
+    onclick={(e) => e.stopPropagation()}
+    ontouchend={(e) => e.stopPropagation()}
     role="menu"
     tabindex="-1"
   >
     <button
       class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2"
-      on:click={handleSetAsStart}
+      onclick={handleSetAsStart}
       role="menuitem"
     >
       <span>⭐</span>
@@ -501,7 +501,7 @@
 
     <button
       class="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-200 flex items-center gap-2"
-      on:click={handleDuplicate}
+      onclick={handleDuplicate}
       role="menuitem"
     >
       <span>📋</span>
@@ -510,7 +510,7 @@
 
     <button
       class="w-full text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900 text-red-600 dark:text-red-400 flex items-center gap-2"
-      on:click={handleDelete}
+      onclick={handleDelete}
       role="menuitem"
     >
       <span>🗑️</span>
@@ -521,8 +521,8 @@
   <!-- Overlay to close menu when clicking outside -->
   <div
     class="fixed inset-0 z-40"
-    on:click={closeContextMenu}
-    on:touchend={closeContextMenu}
+    onclick={closeContextMenu}
+    ontouchend={closeContextMenu}
     role="presentation"
   ></div>
 {/if}

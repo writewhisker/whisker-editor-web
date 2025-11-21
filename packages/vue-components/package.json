@@ -1,0 +1,40 @@
+{
+  "name": "@writewhisker/vue-components",
+  "version": "0.1.0",
+  "description": "Vue component wrappers for Whisker Editor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/story-models": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8",
+    "vue": "^3.5.13"
+  },
+  "keywords": [
+    "whisker",
+    "vue",
+    "components",
+    "composables"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

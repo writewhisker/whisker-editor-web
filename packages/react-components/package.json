@@ -1,0 +1,40 @@
+{
+  "name": "@writewhisker/react-components",
+  "version": "0.1.0",
+  "description": "React component wrappers for Whisker Editor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/story-models": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "react": "^18.3.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "whisker",
+    "react",
+    "components",
+    "hooks"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

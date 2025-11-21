@@ -1,0 +1,46 @@
+{
+  "name": "@writewhisker/cli",
+  "version": "0.1.0",
+  "description": "Main CLI tool for Whisker Editor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "whisker": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/cli-init": "workspace:*",
+    "@writewhisker/cli-build": "workspace:*",
+    "@writewhisker/cli-deploy": "workspace:*",
+    "@writewhisker/cli-migrate": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "whisker",
+    "cli",
+    "interactive-fiction",
+    "story-editor",
+    "command-line"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

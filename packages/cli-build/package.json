@@ -1,0 +1,35 @@
+{
+  "name": "@writewhisker/cli-build",
+  "version": "0.1.0",
+  "description": "Build commands for Whisker Editor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/story-models": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "whisker",
+    "cli",
+    "build",
+    "compile"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

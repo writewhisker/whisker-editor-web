@@ -690,6 +690,38 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jiti@2.6.1)(jsdom@27.1.0)(lightningcss@1.30.2)
 
+  packages/debugger:
+    dependencies:
+      '@writewhisker/story-models':
+        specifier: workspace:*
+        version: link:../story-models
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.5
+        version: 6.4.1(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2)
+
+  packages/dev-server:
+    dependencies:
+      '@writewhisker/story-models':
+        specifier: workspace:*
+        version: link:../story-models
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.5
+        version: 6.4.1(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2)
+
   packages/editor-base:
     dependencies:
       '@writewhisker/analytics':
@@ -1005,6 +1037,22 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jiti@2.6.1)(jsdom@27.1.0)(lightningcss@1.30.2)
 
+  packages/hot-reload:
+    dependencies:
+      '@writewhisker/story-models':
+        specifier: workspace:*
+        version: link:../story-models
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.5
+        version: 6.4.1(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2)
+
   packages/import:
     dependencies:
       '@writewhisker/core-ts':
@@ -1304,6 +1352,22 @@ importers:
       vite:
         specifier: ^5.0.0
         version: 5.4.21(@types/node@20.19.24)(lightningcss@1.30.2)
+
+  packages/profiler:
+    dependencies:
+      '@writewhisker/story-models':
+        specifier: workspace:*
+        version: link:../story-models
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.5
+        version: 6.4.1(@types/node@24.10.0)(jiti@2.6.1)(lightningcss@1.30.2)
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@24.10.0)(@vitest/ui@3.2.4)(happy-dom@20.0.10)(jsdom@27.1.0)(lightningcss@1.30.2)
 
   packages/publishing:
     dependencies:

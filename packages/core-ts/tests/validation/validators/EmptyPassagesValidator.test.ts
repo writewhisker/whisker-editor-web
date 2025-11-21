@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { EmptyPassagesValidator } from '../../../src/validation/validators/EmptyPassagesValidator';
-import { Story } from '../../../src/models';
-import { Passage } from '../../../src/models';
-import { Choice } from '../../../src/models';
+import { EmptyPassagesValidator } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 // Helper to create story without default passage
 const createStory = () => {

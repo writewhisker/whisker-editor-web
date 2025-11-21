@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Passage } from '../../src/../src/models/Passage';
-import { Choice } from '../../src/../src/models/Choice';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 describe('Passage', () => {
   let passage: Passage;

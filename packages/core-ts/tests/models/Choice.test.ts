@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Choice } from '../../src/../src/models/Choice';
+import { Choice } from '@writewhisker/core-ts';
 
 describe('Choice', () => {
   describe('constructor', () => {

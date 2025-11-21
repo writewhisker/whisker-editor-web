@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { ValidatePassageMetadataValidator } from '../../../src/validation/validators/ValidatePassageMetadataValidator';
-import { Story } from '../../../src/models';
-import { Passage } from '../../../src/models';
-import { Choice } from '../../../src/models';
+import { ValidatePassageMetadataValidator } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
 
 const createStory = () => {
   const story = new Story({

@@ -2,17 +2,14 @@
  * @writewhisker/core-ts
  *
  * Core TypeScript runtime for Whisker story engine.
- * Includes models, validation, player, and utilities.
+ * Meta-package that re-exports from focused packages.
  */
 
-// Models
-export * from './models';
+// Models - re-export from @writewhisker/story-models
+export * from '@writewhisker/story-models';
 
-// Validation
-export * from './validation';
+// Validation - re-export from @writewhisker/story-validation
+export * from '@writewhisker/story-validation';
 
-// Player
-export * from './player';
-
-// Utils
-export * from './utils';
+// Player - re-export from @writewhisker/story-player
+export * from '@writewhisker/story-player';

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createDefaultValidator } from '../../src/validation/defaultValidator';
+import { createDefaultValidator } from '@writewhisker/core-ts';
 
 describe('defaultValidator', () => {
   describe('createDefaultValidator', () => {

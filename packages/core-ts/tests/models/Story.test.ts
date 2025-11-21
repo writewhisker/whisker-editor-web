@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Story } from '../../src/../src/models/Story';
-import { Passage } from '../../src/../src/models/Passage';
-import { Variable } from '../../src/../src/models/Variable';
-import { Choice } from '../../src/../src/models/Choice';
-import { LuaFunction } from '../../src/../src/models/LuaFunction';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import { LuaFunction } from '@writewhisker/core-ts';
 
 describe('Story', () => {
   let story: Story;

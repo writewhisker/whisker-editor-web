@@ -33,13 +33,16 @@
   ],
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build && tsc --emitDeclarationOnly --outDir dist",
+    "build": "vite build",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@writewhisker/story-models": "workspace:*",
+    "@writewhisker/story-validation": "workspace:*",
+    "@writewhisker/story-player": "workspace:*",
     "nanoid": "^5.1.6"
   },
   "devDependencies": {

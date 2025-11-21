@@ -1,0 +1,37 @@
+{
+  "name": "@writewhisker/integration-github-actions",
+  "version": "0.1.0",
+  "description": "GitHub Actions CI/CD workflows for Whisker Editor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@writewhisker/story-models": "workspace:*",
+    "@writewhisker/story-validation": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "whisker",
+    "github-actions",
+    "ci-cd",
+    "workflow",
+    "automation"
+  ],
+  "author": "Whisker Team",
+  "license": "MIT"
+}

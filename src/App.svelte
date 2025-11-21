@@ -74,8 +74,7 @@
   import { AudioManager } from '@writewhisker/audio';
   import { initMobileDetection, isMobile } from './lib/utils/mobile';
   import { isAuthenticated, saveFile, getFile, type GitHubRepository } from '@writewhisker/github';
-  import { backgroundSync } from './lib/services/storage/backgroundSync';
-  import { syncQueue } from './lib/services/storage/syncQueue';
+  import { backgroundSync, syncQueue } from '@writewhisker/editor-base/services';
   import { IndexedDBBackend } from '@writewhisker/storage';
   import { kidsModeEnabled } from './lib/stores/kidsModeStore';
   import Landing from './routes/Landing.svelte';

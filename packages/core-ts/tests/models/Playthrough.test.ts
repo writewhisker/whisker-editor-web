@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Playthrough, PlaythroughStep } from '../../src/../src/models/Playthrough';
+import { Playthrough, PlaythroughStep } from '@writewhisker/core-ts';
 
 describe('PlaythroughStep', () => {
   it('should create a step with required fields', () => {

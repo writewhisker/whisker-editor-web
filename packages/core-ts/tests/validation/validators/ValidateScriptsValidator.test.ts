@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ValidateScriptsValidator } from '../../../src/validation/validators/ValidateScriptsValidator';
-import { Story } from '../../../src/models';
+import { ValidateScriptsValidator } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
 
 const createStory = () => {
   return new Story({

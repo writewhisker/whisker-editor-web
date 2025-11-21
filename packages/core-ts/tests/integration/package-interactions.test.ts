@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { Story, Passage, Choice, StoryPlayer, Variable } from '../../src/index';
+import { Story, Passage, Choice, StoryPlayer, Variable } from '@writewhisker/core-ts';
 
 describe('Package Interactions', () => {
   let story: Story;

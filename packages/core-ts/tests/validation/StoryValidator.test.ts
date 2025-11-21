@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StoryValidator } from '../../src/validation/StoryValidator';
-import { createDefaultValidator } from '../../src/validation/defaultValidator';
-import { Story } from '../../src/models';
-import { Passage } from '../../src/models';
-import { Choice } from '../../src/models';
-import { Variable } from '../../src/models';
-import { UnreachablePassagesValidator } from '../../src/validation/validators/UnreachablePassagesValidator';
-import { DeadLinksValidator } from '../../src/validation/validators/DeadLinksValidator';
+import { StoryValidator } from '@writewhisker/core-ts';
+import { createDefaultValidator } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
+import { UnreachablePassagesValidator } from '@writewhisker/core-ts';
+import { DeadLinksValidator } from '@writewhisker/core-ts';
 
 describe('StoryValidator', () => {
   let validator: StoryValidator;

@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { DeadLinksValidator } from '../../../src/validation/validators/DeadLinksValidator';
-import { Story } from '../../../src/models';
-import { Passage } from '../../../src/models';
-import { Choice } from '../../../src/models';
-import type { StoryData } from '../../../src/models';
+import { DeadLinksValidator } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import type { StoryData } from '@writewhisker/core-ts';
 
 describe('DeadLinksValidator', () => {
   it('should have correct metadata', () => {

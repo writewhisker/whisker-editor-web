@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Variable } from '../../src/../src/models/Variable';
+import { Variable } from '@writewhisker/core-ts';
 
 describe('Variable', () => {
   describe('constructor', () => {

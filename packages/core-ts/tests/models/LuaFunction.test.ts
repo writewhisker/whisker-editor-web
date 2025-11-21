@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from '../../src/../src/models/LuaFunction';
+import { LuaFunction, DEFAULT_FUNCTION_TEMPLATES, type LuaFunctionData } from '@writewhisker/core-ts';
 
 describe('LuaFunction', () => {
   let testFunctionData: Partial<LuaFunctionData>;

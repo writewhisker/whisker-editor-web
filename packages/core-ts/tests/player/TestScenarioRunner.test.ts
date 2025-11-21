@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StoryPlayer } from '../../src/player/StoryPlayer';
-import { TestScenarioRunner } from '../../src/player/TestScenarioRunner';
-import { Story } from '../../src/models';
-import { Passage } from '../../src/models';
-import { Choice } from '../../src/models';
-import { Variable } from '../../src/models';
-import type { TestScenario } from '../../src/player/testScenarioTypes';
+import { StoryPlayer } from '@writewhisker/core-ts';
+import { TestScenarioRunner } from '@writewhisker/core-ts';
+import { Story } from '@writewhisker/core-ts';
+import { Passage } from '@writewhisker/core-ts';
+import { Choice } from '@writewhisker/core-ts';
+import { Variable } from '@writewhisker/core-ts';
+import type { TestScenario } from '@writewhisker/core-ts';
 
 describe('TestScenarioRunner', () => {
   let story: Story;

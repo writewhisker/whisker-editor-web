@@ -9,7 +9,12 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['nanoid'],
+      external: [
+        'nanoid',
+        '@writewhisker/story-models',
+        '@writewhisker/story-validation',
+        '@writewhisker/story-player'
+      ],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',

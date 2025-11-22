@@ -69,7 +69,7 @@ export class StoryDebugger {
    * Navigate to passage
    */
   public navigateTo(passageTitle: string): void {
-    const passage = this.story.passages.find(p => p.title === passageTitle);
+    const passage = this.story.findPassage(p => p.title === passageTitle);
 
     if (!passage) {
       this.log('error', `Passage not found: ${passageTitle}`);
@@ -325,14 +325,14 @@ export function inspectStory(story: Story): {
   unreachable: string[];
   cycles: string[][];
 } {
-  const passageMap = new Map(story.passages.map(p => [p.title, p]));
+  const passageMap = new Map(story.mapPassages(p => [p.title, p]));
   const linkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
   // Find all links
   const links: Array<{ from: string; to: string }> = [];
   const linkTargets = new Set<string>();
 
-  for (const passage of story.passages) {
+  for (const passage of story.passages.values()) {
     let match;
     while ((match = linkRegex.exec(passage.content)) !== null) {
       const target = match[2] || match[1];
@@ -342,13 +342,11 @@ export function inspectStory(story: Story): {
   }
 
   // Find orphans (no incoming links, except start passage)
-  const orphans = story.passages
-    .filter(p => p.title !== story.startPassage && !linkTargets.has(p.title))
+  const orphans = story.filterPassages(p => p.title !== story.startPassage && !linkTargets.has(p.title))
     .map(p => p.title);
 
   // Find dead ends (no outgoing links)
-  const deadEnds = story.passages
-    .filter(p => {
+  const deadEnds = story.filterPassages(p => {
       const hasLinks = links.some(l => l.from === p.title);
       return !hasLinks;
     })
@@ -374,15 +372,14 @@ export function inspectStory(story: Story): {
     }
   }
 
-  const unreachable = story.passages
-    .filter(p => !reachable.has(p.title))
+  const unreachable = story.filterPassages(p => !reachable.has(p.title))
     .map(p => p.title);
 
   // Find cycles
   const cycles = findCycles(links);
 
   return {
-    passages: story.passages.length,
+    passages: story.passages.size,
     links: links.length,
     orphans,
     deadEnds,
@@ -462,7 +459,7 @@ export function traceExecution(
   let currentPassage = startPassage;
 
   for (const choice of choices) {
-    const passage = story.passages.find(p => p.title === currentPassage);
+    const passage = story.findPassage(p => p.title === currentPassage);
 
     if (!passage) {
       errors.push(`Passage not found: ${currentPassage}`);

@@ -269,6 +269,79 @@ export class StorageService extends EventEmitter<{
     return this.initialized;
   }
 
+  /**
+   * Save a preference
+   */
+  async savePreference(key: string, value: any): Promise<void> {
+    this.ensureInitialized();
+
+    if (this.backend.savePreference) {
+      try {
+        await this.backend.savePreference(key, value);
+      } catch (error) {
+        this.emitError(error as Error, 'savePreference');
+        throw error;
+      }
+    } else {
+      throw new Error('Backend does not support preferences');
+    }
+  }
+
+  /**
+   * Load a preference
+   */
+  async loadPreference<T = any>(key: string): Promise<T | null> {
+    this.ensureInitialized();
+
+    if (this.backend.loadPreference) {
+      try {
+        const entry = await this.backend.loadPreference<T>(key);
+        return entry ? entry.value : null;
+      } catch (error) {
+        this.emitError(error as Error, 'loadPreference');
+        throw error;
+      }
+    } else {
+      throw new Error('Backend does not support preferences');
+    }
+  }
+
+  /**
+   * Delete a preference
+   */
+  async deletePreference(key: string): Promise<void> {
+    this.ensureInitialized();
+
+    if (this.backend.deletePreference) {
+      try {
+        await this.backend.deletePreference(key);
+      } catch (error) {
+        this.emitError(error as Error, 'deletePreference');
+        throw error;
+      }
+    } else {
+      throw new Error('Backend does not support preferences');
+    }
+  }
+
+  /**
+   * List all preference keys
+   */
+  async listPreferences(prefix?: string): Promise<string[]> {
+    this.ensureInitialized();
+
+    if (this.backend.listPreferences) {
+      try {
+        return await this.backend.listPreferences(prefix);
+      } catch (error) {
+        this.emitError(error as Error, 'listPreferences');
+        throw error;
+      }
+    } else {
+      throw new Error('Backend does not support preferences');
+    }
+  }
+
   private ensureInitialized(): void {
     if (!this.initialized) {
       throw new Error('StorageService not initialized. Call initialize() first.');

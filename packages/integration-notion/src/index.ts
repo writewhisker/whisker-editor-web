@@ -5,7 +5,8 @@
  * Provides two-way sync, collaboration, and documentation features.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage } from '@writewhisker/story-models';
+import type { StoryMetadata } from '@writewhisker/story-models';
 
 export interface NotionClientConfig {
   auth: string; // Integration token
@@ -204,7 +205,7 @@ export class NotionStorySync {
           {
             type: 'text',
             text: {
-              content: story.name,
+              content: story.metadata.title,
             },
           },
         ],
@@ -241,7 +242,7 @@ export class NotionStorySync {
    * Sync story to Notion database
    */
   public async syncStoryToNotion(story: Story, databaseId: string): Promise<void> {
-    for (const passage of story.passages) {
+    for (const passage of story.passages.values()) {
       await this.createPassagePage(passage, databaseId);
     }
   }
@@ -292,21 +293,28 @@ export class NotionStorySync {
   public async syncNotionToStory(databaseId: string, storyName: string): Promise<Story> {
     const { results } = await this.client.queryDatabase(databaseId);
 
-    const passages: Passage[] = [];
+    const story = new Story({
+      metadata: {
+        title: storyName,
+        author: '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ifid: databaseId,
+      },
+      startPassage: '',
+    });
+
     for (const page of results) {
       const passage = await this.notionPageToPassage(page);
-      passages.push(passage);
+      story.passages.set(passage.id, passage);
     }
 
-    return {
-      id: databaseId,
-      name: storyName,
-      startPassage: passages[0]?.title || 'Start',
-      passages,
-      metadata: {},
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    // Set start passage to first passage or 'Start'
+    const firstPassage = Array.from(story.passages.values())[0];
+    story.startPassage = firstPassage?.id || '';
+
+    return story;
   }
 
   /**
@@ -319,7 +327,7 @@ export class NotionStorySync {
     const { results: blocks } = await this.client.getBlockChildren(page.id);
     const content = this.blocksToContent(blocks);
 
-    return {
+    return new Passage({
       id: this.getPropertyValue(properties['ID']) || page.id,
       title: this.getPropertyValue(properties['Passage']) || 'Untitled',
       content,
@@ -328,7 +336,7 @@ export class NotionStorySync {
         x: this.getPropertyValue(properties['Position X']) || 0,
         y: this.getPropertyValue(properties['Position Y']) || 0,
       },
-    };
+    });
   }
 
   /**

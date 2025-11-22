@@ -5,51 +5,73 @@
  * Provides test setup, fixtures, and helper functions.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage } from '@writewhisker/story-models';
 
 /**
  * Create a minimal story for testing
  */
-export function createTestStory(overrides?: Partial<Story>): Story {
-  return {
-    id: 'test-story-1',
-    name: 'Test Story',
+export function createTestStory(overrides?: Partial<any>): Story {
+  const story = new Story({
+    metadata: {
+      title: 'Test Story',
+      author: '',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      ifid: 'test-ifid-1',
+    },
     startPassage: 'Start',
-    passages: [
-      createTestPassage({ title: 'Start' }),
-      createTestPassage({ title: 'Middle', id: 'passage-2' }),
-      createTestPassage({ title: 'End', id: 'passage-3' }),
-    ],
-    metadata: {},
-    created: Date.now(),
-    modified: Date.now(),
     ...overrides,
-  };
+  });
+
+  // Add default passages if not provided
+  if (story.passages.size === 0) {
+    const start = createTestPassage({ title: 'Start' });
+    const middle = createTestPassage({ title: 'Middle', id: 'passage-2' });
+    const end = createTestPassage({ title: 'End', id: 'passage-3' });
+
+    story.passages.set(start.id, start);
+    story.passages.set(middle.id, middle);
+    story.passages.set(end.id, end);
+    story.startPassage = start.id;
+  }
+
+  return story;
 }
 
 /**
  * Create a test passage
  */
-export function createTestPassage(overrides?: Partial<Passage>): Passage {
-  return {
+export function createTestPassage(overrides?: Partial<any>): Passage {
+  return new Passage({
     id: 'passage-1',
     title: 'Test Passage',
     content: 'This is test content.\n\n[[Next Passage]]',
     tags: [],
     position: { x: 0, y: 0 },
     ...overrides,
-  };
+  });
 }
 
 /**
  * Create a story with specific structure
  */
 export function createLinearStory(length: number = 5): Story {
-  const passages: Passage[] = [];
+  const story = new Story({
+    metadata: {
+      title: 'Linear Story',
+      author: '',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      ifid: 'linear-story-ifid',
+    },
+    startPassage: 'passage-0',
+  });
 
   for (let i = 0; i < length; i++) {
     const isLast = i === length - 1;
-    passages.push({
+    const passage = new Passage({
       id: `passage-${i}`,
       title: `Passage ${i}`,
       content: isLast
@@ -58,105 +80,114 @@ export function createLinearStory(length: number = 5): Story {
       tags: [],
       position: { x: i * 200, y: 0 },
     });
+    story.passages.set(passage.id, passage);
   }
 
-  return {
-    id: 'linear-story',
-    name: 'Linear Story',
-    startPassage: 'Passage 0',
-    passages,
-    metadata: {},
-    created: Date.now(),
-    modified: Date.now(),
-  };
+  return story;
 }
 
 /**
  * Create a branching story
  */
 export function createBranchingStory(): Story {
-  return {
-    id: 'branching-story',
-    name: 'Branching Story',
-    startPassage: 'Start',
-    passages: [
-      {
-        id: 'start',
-        title: 'Start',
-        content: 'Choose your path:\n\n[[Left Path]]\n[[Right Path]]',
-        tags: [],
-        position: { x: 0, y: 0 },
-      },
-      {
-        id: 'left',
-        title: 'Left Path',
-        content: 'You went left.\n\n[[End]]',
-        tags: ['left'],
-        position: { x: -200, y: 200 },
-      },
-      {
-        id: 'right',
-        title: 'Right Path',
-        content: 'You went right.\n\n[[End]]',
-        tags: ['right'],
-        position: { x: 200, y: 200 },
-      },
-      {
-        id: 'end',
-        title: 'End',
-        content: 'The story ends.',
-        tags: [],
-        position: { x: 0, y: 400 },
-      },
-    ],
-    metadata: {},
-    created: Date.now(),
-    modified: Date.now(),
-  };
+  const story = new Story({
+    metadata: {
+      title: 'Branching Story',
+      author: '',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      ifid: 'branching-story-ifid',
+    },
+    startPassage: 'start',
+  });
+
+  const passages = [
+    new Passage({
+      id: 'start',
+      title: 'Start',
+      content: 'Choose your path:\n\n[[Left Path]]\n[[Right Path]]',
+      tags: [],
+      position: { x: 0, y: 0 },
+    }),
+    new Passage({
+      id: 'left',
+      title: 'Left Path',
+      content: 'You went left.\n\n[[End]]',
+      tags: ['left'],
+      position: { x: -200, y: 200 },
+    }),
+    new Passage({
+      id: 'right',
+      title: 'Right Path',
+      content: 'You went right.\n\n[[End]]',
+      tags: ['right'],
+      position: { x: 200, y: 200 },
+    }),
+    new Passage({
+      id: 'end',
+      title: 'End',
+      content: 'The story ends.',
+      tags: [],
+      position: { x: 0, y: 400 },
+    }),
+  ];
+
+  passages.forEach(p => story.passages.set(p.id, p));
+
+  return story;
 }
 
 /**
  * Create a story with loops/cycles
  */
 export function createCyclicStory(): Story {
-  return {
-    id: 'cyclic-story',
-    name: 'Cyclic Story',
-    startPassage: 'A',
-    passages: [
-      {
-        id: 'a',
-        title: 'A',
-        content: 'Go to [[B]]',
-        tags: [],
-        position: { x: 0, y: 0 },
-      },
-      {
-        id: 'b',
-        title: 'B',
-        content: 'Go to [[C]]',
-        tags: [],
-        position: { x: 200, y: 0 },
-      },
-      {
-        id: 'c',
-        title: 'C',
-        content: 'Go back to [[A]] or continue to [[D]]',
-        tags: [],
-        position: { x: 400, y: 0 },
-      },
-      {
-        id: 'd',
-        title: 'D',
-        content: 'The End',
-        tags: [],
-        position: { x: 600, y: 0 },
-      },
-    ],
-    metadata: {},
-    created: Date.now(),
-    modified: Date.now(),
-  };
+  const story = new Story({
+    metadata: {
+      title: 'Cyclic Story',
+      author: '',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      ifid: 'cyclic-story-ifid',
+    },
+    startPassage: 'a',
+  });
+
+  const passages = [
+    new Passage({
+      id: 'a',
+      title: 'A',
+      content: 'Go to [[B]]',
+      tags: [],
+      position: { x: 0, y: 0 },
+    }),
+    new Passage({
+      id: 'b',
+      title: 'B',
+      content: 'Go to [[C]]',
+      tags: [],
+      position: { x: 200, y: 0 },
+    }),
+    new Passage({
+      id: 'c',
+      title: 'C',
+      content: 'Go back to [[A]] or continue to [[D]]',
+      tags: [],
+      position: { x: 400, y: 0 },
+    }),
+    new Passage({
+      id: 'd',
+      title: 'D',
+      content: 'The End',
+      tags: [],
+      position: { x: 600, y: 0 },
+    }),
+  ];
+
+  passages.forEach(p => story.passages.set(p.id, p));
+
+  return story;
 }
 
 /**

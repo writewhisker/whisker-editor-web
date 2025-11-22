@@ -252,21 +252,19 @@ registerMigration('2.0.0', '1.0.0', (story: any) => {
 export function validateMigratedStory(story: Story): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!story.id) {
-    errors.push('Story is missing an ID');
+  if (!story.metadata?.title) {
+    errors.push('Story is missing a title in metadata');
   }
 
-  if (!story.name) {
-    errors.push('Story is missing a name');
+  if (!story.passages || !(story.passages instanceof Map)) {
+    errors.push('Story passages must be a Map');
   }
 
-  if (!story.passages || !Array.isArray(story.passages)) {
-    errors.push('Story passages must be an array');
-  }
+  if (story.passages instanceof Map) {
+    const passages = Array.from(story.passages.values());
 
-  if (story.passages) {
-    for (let i = 0; i < story.passages.length; i++) {
-      const passage = story.passages[i];
+    for (let i = 0; i < passages.length; i++) {
+      const passage = passages[i];
 
       if (!passage.id) {
         errors.push(`Passage ${i} is missing an ID`);
@@ -281,15 +279,8 @@ export function validateMigratedStory(story: Story): { valid: boolean; errors: s
       }
     }
 
-    // Check for duplicate IDs
-    const ids = story.passages.map(p => p.id);
-    const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
-    if (duplicateIds.length > 0) {
-      errors.push(`Duplicate passage IDs: ${Array.from(new Set(duplicateIds)).join(', ')}`);
-    }
-
     // Check for duplicate titles
-    const titles = story.passages.map(p => p.title);
+    const titles = passages.map(p => p.title);
     const duplicateTitles = titles.filter((title, index) => titles.indexOf(title) !== index);
     if (duplicateTitles.length > 0) {
       errors.push(`Duplicate passage titles: ${Array.from(new Set(duplicateTitles)).join(', ')}`);

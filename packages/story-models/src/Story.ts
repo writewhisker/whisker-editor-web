@@ -419,6 +419,49 @@ export class Story {
     this.metadata.modified = new Date().toISOString();
   }
 
+  /**
+   * Get passages as an array (for backward compatibility)
+   */
+  getPassagesArray(): Passage[] {
+    return Array.from(this.passages.values());
+  }
+
+  /**
+   * Find a passage by predicate (for backward compatibility)
+   */
+  findPassage(predicate: (passage: Passage, id: string) => boolean): Passage | undefined {
+    for (const [id, passage] of this.passages) {
+      if (predicate(passage, id)) {
+        return passage;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Filter passages by predicate (for backward compatibility)
+   */
+  filterPassages(predicate: (passage: Passage, id: string) => boolean): Passage[] {
+    const result: Passage[] = [];
+    for (const [id, passage] of this.passages) {
+      if (predicate(passage, id)) {
+        result.push(passage);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Map over passages (for backward compatibility)
+   */
+  mapPassages<T>(fn: (passage: Passage, id: string) => T): T[] {
+    const result: T[] = [];
+    for (const [id, passage] of this.passages) {
+      result.push(fn(passage, id));
+    }
+    return result;
+  }
+
   validate(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 

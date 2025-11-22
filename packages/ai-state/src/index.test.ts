@@ -35,11 +35,12 @@ describe('@writewhisker/ai-state', () => {
     };
     configureAIStorage(storageAdapter);
 
-    // Reset state
-    updateAIConfig({ provider: 'openai', temperature: 0.7, maxTokens: 1000 });
+    // Reset state - explicitly clear apiKey and set defaults
+    updateAIConfig({ provider: 'openai', apiKey: undefined, temperature: 0.7, maxTokens: 1000 });
     setGenerating(false);
     clearSuggestions();
     resetUsageStats();
+    disableAI();
   });
 
   describe('AI configuration', () => {

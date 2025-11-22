@@ -84,7 +84,7 @@ export function setupIPC(): void {
         { name: 'Whisker Story', extensions: ['json'] },
         { name: 'All Files', extensions: ['*'] },
       ],
-      defaultPath: `${story.name || 'story'}.json`,
+      defaultPath: `${story.metadata.title || 'story'}.json`,
     });
 
     if (result.canceled || !result.filePath) {

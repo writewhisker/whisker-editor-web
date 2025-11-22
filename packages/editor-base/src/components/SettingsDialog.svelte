@@ -197,9 +197,9 @@
 
             <!-- Quick Presets -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Quick Presets
-              </label>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <button
                   class="px-3 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
@@ -245,9 +245,9 @@
           <div class="space-y-4">
             <!-- Font Size Options -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Select Interface Font Size
-              </label>
+              </div>
               <div class="grid grid-cols-2 gap-2">
                 <button
                   class="px-4 py-3 text-sm rounded border transition-colors {fontSize === 'small' ? 'bg-blue-50 border-blue-500 text-blue-700 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300' : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}"

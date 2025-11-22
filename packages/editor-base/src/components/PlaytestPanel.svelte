@@ -216,10 +216,11 @@
       {#if !$isRecording}
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="playtest-player-name" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Player Name (optional)
             </label>
             <input
+              id="playtest-player-name"
               type="text"
               bind:value={playerName}
               placeholder="Tester name"
@@ -227,10 +228,11 @@
             />
           </div>
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="playtest-session-notes" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
               Session Notes (optional)
             </label>
             <textarea
+              id="playtest-session-notes"
               bind:value={sessionNotes}
               placeholder="Testing focus, observations..."
               rows="2"

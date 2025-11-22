@@ -335,13 +335,14 @@
   <div class="toolbar">
     <div class="search-filter">
       <input
+        id="asset-search"
         type="text"
         class="search-input"
         placeholder="Search assets..."
         bind:value={searchQuery}
       />
 
-      <select class="filter-select" bind:value={filterType}>
+      <select id="asset-filter" class="filter-select" bind:value={filterType}>
         <option value="all">All Types</option>
         <option value="image">Images</option>
         <option value="audio">Audio</option>
@@ -458,14 +459,14 @@
 
         <div class="detail-fields">
           <div class="field">
-            <label>Name</label>
-            <input type="text" value={selectedAsset.name} readonly />
+            <label for="asset-detail-name">Name</label>
+            <input id="asset-detail-name" type="text" value={selectedAsset.name} readonly />
           </div>
 
           <div class="field">
-            <label>ID</label>
+            <label for="asset-detail-id">ID</label>
             <div class="field-with-action">
-              <input type="text" value={selectedAsset.id} readonly />
+              <input id="asset-detail-id" type="text" value={selectedAsset.id} readonly />
               <button on:click={() => copyAssetUrl(selectedAsset!.id)} class="btn-copy">
                 Copy URL
               </button>
@@ -473,22 +474,22 @@
           </div>
 
           <div class="field">
-            <label>Type</label>
-            <input type="text" value={selectedAsset.type} readonly />
+            <label for="asset-detail-type">Type</label>
+            <input id="asset-detail-type" type="text" value={selectedAsset.type} readonly />
           </div>
 
           <div class="field">
-            <label>MIME Type</label>
-            <input type="text" value={selectedAsset.mimeType} readonly />
+            <label for="asset-detail-mime">MIME Type</label>
+            <input id="asset-detail-mime" type="text" value={selectedAsset.mimeType} readonly />
           </div>
 
           <div class="field">
-            <label>Size</label>
-            <input type="text" value={formatSize(selectedAsset.size)} readonly />
+            <label for="asset-detail-size">Size</label>
+            <input id="asset-detail-size" type="text" value={formatSize(selectedAsset.size)} readonly />
           </div>
 
           <div class="field">
-            <label>Usage</label>
+            <div class="field-label">Usage</div>
             <code class="usage-example">
               {#if selectedAsset.type === 'image'}
                 ![{selectedAsset.name}](asset://{selectedAsset.id})

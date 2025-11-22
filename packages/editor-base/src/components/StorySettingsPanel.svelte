@@ -261,20 +261,22 @@
       <div class="space-y-3">
         <!-- Key -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1"> Key </label>
+          <label for="new-setting-key" class="block text-sm font-medium text-gray-700 mb-1"> Key </label>
           <input
+            id="new-setting-key"
             type="text"
             bind:value={newSettingKey}
             placeholder="difficulty"
             class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            
+
           />
         </div>
 
         <!-- Type -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1"> Type </label>
+          <label for="new-setting-type" class="block text-sm font-medium text-gray-700 mb-1"> Type </label>
           <select
+            id="new-setting-type"
             bind:value={newSettingType}
             class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
           >
@@ -286,9 +288,10 @@
 
         <!-- Value -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1"> Value </label>
+          <label for="new-setting-value" class="block text-sm font-medium text-gray-700 mb-1"> Value </label>
           {#if newSettingType === 'boolean'}
             <select
+              id="new-setting-value"
               bind:value={newSettingValue}
               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             >
@@ -297,6 +300,7 @@
             </select>
           {:else}
             <input
+              id="new-setting-value"
               type={newSettingType === 'number' ? 'number' : 'text'}
               bind:value={newSettingValue}
               placeholder={newSettingType === 'number' ? '0' : 'Initial value'}

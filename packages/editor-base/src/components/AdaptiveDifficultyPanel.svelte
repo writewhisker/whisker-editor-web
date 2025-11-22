@@ -258,9 +258,10 @@ ${generatedCode.utilityCode}
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-2">Update Frequency</label>
+          <label for="update-frequency" class="block text-sm font-medium mb-2">Update Frequency</label>
           <div class="flex items-center gap-2">
             <input
+              id="update-frequency"
               type="range"
               min="1"
               max="20"
@@ -274,9 +275,10 @@ ${generatedCode.utilityCode}
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-2">Smoothing Factor</label>
+          <label for="smoothing-factor" class="block text-sm font-medium mb-2">Smoothing Factor</label>
           <div class="flex items-center gap-2">
             <input
+              id="smoothing-factor"
               type="range"
               min="0"
               max="100"
@@ -359,8 +361,9 @@ ${generatedCode.utilityCode}
             <h3 class="text-sm font-medium">{editingMetric.id ? 'Edit' : 'Add'} Metric</h3>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Name *</label>
+              <label for="metric-name" class="block text-sm font-medium mb-1">Name *</label>
               <input
+                id="metric-name"
                 type="text"
                 bind:value={formMetricName}
                 placeholder="Success Rate"
@@ -369,8 +372,9 @@ ${generatedCode.utilityCode}
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Type</label>
+              <label for="metric-type" class="block text-sm font-medium mb-1">Type</label>
               <select
+                id="metric-type"
                 bind:value={formMetricType}
                 class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
               >
@@ -383,8 +387,9 @@ ${generatedCode.utilityCode}
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Description</label>
+              <label for="metric-description" class="block text-sm font-medium mb-1">Description</label>
               <textarea
+                id="metric-description"
                 bind:value={formMetricDescription}
                 rows="2"
                 placeholder="Describe what this metric measures..."
@@ -394,8 +399,9 @@ ${generatedCode.utilityCode}
 
             {#if formMetricType === 'custom'}
               <div>
-                <label class="block text-sm font-medium mb-1">Custom Code</label>
+                <label for="metric-custom-code" class="block text-sm font-medium mb-1">Custom Code</label>
                 <textarea
+                  id="metric-custom-code"
                   bind:value={formMetricCustomCode}
                   rows="4"
                   placeholder="// Code to calculate metric value\nreturn value;"
@@ -482,8 +488,9 @@ ${generatedCode.utilityCode}
             <h3 class="text-sm font-medium">{editingAdjustment.id ? 'Edit' : 'Add'} Adjustment</h3>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Name *</label>
+              <label for="adj-name" class="block text-sm font-medium mb-1">Name *</label>
               <input
+                id="adj-name"
                 type="text"
                 bind:value={formAdjName}
                 placeholder="Make easier for struggling players"
@@ -492,8 +499,9 @@ ${generatedCode.utilityCode}
             </div>
 
             <div>
-              <label class="block text-sm font-medium mb-1">Description</label>
+              <label for="adj-description" class="block text-sm font-medium mb-1">Description</label>
               <textarea
+                id="adj-description"
                 bind:value={formAdjDescription}
                 rows="2"
                 placeholder="Describe what this adjustment does..."
@@ -503,8 +511,9 @@ ${generatedCode.utilityCode}
 
             <div class="grid grid-cols-2 gap-2">
               <div>
-                <label class="block text-sm font-medium mb-1">Type</label>
+                <label for="adj-type" class="block text-sm font-medium mb-1">Type</label>
                 <select
+                  id="adj-type"
                   bind:value={formAdjType}
                   class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                 >
@@ -516,14 +525,15 @@ ${generatedCode.utilityCode}
               </div>
 
               <div>
-                <label class="block text-sm font-medium mb-1">Target Level</label>
+                <label for="adj-target-level" class="block text-sm font-medium mb-1">Target Level</label>
                 <select
+                  id="adj-target-level"
                   bind:value={formAdjTargetLevel}
                   class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                 >
                   <option value="very_easy">Very Easy</option>
                   <option value="easy">Easy</option>
-                  <option value="normal">Normal</option>
+                  <option value="hard">Normal</option>
                   <option value="hard">Hard</option>
                   <option value="very_hard">Very Hard</option>
                 </select>
@@ -533,8 +543,9 @@ ${generatedCode.utilityCode}
             {#if formAdjType === 'variable_modifier'}
               <div class="grid grid-cols-3 gap-2">
                 <div class="col-span-2">
-                  <label class="block text-sm font-medium mb-1">Variable</label>
+                  <label for="adj-variable" class="block text-sm font-medium mb-1">Variable</label>
                   <input
+                    id="adj-variable"
                     type="text"
                     bind:value={formAdjVariableName}
                     placeholder="playerHealth"
@@ -542,8 +553,9 @@ ${generatedCode.utilityCode}
                   />
                 </div>
                 <div>
-                  <label class="block text-sm font-medium mb-1">Operation</label>
+                  <label for="adj-operation" class="block text-sm font-medium mb-1">Operation</label>
                   <select
+                    id="adj-operation"
                     bind:value={formAdjOperation}
                     class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                   >
@@ -554,8 +566,9 @@ ${generatedCode.utilityCode}
                 </div>
               </div>
               <div>
-                <label class="block text-sm font-medium mb-1">Value</label>
+                <label for="adj-value" class="block text-sm font-medium mb-1">Value</label>
                 <input
+                  id="adj-value"
                   type="number"
                   step="0.1"
                   bind:value={formAdjValue}
@@ -566,7 +579,7 @@ ${generatedCode.utilityCode}
 
             <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
               <div class="flex justify-between items-center mb-2">
-                <label class="block text-sm font-medium">Thresholds *</label>
+                <div class="block text-sm font-medium">Thresholds *</div>
                 <button
                   class="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
                   on:click={addThreshold}

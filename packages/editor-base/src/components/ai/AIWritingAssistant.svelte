@@ -165,7 +165,7 @@
 
           {#if context}
             <div class="context-preview">
-              <label>Context:</label>
+              <div class="context-label">Context:</div>
               <div class="context-text">{context.substring(0, 200)}{context.length > 200 ? '...' : ''}</div>
             </div>
           {/if}

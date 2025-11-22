@@ -254,8 +254,9 @@
 
         <div class="space-y-3">
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label for="entity-name" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
             <input
+              id="entity-name"
               type="text"
               bind:value={formName}
               placeholder="Entity name"
@@ -264,8 +265,9 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+            <label for="entity-type" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
             <select
+              id="entity-type"
               bind:value={formType}
               class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
@@ -278,8 +280,9 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label for="entity-description" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
             <textarea
+              id="entity-description"
               bind:value={formDescription}
               placeholder="Entity description"
               rows="3"
@@ -288,8 +291,9 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Color (optional)</label>
+            <label for="entity-color" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Color (optional)</label>
             <input
+              id="entity-color"
               type="color"
               bind:value={formColor}
               class="w-full h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
@@ -297,9 +301,10 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+            <label for="entity-tag-input" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
             <div class="flex gap-1 mb-2">
               <input
+                id="entity-tag-input"
                 type="text"
                 bind:value={formTagInput}
                 placeholder="Add tag"

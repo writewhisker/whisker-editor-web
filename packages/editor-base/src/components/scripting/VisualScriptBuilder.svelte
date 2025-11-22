@@ -243,7 +243,7 @@
                 <div class="block-parameters">
                   {#each block.parameters as param}
                     <div class="parameter">
-                      <label>{param.placeholder || param.name}:</label>
+                      <div class="parameter-label">{param.placeholder || param.name}:</div>
                       {#if param.type === 'text' && param.name === 'operator'}
                         <select
                           value={param.value}

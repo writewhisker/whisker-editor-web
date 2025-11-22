@@ -293,10 +293,11 @@
   {#if view === 'create' || view === 'edit'}
     <div class="scenario-form space-y-4 max-h-96 overflow-y-auto">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label for="scenario-name" class="block text-sm font-medium text-gray-700 mb-1">
           Scenario Name <span class="text-red-500">*</span>
         </label>
         <input
+          id="scenario-name"
           type="text"
           bind:value={formName}
           placeholder="e.g., Happy path through quest"
@@ -305,8 +306,9 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"> Description </label>
+        <label for="scenario-description" class="block text-sm font-medium text-gray-700 mb-1"> Description </label>
         <textarea
+          id="scenario-description"
           bind:value={formDescription}
           placeholder="Describe what this test verifies..."
           rows="2"
@@ -315,8 +317,9 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1"> Start Passage </label>
+        <label for="scenario-start-passage" class="block text-sm font-medium text-gray-700 mb-1"> Start Passage </label>
         <select
+          id="scenario-start-passage"
           bind:value={formStartPassageId}
           class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
@@ -330,7 +333,7 @@
       <!-- Steps -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700"> Test Steps </label>
+          <div class="block text-sm font-medium text-gray-700"> Test Steps </div>
           <button
             class="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
             on:click={addStep}

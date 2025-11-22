@@ -221,10 +221,11 @@
           <!-- Filename Input (Save mode only) -->
           {#if mode === 'save' && selectedRepo}
             <div class="mt-4">
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="github-filename" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Filename
               </label>
               <input
+                id="github-filename"
                 type="text"
                 bind:value={filename}
                 placeholder="story.json"
@@ -239,10 +240,11 @@
           <!-- Create Repository Form -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="new-repo-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Repository Name *
               </label>
               <input
+                id="new-repo-name"
                 type="text"
                 bind:value={newRepoName}
                 placeholder="my-story"
@@ -251,10 +253,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="new-repo-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description (optional)
               </label>
               <textarea
+                id="new-repo-description"
                 bind:value={newRepoDescription}
                 placeholder="My interactive fiction story"
                 rows="3"

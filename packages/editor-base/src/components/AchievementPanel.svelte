@@ -245,8 +245,9 @@
     {:else if viewMode === 'edit'}
       <div class="space-y-3">
         <div>
-          <label class="block text-sm font-medium mb-1">Title *</label>
+          <label for="achievement-title" class="block text-sm font-medium mb-1">Title *</label>
           <input
+            id="achievement-title"
             type="text"
             bind:value={formTitle}
             placeholder="First Steps"
@@ -255,8 +256,9 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Description</label>
+          <label for="achievement-description" class="block text-sm font-medium mb-1">Description</label>
           <textarea
+            id="achievement-description"
             bind:value={formDescription}
             placeholder="Complete your first passage"
             rows="2"
@@ -266,8 +268,9 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-sm font-medium mb-1">Icon</label>
+            <label for="achievement-icon" class="block text-sm font-medium mb-1">Icon</label>
             <input
+              id="achievement-icon"
               type="text"
               bind:value={formIcon}
               placeholder="🏆"
@@ -276,8 +279,9 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Rarity</label>
+            <label for="achievement-rarity" class="block text-sm font-medium mb-1">Rarity</label>
             <select
+              id="achievement-rarity"
               bind:value={formRarity}
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
             >
@@ -291,8 +295,9 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-1">Category</label>
+          <label for="achievement-category" class="block text-sm font-medium mb-1">Category</label>
           <select
+            id="achievement-category"
             bind:value={formCategory}
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm"
           >
@@ -310,9 +315,10 @@
         </div>
 
         <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
-          <label class="block text-sm font-medium mb-2">Unlock Trigger</label>
+          <label for="achievement-trigger-type" class="block text-sm font-medium mb-2">Unlock Trigger</label>
 
           <select
+            id="achievement-trigger-type"
             bind:value={formTriggerType}
             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-sm mb-3"
           >

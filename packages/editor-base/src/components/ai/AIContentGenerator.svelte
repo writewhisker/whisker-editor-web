@@ -175,7 +175,7 @@ Choices: [choice 1], [choice 2]
 
         <!-- Generation Type -->
         <div class="form-group">
-          <label>What do you want to generate?</label>
+          <div class="form-group-label">What do you want to generate?</div>
           <div class="type-buttons">
             <button
               class="type-btn"

@@ -160,8 +160,9 @@
       <h3 class="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">New Goal</h3>
       <div class="space-y-2">
         <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Goal Type</label>
+          <label for="goal-type" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Goal Type</label>
           <select
+            id="goal-type"
             bind:value={formType}
             class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           >
@@ -172,8 +173,9 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Words</label>
+          <label for="goal-target" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Words</label>
           <input
+            id="goal-target"
             type="number"
             bind:value={formTarget}
             min="1"
@@ -182,8 +184,9 @@
           />
         </div>
         <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
+          <label for="goal-start-date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date</label>
           <input
+            id="goal-start-date"
             type="date"
             bind:value={formStartDate}
             class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -191,8 +194,9 @@
         </div>
         {#if formType !== 'total'}
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date (optional)</label>
+            <label for="goal-end-date" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date (optional)</label>
             <input
+              id="goal-end-date"
               type="date"
               bind:value={formEndDate}
               class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"

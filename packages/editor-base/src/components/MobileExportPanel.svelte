@@ -137,9 +137,9 @@
     {#if !showPreview}
       <!-- Export Target Selection -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Export Target
-        </label>
+        </div>
         <div class="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -184,8 +184,9 @@
         <h3 class="font-medium text-sm text-gray-700 dark:text-gray-300">App Information</h3>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App Title</label>
+          <label for="app-title" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App Title</label>
           <input
+            id="app-title"
             type="text"
             bind:value={appTitle}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -194,8 +195,9 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Subtitle</label>
+          <label for="app-subtitle" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Subtitle</label>
           <input
+            id="app-subtitle"
             type="text"
             bind:value={appSubtitle}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -204,8 +206,9 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Description</label>
+          <label for="app-description" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Description</label>
           <textarea
+            id="app-description"
             bind:value={appDescription}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             rows="3"
@@ -214,8 +217,9 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Keywords (comma-separated)</label>
+          <label for="app-keywords" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Keywords (comma-separated)</label>
           <input
+            id="app-keywords"
             type="text"
             bind:value={appKeywords}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -224,8 +228,9 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Category</label>
+          <label for="app-category" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Category</label>
           <select
+            id="app-category"
             bind:value={appCategory}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >
@@ -243,8 +248,9 @@
           <h3 class="font-medium text-sm text-gray-700 dark:text-gray-300">PWA Configuration</h3>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App Name</label>
+            <label for="pwa-name" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App Name</label>
             <input
+              id="pwa-name"
               type="text"
               bind:value={pwaName}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -253,8 +259,9 @@
           </div>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Short Name</label>
+            <label for="pwa-short-name" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Short Name</label>
             <input
+              id="pwa-short-name"
               type="text"
               bind:value={pwaShortName}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -264,8 +271,9 @@
           </div>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Theme Color</label>
+            <label for="pwa-theme-color" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Theme Color</label>
             <input
+              id="pwa-theme-color"
               type="color"
               bind:value={pwaThemeColor}
               class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded"
@@ -279,8 +287,9 @@
           <h3 class="font-medium text-sm text-gray-700 dark:text-gray-300">App Settings</h3>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App ID (reverse domain)</label>
+            <label for="app-id" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">App ID (reverse domain)</label>
             <input
+              id="app-id"
               type="text"
               bind:value={appId}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -289,8 +298,9 @@
           </div>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Version</label>
+            <label for="app-version" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Version</label>
             <input
+              id="app-version"
               type="text"
               bind:value={appVersion}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -299,8 +309,9 @@
           </div>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Author Name</label>
+            <label for="app-author" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Author Name</label>
             <input
+              id="app-author"
               type="text"
               bind:value={appAuthor}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -309,8 +320,9 @@
           </div>
 
           <div>
-            <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Contact Email</label>
+            <label for="app-email" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Contact Email</label>
             <input
+              id="app-email"
               type="email"
               bind:value={appEmail}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -325,8 +337,9 @@
         <h3 class="font-medium text-sm text-gray-700 dark:text-gray-300">Player Settings</h3>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Font Size</label>
+          <label for="font-size" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Font Size</label>
           <select
+            id="font-size"
             bind:value={fontSize}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >
@@ -337,8 +350,9 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Theme</label>
+          <label for="theme" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Theme</label>
           <select
+            id="theme"
             bind:value={theme}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >

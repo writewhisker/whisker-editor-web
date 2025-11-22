@@ -121,8 +121,9 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium mb-1">Provider</label>
+          <label for="ai-provider" class="block text-xs font-medium mb-1">Provider</label>
           <select
+            id="ai-provider"
             bind:value={provider}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >
@@ -135,8 +136,9 @@
 
         {#if provider !== 'mock'}
           <div>
-            <label class="block text-xs font-medium mb-1">API Key</label>
+            <label for="ai-api-key" class="block text-xs font-medium mb-1">API Key</label>
             <input
+              id="ai-api-key"
               type="password"
               bind:value={apiKey}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -146,8 +148,9 @@
         {/if}
 
         <div>
-          <label class="block text-xs font-medium mb-1">Temperature: {temperature.toFixed(1)}</label>
+          <label for="ai-temperature" class="block text-xs font-medium mb-1">Temperature: {temperature.toFixed(1)}</label>
           <input
+            id="ai-temperature"
             type="range"
             bind:value={temperature}
             min="0"
@@ -162,8 +165,9 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium mb-1">Max Tokens: {maxTokens}</label>
+          <label for="ai-max-tokens" class="block text-xs font-medium mb-1">Max Tokens: {maxTokens}</label>
           <input
+            id="ai-max-tokens"
             type="range"
             bind:value={maxTokens}
             min="100"
@@ -235,7 +239,7 @@
       <div class="space-y-4">
         <!-- Assistance Type -->
         <div>
-          <label class="block text-sm font-medium mb-2">What do you need help with?</label>
+          <div class="block text-sm font-medium mb-2">What do you need help with?</div>
           <div class="grid grid-cols-2 gap-2">
             {#each Object.entries(templates) as [type, template]}
               <button
@@ -255,8 +259,9 @@
 
         <!-- Prompt Input -->
         <div>
-          <label class="block text-sm font-medium mb-2">Your Request</label>
+          <label for="ai-prompt" class="block text-sm font-medium mb-2">Your Request</label>
           <textarea
+            id="ai-prompt"
             bind:value={prompt}
             class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 resize-none"
             rows="4"
@@ -275,7 +280,9 @@
           </button>
 
           {#if showContext}
+            <label for="ai-context" class="sr-only">Context</label>
             <textarea
+              id="ai-context"
               bind:value={context}
               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 resize-none"
               rows="3"

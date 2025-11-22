@@ -161,9 +161,9 @@
         </div>
 
         <div class="space-y-1">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div class="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Search in
-          </label>
+          </div>
           <div class="flex gap-4">
             <label class="flex items-center gap-2">
               <input

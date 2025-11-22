@@ -179,8 +179,9 @@
           <div class="p-3 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 space-y-2">
             <h4 class="text-sm font-medium">Create New Snapshot</h4>
             <div>
-              <label class="block text-xs font-medium mb-1">Label *</label>
+              <label for="snapshot-label" class="block text-xs font-medium mb-1">Label *</label>
               <input
+                id="snapshot-label"
                 type="text"
                 bind:value={snapshotLabel}
                 placeholder="v1.0.0 or Major Revision"
@@ -188,8 +189,9 @@
               />
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1">Description</label>
+              <label for="snapshot-description" class="block text-xs font-medium mb-1">Description</label>
               <textarea
+                id="snapshot-description"
                 bind:value={snapshotDescription}
                 rows="2"
                 placeholder="What changed in this version..."
@@ -197,8 +199,9 @@
               ></textarea>
             </div>
             <div>
-              <label class="block text-xs font-medium mb-1">Author (optional)</label>
+              <label for="snapshot-author" class="block text-xs font-medium mb-1">Author (optional)</label>
               <input
+                id="snapshot-author"
                 type="text"
                 bind:value={snapshotAuthor}
                 placeholder="Your name"
@@ -233,16 +236,18 @@
                 {#if editingSnapshot?.id === snapshot.id}
                   <div class="space-y-2">
                     <div>
-                      <label class="block text-xs font-medium mb-1">Label</label>
+                      <label for="edit-label-{snapshot.id}" class="block text-xs font-medium mb-1">Label</label>
                       <input
+                        id="edit-label-{snapshot.id}"
                         type="text"
                         bind:value={editLabel}
                         class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                       />
                     </div>
                     <div>
-                      <label class="block text-xs font-medium mb-1">Description</label>
+                      <label for="edit-desc-{snapshot.id}" class="block text-xs font-medium mb-1">Description</label>
                       <textarea
+                        id="edit-desc-{snapshot.id}"
                         bind:value={editDescription}
                         rows="2"
                         class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
@@ -307,8 +312,9 @@
         <h3 class="text-sm font-medium">Select Versions to Compare</h3>
 
         <div>
-          <label class="block text-sm font-medium mb-2">From (older version)</label>
+          <label for="compare-from" class="block text-sm font-medium mb-2">From (older version)</label>
           <select
+            id="compare-from"
             bind:value={selectedFrom}
             class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >
@@ -320,8 +326,9 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-2">To (newer version)</label>
+          <label for="compare-to" class="block text-sm font-medium mb-2">To (newer version)</label>
           <select
+            id="compare-to"
             bind:value={selectedTo}
             class="w-full px-2 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
           >
@@ -380,8 +387,9 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <label class="flex items-center gap-1 text-xs">
+          <label for="show-unchanged" class="flex items-center gap-1 text-xs">
             <input
+              id="show-unchanged"
               type="checkbox"
               bind:checked={showUnchanged}
               class="rounded"

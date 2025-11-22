@@ -218,8 +218,9 @@
 
             <!-- Type Selector -->
             <div>
-              <label class="block text-xs text-gray-600 mb-1">Type</label>
+              <label for="var-type-{variable.name}" class="block text-xs text-gray-600 mb-1">Type</label>
               <select
+                id="var-type-{variable.name}"
                 value={variable.type}
                 on:change={(e) => updateVariableType(variable.name, (e.target as HTMLSelectElement).value as any)}
                 class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -232,9 +233,10 @@
 
             <!-- Default/Initial Value -->
             <div>
-              <label class="block text-xs text-gray-600 mb-1">Default Value</label>
+              <label for="var-default-{variable.name}" class="block text-xs text-gray-600 mb-1">Default Value</label>
               {#if variable.type === 'boolean'}
                 <select
+                  id="var-default-{variable.name}"
                   value={String(variable.initial)}
                   on:change={(e) => updateVariableValue(variable.name, (e.target as HTMLSelectElement).value)}
                   class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -244,6 +246,7 @@
                 </select>
               {:else}
                 <input
+                  id="var-default-{variable.name}"
                   type={variable.type === 'number' ? 'number' : 'text'}
                   value={variable.initial}
                   on:input={(e) => updateVariableValue(variable.name, (e.target as HTMLInputElement).value)}
@@ -307,12 +310,13 @@
             {#each $variableList as variable (variable.name)}
               {@const testValue = getTestValue(variable.name, variable)}
               <div class="border border-gray-200 rounded p-2 bg-gray-50 space-y-1">
-                <label class="block text-xs font-medium text-gray-700">
+                <label for="test-{variable.name}" class="block text-xs font-medium text-gray-700">
                   {variable.name}
                   <span class="text-gray-500 font-normal">({variable.type})</span>
                 </label>
                 {#if variable.type === 'boolean'}
                   <select
+                    id="test-{variable.name}"
                     value={String(testValue)}
                     on:change={(e) => updateTestValue(variable.name, (e.target as HTMLSelectElement).value, variable.type)}
                     class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -322,6 +326,7 @@
                   </select>
                 {:else}
                   <input
+                    id="test-{variable.name}"
                     type={variable.type === 'number' ? 'number' : 'text'}
                     value={testValue}
                     on:input={(e) => updateTestValue(variable.name, (e.target as HTMLInputElement).value, variable.type)}
@@ -376,24 +381,26 @@
       <div class="space-y-3">
         <!-- Name -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="new-var-name" class="block text-sm font-medium text-gray-700 mb-1">
             Name
           </label>
           <input
+            id="new-var-name"
             type="text"
             bind:value={newVarName}
             placeholder="playerName"
             class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-            
+
           />
         </div>
 
         <!-- Type -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="new-var-type" class="block text-sm font-medium text-gray-700 mb-1">
             Type
           </label>
           <select
+            id="new-var-type"
             bind:value={newVarType}
             class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
           >
@@ -405,11 +412,12 @@
 
         <!-- Initial Value -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
+          <label for="new-var-initial" class="block text-sm font-medium text-gray-700 mb-1">
             Initial Value
           </label>
           {#if newVarType === 'boolean'}
             <select
+              id="new-var-initial"
               bind:value={newVarInitial}
               class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
             >
@@ -418,6 +426,7 @@
             </select>
           {:else}
             <input
+              id="new-var-initial"
               type={newVarType === 'number' ? 'number' : 'text'}
               bind:value={newVarInitial}
               placeholder={newVarType === 'number' ? '0' : 'Initial value'}

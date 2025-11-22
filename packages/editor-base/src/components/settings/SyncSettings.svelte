@@ -230,10 +230,11 @@
     <div class="space-y-3">
       <!-- User ID -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="sync-user-id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           User ID
         </label>
         <input
+          id="sync-user-id"
           type="text"
           bind:value={userId}
           onchange={saveSettings}
@@ -244,10 +245,11 @@
 
       <!-- API Endpoint -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="sync-api-endpoint" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           API Endpoint
         </label>
         <input
+          id="sync-api-endpoint"
           type="text"
           bind:value={apiEndpoint}
           onchange={saveSettings}
@@ -258,10 +260,11 @@
 
       <!-- API Key (optional) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="sync-api-key" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           API Key (optional)
         </label>
         <input
+          id="sync-api-key"
           type="password"
           bind:value={apiKey}
           onchange={saveSettings}
@@ -272,10 +275,11 @@
 
       <!-- Conflict Resolution Strategy -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="sync-conflict-strategy" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Conflict Resolution
         </label>
         <select
+          id="sync-conflict-strategy"
           bind:value={conflictStrategy}
           onchange={handleConflictStrategyChange}
           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -292,10 +296,11 @@
 
       <!-- Sync Interval -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label for="sync-interval" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Sync Interval (seconds)
         </label>
         <input
+          id="sync-interval"
           type="number"
           bind:value={syncInterval}
           onchange={handleSyncIntervalChange}

@@ -141,7 +141,7 @@
 
       <!-- Transition Type Selection -->
       <div class="form-section">
-        <label class="section-label">Transition Type</label>
+        <div class="section-label">Transition Type</div>
         <div class="transition-grid">
           {#each transitions as transition}
             <button
@@ -203,7 +203,7 @@
       <!-- Preview Section -->
       <div class="preview-section">
         <div class="preview-header">
-          <label class="section-label">Preview</label>
+          <div class="section-label">Preview</div>
           <button
             class="btn btn-secondary"
             onclick={triggerPreview}

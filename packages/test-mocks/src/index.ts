@@ -5,7 +5,7 @@
  * Provides factories for stories, passages, and other entities.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage } from '@writewhisker/story-models';
 
 /**
  * Random data generator
@@ -176,7 +176,7 @@ export function generatePassageContent(generator: MockDataGenerator = new MockDa
 export function mockPassage(overrides?: Partial<Passage>): Passage {
   const generator = new MockDataGenerator();
 
-  return {
+  return new Passage({
     id: generator.randomId(),
     title: `Passage ${generator.randomInt(1, 1000)}`,
     content: generatePassageContent(generator),
@@ -188,7 +188,7 @@ export function mockPassage(overrides?: Partial<Passage>): Passage {
       y: generator.randomInt(0, 1000),
     },
     ...overrides,
-  };
+  });
 }
 
 /**
@@ -197,29 +197,62 @@ export function mockPassage(overrides?: Partial<Passage>): Passage {
 export function mockStory(overrides?: Partial<Story>): Story {
   const generator = new MockDataGenerator();
   const passageCount = generator.randomInt(3, 10);
-  const passages: Passage[] = [];
+  const passages: Record<string, any> = {};
 
   for (let i = 0; i < passageCount; i++) {
-    passages.push(mockPassage({
-      id: `passage-${i}`,
+    const passageId = `passage-${i}`;
+    const passage = mockPassage({
+      id: passageId,
       title: i === 0 ? 'Start' : `Passage ${i}`,
       position: {
         x: (i % 3) * 300,
         y: Math.floor(i / 3) * 300,
       },
-    }));
+    });
+    passages[passageId] = passage.serialize();
   }
 
-  return {
-    id: generator.randomId(),
-    name: generateStoryName(generator),
-    startPassage: 'Start',
+  const now = new Date().toISOString();
+  const createdTime = new Date(Date.now() - generator.randomInt(0, 86400000)).toISOString();
+
+  // Create story with proper data structure
+  const story = new Story({
+    metadata: overrides?.metadata || {
+      title: generateStoryName(generator),
+      author: '',
+      version: '1.0.0',
+      created: createdTime,
+      modified: now,
+    },
+    startPassage: overrides?.startPassage || 'passage-0',
     passages,
-    metadata: {},
-    created: Date.now() - generator.randomInt(0, 86400000),
-    modified: Date.now(),
-    ...overrides,
-  };
+    variables: {},
+  });
+
+  // Apply overrides that are Map-based properties
+  if (overrides?.passages) {
+    story.passages = overrides.passages;
+  }
+  if (overrides?.variables) {
+    story.variables = overrides.variables;
+  }
+  if (overrides?.settings) {
+    story.settings = overrides.settings;
+  }
+  if (overrides?.stylesheets) {
+    story.stylesheets = overrides.stylesheets;
+  }
+  if (overrides?.scripts) {
+    story.scripts = overrides.scripts;
+  }
+  if (overrides?.assets) {
+    story.assets = overrides.assets;
+  }
+  if (overrides?.luaFunctions) {
+    story.luaFunctions = overrides.luaFunctions;
+  }
+
+  return story;
 }
 
 /**

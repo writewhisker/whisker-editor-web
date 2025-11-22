@@ -93,10 +93,11 @@ export class ChatMapperExporter {
     const variables = this.extractVariables(story);
 
     // Create a single conversation containing all passages
+    const passages = story.getPassagesArray();
     const conversation: ChatMapperConversation = {
       id: 1,
       title: story.metadata.title,
-      dialogueEntries: story.mapPassages((passage, index) =>
+      dialogueEntries: passages.map((passage, index) =>
         this.convertPassageToDialogueEntry(passage, index + 1, 1)
       ),
     };

@@ -5,7 +5,7 @@
  * Provides markdown integration, vault synchronization, and graph view.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage } from '@writewhisker/story-models';
 
 export interface ObsidianPluginManifest {
   id: string;
@@ -93,7 +93,7 @@ export class ObsidianConverter {
   public storyToMarkdownFiles(story: Story): Map<string, string> {
     const files = new Map<string, string>();
 
-    for (const passage of story.passages) {
+    for (const passage of story.passages.values()) {
       const fileName = this.sanitizeFileName(passage.title);
       const content = this.passageToMarkdown(passage, story);
       files.set(`${fileName}.md`, content);
@@ -165,12 +165,12 @@ export class ObsidianConverter {
     const lines: string[] = [];
 
     lines.push('---');
-    lines.push(`title: ${story.name}`);
-    lines.push(`story_id: ${story.id}`);
+    lines.push(`title: ${story.metadata.title}`);
+    lines.push(`story_id: ${story.metadata.ifid}`);
     lines.push(`start_passage: ${story.startPassage}`);
     lines.push('---');
     lines.push('');
-    lines.push(`# ${story.name}`);
+    lines.push(`# ${story.metadata.title}`);
     lines.push('');
 
     // Story metadata
@@ -184,7 +184,7 @@ export class ObsidianConverter {
 
     // Passage list
     lines.push('## Passages');
-    for (const passage of story.passages) {
+    for (const passage of story.passages.values()) {
       const fileName = this.sanitizeFileName(passage.title);
       lines.push(`- [[${fileName}|${passage.title}]]`);
     }
@@ -197,7 +197,7 @@ export class ObsidianConverter {
    * Convert Obsidian markdown files back to Whisker Story
    */
   public markdownFilesToStory(files: Map<string, string>, storyName: string): Story {
-    const passages: Passage[] = [];
+    const passagesMap = new Map<string, Passage>();
     let startPassage = '';
     let storyId = '';
     let metadata: Record<string, any> = {};
@@ -215,19 +215,26 @@ export class ObsidianConverter {
       // Parse passage
       const passage = this.markdownToPassage(content);
       if (passage) {
-        passages.push(passage);
+        passagesMap.set(passage.id, passage);
       }
     }
 
-    return {
-      id: storyId || this.generateId(),
-      name: storyName,
-      startPassage: startPassage || passages[0]?.title || 'Start',
-      passages,
-      metadata,
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    const passagesArray = Array.from(passagesMap.values());
+    const story = new Story({
+      metadata: {
+        title: storyName,
+        ifid: storyId || this.generateId(),
+        author: metadata.author || '',
+        version: metadata.version || '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        createdBy: 'obsidian-converter',
+      },
+      startPassage: startPassage || passagesArray[0]?.id || '',
+      passages: Object.fromEntries(passagesMap),
+    });
+
+    return story;
   }
 
   /**
@@ -279,13 +286,13 @@ export class ObsidianConverter {
     // Convert Obsidian links back to Whisker format
     const whiskerContent = this.convertObsidianLinksToWhisker(contentWithoutTitle);
 
-    return {
+    return new Passage({
       id: frontmatter.id || this.generateId(),
       title: frontmatter.title || 'Untitled',
       content: whiskerContent,
       tags: frontmatter.tags || [],
-      position: frontmatter.position,
-    };
+      position: frontmatter.position || { x: 0, y: 0 },
+    });
   }
 
   /**
@@ -356,7 +363,7 @@ export function createGraphData(story: Story): { nodes: GraphNode[]; edges: Grap
   const edges: GraphEdge[] = [];
 
   // Create nodes for each passage
-  for (const passage of story.passages) {
+  for (const passage of story.passages.values()) {
     nodes.push({
       id: passage.id,
       label: passage.title,
@@ -365,13 +372,13 @@ export function createGraphData(story: Story): { nodes: GraphNode[]; edges: Grap
   }
 
   // Create edges from links
-  for (const passage of story.passages) {
+  for (const passage of story.passages.values()) {
     const linkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
     let match;
 
     while ((match = linkRegex.exec(passage.content)) !== null) {
       const targetTitle = match[2] || match[1];
-      const targetPassage = story.passages.find(p => p.title === targetTitle);
+      const targetPassage = story.findPassage(p => p.title === targetTitle);
 
       if (targetPassage) {
         edges.push({

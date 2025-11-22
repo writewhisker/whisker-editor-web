@@ -19,29 +19,32 @@ export function useStory(initialStory: Story) {
   }, []);
 
   const updatePassage = useCallback((passage: Passage) => {
-    setStory(prev => ({
-      ...prev,
-      passages: prev.passages.map(p => p.id === passage.id ? passage : p),
-    }));
+    setStory(prev => {
+      prev.passages.set(passage.id, passage);
+      prev.updateModified();
+      return prev;
+    });
   }, []);
 
   const addPassage = useCallback((passage: Passage) => {
-    setStory(prev => ({
-      ...prev,
-      passages: [...prev.passages, passage],
-    }));
+    setStory(prev => {
+      prev.addPassage(passage);
+      prev.updateModified();
+      return prev;
+    });
   }, []);
 
   const removePassage = useCallback((passageId: string) => {
-    setStory(prev => ({
-      ...prev,
-      passages: prev.passages.filter(p => p.id !== passageId),
-    }));
+    setStory(prev => {
+      prev.removePassage(passageId);
+      prev.updateModified();
+      return prev;
+    });
   }, []);
 
   const getCurrentPassage = useCallback(() => {
-    return story.passages.find(p => p.title === currentPassage) || null;
-  }, [story.passages, currentPassage]);
+    return story.findPassage((p) => p.title === currentPassage) || null;
+  }, [story, currentPassage]);
 
   return {
     story,

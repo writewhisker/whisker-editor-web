@@ -16,15 +16,17 @@ export function PassageEditor({ passage: initialPassage, onChange, className, st
   const [passage, setPassage] = useState<Passage>(initialPassage);
 
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const updated = { ...passage, title: e.target.value };
-    setPassage(updated);
-    onChange?.(updated);
+    passage.title = e.target.value;
+    passage.modified = new Date().toISOString();
+    setPassage(passage);
+    onChange?.(passage);
   }, [passage, onChange]);
 
   const handleContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const updated = { ...passage, content: e.target.value };
-    setPassage(updated);
-    onChange?.(updated);
+    passage.content = e.target.value;
+    passage.modified = new Date().toISOString();
+    setPassage(passage);
+    onChange?.(passage);
   }, [passage, onChange]);
 
   return (

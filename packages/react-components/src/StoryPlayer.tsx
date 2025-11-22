@@ -20,7 +20,7 @@ export function StoryPlayer({ story, onNavigate, className, style }: StoryPlayer
     onNavigate?.(passageTitle);
   }, [onNavigate]);
 
-  const passage = story.passages.find(p => p.title === currentPassage);
+  const passage = story.findPassage((p) => p.title === currentPassage);
 
   if (!passage) {
     return <div className={className} style={style}>Passage not found: {currentPassage}</div>;

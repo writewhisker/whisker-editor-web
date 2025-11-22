@@ -5,7 +5,7 @@
  * Supports Twine 2.x story formats including Harlowe, Sugarcube, and Snowman.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import type { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface TwineStory {
   name: string;
@@ -56,13 +56,14 @@ export class TwineExporter {
    * Convert Whisker Story to Twine structure
    */
   public convertToTwine(story: Story): TwineStory {
-    const passages = story.passages.map((passage, index) => {
-      return this.convertPassageToTwine(passage, index + 1);
+    let pid = 1;
+    const passages = story.mapPassages((passage) => {
+      return this.convertPassageToTwine(passage, pid++);
     });
 
     return {
-      name: story.name,
-      ifid: story.ifid || this.generateIFID(),
+      name: story.metadata.title,
+      ifid: story.metadata.ifid || this.generateIFID(),
       startPassage: story.startPassage || passages[0]?.name || 'Start',
       format: 'Harlowe',
       formatVersion: '3.3.8',
@@ -232,29 +233,40 @@ export class TwineImporter {
    * Convert Twine structure to Whisker Story
    */
   public convertToWhisker(twineStory: TwineStory): Story {
+    const { Story: StoryModel, Passage: PassageModel } = require('@writewhisker/story-models');
     const passages = twineStory.passages.map(p => this.convertPassageToWhisker(p));
 
-    return {
-      id: twineStory.ifid || this.generateId(),
-      name: twineStory.name,
-      ifid: twineStory.ifid,
+    const story = new StoryModel({
+      metadata: {
+        title: twineStory.name,
+        author: '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ifid: twineStory.ifid || this.generateId(),
+        ...twineStory.metadata,
+      },
       startPassage: twineStory.startPassage,
-      passages,
-      metadata: twineStory.metadata || {},
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    });
+
+    // Add passages to story
+    for (const passage of passages) {
+      story.passages.set(passage.id, passage);
+    }
+
+    return story;
   }
 
   private convertPassageToWhisker(passage: TwinePassage): Passage {
-    return {
+    const { Passage: PassageModel } = require('@writewhisker/story-models');
+    return new PassageModel({
       id: passage.pid || this.generateId(),
       title: passage.name,
       content: this.convertContentToWhisker(passage.text),
       tags: passage.tags || [],
       position: passage.position,
       size: passage.size,
-    };
+    });
   }
 
   private convertContentToWhisker(content: string): string {

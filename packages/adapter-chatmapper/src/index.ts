@@ -5,7 +5,7 @@
  * ChatMapper is a professional dialogue tree editor for games.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import type { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface ChatMapperProject {
   title: string;
@@ -95,14 +95,14 @@ export class ChatMapperExporter {
     // Create a single conversation containing all passages
     const conversation: ChatMapperConversation = {
       id: 1,
-      title: story.name,
-      dialogueEntries: story.passages.map((passage, index) =>
+      title: story.metadata.title,
+      dialogueEntries: story.mapPassages((passage, index) =>
         this.convertPassageToDialogueEntry(passage, index + 1, 1)
       ),
     };
 
     return {
-      title: story.name,
+      title: story.metadata.title,
       version: '1.0',
       conversations: [conversation],
       actors,
@@ -198,7 +198,7 @@ export class ChatMapperExporter {
     actorSet.add('Player');
 
     // Extract actors from passage content
-    for (const passage of story.passages) {
+    for (const passage of story.passages.values()) {
       const lines = passage.content.split('\n');
       for (const line of lines) {
         const match = line.match(/^(\w+):\s*"/);
@@ -219,15 +219,14 @@ export class ChatMapperExporter {
   private extractVariables(story: Story): ChatMapperVariable[] {
     const variables: ChatMapperVariable[] = [];
 
-    if (story.metadata?.variables) {
-      for (const [name, value] of Object.entries(story.metadata.variables)) {
-        const type = typeof value === 'boolean' ? 'Boolean' : typeof value === 'number' ? 'Number' : 'Text';
-        variables.push({
-          name,
-          initialValue: value,
-          type,
-        });
-      }
+    for (const [name, variable] of story.variables) {
+      const value = variable.initial;
+      const type = typeof value === 'boolean' ? 'Boolean' : typeof value === 'number' ? 'Number' : 'Text';
+      variables.push({
+        name,
+        initialValue: value,
+        type,
+      });
     }
 
     return variables;
@@ -437,8 +436,9 @@ export class ChatMapperImporter {
   /**
    * Convert ChatMapper structure to Whisker Story
    */
-  public convertToWhisker(project: ChatMapperProject): Story {
-    const passages: Passage[] = [];
+  public convertToWhisker(project: ChatMapperProject): any {
+    const { Story, Variable } = require('@writewhisker/story-models');
+    const passages = [];
 
     // Convert all dialogue entries to passages
     for (const conversation of project.conversations) {
@@ -447,28 +447,38 @@ export class ChatMapperImporter {
       }
     }
 
-    // Extract variables for metadata
-    const variables: Record<string, any> = {};
-    for (const variable of project.variables) {
-      variables[variable.name] = variable.initialValue;
-    }
-
-    return {
-      id: this.generateId(),
-      name: project.title,
-      startPassage: passages[0]?.title || 'Start',
-      passages,
+    const story = new Story({
       metadata: {
+        title: project.title,
+        author: '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
         ...project.metadata,
-        variables,
         actors: project.actors,
       },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+      startPassage: passages[0]?.id || 'start',
+    });
+
+    // Add passages to story
+    for (const passage of passages) {
+      story.passages.set(passage.id, passage);
+    }
+
+    // Add variables
+    for (const variable of project.variables) {
+      const storyVar = new Variable({
+        name: variable.name,
+        initial: variable.initialValue,
+      });
+      story.variables.set(variable.name, storyVar);
+    }
+
+    return story;
   }
 
-  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): Passage {
+  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): any {
+    const { Passage } = require('@writewhisker/story-models');
     let content = '';
 
     // Add actor dialogue if present
@@ -483,7 +493,7 @@ export class ChatMapperImporter {
       content += `\n\n[[Choice ${link.priority + 1}|Entry_${link.destinationDialogueId}]]`;
     }
 
-    return {
+    return new Passage({
       id: this.generateId(),
       title: entry.menuText || `Entry_${entry.id}`,
       content: content.trim(),
@@ -494,7 +504,7 @@ export class ChatMapperImporter {
       size: entry.canvasRect
         ? { width: entry.canvasRect.width, height: entry.canvasRect.height }
         : undefined,
-    };
+    });
   }
 
   private generateId(): string {

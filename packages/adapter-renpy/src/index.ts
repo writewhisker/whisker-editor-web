@@ -70,12 +70,12 @@ export class RenpyExporter {
    * Convert Whisker Story to Ren'Py structure
    */
   public convertToRenpy(story: Story): RenpyScript {
-    const labels = story.passages.map(passage => this.convertPassageToLabel(passage));
+    const labels = story.mapPassages(passage => this.convertPassageToLabel(passage));
     const characters = this.extractCharacters(story);
     const variables = this.extractVariables(story);
 
     return {
-      name: story.name,
+      name: story.metadata.title,
       labels,
       characters,
       images: [],
@@ -152,7 +152,7 @@ export class RenpyExporter {
     const characterSet = new Set<string>();
 
     // Extract characters from passage content
-    for (const passage of story.passages) {
+    for (const passage of story.passages.values()) {
       const lines = passage.content.split('\n');
       for (const line of lines) {
         const match = line.match(/^(\w+):\s*"/);
@@ -176,10 +176,8 @@ export class RenpyExporter {
   private extractVariables(story: Story): RenpyVariable[] {
     const variables: RenpyVariable[] = [];
 
-    if (story.metadata?.variables) {
-      for (const [name, value] of Object.entries(story.metadata.variables)) {
-        variables.push({ name, value });
-      }
+    for (const [name, variable] of story.variables) {
+      variables.push({ name, value: variable.initial });
     }
 
     return variables;
@@ -476,31 +474,41 @@ export class RenpyImporter {
   /**
    * Convert Ren'Py structure to Whisker Story
    */
-  public convertToWhisker(renpyScript: RenpyScript): Story {
+  public convertToWhisker(renpyScript: RenpyScript): any {
+    const { Story, Variable } = require('@writewhisker/story-models');
     const passages = renpyScript.labels.map((label, index) => this.convertLabelToPassage(label, index));
 
-    // Extract variables for metadata
-    const variables: Record<string, any> = {};
-    for (const variable of renpyScript.variables) {
-      variables[variable.name] = variable.value;
+    const story = new Story({
+      metadata: {
+        title: renpyScript.name,
+        author: '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ...renpyScript.metadata,
+      },
+      startPassage: passages[0]?.id || 'start',
+    });
+
+    // Add passages to story
+    for (const passage of passages) {
+      story.passages.set(passage.id, passage);
     }
 
-    return {
-      id: this.generateId(),
-      name: renpyScript.name,
-      startPassage: passages[0]?.title || 'start',
-      passages,
-      metadata: {
-        ...renpyScript.metadata,
-        variables,
-        characters: renpyScript.characters,
-      },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    // Add variables
+    for (const variable of renpyScript.variables) {
+      const storyVar = new Variable({
+        name: variable.name,
+        initial: variable.value,
+      });
+      story.variables.set(variable.name, storyVar);
+    }
+
+    return story;
   }
 
-  private convertLabelToPassage(label: RenpyLabel, index: number): Passage {
+  private convertLabelToPassage(label: RenpyLabel, index: number): any {
+    const { Passage } = require('@writewhisker/story-models');
     let content = label.content;
 
     // Add menu choices as links
@@ -511,7 +519,7 @@ export class RenpyImporter {
       }
     }
 
-    return {
+    return new Passage({
       id: this.generateId(),
       title: label.name,
       content: content.trim(),
@@ -520,7 +528,7 @@ export class RenpyImporter {
         x: (index % 5) * 200,
         y: Math.floor(index / 5) * 200,
       },
-    };
+    });
   }
 
   private generateId(): string {

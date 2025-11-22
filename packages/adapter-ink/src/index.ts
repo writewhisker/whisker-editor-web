@@ -58,10 +58,10 @@ export class InkExporter {
    * Convert Whisker Story to Ink structure
    */
   public convertToInk(story: Story): InkStory {
-    const knots = story.passages.map(passage => this.convertPassageToKnot(passage));
+    const knots = story.mapPassages(passage => this.convertPassageToKnot(passage));
 
     return {
-      title: story.name,
+      title: story.metadata.title,
       author: story.metadata?.author,
       knots,
       globalVariables: this.extractVariables(story),
@@ -109,17 +109,15 @@ export class InkExporter {
   }
 
   private extractVariables(story: Story): InkVariable[] {
-    // Extract variables from story metadata
+    // Extract variables from story
     const variables: InkVariable[] = [];
 
-    if (story.metadata?.variables) {
-      for (const [name, value] of Object.entries(story.metadata.variables)) {
-        variables.push({
-          name,
-          value,
-          type: 'VAR',
-        });
-      }
+    for (const [name, variable] of story.variables) {
+      variables.push({
+        name,
+        value: variable.initial,
+        type: 'VAR',
+      });
     }
 
     return variables;
@@ -360,30 +358,40 @@ export class InkImporter {
    * Convert Ink structure to Whisker Story
    */
   public convertToWhisker(inkStory: InkStory): Story {
+    const { Story, Variable } = require('@writewhisker/story-models');
     const passages = inkStory.knots.map((knot, index) => this.convertKnotToPassage(knot, index));
 
-    // Extract variables for metadata
-    const variables: Record<string, any> = {};
-    for (const variable of inkStory.globalVariables) {
-      variables[variable.name] = variable.value;
+    const story = new Story({
+      metadata: {
+        title: inkStory.title,
+        author: inkStory.author || '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ...inkStory.metadata,
+      },
+      startPassage: passages[0]?.id || 'start',
+    });
+
+    // Add passages to story
+    for (const passage of passages) {
+      story.passages.set(passage.id, passage);
     }
 
-    return {
-      id: this.generateId(),
-      name: inkStory.title,
-      startPassage: passages[0]?.title || 'Start',
-      passages,
-      metadata: {
-        ...inkStory.metadata,
-        author: inkStory.author,
-        variables,
-      },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    // Add variables
+    for (const variable of inkStory.globalVariables) {
+      const storyVar = new Variable({
+        name: variable.name,
+        initial: variable.value,
+      });
+      story.variables.set(variable.name, storyVar);
+    }
+
+    return story;
   }
 
-  private convertKnotToPassage(knot: InkKnot, index: number): Passage {
+  private convertKnotToPassage(knot: InkKnot, index: number): any {
+    const { Passage } = require('@writewhisker/story-models');
     // Combine content and choices into Whisker format
     let content = knot.content;
 
@@ -400,7 +408,7 @@ export class InkImporter {
       }
     }
 
-    return {
+    return new Passage({
       id: this.generateId(),
       title: knot.name,
       content: content.trim(),
@@ -409,7 +417,7 @@ export class InkImporter {
         x: (index % 5) * 200,
         y: Math.floor(index / 5) * 200,
       },
-    };
+    });
   }
 
   private generateId(): string {

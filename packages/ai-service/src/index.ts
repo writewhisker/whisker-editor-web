@@ -5,10 +5,10 @@
  * Zero dependencies, works with OpenAI, Anthropic, local models, or custom providers.
  */
 
-export type AIProvider = 'openai' | 'anthropic' | 'local' | 'custom';
+export type AIProviderType = 'openai' | 'anthropic' | 'local' | 'custom';
 
 export interface AIConfig {
-  provider: AIProvider;
+  provider: AIProviderType;
   apiKey?: string;
   model?: string;
   temperature?: number;
@@ -219,7 +219,7 @@ export class AIService {
 /**
  * Cost estimation utilities
  */
-export function estimateCost(usage: AIUsage, provider: AIProvider, model?: string): number {
+export function estimateCost(usage: AIUsage, provider: AIProviderType, model?: string): number {
   let inputCost = 0;
   let outputCost = 0;
 

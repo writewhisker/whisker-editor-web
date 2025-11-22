@@ -7,7 +7,7 @@ export interface ToolbarItem {
   action?: () => void;
 }
 
-export interface ToolbarGroup {
+export interface ToolbarGroupConfig {
   id: string;
   items: ToolbarItem[];
 }

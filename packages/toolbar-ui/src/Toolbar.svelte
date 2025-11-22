@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ToolbarGroup } from './types';
+  import type { ToolbarGroupConfig } from './types';
 
   interface Props {
-    groups?: ToolbarGroup[];
+    groups?: ToolbarGroupConfig[];
   }
 
   let { groups = [] }: Props = $props();

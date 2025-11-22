@@ -23,7 +23,7 @@ export const storyMatchers = {
    * Check if story has a specific passage
    */
   toHavePassage(story: Story, title: string): MatcherResult {
-    const passage = story.passages.find(p => p.title === title);
+    const passage = Array.from(story.passages.values()).find(p => p.title === title);
     return {
       pass: !!passage,
       message: () =>
@@ -37,7 +37,7 @@ export const storyMatchers = {
    * Check if story has a start passage
    */
   toHaveStartPassage(story: Story): MatcherResult {
-    const hasStart = !!story.startPassage && story.passages.some(p => p.title === story.startPassage);
+    const hasStart = !!story.startPassage && Array.from(story.passages.values()).some(p => p.title === story.startPassage);
     return {
       pass: hasStart,
       message: () =>
@@ -80,9 +80,9 @@ export const storyMatchers = {
    */
   toHavePassageCount(story: Story, count: number): MatcherResult {
     return {
-      pass: story.passages.length === count,
+      pass: story.passages.size === count,
       message: () =>
-        `Expected story to have ${count} passages, but has ${story.passages.length}`,
+        `Expected story to have ${count} passages, but has ${story.passages.size}`,
     };
   },
 
@@ -256,10 +256,10 @@ export const contentMatchers = {
  */
 
 function findBrokenLinks(story: Story): string[] {
-  const passageTitles = new Set(story.passages.map(p => p.title));
+  const passageTitles = new Set(Array.from(story.passages.values()).map(p => p.title));
   const brokenLinks: string[] = [];
 
-  for (const passage of story.passages) {
+  for (const passage of Array.from(story.passages.values())) {
     const links = extractLinks(passage.content);
     for (const link of links) {
       if (!passageTitles.has(link)) {
@@ -286,7 +286,7 @@ function extractLinks(content: string): string[] {
 
 function checkIfLinear(story: Story): boolean {
   // A story is linear if each passage has at most one link
-  for (const passage of story.passages) {
+  for (const passage of Array.from(story.passages.values())) {
     const links = extractLinks(passage.content);
     if (links.length > 1) {
       return false;
@@ -319,7 +319,7 @@ function detectCycles(story: Story): boolean {
     return false;
   }
 
-  for (const passage of story.passages) {
+  for (const passage of Array.from(story.passages.values())) {
     if (!visited.has(passage.id)) {
       if (hasCycleDFS(passage.id)) {
         return true;
@@ -335,12 +335,12 @@ function buildGraph(story: Story): Map<string, string[]> {
   const titleToId = new Map<string, string>();
 
   // Build title to ID mapping
-  for (const passage of story.passages) {
+  for (const passage of Array.from(story.passages.values())) {
     titleToId.set(passage.title, passage.id);
   }
 
   // Build adjacency list
-  for (const passage of story.passages) {
+  for (const passage of Array.from(story.passages.values())) {
     const links = extractLinks(passage.content);
     const neighbors: string[] = [];
 

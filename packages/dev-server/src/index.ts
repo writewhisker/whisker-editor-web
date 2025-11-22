@@ -181,7 +181,7 @@ async function generateHTML(storyPath: string): Promise<string> {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHTML(story.name)} - Development</title>
+  <title>${escapeHTML(story.metadata.title)} - Development</title>
   <style>
     * {
       margin: 0;
@@ -273,12 +273,12 @@ async function generateHTML(storyPath: string): Promise<string> {
   </div>
 
   <div class="container">
-    <h1 id="story-title">${escapeHTML(story.name)}</h1>
+    <h1 id="story-title">${escapeHTML(story.metadata.title)}</h1>
     <div id="story"></div>
     <div class="debug-info">
       <strong>Debug Info:</strong><br>
       Current Passage: <span id="current-passage"></span><br>
-      Total Passages: ${story.passages.length}
+      Total Passages: ${story.passages.size}
     </div>
   </div>
 

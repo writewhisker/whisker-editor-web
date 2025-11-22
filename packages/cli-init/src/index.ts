@@ -5,7 +5,7 @@
  */
 
 import type { Command, CommandContext } from './types.js';
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage } from '@writewhisker/story-models';
 
 /**
  * Project template type
@@ -68,7 +68,7 @@ export async function createProject(config: ProjectConfig, targetDir: string): P
   // Create story file
   const story = generateStoryFromTemplate(config);
   const storyPath = path.join(targetDir, 'story.json');
-  await fs.writeFile(storyPath, JSON.stringify(story, null, 2));
+  await fs.writeFile(storyPath, JSON.stringify(story.serialize(), null, 2));
 
   // Create package.json if TypeScript is enabled
   if (config.typescript) {
@@ -107,18 +107,27 @@ export async function createProject(config: ProjectConfig, targetDir: string): P
 export function generateStoryFromTemplate(config: ProjectConfig): Story {
   const passages = generatePassagesForTemplate(config.template);
 
-  return {
-    id: generateId(),
-    name: config.name,
-    startPassage: passages[0].title,
-    passages,
+  const story = new Story({
     metadata: {
+      title: config.name,
       author: config.author,
       description: config.description,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      version: '1.0.0',
+      tags: [],
+      createdBy: 'cli-init',
+      ifid: generateId(),
     },
-  };
+    startPassage: passages[0].id,
+  });
+
+  // Add passages to the story using the Map
+  passages.forEach(passage => {
+    story.passages.set(passage.id, passage);
+  });
+
+  return story;
 }
 
 /**
@@ -146,24 +155,24 @@ function generatePassagesForTemplate(template: TemplateType): Passage[] {
  */
 function generateBasicPassages(): Passage[] {
   return [
-    {
+    new Passage({
       id: generateId(),
       title: 'Start',
       content: 'Welcome to your story!\n\nThis is the beginning of your adventure.\n\n[[Continue->Middle]]',
       position: { x: 100, y: 100 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Middle',
       content: 'The story continues...\n\n[[Proceed->End]]',
       position: { x: 300, y: 100 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'End',
       content: 'The end.\n\nThank you for reading!',
       position: { x: 500, y: 100 },
-    },
+    }),
   ];
 }
 
@@ -172,36 +181,36 @@ function generateBasicPassages(): Passage[] {
  */
 function generateInteractivePassages(): Passage[] {
   return [
-    {
+    new Passage({
       id: generateId(),
       title: 'Start',
       content: 'You stand at a crossroads.\n\n[[Go left->Left Path]]\n[[Go right->Right Path]]',
       position: { x: 100, y: 200 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Left Path',
       content: 'You chose the left path. The road is dark and mysterious.\n\n[[Continue->Left End]]',
       position: { x: 300, y: 100 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Right Path',
       content: 'You chose the right path. The sun shines brightly ahead.\n\n[[Continue->Right End]]',
       position: { x: 300, y: 300 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Left End',
       content: 'You found a hidden treasure in the darkness!',
       position: { x: 500, y: 100 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Right End',
       content: 'You reached a beautiful meadow and found peace.',
       position: { x: 500, y: 300 },
-    },
+    }),
   ];
 }
 
@@ -210,54 +219,54 @@ function generateInteractivePassages(): Passage[] {
  */
 function generateBranchingPassages(): Passage[] {
   return [
-    {
+    new Passage({
       id: generateId(),
       title: 'Start',
       content: 'Your adventure begins in a mysterious forest.\n\n[[Explore the forest->Forest]]\n[[Follow the river->River]]\n[[Climb the mountain->Mountain]]',
       position: { x: 100, y: 200 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Forest',
       content: 'Deep in the forest, you encounter a wise old hermit.\n\n[[Ask for guidance->Forest Good]]\n[[Continue alone->Forest Neutral]]',
       position: { x: 300, y: 100 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'River',
       content: 'Following the river, you discover an ancient bridge.\n\n[[Cross the bridge->River Good]]\n[[Turn back->River Bad]]',
       position: { x: 300, y: 200 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Mountain',
       content: 'The mountain path is treacherous.\n\n[[Press onward->Mountain Good]]\n[[Seek shelter->Mountain Neutral]]',
       position: { x: 300, y: 300 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Forest Good',
       content: 'The hermit shares ancient wisdom. You feel enlightened.',
       position: { x: 500, y: 50 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Forest Neutral',
       content: 'You navigate the forest successfully on your own.',
       position: { x: 500, y: 150 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'River Good',
       content: 'The bridge leads to a hidden village. You are welcomed warmly.',
       position: { x: 500, y: 200 },
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'River Bad',
       content: 'You get lost returning to the forest.',
       position: { x: 500, y: 250 },
-    },
+    }),
   ];
 }
 
@@ -266,48 +275,48 @@ function generateBranchingPassages(): Passage[] {
  */
 function generateRPGPassages(): Passage[] {
   return [
-    {
+    new Passage({
       id: generateId(),
       title: 'Character Creation',
       content: 'Welcome, adventurer!\n\nChoose your class:\n\n[[Warrior->Warrior Start]]\n[[Mage->Mage Start]]\n[[Rogue->Rogue Start]]',
       position: { x: 100, y: 200 },
       tags: ['character-creation'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Warrior Start',
       content: 'As a warrior, you begin your quest with sword and shield.\n\n[[Enter the dungeon->Dungeon]]',
       position: { x: 300, y: 100 },
       tags: ['class:warrior'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Mage Start',
       content: 'As a mage, you wield powerful magic.\n\n[[Enter the dungeon->Dungeon]]',
       position: { x: 300, y: 200 },
       tags: ['class:mage'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Rogue Start',
       content: 'As a rogue, you rely on stealth and cunning.\n\n[[Enter the dungeon->Dungeon]]',
       position: { x: 300, y: 300 },
       tags: ['class:rogue'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Dungeon',
       content: 'You enter the dark dungeon. A monster blocks your path!\n\n[[Fight->Combat]]\n[[Flee->Escape]]',
       position: { x: 500, y: 200 },
       tags: ['combat-encounter'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Combat',
       content: 'You defeated the monster! Victory is yours!',
       position: { x: 700, y: 150 },
       tags: ['victory'],
-    },
+    }),
   ];
 }
 
@@ -316,55 +325,55 @@ function generateRPGPassages(): Passage[] {
  */
 function generateVisualNovelPassages(): Passage[] {
   return [
-    {
+    new Passage({
       id: generateId(),
       title: 'Prologue',
       content: 'A new day begins at the academy.\n\n[[Continue->Morning]]',
       position: { x: 100, y: 200 },
       tags: ['scene:prologue'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Morning',
       content: 'You meet your classmates in the courtyard.\n\n[[Talk to Alice->Alice Route]]\n[[Talk to Bob->Bob Route]]',
       position: { x: 300, y: 200 },
       tags: ['scene:morning'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Alice Route',
       content: 'Alice: "Good morning! Ready for class?"\n\n[[Go to class together->Class Alice]]',
       position: { x: 500, y: 100 },
       tags: ['character:alice'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Bob Route',
       content: 'Bob: "Hey! Want to skip class today?"\n\n[[Skip class->Skip]]\n[[Decline->Class Bob]]',
       position: { x: 500, y: 300 },
       tags: ['character:bob'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Class Alice',
       content: 'You and Alice attend class together. A normal day at the academy.',
       position: { x: 700, y: 100 },
       tags: ['scene:class', 'route:alice'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Class Bob',
       content: 'You go to class alone. Bob looks disappointed.',
       position: { x: 700, y: 250 },
       tags: ['scene:class', 'route:bob'],
-    },
-    {
+    }),
+    new Passage({
       id: generateId(),
       title: 'Skip',
       content: 'You and Bob skip class and have an adventure in town!',
       position: { x: 700, y: 350 },
       tags: ['scene:town', 'route:bob'],
-    },
+    }),
   ];
 }
 

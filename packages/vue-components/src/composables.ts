@@ -15,7 +15,7 @@ export function useStory(initialStory: Story) {
   const visitedPassages = ref<string[]>([]);
 
   const getCurrentPassage = computed(() => {
-    return story.value.passages.find(p => p.title === currentPassage.value) || null;
+    return story.value.findPassage(p => p.title === currentPassage.value) || null;
   });
 
   function navigateTo(passageTitle: string) {
@@ -24,24 +24,16 @@ export function useStory(initialStory: Story) {
   }
 
   function updatePassage(passage: Passage) {
-    story.value = {
-      ...story.value,
-      passages: story.value.passages.map(p => p.id === passage.id ? passage : p),
-    };
+    story.value.passages.set(passage.id, passage);
+    story.value.updateModified();
   }
 
   function addPassage(passage: Passage) {
-    story.value = {
-      ...story.value,
-      passages: [...story.value.passages, passage],
-    };
+    story.value.addPassage(passage);
   }
 
   function removePassage(passageId: string) {
-    story.value = {
-      ...story.value,
-      passages: story.value.passages.filter(p => p.id !== passageId),
-    };
+    story.value.removePassage(passageId);
   }
 
   return {

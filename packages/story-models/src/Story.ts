@@ -462,6 +462,25 @@ export class Story {
     return result;
   }
 
+  /**
+   * Check if some passage matches predicate (for backward compatibility)
+   */
+  somePassage(predicate: (passage: Passage, id: string) => boolean): boolean {
+    for (const [id, passage] of this.passages) {
+      if (predicate(passage, id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get the number of passages (for backward compatibility)
+   */
+  get passageCount(): number {
+    return this.passages.size;
+  }
+
   validate(): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 

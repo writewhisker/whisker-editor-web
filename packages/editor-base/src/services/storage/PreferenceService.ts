@@ -3,14 +3,15 @@
  * Re-exports PreferenceManager from @writewhisker/storage for backwards compatibility
  */
 
-import { PreferenceManager } from '@writewhisker/storage';
+import { PreferenceManager, LocalStorageBackend } from '@writewhisker/storage';
 
 // Singleton instance
 let instance: PreferenceManager | null = null;
 
 export function getPreferenceService(): PreferenceManager {
   if (!instance) {
-    instance = new PreferenceManager();
+    const backend = new LocalStorageBackend();
+    instance = new PreferenceManager(backend);
   }
   return instance;
 }

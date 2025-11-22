@@ -150,6 +150,9 @@
             class="stylesheet-item"
             class:active={index === activeIndex}
             on:click={() => { activeIndex = index; }}
+            on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') ? activeIndex = index : null}
+            role="button"
+            tabindex="0"
           >
             <span class="stylesheet-name">Stylesheet {index + 1}</span>
             <button

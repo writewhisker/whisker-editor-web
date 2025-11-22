@@ -52,11 +52,12 @@
 </script>
 
 {#if show}
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={handleCancel} role="presentation">
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={handleCancel} on:keydown={(e) => e.key === 'Escape' ? handleCancel() : null} role="presentation">
     <div
       bind:this={dialogElement}
       class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 min-w-[400px]"
       on:click|stopPropagation
+      on:keydown|stopPropagation
       role="dialog"
       tabindex="-1"
       aria-modal="true"

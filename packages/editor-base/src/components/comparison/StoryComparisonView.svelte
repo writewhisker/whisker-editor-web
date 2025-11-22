@@ -469,10 +469,6 @@
     border-radius: 4px;
   }
 
-  .dark .overflow-y-auto::-webkit-scrollbar-track {
-    background: #374151;
-  }
-
   .overflow-y-auto::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
@@ -480,13 +476,5 @@
 
   .overflow-y-auto::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
-
-  .dark .overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #6b7280;
-  }
-
-  .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
   }
 </style>

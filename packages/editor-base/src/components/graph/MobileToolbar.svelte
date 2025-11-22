@@ -153,7 +153,14 @@
 <!-- Slide-in Menu -->
 {#if showMenu}
   <!-- Overlay -->
-  <div class="menu-overlay" on:click={toggleMenu}></div>
+  <div
+    class="menu-overlay"
+    role="button"
+    tabindex="0"
+    on:click={toggleMenu}
+    on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); toggleMenu(); } }}
+    aria-label="Close menu"
+  ></div>
 
   <!-- Menu Drawer -->
   <div class="menu-drawer">

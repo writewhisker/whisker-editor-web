@@ -104,7 +104,7 @@
 </script>
 
 <div class="audio-controls" class:collapsed={!isExpanded}>
-  <div class="controls-header" onclick={toggleExpand}>
+  <div class="controls-header" onclick={toggleExpand} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') ? toggleExpand() : null} role="button" tabindex="0">
     <div class="header-content">
       <span class="header-icon">🎵</span>
       <h3>Audio Controls</h3>
@@ -338,7 +338,6 @@
     margin-bottom: 0;
   }
 
-  .volume-section h4,
   .music-section h4,
   .sfx-section h4 {
     margin: 0 0 12px 0;

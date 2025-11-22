@@ -75,6 +75,7 @@
     on:click={handleClose}
     on:keydown={(e) => e.key === 'Escape' && handleClose()}
     role="dialog"
+    tabindex="-1"
     aria-modal="true"
     aria-labelledby="export-dialog-title"
   >

@@ -170,6 +170,8 @@
             ondragstart={(e) => handleDragStart(e, blockType)}
             style="background-color: {block.color}"
             title="Drag to canvas to add"
+            role="button"
+            tabindex="0"
           >
             <div class="block-label">{block.label}</div>
             <div class="block-params">
@@ -188,6 +190,8 @@
         class="script-canvas"
         ondragover={handleDragOver}
         ondrop={handleDrop}
+        role="region"
+        aria-label="Script canvas"
       >
         {#if blocks.length === 0}
           <div class="canvas-empty">
@@ -203,6 +207,9 @@
                 class:selected={selectedBlockId === block.id}
                 style="border-left: 4px solid {block.color}"
                 onclick={() => (selectedBlockId = block.id)}
+                onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') ? selectedBlockId = block.id : null}
+                role="button"
+                tabindex="0"
               >
                 <div class="block-header">
                   <span class="block-label">{block.label}</span>
@@ -551,11 +558,6 @@
     gap: 0.5rem;
   }
 
-  .parameter label {
-    font-size: 0.875rem;
-    color: var(--text-secondary, #666);
-    min-width: 120px;
-  }
 
   .parameter input,
   .parameter select {

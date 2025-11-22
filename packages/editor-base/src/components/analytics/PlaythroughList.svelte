@@ -177,8 +177,8 @@
 </div>
 
 {#if showDetails && selectedPlaythrough}
-  <div class="modal-overlay" onclick={handleCloseDetails}>
-    <div class="modal-content" onclick={(e) => e.stopPropagation()}>
+  <div class="modal-overlay" onclick={handleCloseDetails} onkeydown={(e) => (e.key === 'Escape' ? handleCloseDetails() : null)} role="button" tabindex="0">
+    <div class="modal-content" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="dialog" tabindex="-1">
       <div class="modal-header">
         <h2>Playthrough Details</h2>
         <button class="btn-close" onclick={handleCloseDetails}>✕</button>

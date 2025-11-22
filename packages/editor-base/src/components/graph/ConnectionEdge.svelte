@@ -26,8 +26,8 @@
   export let data: $$Props['data'] = {};
   export let markerEnd: $$Props['markerEnd'] = undefined;
   export let style: $$Props['style'] = undefined;
-  export let label: $$Props['label'] = undefined;
-  export let labelStyle: $$Props['labelStyle'] = undefined;
+  export const label: $$Props['label'] = undefined;
+  export const labelStyle: $$Props['labelStyle'] = undefined;
 
   // Extract choice data
   $: choiceText = data?.choiceText || '';
@@ -60,7 +60,7 @@
   }
 </script>
 
-<g oncontextmenu={handleContextMenu}>
+<g oncontextmenu={handleContextMenu} role="group" aria-label="Connection edge">
   <BaseEdge path={edgePath} {markerEnd} style="{edgeStyle} {style || ''}" />
 
   <!-- Edge label with background -->

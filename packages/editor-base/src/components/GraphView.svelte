@@ -1310,6 +1310,7 @@
       class="fixed bg-white border border-gray-300 rounded shadow-lg z-50 py-1 min-w-[180px]"
       style="left: {edgeContextMenu.x}px; top: {edgeContextMenu.y}px;"
       on:click|stopPropagation
+      on:keydown={(e) => { if (e.key === 'Escape') closeEdgeContextMenu(); }}
       role="menu"
       tabindex="-1"
     >

@@ -104,6 +104,7 @@
             role="menu" tabindex="0"
             class="absolute top-full mt-1 left-0 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[200px] max-h-64 overflow-y-auto"
             on:click|stopPropagation
+            on:keydown={(e) => { if (e.key === 'Escape') closeDropdowns(); }}
           >
             <div class="p-2">
               {#each $availableTags as tag}
@@ -161,6 +162,7 @@
           role="menu" tabindex="0"
           class="absolute top-full mt-1 left-0 bg-white border border-gray-300 rounded shadow-lg z-50 min-w-[180px]"
           on:click|stopPropagation
+          on:keydown={(e) => { if (e.key === 'Escape') closeDropdowns(); }}
         >
           <div class="p-2">
             <label class="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 rounded cursor-pointer">

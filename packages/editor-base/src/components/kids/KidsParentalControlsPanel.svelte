@@ -101,6 +101,7 @@
     on:click={handleClose}
     on:keydown={(e) => e.key === 'Escape' && handleClose()}
     role="dialog"
+    tabindex="-1"
     aria-modal="true"
     aria-labelledby="parental-controls-title"
   >
@@ -134,7 +135,6 @@
               placeholder="Enter PIN"
               class="w-full px-6 py-4 text-2xl rounded-xl border-4 border-blue-400 focus:border-blue-600 focus:outline-none text-center font-bold mb-4"
               on:keydown={(e) => e.key === 'Enter' && handleUnlock()}
-              autofocus
             />
             <div class="flex gap-4">
               <button

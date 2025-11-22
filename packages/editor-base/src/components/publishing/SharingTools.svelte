@@ -80,10 +80,11 @@
 </script>
 
 {#if open}
-  <div class="dialog-overlay" onclick={handleClose} role="presentation">
+  <div class="dialog-overlay" onclick={handleClose} onkeydown={(e) => (e.key === 'Escape' ? handleClose() : null)} role="button" tabindex="0">
     <div
       class="dialog"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
       role="dialog" tabindex="-1"
       aria-labelledby="sharing-title"
       aria-modal="true"

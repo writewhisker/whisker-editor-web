@@ -777,6 +777,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4"
         on:click|stopPropagation
+        on:keydown|stopPropagation
         role="dialog"
         aria-modal="true"
         aria-labelledby="fix-all-confirm-title"
@@ -864,6 +865,7 @@
       <div
         class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
         on:click|stopPropagation
+        on:keydown|stopPropagation
         role="dialog"
         aria-modal="true"
         aria-labelledby="fix-all-summary-title"

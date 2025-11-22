@@ -439,6 +439,7 @@
             </div>
           {:else if selectedAsset.type === 'video'}
             <video controls src={selectedAsset.path}>
+              <track kind="captions" />
               Your browser does not support video.
             </video>
           {:else}

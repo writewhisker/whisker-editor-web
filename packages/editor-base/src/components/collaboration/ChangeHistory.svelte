@@ -133,7 +133,7 @@
   <div class="changes-list">
     {#each filteredChanges() as change (change.id)}
       <div class="change-item">
-        <div class="change-summary" onclick={() => toggleDetails(change.id)}>
+        <div class="change-summary" onclick={() => toggleDetails(change.id)} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') ? toggleDetails(change.id) : null} role="button" tabindex="0">
           <div class="change-info">
             <span class="change-icon">
               {getChangeIcon(change.changeType as any)}

@@ -126,8 +126,8 @@
 </script>
 
 {#if open}
-  <div class="dialog-overlay" onclick={handleCancel}>
-    <div class="dialog-container" onclick={(e) => e.stopPropagation()}>
+  <div class="dialog-overlay" onclick={handleCancel} onkeydown={(e) => (e.key === 'Escape' ? handleCancel() : null)} role="button" tabindex="0">
+    <div class="dialog-container" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()} role="button" tabindex="0">
       <div class="dialog-header">
         <div class="header-content">
           <h2>Resolve Conflicts</h2>

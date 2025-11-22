@@ -121,6 +121,7 @@
     <div
       class="bg-gradient-to-br from-red-100 via-orange-100 to-yellow-100 rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border-8 border-red-600"
       on:click|stopPropagation
+      on:keydown|stopPropagation
       role="dialog" tabindex="-1"
       aria-labelledby="roblox-asset-picker-title"
     >

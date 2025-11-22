@@ -146,6 +146,7 @@
     <div
       class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
       on:click|stopPropagation
+      on:keydown|stopPropagation
       role="dialog" tabindex="-1"
       aria-labelledby="settings-title"
     >
@@ -309,6 +310,7 @@
                   on:click={() => kidsModeActions.toggle()}
                   role="switch"
                   aria-checked={$kidsModeEnabled}
+                  aria-label="Toggle Kids Mode"
                 >
                   <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {$kidsModeEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
                 </button>
@@ -340,6 +342,7 @@
                 on:click={() => gridSnapEnabled = !gridSnapEnabled}
                 role="switch"
                 aria-checked={gridSnapEnabled}
+                aria-label="Toggle Grid Snap"
               >
                 <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {gridSnapEnabled ? 'translate-x-6' : 'translate-x-1'}"></span>
               </button>

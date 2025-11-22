@@ -114,7 +114,7 @@
 </script>
 
 <div class="animation-controls" class:collapsed={!isExpanded}>
-  <div class="controls-header" onclick={() => (isExpanded = !isExpanded)}>
+  <div class="controls-header" onclick={() => (isExpanded = !isExpanded)} onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') ? isExpanded = !isExpanded : null} role="button" tabindex="0">
     <div class="header-content">
       <span class="header-icon">✨</span>
       <h3>Animation Settings</h3>

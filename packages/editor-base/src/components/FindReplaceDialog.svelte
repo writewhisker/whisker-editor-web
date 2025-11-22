@@ -90,6 +90,9 @@
       bind:this={dialogElement}
       class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6"
       on:click|stopPropagation
+      on:keydown|stopPropagation
+      role="button"
+      tabindex="0"
     >
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">

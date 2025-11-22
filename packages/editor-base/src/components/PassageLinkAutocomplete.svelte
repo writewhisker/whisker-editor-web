@@ -124,6 +124,7 @@
           class="px-3 py-2 cursor-pointer transition-colors {index === selectedIndex ? 'bg-blue-500 text-white' : 'hover:bg-gray-100'}"
           on:mouseenter={() => selectedIndex = index}
           on:click|preventDefault={() => selectPassage(index)}
+          on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectPassage(index); } }}
           role="option"
           aria-selected={index === selectedIndex}
         >
@@ -165,14 +166,3 @@
   </div>
 {/if}
 
-<style>
-  mark {
-    background-color: rgb(254 249 195);
-    font-weight: 600;
-  }
-
-  [aria-selected="true"] mark {
-    background-color: rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-  }
-</style>

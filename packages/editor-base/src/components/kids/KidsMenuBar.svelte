@@ -78,6 +78,9 @@
         <div
           class="absolute top-full mt-2 left-0 bg-white rounded-2xl shadow-2xl border-4 border-purple-300 py-2 min-w-[200px] z-50"
           on:click|stopPropagation
+          on:keydown|stopPropagation
+          role="menu"
+          tabindex="0"
         >
           <button
             type="button"
@@ -143,6 +146,9 @@
         <div
           class="absolute top-full mt-2 left-0 bg-white rounded-2xl shadow-2xl border-4 border-purple-300 py-2 min-w-[220px] z-50"
           on:click|stopPropagation
+          on:keydown|stopPropagation
+          role="menu"
+          tabindex="0"
         >
           <button
             class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3 {$kidsTheme === 'default' ? 'bg-purple-50' : ''}"
@@ -184,6 +190,9 @@
         <div
           class="absolute top-full mt-2 right-0 bg-white rounded-2xl shadow-2xl border-4 border-purple-300 py-2 min-w-[200px] z-50"
           on:click|stopPropagation
+          on:keydown|stopPropagation
+          role="menu"
+          tabindex="0"
         >
           <button class="w-full px-6 py-3 text-left hover:bg-purple-100 font-semibold text-lg flex items-center gap-3">
             <span class="text-2xl">📚</span>

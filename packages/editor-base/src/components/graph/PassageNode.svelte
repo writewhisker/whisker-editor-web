@@ -54,14 +54,22 @@
   let startWidth = 0;
   let startHeight = 0;
 
-  function handleResizeStart(event: MouseEvent, direction: typeof resizeDirection) {
+  function handleResizeStart(event: MouseEvent | KeyboardEvent, direction: typeof resizeDirection) {
     event.stopPropagation();
     event.preventDefault();
 
     isResizing = true;
     resizeDirection = direction;
-    startMouseX = event.clientX;
-    startMouseY = event.clientY;
+
+    if (event instanceof MouseEvent) {
+      startMouseX = event.clientX;
+      startMouseY = event.clientY;
+    } else {
+      // For keyboard events, start from current position
+      startMouseX = 0;
+      startMouseY = 0;
+    }
+
     startWidth = passage.size?.width || 200;
     startHeight = passage.size?.height || 150;
 
@@ -70,6 +78,12 @@
 
     window.addEventListener('mousemove', handleResizeMove);
     window.addEventListener('mouseup', handleResizeEnd);
+  }
+
+  function handleResizeKeydown(event: KeyboardEvent, direction: typeof resizeDirection) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      handleResizeStart(event, direction);
+    }
   }
 
   function handleResizeMove(event: MouseEvent) {
@@ -437,46 +451,78 @@
     <!-- Corner handles -->
     <div
       class="resize-handle resize-se"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'se')}
+      onkeydown={(e) => handleResizeKeydown(e, 'se')}
       title="Resize"
-    />
+      aria-label="Resize from bottom-right corner"
+    ></div>
     <div
       class="resize-handle resize-sw"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'sw')}
+      onkeydown={(e) => handleResizeKeydown(e, 'sw')}
       title="Resize"
-    />
+      aria-label="Resize from bottom-left corner"
+    ></div>
     <div
       class="resize-handle resize-ne"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'ne')}
+      onkeydown={(e) => handleResizeKeydown(e, 'ne')}
       title="Resize"
-    />
+      aria-label="Resize from top-right corner"
+    ></div>
     <div
       class="resize-handle resize-nw"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'nw')}
+      onkeydown={(e) => handleResizeKeydown(e, 'nw')}
       title="Resize"
-    />
+      aria-label="Resize from top-left corner"
+    ></div>
 
     <!-- Edge handles -->
     <div
       class="resize-handle resize-e"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'e')}
+      onkeydown={(e) => handleResizeKeydown(e, 'e')}
       title="Resize"
-    />
+      aria-label="Resize from right edge"
+    ></div>
     <div
       class="resize-handle resize-w"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'w')}
+      onkeydown={(e) => handleResizeKeydown(e, 'w')}
       title="Resize"
-    />
+      aria-label="Resize from left edge"
+    ></div>
     <div
       class="resize-handle resize-s"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 's')}
+      onkeydown={(e) => handleResizeKeydown(e, 's')}
       title="Resize"
-    />
+      aria-label="Resize from bottom edge"
+    ></div>
     <div
       class="resize-handle resize-n"
+      role="button"
+      tabindex="0"
       onmousedown={(e) => handleResizeStart(e, 'n')}
+      onkeydown={(e) => handleResizeKeydown(e, 'n')}
       title="Resize"
-    />
+      aria-label="Resize from top edge"
+    ></div>
   </div>
 </div>
 
@@ -487,6 +533,7 @@
     style="left: {contextMenuX}px; top: {contextMenuY}px;"
     onclick={(e) => e.stopPropagation()}
     ontouchend={(e) => e.stopPropagation()}
+    onkeydown={(e) => { if (e.key === 'Escape') closeContextMenu(); }}
     role="menu"
     tabindex="-1"
   >
@@ -545,6 +592,7 @@
   .line-clamp-3 {
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

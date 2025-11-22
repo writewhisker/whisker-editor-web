@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Comment } from '@writewhisker/core-ts';
   import { currentUser } from '../../stores/commentStore';
+  import CommentThread from './CommentThread.svelte';
 
   // Props
   let {
@@ -172,7 +173,7 @@
   {#if comment.replies.length > 0}
     <div class="replies">
       {#each comment.replies as reply}
-        <svelte:self
+        <CommentThread
           comment={reply}
           depth={depth + 1}
           {onreply}

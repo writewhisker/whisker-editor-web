@@ -372,6 +372,7 @@
 
   .number-field[type='number'] {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 
   .slider-wrapper {

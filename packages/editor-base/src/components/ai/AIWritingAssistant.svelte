@@ -102,10 +102,11 @@
 </script>
 
 {#if open}
-  <div class="dialog-overlay" onclick={handleClose} role="presentation">
+  <div class="dialog-overlay" onclick={handleClose} onkeydown={(e) => (e.key === 'Escape' ? handleClose() : null)} role="button" tabindex="0">
     <div
       class="dialog"
       onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
       role="dialog" tabindex="-1"
       aria-labelledby="ai-assistant-title"
       aria-modal="true"
@@ -461,13 +462,6 @@
     border-radius: 6px;
   }
 
-  .context-preview label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-secondary, #666);
-    margin-bottom: 6px;
-  }
 
   .context-text {
     font-size: 14px;

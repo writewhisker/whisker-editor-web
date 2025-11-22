@@ -183,7 +183,6 @@
             placeholder="Enter your name..."
             class="w-full px-6 py-5 text-3xl rounded-2xl border-4 border-purple-300 focus:border-purple-600 focus:outline-none text-center font-bold"
             maxlength="20"
-            autofocus
             on:keydown={(e) => e.key === 'Enter' && childName.trim() && handleComplete()}
           />
           <p class="text-gray-500 text-sm mt-2 text-center font-semibold">

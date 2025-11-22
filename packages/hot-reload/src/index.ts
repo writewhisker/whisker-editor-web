@@ -274,7 +274,7 @@ export class StoryHotReload {
    * Update passage
    */
   public updatePassage(passage: Passage): void {
-    const existingPassage = this.story.findPassage(passage.id);
+    const existingPassage = this.story.getPassage(passage.id);
 
     if (existingPassage) {
       this.story.passages.set(passage.id, passage);

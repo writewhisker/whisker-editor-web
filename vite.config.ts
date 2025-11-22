@@ -31,7 +31,9 @@ export default defineConfig(({ mode }) => ({
     alias: {
       '$lib': path.resolve('./packages/editor-base/src'),
       '@writewhisker/core-ts': path.resolve('./packages/core-ts/src'),
-      '@writewhisker/editor-base': path.resolve('./packages/editor-base/src')
+      '@writewhisker/editor-base': path.resolve('./packages/editor-base/src'),
+      '@writewhisker/storage': path.resolve('./packages/storage/dist'),
+      '@writewhisker/github': path.resolve('./packages/github/dist')
     }
   },
   optimizeDeps: {

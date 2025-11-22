@@ -111,6 +111,57 @@ export class PreferenceManager {
   }
 
   /**
+   * Get a preference value synchronously (cache only)
+   * Returns the cached value or the default value if not cached.
+   * Note: This only reads from cache and doesn't access storage.
+   */
+  getPreferenceSync<T>(
+    key: string,
+    defaultValue: T,
+    scope: PreferenceScope = 'global'
+  ): T {
+    const cacheKey = this.buildCacheKey(key, scope);
+    const cached = this.cache.get(cacheKey);
+
+    if (cached && cached.scope === scope) {
+      return cached.value as T;
+    }
+
+    return defaultValue;
+  }
+
+  /**
+   * Set a preference value synchronously (cache only)
+   * Updates the cache immediately and schedules async persistence.
+   * Note: This updates cache immediately but persists to storage asynchronously.
+   */
+  setPreferenceSync<T>(
+    key: string,
+    value: T,
+    scope: PreferenceScope = 'global'
+  ): void {
+    // Update cache immediately
+    const cacheKey = this.buildCacheKey(key, scope);
+    this.cache.set(cacheKey, {
+      value,
+      scope,
+    });
+
+    // Persist asynchronously (fire and forget)
+    if (this.initialized && this.backend.savePreference) {
+      const storageKey = this.buildStorageKey(key, scope);
+      const entry: PreferenceEntry<T> = {
+        value,
+        scope,
+        updatedAt: new Date().toISOString(),
+      };
+      this.backend.savePreference(storageKey, entry).catch(err => {
+        console.error(`Failed to save preference ${key}:`, err);
+      });
+    }
+  }
+
+  /**
    * Delete a preference
    */
   async delete(key: string, scope: PreferenceScope = 'global'): Promise<void> {
@@ -212,6 +263,21 @@ export class PreferenceManager {
     }
 
     return result;
+  }
+
+  /**
+   * Backward compatibility aliases
+   */
+  async getPreference<T>(key: string, defaultValue: T, scope: PreferenceScope = 'global'): Promise<T> {
+    return this.get(key, defaultValue, scope);
+  }
+
+  async setPreference<T>(key: string, value: T, scope: PreferenceScope = 'global'): Promise<void> {
+    return this.set(key, value, scope);
+  }
+
+  async listPreferences(scope: PreferenceScope = 'global'): Promise<string[]> {
+    return this.list(scope);
   }
 
   /**

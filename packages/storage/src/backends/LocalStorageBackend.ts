@@ -9,6 +9,7 @@ import type { IStorageBackend, StorageMetadata } from '../interfaces/IStorageBac
 const STORAGE_PREFIX = 'whisker:story:';
 const METADATA_PREFIX = 'whisker:metadata:';
 const INDEX_KEY = 'whisker:index';
+const PREFERENCE_PREFIX = 'whisker:pref:';
 
 export class LocalStorageBackend implements IStorageBackend {
   private ensureBrowser(): void {
@@ -183,13 +184,41 @@ export class LocalStorageBackend implements IStorageBackend {
 
   async clear(): Promise<void> {
     this.ensureBrowser();
-    
+
     const index = this.getIndex();
     for (const id of index) {
       localStorage.removeItem(STORAGE_PREFIX + id);
       localStorage.removeItem(METADATA_PREFIX + id);
     }
-    
+
     this.updateIndex([]);
+  }
+
+  async savePreference(key: string, entry: import('../types/ExtendedStorage.js').PreferenceEntry): Promise<void> {
+    this.ensureBrowser();
+    localStorage.setItem(PREFERENCE_PREFIX + key, JSON.stringify(entry));
+  }
+
+  async loadPreference<T = any>(key: string): Promise<import('../types/ExtendedStorage.js').PreferenceEntry<T> | null> {
+    this.ensureBrowser();
+    const data = localStorage.getItem(PREFERENCE_PREFIX + key);
+    return data ? JSON.parse(data) : null;
+  }
+
+  async deletePreference(key: string): Promise<void> {
+    this.ensureBrowser();
+    localStorage.removeItem(PREFERENCE_PREFIX + key);
+  }
+
+  async listPreferences(): Promise<string[]> {
+    this.ensureBrowser();
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(PREFERENCE_PREFIX)) {
+        keys.push(key.substring(PREFERENCE_PREFIX.length));
+      }
+    }
+    return keys;
   }
 }

@@ -103,7 +103,7 @@ export interface IStorageBackend {
   /**
    * List all preference keys
    */
-  listPreferences?(): Promise<string[]>;
+  listPreferences?(prefix?: string): Promise<string[]>;
 
   /**
    * Add an entry to the sync queue

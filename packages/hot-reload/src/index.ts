@@ -274,10 +274,10 @@ export class StoryHotReload {
    * Update passage
    */
   public updatePassage(passage: Passage): void {
-    const index = this.story.passages.findIndex(p => p.id === passage.id);
+    const existingPassage = this.story.findPassage(passage.id);
 
-    if (index !== -1) {
-      this.story.passages[index] = passage;
+    if (existingPassage) {
+      this.story.passages.set(passage.id, passage);
       this.cache.invalidate(passage.id);
 
       for (const callback of this.updateCallbacks) {
@@ -290,7 +290,7 @@ export class StoryHotReload {
    * Add passage
    */
   public addPassage(passage: Passage): void {
-    this.story.passages.push(passage);
+    this.story.passages.set(passage.id, passage);
 
     for (const callback of this.updateCallbacks) {
       callback(this.story);
@@ -301,7 +301,7 @@ export class StoryHotReload {
    * Remove passage
    */
   public removePassage(passageId: string): void {
-    this.story.passages = this.story.passages.filter(p => p.id !== passageId);
+    this.story.passages.delete(passageId);
     this.cache.invalidate(passageId);
 
     for (const callback of this.updateCallbacks) {
@@ -329,8 +329,8 @@ export class StoryHotReload {
   private detectChanges(oldStory: Story, newStory: Story): Array<{ id: string; type: 'update' | 'add' | 'remove' }> {
     const changes: Array<{ id: string; type: 'update' | 'add' | 'remove' }> = [];
 
-    const oldPassages = new Map(oldStory.passages.map(p => [p.id, p]));
-    const newPassages = new Map(newStory.passages.map(p => [p.id, p]));
+    const oldPassages = oldStory.passages;
+    const newPassages = newStory.passages;
 
     // Check for updates and removals
     for (const [id, oldPassage] of oldPassages) {

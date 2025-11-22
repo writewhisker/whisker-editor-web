@@ -116,7 +116,7 @@ export class StoryPlayer extends WhiskerElement {
       return;
     }
 
-    const passage = this.story.passages.find(p => p.title === this.currentPassage);
+    const passage = this.story.findPassage(p => p.title === this.currentPassage);
 
     if (!passage) {
       this.shadow.innerHTML = `<div>Passage not found: ${this.currentPassage}</div>`;

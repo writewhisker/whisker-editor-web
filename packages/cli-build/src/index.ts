@@ -86,7 +86,7 @@ async function buildHTML(story: Story, options: BuildOptions): Promise<string> {
   const storyData = options.minify ? JSON.stringify(story) : JSON.stringify(story, null, 2);
 
   return template
-    .replace('{{STORY_TITLE}}', escapeHTML(story.name))
+    .replace('{{STORY_TITLE}}', escapeHTML(story.metadata.title))
     .replace('{{STORY_DATA}}', escapeHTML(storyData))
     .replace('{{MINIFIED}}', options.minify ? 'true' : 'false');
 }
@@ -102,7 +102,7 @@ async function buildJSON(story: Story, options: BuildOptions): Promise<string> {
  * Build Markdown output
  */
 async function buildMarkdown(story: Story, options: BuildOptions): Promise<string> {
-  let markdown = `# ${story.name}\n\n`;
+  let markdown = `# ${story.metadata.title}\n\n`;
 
   if (story.metadata?.author) {
     markdown += `**Author:** ${story.metadata.author}\n\n`;
@@ -115,7 +115,7 @@ async function buildMarkdown(story: Story, options: BuildOptions): Promise<strin
   markdown += `---\n\n`;
 
   // Add passages
-  for (const passage of story.passages) {
+  for (const passage of story.passages.values()) {
     markdown += `## ${passage.title}\n\n`;
     markdown += `${passage.content}\n\n`;
 
@@ -282,7 +282,7 @@ async function validateStory(story: Story): Promise<ValidationResult> {
   if (!story.startPassage) {
     errors.push({ type: 'missing-start', message: 'Story has no start passage' });
   } else {
-    const startExists = story.passages.some(p => p.title === story.startPassage);
+    const startExists = story.somePassage(p => p.title === story.startPassage);
     if (!startExists) {
       errors.push({
         type: 'invalid-start',
@@ -292,10 +292,10 @@ async function validateStory(story: Story): Promise<ValidationResult> {
   }
 
   // Check for broken links
-  const passageTitles = new Set(story.passages.map(p => p.title));
+  const passageTitles = new Set(story.mapPassages(p => p.title));
   const linkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
-  for (const passage of story.passages) {
+  for (const passage of story.passages.values()) {
     let match;
     while ((match = linkRegex.exec(passage.content)) !== null) {
       const target = match[2] || match[1];
@@ -309,7 +309,7 @@ async function validateStory(story: Story): Promise<ValidationResult> {
   }
 
   // Check for duplicate titles
-  const titles = story.passages.map(p => p.title);
+  const titles = story.mapPassages(p => p.title);
   const duplicates = titles.filter((title, index) => titles.indexOf(title) !== index);
   if (duplicates.length > 0) {
     errors.push({

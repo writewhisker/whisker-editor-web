@@ -12,6 +12,12 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ['@writewhisker/core-ts', 'eventemitter3', 'idb'],
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+      },
     },
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 });

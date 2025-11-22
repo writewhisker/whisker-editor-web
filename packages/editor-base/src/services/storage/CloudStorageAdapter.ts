@@ -5,7 +5,7 @@
  * Supports offline-first operation with sync queue.
  */
 
-import type { PreferenceScope } from '@writewhisker/storage';
+import type { PreferenceScope, PreferenceEntry } from '@writewhisker/storage';
 import type { IStorageAdapter } from './types';
 import { LocalStorageAdapter } from './LocalStorageAdapter';
 
@@ -133,7 +133,12 @@ export class CloudStorageAdapter {
     this.cache.set(key, { value, timestamp });
 
     // Save to local storage immediately
-    await this.localAdapter.savePreference(key, value, scope);
+    const entry: PreferenceEntry<T> = {
+      value,
+      scope,
+      updatedAt: new Date(timestamp).toISOString(),
+    };
+    await this.localAdapter.savePreference(key, entry);
 
     // Queue for cloud sync
     if (this.config.syncEnabled) {
@@ -168,11 +173,11 @@ export class CloudStorageAdapter {
     }
 
     // Load from local storage
-    const localValue = await this.localAdapter.loadPreference(key, scope) as T | null;
+    const localEntry = await this.localAdapter.loadPreference<T>(key);
 
-    if (localValue !== null) {
-      this.cache.set(key, { value: localValue, timestamp: Date.now() });
-      return localValue;
+    if (localEntry !== null) {
+      this.cache.set(key, { value: localEntry.value, timestamp: Date.now() });
+      return localEntry.value;
     }
 
     // Try to fetch from cloud if online
@@ -181,8 +186,14 @@ export class CloudStorageAdapter {
         const remoteValue = await this.fetchFromCloud<T>(key, scope);
         if (remoteValue !== null) {
           // Save to local cache and storage
-          this.cache.set(key, { value: remoteValue, timestamp: Date.now() });
-          await this.localAdapter.savePreference(key, remoteValue, scope);
+          const timestamp = Date.now();
+          this.cache.set(key, { value: remoteValue, timestamp });
+          const entry: PreferenceEntry<T> = {
+            value: remoteValue,
+            scope,
+            updatedAt: new Date(timestamp).toISOString(),
+          };
+          await this.localAdapter.savePreference(key, entry);
           return remoteValue;
         }
       } catch (error) {
@@ -388,17 +399,17 @@ export class CloudStorageAdapter {
 
       for (const remote of remoteData) {
         const cached = this.cache.get(remote.key);
-        const local = await this.localAdapter.loadPreference(remote.key, remote.scope);
+        const localEntry = await this.localAdapter.loadPreference(remote.key);
 
-        if (local !== null && cached) {
+        if (localEntry !== null && cached) {
           // Potential conflict
           const localTimestamp = cached.timestamp;
           const remoteTimestamp = remote.timestamp;
 
-          if (JSON.stringify(local) !== JSON.stringify(remote.value)) {
+          if (JSON.stringify(localEntry.value) !== JSON.stringify(remote.value)) {
             conflicts.push({
               key: remote.key,
-              localValue: local,
+              localValue: localEntry.value,
               remoteValue: remote.value,
               localTimestamp,
               remoteTimestamp,
@@ -407,7 +418,12 @@ export class CloudStorageAdapter {
         } else {
           // No conflict, just update
           this.cache.set(remote.key, { value: remote.value, timestamp: remote.timestamp });
-          await this.localAdapter.savePreference(remote.key, remote.value, remote.scope);
+          const entry: PreferenceEntry = {
+            value: remote.value,
+            scope: remote.scope,
+            updatedAt: new Date(remote.timestamp).toISOString(),
+          };
+          await this.localAdapter.savePreference(remote.key, entry);
         }
       }
 
@@ -521,7 +537,12 @@ export class CloudStorageAdapter {
         } else if (conflict.resolution === 'remote') {
           // Use remote, update local
           this.cache.set(conflict.key, { value: conflict.remoteValue, timestamp: conflict.remoteTimestamp });
-          await this.localAdapter.savePreference(conflict.key, conflict.remoteValue, 'global');
+          const entry: PreferenceEntry = {
+            value: conflict.remoteValue,
+            scope: 'global',
+            updatedAt: new Date(conflict.remoteTimestamp).toISOString(),
+          };
+          await this.localAdapter.savePreference(conflict.key, entry);
         }
       }
     } else {
@@ -542,7 +563,12 @@ export class CloudStorageAdapter {
           await this.pushToCloud(conflict.key, conflict.localValue, 'global');
         } else {
           this.cache.set(conflict.key, { value: conflict.remoteValue, timestamp: conflict.remoteTimestamp });
-          await this.localAdapter.savePreference(conflict.key, conflict.remoteValue, 'global');
+          const entry: PreferenceEntry = {
+            value: conflict.remoteValue,
+            scope: 'global',
+            updatedAt: new Date(conflict.remoteTimestamp).toISOString(),
+          };
+          await this.localAdapter.savePreference(conflict.key, entry);
         }
       }
     }

@@ -210,15 +210,42 @@ export class LocalStorageBackend implements IStorageBackend {
     localStorage.removeItem(PREFERENCE_PREFIX + key);
   }
 
-  async listPreferences(): Promise<string[]> {
+  async listPreferences(prefix?: string): Promise<string[]> {
     this.ensureBrowser();
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith(PREFERENCE_PREFIX)) {
-        keys.push(key.substring(PREFERENCE_PREFIX.length));
+        const prefKey = key.substring(PREFERENCE_PREFIX.length);
+        // Filter by prefix if provided
+        if (!prefix || prefKey.startsWith(prefix)) {
+          keys.push(prefKey);
+        }
       }
     }
     return keys;
+  }
+
+  async getQuotaInfo(): Promise<{ used: number; total: number; available: number }> {
+    this.ensureBrowser();
+
+    // Calculate used storage
+    let used = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        const value = localStorage.getItem(key);
+        if (value) {
+          // Count key + value size in bytes (approximate)
+          used += key.length + value.length;
+        }
+      }
+    }
+
+    // localStorage typically has ~5-10MB quota, using 5MB as conservative estimate
+    const total = 5 * 1024 * 1024; // 5MB in bytes
+    const available = Math.max(0, total - used);
+
+    return { used, total, available };
   }
 }

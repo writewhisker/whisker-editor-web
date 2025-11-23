@@ -130,29 +130,31 @@
 
   /* Hero Section */
   .hero {
-    padding: 6rem 0 8rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    padding: 4rem 0 4.5rem;
+    background: #f5f7f9;
+    color: #2c3e50;
+    border-bottom: 1px solid #e1e8ed;
   }
 
   .hero-content {
     text-align: center;
-    max-width: 800px;
+    max-width: 720px;
     margin: 0 auto;
   }
 
   .hero h1 {
-    font-size: 3.5rem;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-    letter-spacing: -0.02em;
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+    color: #1a2634;
   }
 
   .subtitle {
-    font-size: 1.25rem;
+    font-size: 1.0625rem;
     line-height: 1.6;
-    margin-bottom: 3rem;
-    opacity: 0.95;
+    margin-bottom: 2rem;
+    color: #5a6c7d;
   }
 
   .cta-buttons {
@@ -163,48 +165,50 @@
   }
 
   .btn {
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-size: 1.0625rem;
-    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 4px;
+    font-size: 0.9375rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     border: none;
     font-family: inherit;
   }
 
   .btn-primary {
-    background: white;
-    color: #667eea;
+    background: #4a5568;
+    color: white;
+    border: 1px solid #4a5568;
   }
 
   .btn-primary:hover {
-    background: #f8f9fa;
-    transform: translateY(-1px);
+    background: #2d3748;
+    border-color: #2d3748;
   }
 
   .btn-secondary {
     background: transparent;
-    color: white;
-    border: 2px solid white;
+    color: #4a5568;
+    border: 1px solid #cbd5e0;
   }
 
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: #f7fafc;
+    border-color: #a0aec0;
   }
 
   /* Features Section */
   .features {
-    padding: 6rem 0;
-    background: #f8f9fa;
+    padding: 4rem 0;
+    background: #ffffff;
   }
 
   .features h2 {
     text-align: center;
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 4rem;
-    color: #1a1a1a;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 3rem;
+    color: #1a2634;
   }
 
   .features-grid {
@@ -214,44 +218,51 @@
   }
 
   .feature {
-    text-align: center;
+    text-align: left;
+    padding: 1.5rem;
+    background: #f8fafb;
+    border-radius: 4px;
+    border: 1px solid #e8edf2;
   }
 
   .feature-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.7;
   }
 
   .feature h3 {
-    font-size: 1.25rem;
+    font-size: 1.0625rem;
     font-weight: 600;
-    margin-bottom: 0.75rem;
-    color: #1a1a1a;
+    margin-bottom: 0.5rem;
+    color: #1a2634;
   }
 
   .feature p {
-    color: #666;
+    color: #5a6c7d;
     line-height: 1.6;
+    font-size: 0.9375rem;
   }
 
   /* CTA Section */
   .cta {
-    padding: 6rem 0;
+    padding: 3.5rem 0;
     text-align: center;
-    background: white;
+    background: #f5f7f9;
+    border-top: 1px solid #e1e8ed;
   }
 
   .cta h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: #1a1a1a;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #1a2634;
   }
 
   .cta p {
-    font-size: 1.125rem;
-    color: #666;
-    margin-bottom: 2.5rem;
+    font-size: 0.9375rem;
+    color: #5a6c7d;
+    margin-bottom: 1.75rem;
   }
 
   .sign-in-link {
@@ -262,7 +273,7 @@
   .link-btn {
     background: none;
     border: none;
-    color: #667eea;
+    color: #4a5568;
     text-decoration: underline;
     cursor: pointer;
     font-family: inherit;
@@ -270,14 +281,14 @@
   }
 
   .link-btn:hover {
-    color: #5568d3;
+    color: #2d3748;
   }
 
   /* Footer */
   .footer {
-    background: #1a1a1a;
-    color: #ffffff;
-    padding: 3rem 0 2rem;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 2.5rem 0 1.5rem;
   }
 
   .footer-content {
@@ -288,14 +299,15 @@
   }
 
   .footer-brand h4 {
-    font-size: 1.25rem;
+    font-size: 1.0625rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
+    color: #e2e8f0;
   }
 
   .footer-brand p {
-    color: #999;
-    font-size: 0.9375rem;
+    color: #a0aec0;
+    font-size: 0.875rem;
   }
 
   .footer-links {
@@ -305,52 +317,52 @@
   }
 
   .footer-section h5 {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 600;
     margin-bottom: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #ffffff;
+    color: #e2e8f0;
   }
 
   .footer-section a {
     display: block;
-    color: #999;
+    color: #a0aec0;
     text-decoration: none;
     margin-bottom: 0.5rem;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
   }
 
   .footer-section a:hover {
-    color: #ffffff;
+    color: #e2e8f0;
   }
 
   .footer-bottom {
-    padding-top: 2rem;
-    border-top: 1px solid #333;
+    padding-top: 1.5rem;
+    border-top: 1px solid #4a5568;
     text-align: center;
-    color: #999;
-    font-size: 0.875rem;
+    color: #a0aec0;
+    font-size: 0.8125rem;
   }
 
   /* Responsive */
   @media (max-width: 768px) {
     .hero h1 {
-      font-size: 2.5rem;
+      font-size: 1.875rem;
     }
 
     .subtitle {
-      font-size: 1.125rem;
+      font-size: 1rem;
     }
 
     .features h2,
     .cta h2 {
-      font-size: 2rem;
+      font-size: 1.5rem;
     }
 
     .features-grid {
       grid-template-columns: 1fr;
-      gap: 2.5rem;
+      gap: 1.5rem;
     }
 
     .footer-content {
@@ -366,11 +378,11 @@
 
   @media (max-width: 480px) {
     .hero {
-      padding: 4rem 0 5rem;
+      padding: 3rem 0 3.5rem;
     }
 
     .hero h1 {
-      font-size: 2rem;
+      font-size: 1.625rem;
     }
 
     .cta-buttons {

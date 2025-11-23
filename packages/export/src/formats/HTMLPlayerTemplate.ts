@@ -572,7 +572,7 @@ export function generateHTMLPlayer(
   }
 
   hasArithmeticOperator(expr) {
-    return /[+\-*/%]/.test(expr);
+    return /[+*/%\-]/.test(expr);
   }
 
   handleAssignment(expr) {

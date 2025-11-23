@@ -620,6 +620,7 @@
       </div>
     {:else if $filteredPassages.length < 50}
       <!-- Regular rendering for small lists (avoids VirtualList mount issues) -->
+      <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
       <div class="overflow-y-auto h-full" role="group" on:keydown={handleListKeydown}>
         {#each $filteredPassages as passage, i}
           {@const validationSeverity = getPassageValidationSeverity(passage.id)}

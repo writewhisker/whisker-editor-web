@@ -105,6 +105,7 @@
     aria-modal="true"
     aria-labelledby="parental-controls-title"
   >
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <div
       class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full p-8 transform transition-all max-h-[90vh] overflow-y-auto"
       on:click|stopPropagation

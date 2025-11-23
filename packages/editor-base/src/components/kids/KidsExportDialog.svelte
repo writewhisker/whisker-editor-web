@@ -79,6 +79,7 @@
     aria-modal="true"
     aria-labelledby="export-dialog-title"
   >
+    <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
     <div
       class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-8 transform transition-all"
       on:click|stopPropagation

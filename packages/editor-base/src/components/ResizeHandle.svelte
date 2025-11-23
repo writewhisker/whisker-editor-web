@@ -72,6 +72,8 @@
   }
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 <div
   class="resize-handle {orientation === 'vertical' ? 'resize-handle-vertical' : 'resize-handle-horizontal'}"
   on:mousedown={handleMouseDown}

@@ -641,7 +641,7 @@ export function generateHTMLPlayer(
   }
 
   evaluateArithmetic(expr) {
-    const jsExpr = expr.replace(/\\b(\\w+)\\b/g, (match) => {
+    const jsExpr = expr.replace(/\\\\b(\\\\w+)\\\\b/g, (match) => {
       if (this.globalScope.has(match)) {
         const val = this.globalScope.get(match);
         return typeof val === 'string' ? '"' + val + '"' : String(val);
@@ -676,7 +676,7 @@ export function generateHTMLPlayer(
       return false;
     }
 
-    if (/^-?\d+\.?\d*$/.test(expr)) {
+    if (/^-?\\d+\\.?\\d*$/.test(expr)) {
       return parseFloat(expr);
     }
 

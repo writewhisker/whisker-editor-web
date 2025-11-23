@@ -242,6 +242,41 @@ describe('HTMLExporter', () => {
       expect(result.error).toBe('Serialization failed');
       expect(result.duration).toBeGreaterThanOrEqual(0);
     });
+
+    it('should escape </script> tags in story content to prevent HTML injection', async () => {
+      // Create a story with </script> in passage content
+      const passage1 = new Passage({ title: 'Script Test' });
+      passage1.content = 'This story talks about </script> tags and HTML.';
+
+      story.passages.clear();
+      story.addPassage(passage1);
+      story.startPassage = passage1.id;
+
+      const context: ExportContext = {
+        story,
+        options: { format: 'html' },
+      };
+
+      const result = await exporter.export(context);
+
+      expect(result.success).toBe(true);
+      const html = result.content as string;
+
+      // The JSON should escape </script> as <\/script>
+      // This prevents the HTML from breaking
+      expect(html).toContain('<\\/script>');
+
+      // Verify the HTML structure is still valid
+      expect(html).toContain('<!DOCTYPE html>');
+      expect(html).toContain('const STORY_DATA =');
+      expect(html).toContain('class StoryPlayer');
+      expect(html).toContain('player.start()');
+
+      // Count script tags - should have exactly the expected number (not broken)
+      const scriptMatches = html.match(/<script[\s>]/g);
+      const scriptCloseMatches = html.match(/<\/script>/g);
+      expect(scriptMatches?.length).toBe(scriptCloseMatches?.length);
+    });
   });
 
   describe('validateOptions', () => {

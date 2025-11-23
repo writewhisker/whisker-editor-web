@@ -58,7 +58,11 @@ export class HTMLExporter implements IExporter {
 
       // Serialize story data
       let storyData = context.story.serialize();
-      const storyJSON = JSON.stringify(storyData);
+      let storyJSON = JSON.stringify(storyData);
+
+      // Escape </script> tags to prevent breaking the HTML when embedded in <script> tags
+      // This is critical for security and functionality
+      storyJSON = storyJSON.replace(/<\/script>/gi, '<\\/script>');
 
       // Generate HTML
       let html = generateHTMLPlayer(storyJSON, context.story.metadata.title, {

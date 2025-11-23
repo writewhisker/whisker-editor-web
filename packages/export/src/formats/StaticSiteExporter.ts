@@ -78,7 +78,12 @@ export class StaticSiteExporter implements IExporter {
   private serializeStory(story: any): string {
     // Serialize story to JSON
     const serialized = story.serialize();
-    return `const STORY_DATA = ${JSON.stringify(serialized, null, 2)};`;
+    let json = JSON.stringify(serialized, null, 2);
+
+    // Escape </script> tags to prevent breaking the HTML when embedded in <script> tags
+    json = json.replace(/<\/script>/gi, '<\\/script>');
+
+    return `const STORY_DATA = ${json};`;
   }
 
   private generateHTML(

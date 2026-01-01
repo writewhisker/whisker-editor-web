@@ -1,4 +1,4 @@
-import type { ChoiceData } from './types';
+import type { ChoiceData, ChoiceType } from './types';
 import { nanoid } from 'nanoid';
 
 export class Choice {
@@ -7,6 +7,7 @@ export class Choice {
   target: string;
   condition?: string;
   action?: string;
+  choiceType: ChoiceType;  // WLS 1.0: 'once' or 'sticky'
   metadata: Record<string, any>;
 
   constructor(data?: Partial<ChoiceData>) {
@@ -15,7 +16,24 @@ export class Choice {
     this.target = data?.target || '';
     this.condition = data?.condition;
     this.action = data?.action;
+    this.choiceType = data?.choiceType || 'once';  // Default to once-only (WLS 1.0)
     this.metadata = data?.metadata || {};
+  }
+
+  /**
+   * Check if this is a once-only choice (WLS 1.0)
+   * Once-only choices disappear after being selected
+   */
+  isOnce(): boolean {
+    return this.choiceType === 'once';
+  }
+
+  /**
+   * Check if this is a sticky choice (WLS 1.0)
+   * Sticky choices remain visible after selection
+   */
+  isSticky(): boolean {
+    return this.choiceType === 'sticky';
   }
 
   // Metadata methods
@@ -48,6 +66,8 @@ export class Choice {
 
     if (this.condition) data.condition = this.condition;
     if (this.action) data.action = this.action;
+    // Only serialize choiceType if not default ('once')
+    if (this.choiceType !== 'once') data.choiceType = this.choiceType;
     if (Object.keys(this.metadata).length > 0) {
       data.metadata = { ...this.metadata };
     }

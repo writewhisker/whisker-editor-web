@@ -1,7 +1,7 @@
 # Whisker Visual Editor - User Guide
 
-**Version:** 1.0.0
-**Last Updated:** 2025-10-22
+**Version:** 2.0.0 (WLS 1.0)
+**Last Updated:** 2025-12-30
 
 ## Table of Contents
 
@@ -49,26 +49,30 @@ Whisker Visual Editor is a powerful, browser-based tool for creating interactive
 2. **Create a new story** or open an existing one
 3. **Start with the default passage** (automatically created as your story's beginning)
 4. **Write your opening text** in the passage content area
-5. **Add choices** by typing `[[Choice Text -> TargetPassage]]`
+5. **Add choices** using WLS 1.0 syntax: `+ [Choice Text] -> TargetPassage`
 6. **Create connected passages** by clicking on choice links
 7. **Test your story** by clicking the Play button or pressing `Ctrl+P`
 
 ### Example: Your First Interactive Story
 
-```
-[[Welcome]]
+```wls
+== Welcome ==
 
 You wake up in a mysterious forest. Two paths stretch before you.
 
 Do you:
-[[Take the left path -> LeftPath]]
-[[Take the right path -> RightPath]]
++ [Take the left path] -> LeftPath
++ [Take the right path] -> RightPath
 ```
 
 This creates:
 - A starting passage called "Welcome"
-- Two choice links that create new passages
+- Two once-only choices (`+`) that create new passages
 - A branching narrative structure
+
+**Choice Types:**
+- `+` = Once-only choice (disappears after being selected)
+- `*` = Sticky choice (always available)
 
 ---
 
@@ -156,8 +160,8 @@ Avoid:
 ### Creating Passages
 
 #### Method 1: From a Choice Link
-```
-[[Take the left path -> LeftPath]]
+```wls
++ [Take the left path] -> LeftPath
 ```
 - Type this in any passage
 - Click the "LeftPath" link
@@ -193,29 +197,45 @@ Whisker supports Markdown formatting:
 > Blockquote
 ```
 
-### Choice Links
+### Choice Links (WLS 1.0 Syntax)
 
-#### Basic Link
-```
-[[Go to the castle]]
-```
-- Creates a choice with text "Go to the castle"
-- Links to a passage with the same name
+WLS 1.0 uses `+` for once-only choices and `*` for sticky choices.
 
-#### Custom Text Link
+#### Once-Only Choice (`+`)
+```wls
++ [Go to the castle] -> Castle
 ```
-[[Open the door -> InsideRoom]]
-```
-- Choice displays: "Open the door"
-- Links to passage named: "InsideRoom"
+- Disappears after being selected
+- Use for single-use options or to prevent repeated visits
 
-#### Conditional Links
+#### Sticky Choice (`*`)
+```wls
+* [Look around] -> LookAround
 ```
-{@health > 50}[[Fight the dragon -> DragonFight]]{/@}
-{@health <= 50}[[Run away -> Escape]]{/@}
+- Stays available after being selected
+- Use for repeatable actions
+
+#### Conditional Choices
+```wls
++ {$health > 50} [Fight the dragon] -> DragonFight
++ {$health <= 50} [Run away] -> Escape
 ```
 - Only shows if the condition is true
 - See [Variables & Logic](#variables--logic) for details
+
+#### Choices with Actions
+```wls
++ [Buy sword] {$ $gold = $gold - 50} -> Shop
+```
+- Action block `{$ ... }` executes when the choice is selected
+- Use to modify variables when making a choice
+
+#### Special Targets
+```wls
++ [The End] -> END          -- End the story
++ [Go back] -> BACK         -- Return to previous passage
++ [Start over] -> RESTART   -- Restart story from beginning
+```
 
 ### Deleting Passages
 
@@ -288,65 +308,64 @@ Lines between nodes show connections:
 
 Variables let you create dynamic, personalized stories that remember player choices.
 
+### Variable Scopes (WLS 1.0)
+
+WLS 1.0 has two variable scopes:
+- **Story scope (`$`)**: Persists across the entire story
+- **Temp scope (`_`)**: Resets when leaving a passage
+
 ### Creating Variables
 
-Variables are created automatically when first used:
-```
-{$health = 100}
-{$playerName = "Hero"}
-{$hasKey = false}
+Variables are created with action blocks `{$ ... }`:
+```wls
+{$ $health = 100}
+{$ $playerName = "Hero"}
+{$ $hasKey = false}
+{$ _tempCounter = 0}   -- Temporary variable (resets per passage)
 ```
 
 ### Variable Types
 
 #### Numbers
-```
-{$health = 100}
-{$gold = 50}
-{$score = 0}
+```wls
+{$ $health = 100}
+{$ $gold = 50}
+{$ $score = 0}
 ```
 
 #### Text (Strings)
-```
-{$name = "Alice"}
-{$title = "Knight"}
+```wls
+{$ $name = "Alice"}
+{$ $title = "Knight"}
 ```
 
 #### True/False (Booleans)
-```
-{$hasKey = true}
-{$isAlive = false}
+```wls
+{$ $hasKey = true}
+{$ $isAlive = false}
 ```
 
 ### Displaying Variables
 
-Show variable values in your text:
-```
-Your health is {@health}.
-Welcome back, {@playerName}!
-You have {@gold} gold coins.
+Show variable values in your text using `$var` or `${expression}`:
+```wls
+Your health is $health.
+Welcome back, $playerName!
+You have ${gold * 2} gold coins after doubling.
 ```
 
 ### Modifying Variables
 
 #### Set a Value
-```
-{$health = 100}
-{$name = "Bob"}
+```wls
+{$ $health = 100}
+{$ $name = "Bob"}
 ```
 
 #### Add/Subtract
-```
-{$health = $health + 10}
-{$gold = $gold - 25}
-```
-
-#### Shortcuts
-```
-{$health += 10}   // Add 10
-{$health -= 5}    // Subtract 5
-{$count++}        // Increment by 1
-{$count--}        // Decrement by 1
+```wls
+{$ $health = $health + 10}
+{$ $gold = $gold - 25}
 ```
 
 ### Conditional Display
@@ -354,48 +373,48 @@ You have {@gold} gold coins.
 Show text only if a condition is met:
 
 #### If Statement
-```
-{@health > 50}
+```wls
+{$health > 50}
 You feel strong and healthy.
-{/@}
+{/}
 ```
 
 #### If-Else
-```
-{@health > 50}
+```wls
+{$health > 50}
 You feel great!
-{:else}
+{else}
 You're badly wounded.
-{/@}
+{/}
 ```
 
-#### If-Else-If
-```
-{@health > 75}
+#### If-Elif-Else
+```wls
+{$health > 75}
 You're in excellent shape!
-{:@health > 50}
+{elif $health > 50}
 You're doing okay.
-{:@health > 25}
+{elif $health > 25}
 You're hurt.
-{:else}
+{else}
 You're near death!
-{/@}
+{/}
 ```
 
 ### Conditional Choices
 
 Only show choices when conditions are met:
 
-```
-{@hasKey}[[Unlock the door -> TreasureRoom]]{/@}
-{@gold >= 100}[[Buy the sword -> BuySword]]{/@}
-{@health > 0}[[Continue fighting -> Fight]]{/@}
+```wls
++ {$hasKey} [Unlock the door] -> TreasureRoom
++ {$gold >= 100} [Buy the sword] -> BuySword
++ {$health > 0} [Continue fighting] -> Fight
 ```
 
 ### Comparison Operators
 
 - `==` - Equal to
-- `!=` - Not equal to
+- `~=` - Not equal to (Lua style)
 - `>` - Greater than
 - `<` - Less than
 - `>=` - Greater than or equal to
@@ -405,25 +424,25 @@ Only show choices when conditions are met:
 
 Combine conditions:
 
-#### AND (`&&`)
-```
-{@health > 50 && hasKey}
+#### AND (`and`)
+```wls
+{$health > 50 and $hasKey}
 You're healthy and you have the key!
-{/@}
+{/}
 ```
 
-#### OR (`||`)
-```
-{@isWarrior || isRogue}
+#### OR (`or`)
+```wls
+{$isWarrior or $isRogue}
 You know how to fight.
-{/@}
+{/}
 ```
 
-#### NOT (`!`)
-```
-{@!hasKey}
+#### NOT (`not`)
+```wls
+{not $hasKey}
 You need to find a key.
-{/@}
+{/}
 ```
 
 ---
@@ -797,14 +816,14 @@ Examples:
 ### Testing Tips
 
 #### Create Test Passages
-```
-[[Test Passage]]
+```wls
+== Test Passage ==
 Test variables:
-{$health = 50}
-{$gold = 100}
-{$hasKey = true}
+{$ $health = 50}
+{$ $gold = 100}
+{$ $hasKey = true}
 
-[[Go to scene -> ActualScene]]
++ [Go to scene] -> ActualScene
 ```
 
 #### Use Variable Inspector
@@ -828,13 +847,13 @@ Test variables:
 
 #### "My choices don't show up when testing"
 **Solution**: Check if they're wrapped in a false conditional:
-```
-{@hasKey}[[Open door]]{/@}  // Only shows if hasKey is true
+```wls
++ {$hasKey} [Open door] -> Room  -- Only shows if $hasKey is true
 ```
 
 #### "Variables aren't updating"
 **Solution**:
-1. Check syntax: `{$health = 100}` not `$health = 100`
+1. Check syntax: `{$ $health = 100}` not `$health = 100`
 2. Verify the passage is actually visited
 3. Use Variable Inspector to debug
 
@@ -852,10 +871,11 @@ Test variables:
 3. Try again
 
 #### "Link syntax isn't working"
-**Solution**: Check syntax carefully:
-- ✅ `[[Choice text -> PassageName]]`
-- ❌ `[Choice text -> PassageName]` (single brackets)
-- ❌ `[[Choice text - PassageName]]` (hyphen instead of arrow)
+**Solution**: Check WLS 1.0 syntax carefully:
+- ✅ `+ [Choice text] -> PassageName`
+- ✅ `* [Choice text] -> PassageName`
+- ❌ `[[Choice text -> PassageName]]` (old syntax)
+- ❌ `+ Choice text -> PassageName` (missing brackets around text)
 
 ### Getting Help
 
@@ -876,47 +896,57 @@ Have an idea for improvement? Let us know!
 
 ---
 
-## Appendix: Quick Reference
+## Appendix: Quick Reference (WLS 1.0)
+
+### Passage Syntax
+```wls
+== PassageName ==                   -- Passage header
+== PassageName == [tag1, tag2]      -- With tags
+```
 
 ### Choice Link Syntax
-```
-[[Choice text]]                     // Simple link
-[[Choice text -> PassageName]]      // Custom target
-{@condition}[[Choice]]{/@}          // Conditional
+```wls
++ [Choice text] -> PassageName      -- Once-only choice
+* [Choice text] -> PassageName      -- Sticky choice
++ {cond} [Choice] -> Target         -- Conditional choice
++ [Choice] {$ action} -> Target     -- Choice with action
++ [The End] -> END                  -- End story
++ [Go back] -> BACK                 -- Go to previous passage
++ [Restart] -> RESTART              -- Restart story
 ```
 
 ### Variable Syntax
-```
-{$var = value}                      // Set variable
-{@var}                              // Display variable
-{$var += 5}                         // Modify variable
-{@var > 10}...{/@}                  // Conditional
+```wls
+$var                                -- Story-scoped variable
+_var                                -- Temp-scoped variable
+${expression}                       -- Expression interpolation
+{$ $var = value}                    -- Set variable (action block)
 ```
 
 ### Conditional Syntax
-```
-{@condition}                        // If
+```wls
+{condition}                         -- If block
   Content
-{/@}
+{/}
 
-{@condition}                        // If-else
+{condition}                         -- If-else block
   True content
-{:else}
+{else}
   False content
-{/@}
+{/}
 
-{@condition1}                       // If-else-if
+{condition1}                        -- If-elif-else block
   Content 1
-{:@condition2}
+{elif condition2}
   Content 2
-{:else}
+{else}
   Default
-{/@}
+{/}
 ```
 
 ### Operators
-- Comparison: `==`, `!=`, `>`, `<`, `>=`, `<=`
-- Logical: `&&` (and), `||` (or), `!` (not)
+- Comparison: `==`, `~=`, `>`, `<`, `>=`, `<=`
+- Logical: `and`, `or`, `not`
 - Arithmetic: `+`, `-`, `*`, `/`, `%`
 
 ---

@@ -304,11 +304,16 @@ export class WhiskerPlayerUI {
   private renderPassage(passage: Passage): void {
     if (!this.passageEl || !this.choicesEl) return;
 
-    // Render passage content
-    this.passageEl.innerHTML = `
-      <h2>${passage.title}</h2>
-      <div>${passage.content}</div>
-    `;
+    // Render passage content safely (no innerHTML with user content)
+    this.passageEl.innerHTML = '';
+
+    const titleEl = document.createElement('h2');
+    titleEl.textContent = passage.title;
+    this.passageEl.appendChild(titleEl);
+
+    const contentEl = document.createElement('div');
+    contentEl.textContent = passage.content;
+    this.passageEl.appendChild(contentEl);
 
     // Render choices
     const availableChoices = this.player.getAvailableChoices();

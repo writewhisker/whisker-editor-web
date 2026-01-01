@@ -1,7 +1,7 @@
 # Whisker Editor Scripting Guide
 
-**Version:** 2.0
-**Last Updated:** 2025-11-12
+**Version:** 3.0 (WLS 1.0)
+**Last Updated:** 2025-12-30
 
 ## Table of Contents
 
@@ -9,14 +9,15 @@
 2. [Getting Started](#getting-started)
 3. [Script Editor Overview](#script-editor-overview)
 4. [Lua Basics](#lua-basics)
-5. [Whisker Story API](#whisker-story-api)
-6. [Function Library](#function-library)
-7. [Visual Script Builder](#visual-script-builder)
-8. [Visual Condition Builder](#visual-condition-builder)
-9. [Best Practices](#best-practices)
-10. [Advanced Topics](#advanced-topics)
-11. [Debugging](#debugging)
-12. [Examples](#examples)
+5. [WLS 1.0 API](#wls-10-api) *(New in WLS 1.0)*
+6. [Legacy Whisker Story API](#legacy-whisker-story-api)
+7. [Function Library](#function-library)
+8. [Visual Script Builder](#visual-script-builder)
+9. [Visual Condition Builder](#visual-condition-builder)
+10. [Best Practices](#best-practices)
+11. [Advanced Topics](#advanced-topics)
+12. [Debugging](#debugging)
+13. [Examples](#examples)
 
 ---
 
@@ -240,7 +241,264 @@ end
 
 ---
 
-## Whisker Story API
+## WLS 1.0 API
+
+WLS 1.0 (Whisker Language Specification 1.0) introduces a new, cleaner API for scripting. This is the recommended approach for new stories.
+
+### Variable Syntax
+
+WLS 1.0 uses `$` prefix for story-scoped variables and `_` prefix for temporary variables:
+
+```lua
+-- Story-scoped variables (persist across passages)
+$gold = 100
+$playerName = "Hero"
+$hasKey = true
+
+-- Temporary variables (reset each passage)
+_localCounter = 0
+_tempResult = "processing"
+```
+
+In passage content, reference variables directly:
+```
+You have $gold gold pieces.
+Hello, $playerName!
+```
+
+For complex expressions, use `${}`:
+```
+You have ${$gold * 2} gold after doubling!
+Result: ${math.random(1, 6) + $modifier}
+```
+
+### whisker.state Namespace
+
+Manage story state programmatically:
+
+```lua
+-- Get variable value
+local gold = whisker.state.get("gold")
+local name = whisker.state.get("playerName")
+
+-- Set variable value
+whisker.state.set("gold", 100)
+whisker.state.set("playerName", "Hero")
+
+-- Check if variable exists
+if whisker.state.has("secretFound") then
+  print("Secret was found!")
+end
+
+-- Delete variable
+whisker.state.delete("tempVar")
+
+-- Get all variables
+local allVars = whisker.state.all()
+for name, value in pairs(allVars) do
+  print(name, value)
+end
+
+-- Reset all variables to initial values
+whisker.state.reset()
+```
+
+### whisker.passage Namespace
+
+Navigate and access passages:
+
+```lua
+-- Get current passage info
+local current = whisker.passage.current()
+print("Title:", current.title)
+print("Tags:", table.concat(current.tags, ", "))
+
+-- Get passage by title
+local passage = whisker.passage.get("ForestPath")
+
+-- Navigate to passage
+whisker.passage.go("NextPassage")
+
+-- Check if passage exists
+if whisker.passage.exists("SecretRoom") then
+  print("Secret room is available")
+end
+
+-- Get all passages
+local passages = whisker.passage.all()
+print("Total passages:", #passages)
+
+-- Get passages with specific tag
+local combatPassages = whisker.passage.tags("combat")
+```
+
+### whisker.history Namespace
+
+Manage navigation history:
+
+```lua
+-- Go back to previous passage
+whisker.history.back()
+
+-- Check if can go back
+if whisker.history.canBack() then
+  print("Back button available")
+end
+
+-- Get history list
+local history = whisker.history.list()
+for i, passageTitle in ipairs(history) do
+  print(i, passageTitle)
+end
+
+-- Get history count
+local count = whisker.history.count()
+
+-- Check if passage was visited
+if whisker.history.contains("TreasureRoom") then
+  print("Player found the treasure!")
+end
+
+-- Clear history
+whisker.history.clear()
+```
+
+### whisker.choice Namespace
+
+Access available choices:
+
+```lua
+-- Get available choices
+local choices = whisker.choice.available()
+for i, choice in ipairs(choices) do
+  print(i, choice.text, "->", choice.target)
+end
+
+-- Select a choice programmatically
+whisker.choice.select(1)
+
+-- Get choice count
+local count = whisker.choice.count()
+```
+
+### Top-Level Functions
+
+Commonly used functions available at global scope:
+
+```lua
+-- Check how many times a passage was visited
+local visits = visited("ForestPath")
+if visited("DarkCave") > 0 then
+  print("You've been here before...")
+end
+
+-- Random number between min and max (inclusive)
+local roll = random(1, 20)
+
+-- Pick a random item from a list
+local item = pick("sword", "shield", "potion")
+local enemy = pick({"goblin", "orc", "troll"})
+
+-- Print to console (debugging)
+print("Debug:", $gold, $health)
+```
+
+### WLS 1.0 Operators
+
+WLS 1.0 uses Lua operators:
+
+```lua
+-- Comparison
+$gold == 100    -- equals
+$gold ~= 50     -- not equals (Lua style, NOT !=)
+$gold > 10      -- greater than
+$gold < 100     -- less than
+$gold >= 50     -- greater or equal
+$gold <= 75     -- less or equal
+
+-- Logical
+$hasKey and $gold > 10    -- both must be true
+$hasKey or $hasPick       -- either can be true
+not $isLocked             -- negation
+
+-- Arithmetic
+$gold + 10      -- addition
+$gold - 5       -- subtraction
+$gold * 2       -- multiplication
+$gold / 4       -- division
+$gold % 3       -- modulo (remainder)
+$level ^ 2      -- power (exponent)
+
+-- String concatenation
+$playerName .. " the Brave"    -- joins strings
+```
+
+### WLS 1.0 Conditionals
+
+Block conditionals in passage content:
+
+```
+{$gold > 100}
+  You're rich! You can afford the expensive option.
+{else}
+  You need more gold.
+{/}
+```
+
+With `elif` for multiple conditions:
+
+```
+{$gold >= 100}
+  Wealthy adventurer!
+{elif $gold >= 50}
+  Modest funds.
+{elif $gold >= 10}
+  Running low on gold.
+{else}
+  Nearly broke!
+{/}
+```
+
+Inline conditionals:
+
+```
+You are {$health > 50 : "healthy" | "injured"}.
+The door is {$hasKey : "unlocked" | "locked"}.
+```
+
+### WLS 1.0 Choices
+
+Choices use `+` for once-only and `*` for sticky:
+
+```
+:: Tavern
+
+The bartender looks at you expectantly.
+
++ [Order ale] {$ $gold = $gold - 2} -> DrinkAle
++ {$gold >= 10} [Order the special] {$ $gold = $gold - 10} -> OrderSpecial
+* [Ask about rumors] -> Rumors
++ [Leave] -> Outside
+```
+
+Choice syntax breakdown:
+- `+` once-only choice (disappears after selection)
+- `*` sticky choice (always available)
+- `{condition}` optional condition for availability
+- `[text]` the choice text shown to player
+- `{$ action}` optional action executed on selection
+- `-> Target` the target passage
+
+Special targets:
+- `-> END` ends the story
+- `-> BACK` returns to previous passage
+- `-> RESTART` restarts from beginning
+
+---
+
+## Legacy Whisker Story API
+
+> **Note:** The following API is maintained for backwards compatibility. For new stories, use the [WLS 1.0 API](#wls-10-api) above.
 
 ### Game State
 
@@ -454,7 +712,7 @@ The Visual Condition Builder helps create conditional logic without writing code
 #### Basic Condition
 
 ```
-score == 100
+$score == 100
 ```
 
 **Visual Builder:**
@@ -465,7 +723,7 @@ score == 100
 #### Multiple Rules (AND)
 
 ```
-score > 50 and hasKey == true
+$score > 50 and $hasKey == true
 ```
 
 **Visual Builder:**
@@ -477,7 +735,7 @@ score > 50 and hasKey == true
 #### Multiple Groups (OR)
 
 ```
-(score > 100 and hasKey == true) or (health > 50 and hasSword == true)
+($score > 100 and $hasKey == true) or ($health > 50 and $hasSword == true)
 ```
 
 **Visual Builder:**
@@ -488,16 +746,33 @@ score > 50 and hasKey == true
 
 ### Output Formats
 
-- **Whisker**: `{{score}} > 100` - For passage conditions
-- **Lua**: `score > 100` - For Lua scripts
+- **WLS 1.0** (default): `$score > 100` - Modern syntax with `$` prefix
+- **Legacy Whisker**: `{{score}} > 100` - Backwards compatible
+- **Lua**: `score > 100` - For direct Lua scripts
+
+### WLS 1.0 Operators
+
+The Visual Condition Builder uses Lua-style operators:
+
+| Operator | Meaning |
+|----------|---------|
+| `==` | equals |
+| `~=` | not equals |
+| `>` | greater than |
+| `<` | less than |
+| `>=` | greater or equal |
+| `<=` | less or equal |
+
+> **Note:** WLS 1.0 uses `~=` for "not equals" (Lua style), not `!=` (C style).
 
 ### Using Generated Conditions
 
 Copy the generated condition and use in:
-- Passage choice conditions
+- Choice conditions: `+ {$gold > 10} [Buy item] -> Shop`
+- Block conditionals: `{$gold > 10}...{/}`
+- Inline conditionals: `{$gold > 10 : "rich" | "poor"}`
 - Lua if statements
 - Visual Script Builder
-- Custom functions
 
 ---
 

@@ -93,6 +93,11 @@ export enum TokenType {
   ELIF = 'ELIF',                               // elif
   DO = 'DO',                                   // do (in choice actions)
 
+  // Collection keywords (WLS 1.0 - Gap 3)
+  LIST = 'LIST',                               // LIST name = ...
+  ARRAY = 'ARRAY',                             // ARRAY name = ...
+  MAP = 'MAP',                                 // MAP name = ...
+
   // Text content
   TEXT = 'TEXT',                               // Plain text content
 
@@ -109,6 +114,7 @@ export enum TokenType {
   DOT = 'DOT',                                 // . (member access)
   HASH = 'HASH',                               // # (length operator)
   DOTDOT = 'DOTDOT',                           // .. (string concatenation)
+  QUESTION = 'QUESTION',                       // ? (contains operator for lists)
 
   // Comments
   COMMENT = 'COMMENT',                         // -- comment or /* block */
@@ -165,6 +171,10 @@ export const KEYWORDS: Record<string, TokenType> = {
   'else': TokenType.ELSE,
   'elif': TokenType.ELIF,
   'do': TokenType.DO,
+  // Collection keywords (WLS 1.0 - Gap 3)
+  'LIST': TokenType.LIST,
+  'ARRAY': TokenType.ARRAY,
+  'MAP': TokenType.MAP,
 };
 
 /**

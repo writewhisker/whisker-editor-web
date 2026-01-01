@@ -339,6 +339,10 @@ export class Lexer {
           this.addToken(TokenType.AMPERSAND, '&', start);
         }
         break;
+      case '?':
+        // Contains operator for lists (WLS 1.0 - Gap 3)
+        this.addToken(TokenType.QUESTION, '?', start);
+        break;
 
       // Special characters
       case '$':

@@ -269,12 +269,33 @@ export type AssignmentOperator = '=' | '+=' | '-=' | '*=' | '/=';
 // ============================================================================
 
 /**
+ * WLS Error codes for cross-platform parity
+ */
+export const WLS_ERROR_CODES = {
+  // Syntax errors (SYN)
+  EXPECTED_PASSAGE_NAME: 'WLS-SYN-001',
+  EXPECTED_PASSAGE_MARKER: 'WLS-SYN-002',
+  EXPECTED_CHOICE_TARGET: 'WLS-SYN-003',
+  EXPECTED_EXPRESSION: 'WLS-SYN-004',
+  EXPECTED_CLOSING_BRACE: 'WLS-SYN-005',
+  UNEXPECTED_TOKEN: 'WLS-SYN-006',
+  // Reference errors (REF)
+  UNDEFINED_PASSAGE: 'WLS-REF-001',
+  // Structure errors (STR)
+  DUPLICATE_PASSAGE: 'WLS-STR-001',
+} as const;
+
+export type WLSErrorCode = typeof WLS_ERROR_CODES[keyof typeof WLS_ERROR_CODES];
+
+/**
  * Parser error with location and recovery info
  */
 export interface ParseError {
   message: string;
   location: SourceSpan;
+  code?: WLSErrorCode;
   suggestion?: string;
+  severity?: 'error' | 'warning';
 }
 
 /**

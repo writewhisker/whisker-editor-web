@@ -279,21 +279,95 @@ export class LuaRuntime {
   }
 
   private evaluateArithmetic(expr: string): number {
-    // Simple arithmetic evaluation using Function constructor
-    // Replace Lua operators with JS equivalents
-    const jsExpr = expr.replace(/\b(\w+)\b/g, (match) => {
-      if (this.globalScope.has(match)) {
-        const val = this.globalScope.get(match);
-        return typeof val === 'string' ? `"${val}"` : String(val);
-      }
-      return match;
-    });
+    // Safe arithmetic evaluation without Function constructor
+    // Tokenize and evaluate expression safely
+    const tokens = this.tokenizeArithmetic(expr);
+    return this.evaluateArithmeticTokens(tokens);
+  }
 
-    try {
-      return Function(`"use strict"; return (${jsExpr})`)();
-    } catch (error) {
-      throw new Error(`Arithmetic evaluation failed: ${error}`);
+  private tokenizeArithmetic(expr: string): Array<string | number> {
+    const tokens: Array<string | number> = [];
+    let current = '';
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      if (char === ' ') {
+        if (current) {
+          tokens.push(this.resolveArithmeticToken(current));
+          current = '';
+        }
+        continue;
+      }
+
+      if (['+', '-', '*', '/', '%', '(', ')'].includes(char)) {
+        if (current) {
+          tokens.push(this.resolveArithmeticToken(current));
+          current = '';
+        }
+        tokens.push(char);
+      } else {
+        current += char;
+      }
     }
+
+    if (current) {
+      tokens.push(this.resolveArithmeticToken(current));
+    }
+
+    return tokens;
+  }
+
+  private resolveArithmeticToken(token: string): string | number {
+    // Handle numbers
+    if (/^-?\d+\.?\d*$/.test(token)) {
+      return parseFloat(token);
+    }
+
+    // Handle variable lookup
+    if (this.globalScope.has(token)) {
+      const val = this.globalScope.get(token);
+      return typeof val === 'number' ? val : 0;
+    }
+
+    return token;
+  }
+
+  private evaluateArithmeticTokens(tokens: Array<string | number>): number {
+    // Simple left-to-right evaluation with operator precedence
+    // First pass: handle * / %
+    let result: Array<string | number> = [];
+    let i = 0;
+
+    while (i < tokens.length) {
+      const token = tokens[i];
+
+      if (token === '*' || token === '/' || token === '%') {
+        const left = result.pop() as number;
+        const right = tokens[++i] as number;
+        if (token === '*') result.push(left * right);
+        else if (token === '/') result.push(right !== 0 ? left / right : 0);
+        else result.push(left % right);
+      } else {
+        result.push(token);
+      }
+      i++;
+    }
+
+    // Second pass: handle + -
+    let value = typeof result[0] === 'number' ? result[0] : 0;
+    i = 1;
+
+    while (i < result.length) {
+      const op = result[i] as string;
+      const right = result[++i] as number;
+
+      if (op === '+') value += right;
+      else if (op === '-') value -= right;
+      i++;
+    }
+
+    return value;
   }
 
   private evaluateStringConcat(expr: string): string {

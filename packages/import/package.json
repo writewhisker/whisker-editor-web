@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@writewhisker/core-ts": "workspace:*",
+    "@writewhisker/parser": "workspace:*",
+    "@writewhisker/story-models": "workspace:*",
     "nanoid": "^5.0.0"
   },
   "devDependencies": {

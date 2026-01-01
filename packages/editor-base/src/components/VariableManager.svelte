@@ -7,6 +7,7 @@
   let newVarName = '';
   let newVarType: 'string' | 'number' | 'boolean' = 'string';
   let newVarInitial: string | number | boolean = '';
+  let newVarScope: 'story' | 'temp' = 'story'; // WLS 1.0 variable scope
 
   // Test values management
   let testValues: Map<string, any> = new Map();
@@ -17,6 +18,7 @@
     newVarName = '';
     newVarType = 'string';
     newVarInitial = '';
+    newVarScope = 'story';
   }
 
   function confirmAddVariable() {
@@ -33,7 +35,8 @@
       type: newVarType,
       initial: newVarType === 'number' ? Number(newVarInitial) :
                newVarType === 'boolean' ? Boolean(newVarInitial) :
-               String(newVarInitial)
+               String(newVarInitial),
+      scope: newVarScope // WLS 1.0 variable scope
     });
 
     $currentStory.addVariable(variable);
@@ -147,11 +150,13 @@
     expandedVariable = expandedVariable === name ? null : name;
   }
 
-  function insertVariableAtCursor(name: string) {
-    // This would need to be implemented based on which textarea is focused
+  function insertVariableAtCursor(name: string, scope?: 'story' | 'temp') {
+    // WLS 1.0 syntax: $var for story-scoped, _var for temp-scoped
     // For now, just copy to clipboard
-    navigator.clipboard.writeText(`{{${name}}}`);
-    alert(`Copied {{${name}}} to clipboard`);
+    const prefix = scope === 'temp' ? '_' : '$';
+    const varRef = `${prefix}${name}`;
+    navigator.clipboard.writeText(varRef);
+    alert(`Copied ${varRef} to clipboard`);
   }
 </script>
 
@@ -191,7 +196,14 @@
             <!-- Name and Controls -->
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-sm font-medium text-gray-800">{variable.name}</span>
+                <span class="font-mono text-sm font-medium text-gray-800">
+                  {variable.scope === 'temp' ? '_' : '$'}{variable.name}
+                </span>
+                {#if variable.scope === 'temp'}
+                  <span class="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-700 rounded" title="Temporary variable (per-passage)">
+                    temp
+                  </span>
+                {/if}
                 {#if $isPlayerActive && runtimeValue !== undefined}
                   <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded" title="Current runtime value">
                     ▶ {String(runtimeValue)}
@@ -201,8 +213,8 @@
               <div class="flex items-center gap-1">
                 <button
                   class="text-xs text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors"
-                  on:click={() => insertVariableAtCursor(variable.name)}
-                  title="Copy {{variable}} to clipboard"
+                  on:click={() => insertVariableAtCursor(variable.name, variable.scope)}
+                  title="Copy variable reference to clipboard"
                 >
                   📋
                 </button>
@@ -392,6 +404,21 @@
             class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
 
           />
+        </div>
+
+        <!-- Scope (WLS 1.0) -->
+        <div>
+          <label for="new-var-scope" class="block text-sm font-medium text-gray-700 mb-1">
+            Scope
+          </label>
+          <select
+            id="new-var-scope"
+            bind:value={newVarScope}
+            class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            <option value="story">Story ($var) - persists across passages</option>
+            <option value="temp">Temp (_var) - resets each passage</option>
+          </select>
         </div>
 
         <!-- Type -->

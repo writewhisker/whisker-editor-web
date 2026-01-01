@@ -51,3 +51,6 @@ export * from './testScenarioStore';
 export * from './variableDependencyStore';
 export * from './versionDiffStore';
 export * from './wordGoalStore';
+
+// Migration stores (Phase 3 WLS 1.0)
+export * from './migrationStore';

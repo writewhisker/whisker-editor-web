@@ -301,10 +301,29 @@ describe('VisualConditionBuilder', () => {
   });
 
   describe('Output Formats', () => {
-    it('should generate Whisker format by default', async () => {
+    it('should generate WLS 1.0 format by default', async () => {
       const onConditionChange = vi.fn();
       const { container } = render(VisualConditionBuilder, {
         props: { onConditionChange }
+      });
+
+      const variableSelect = container.querySelector('.variable-select') as HTMLSelectElement;
+      const valueInput = container.querySelector('.rule-input') as HTMLInputElement;
+
+      fireEvent.change(variableSelect, { target: { value: 'score' } });
+      fireEvent.input(valueInput, { target: { value: '100' } });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const calls = onConditionChange.mock.calls;
+      const lastCall = calls[calls.length - 1];
+      // Should use $var format (WLS 1.0)
+      expect(lastCall[0]).toContain('$score');
+    });
+
+    it('should generate legacy Whisker format when specified', async () => {
+      const onConditionChange = vi.fn();
+      const { container } = render(VisualConditionBuilder, {
+        props: { onConditionChange, outputFormat: 'whisker' }
       });
 
       const variableSelect = container.querySelector('.variable-select') as HTMLSelectElement;
@@ -454,6 +473,63 @@ describe('VisualConditionBuilder', () => {
       // Both variables should be in {{}} format
       expect(lastCall[0]).toContain('{{score}}');
       expect(lastCall[0]).toContain('{{maxScore}}');
+    });
+
+    it('should handle WLS 1.0 variable references with $ prefix', async () => {
+      const onConditionChange = vi.fn();
+      const { container } = render(VisualConditionBuilder, {
+        props: { onConditionChange, outputFormat: 'wls' }
+      });
+
+      const variableSelect = container.querySelector('.variable-select') as HTMLSelectElement;
+      const typeSelect = container.querySelector('.type-select') as HTMLSelectElement;
+      const valueInput = container.querySelector('.rule-input') as HTMLInputElement;
+
+      fireEvent.change(variableSelect, { target: { value: 'score' } });
+      fireEvent.change(typeSelect, { target: { value: 'variable' } });
+      fireEvent.input(valueInput, { target: { value: 'maxScore' } });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const calls = onConditionChange.mock.calls;
+      const lastCall = calls[calls.length - 1];
+      // Both variables should use $ prefix in WLS 1.0
+      expect(lastCall[0]).toContain('$score');
+      expect(lastCall[0]).toContain('$maxScore');
+    });
+  });
+
+  describe('WLS 1.0 Lua Operators', () => {
+    it('should use ~= for not-equal operator', async () => {
+      const onConditionChange = vi.fn();
+      const { container } = render(VisualConditionBuilder, {
+        props: { onConditionChange, outputFormat: 'wls' }
+      });
+
+      const variableSelect = container.querySelector('.variable-select') as HTMLSelectElement;
+      const operatorSelect = container.querySelector('.operator-select') as HTMLSelectElement;
+      const valueInput = container.querySelector('.rule-input') as HTMLInputElement;
+
+      fireEvent.change(variableSelect, { target: { value: 'score' } });
+      fireEvent.change(operatorSelect, { target: { value: '~=' } });
+      fireEvent.input(valueInput, { target: { value: '0' } });
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      const calls = onConditionChange.mock.calls;
+      const lastCall = calls[calls.length - 1];
+      // Should use Lua's ~= operator
+      expect(lastCall[0]).toContain('~=');
+      expect(lastCall[0]).not.toContain('!=');
+    });
+
+    it('should have ~= in operator dropdown options', () => {
+      const { container } = render(VisualConditionBuilder);
+
+      const operatorSelect = container.querySelector('.operator-select') as HTMLSelectElement;
+      const options = Array.from(operatorSelect.options);
+      const values = options.map(o => o.value);
+
+      expect(values).toContain('~=');
+      expect(values).not.toContain('!=');
     });
   });
 });

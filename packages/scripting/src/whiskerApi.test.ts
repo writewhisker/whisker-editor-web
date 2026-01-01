@@ -510,4 +510,197 @@ describe('WhiskerApi', () => {
       expect(context.getOutput()).toEqual(['Single']);
     });
   });
+
+  // ==========================================================================
+  // WLS 1.0 Gap 3: Collection Operations
+  // ==========================================================================
+
+  describe('whisker.state LIST operations', () => {
+    beforeEach(() => {
+      // Set up a test list
+      context.setList('moods', {
+        values: ['happy', 'sad', 'angry', 'neutral'],
+        active: new Set(['happy']),
+      });
+    });
+
+    it('getList returns list data', () => {
+      const list = api.state.getList('moods');
+      expect(list).not.toBeNull();
+      expect(list?.values).toEqual(['happy', 'sad', 'angry', 'neutral']);
+      expect(list?.active.has('happy')).toBe(true);
+    });
+
+    it('hasList returns true for existing list', () => {
+      expect(api.state.hasList('moods')).toBe(true);
+    });
+
+    it('hasList returns false for non-existing list', () => {
+      expect(api.state.hasList('nonexistent')).toBe(false);
+    });
+
+    it('listValues returns possible values', () => {
+      expect(api.state.listValues('moods')).toEqual(['happy', 'sad', 'angry', 'neutral']);
+    });
+
+    it('listActive returns active values', () => {
+      expect(api.state.listActive('moods')).toEqual(['happy']);
+    });
+
+    it('listContains checks active status', () => {
+      expect(api.state.listContains('moods', 'happy')).toBe(true);
+      expect(api.state.listContains('moods', 'sad')).toBe(false);
+    });
+
+    it('listAdd activates a value', () => {
+      expect(api.state.listAdd('moods', 'sad')).toBe(true);
+      expect(api.state.listContains('moods', 'sad')).toBe(true);
+    });
+
+    it('listAdd returns false for invalid value', () => {
+      expect(api.state.listAdd('moods', 'invalid')).toBe(false);
+    });
+
+    it('listRemove deactivates a value', () => {
+      expect(api.state.listRemove('moods', 'happy')).toBe(true);
+      expect(api.state.listContains('moods', 'happy')).toBe(false);
+    });
+
+    it('listToggle switches value state', () => {
+      expect(api.state.listToggle('moods', 'happy')).toBe(false); // was true, now false
+      expect(api.state.listToggle('moods', 'happy')).toBe(true);  // was false, now true
+    });
+
+    it('listCount returns active count', () => {
+      expect(api.state.listCount('moods')).toBe(1);
+      api.state.listAdd('moods', 'sad');
+      expect(api.state.listCount('moods')).toBe(2);
+    });
+  });
+
+  describe('whisker.state ARRAY operations', () => {
+    beforeEach(() => {
+      context.setArray('scores', [100, 85, 92]);
+    });
+
+    it('getArray returns array', () => {
+      expect(api.state.getArray('scores')).toEqual([100, 85, 92]);
+    });
+
+    it('hasArray returns true for existing array', () => {
+      expect(api.state.hasArray('scores')).toBe(true);
+    });
+
+    it('hasArray returns false for non-existing array', () => {
+      expect(api.state.hasArray('nonexistent')).toBe(false);
+    });
+
+    it('arrayGet returns element at index', () => {
+      expect(api.state.arrayGet('scores', 0)).toBe(100);
+      expect(api.state.arrayGet('scores', 1)).toBe(85);
+      expect(api.state.arrayGet('scores', 2)).toBe(92);
+    });
+
+    it('arraySet updates element at index', () => {
+      expect(api.state.arraySet('scores', 1, 90)).toBe(true);
+      expect(api.state.arrayGet('scores', 1)).toBe(90);
+    });
+
+    it('arrayLength returns array length', () => {
+      expect(api.state.arrayLength('scores')).toBe(3);
+    });
+
+    it('arrayPush appends value', () => {
+      expect(api.state.arrayPush('scores', 95)).toBe(4);
+      expect(api.state.arrayLength('scores')).toBe(4);
+      expect(api.state.arrayGet('scores', 3)).toBe(95);
+    });
+
+    it('arrayPop removes and returns last value', () => {
+      expect(api.state.arrayPop('scores')).toBe(92);
+      expect(api.state.arrayLength('scores')).toBe(2);
+    });
+
+    it('arrayInsert inserts at index', () => {
+      api.state.arrayInsert('scores', 1, 88);
+      expect(api.state.getArray('scores')).toEqual([100, 88, 85, 92]);
+    });
+
+    it('arrayRemove removes at index', () => {
+      expect(api.state.arrayRemove('scores', 1)).toBe(85);
+      expect(api.state.getArray('scores')).toEqual([100, 92]);
+    });
+
+    it('arrayContains checks for value', () => {
+      expect(api.state.arrayContains('scores', 85)).toBe(true);
+      expect(api.state.arrayContains('scores', 99)).toBe(false);
+    });
+
+    it('arrayIndexOf finds value index', () => {
+      expect(api.state.arrayIndexOf('scores', 85)).toBe(1);
+      expect(api.state.arrayIndexOf('scores', 99)).toBe(-1);
+    });
+  });
+
+  describe('whisker.state MAP operations', () => {
+    beforeEach(() => {
+      context.setMap('player', { name: 'Hero', health: 100, level: 1 });
+    });
+
+    it('getMap returns map', () => {
+      expect(api.state.getMap('player')).toEqual({ name: 'Hero', health: 100, level: 1 });
+    });
+
+    it('hasMap returns true for existing map', () => {
+      expect(api.state.hasMap('player')).toBe(true);
+    });
+
+    it('hasMap returns false for non-existing map', () => {
+      expect(api.state.hasMap('nonexistent')).toBe(false);
+    });
+
+    it('mapGet returns value by key', () => {
+      expect(api.state.mapGet('player', 'name')).toBe('Hero');
+      expect(api.state.mapGet('player', 'health')).toBe(100);
+    });
+
+    it('mapGet returns null for missing key', () => {
+      expect(api.state.mapGet('player', 'mana')).toBeNull();
+    });
+
+    it('mapSet updates value by key', () => {
+      api.state.mapSet('player', 'health', 90);
+      expect(api.state.mapGet('player', 'health')).toBe(90);
+    });
+
+    it('mapSet adds new key', () => {
+      api.state.mapSet('player', 'mana', 50);
+      expect(api.state.mapGet('player', 'mana')).toBe(50);
+    });
+
+    it('mapHas checks for key existence', () => {
+      expect(api.state.mapHas('player', 'name')).toBe(true);
+      expect(api.state.mapHas('player', 'mana')).toBe(false);
+    });
+
+    it('mapDelete removes key', () => {
+      expect(api.state.mapDelete('player', 'level')).toBe(1);
+      expect(api.state.mapHas('player', 'level')).toBe(false);
+    });
+
+    it('mapKeys returns all keys', () => {
+      expect(api.state.mapKeys('player').sort()).toEqual(['health', 'level', 'name']);
+    });
+
+    it('mapValues returns all values', () => {
+      const values = api.state.mapValues('player');
+      expect(values).toContain('Hero');
+      expect(values).toContain(100);
+      expect(values).toContain(1);
+    });
+
+    it('mapSize returns entry count', () => {
+      expect(api.state.mapSize('player')).toBe(3);
+    });
+  });
 });

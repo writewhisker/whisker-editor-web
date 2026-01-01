@@ -28,6 +28,9 @@ export interface StoryNode extends BaseNode {
   type: 'story';
   metadata: MetadataNode[];
   variables: VariableDeclarationNode[];
+  lists: ListDeclarationNode[];         // WLS 1.0 Gap 3: LIST declarations
+  arrays: ArrayDeclarationNode[];       // WLS 1.0 Gap 3: ARRAY declarations
+  maps: MapDeclarationNode[];           // WLS 1.0 Gap 3: MAP declarations
   passages: PassageNode[];
 }
 
@@ -48,6 +51,64 @@ export interface VariableDeclarationNode extends BaseNode {
   name: string;
   scope: 'story' | 'temp';
   initialValue: ExpressionNode | null;
+}
+
+// ============================================================================
+// Collection Declarations (WLS 1.0 - Gap 3)
+// ============================================================================
+
+/**
+ * List value item - can be active (selected) or inactive
+ */
+export interface ListValueNode {
+  value: string;
+  active: boolean;
+}
+
+/**
+ * LIST declaration: enumerated set with optional active values
+ * Example: LIST moods = happy, (sad), angry
+ */
+export interface ListDeclarationNode extends BaseNode {
+  type: 'list_declaration';
+  name: string;
+  values: ListValueNode[];
+}
+
+/**
+ * Array element - value with optional explicit index
+ */
+export interface ArrayElementNode {
+  index: number | null;  // null = auto-indexed
+  value: ExpressionNode;
+}
+
+/**
+ * ARRAY declaration: indexed collection
+ * Example: ARRAY items = [1, 2, 3] or ARRAY items = [0: "first", 2: "third"]
+ */
+export interface ArrayDeclarationNode extends BaseNode {
+  type: 'array_declaration';
+  name: string;
+  elements: ArrayElementNode[];
+}
+
+/**
+ * Map entry - key-value pair
+ */
+export interface MapEntryNode {
+  key: string;
+  value: ExpressionNode;
+}
+
+/**
+ * MAP declaration: key-value object
+ * Example: MAP player = { name: "Hero", health: 100 }
+ */
+export interface MapDeclarationNode extends BaseNode {
+  type: 'map_declaration';
+  name: string;
+  entries: MapEntryNode[];
 }
 
 // ============================================================================

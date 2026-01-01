@@ -12,6 +12,12 @@ import type {
   PassageMetadataNode,
   MetadataNode,
   VariableDeclarationNode,
+  ListDeclarationNode,
+  ListValueNode,
+  ArrayDeclarationNode,
+  ArrayElementNode,
+  MapDeclarationNode,
+  MapEntryNode,
   ContentNode,
   TextNode,
   InterpolationNode,
@@ -71,6 +77,9 @@ export class Parser {
           type: 'story',
           metadata: [],
           variables: [],
+          lists: [],
+          arrays: [],
+          maps: [],
           passages: [],
           location: emptyLocation,
         },
@@ -182,6 +191,9 @@ export class Parser {
     const start = this.peek();
     const metadata: MetadataNode[] = [];
     const variables: VariableDeclarationNode[] = [];
+    const lists: ListDeclarationNode[] = [];
+    const arrays: ArrayDeclarationNode[] = [];
+    const maps: MapDeclarationNode[] = [];
     const passages: PassageNode[] = [];
 
     this.skipNewlines();
@@ -192,12 +204,15 @@ export class Parser {
         type: 'story',
         metadata,
         variables,
+        lists,
+        arrays,
+        maps,
         passages,
         location: this.getLocation(start),
       };
     }
 
-    // Parse metadata and variables before first passage
+    // Parse metadata, variables, and collections before first passage
     while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER)) {
       if (this.check(TokenType.DIRECTIVE)) {
         const directive = this.parseDirective();
@@ -206,6 +221,18 @@ export class Parser {
         } else if (directive.type === 'variable_declaration') {
           variables.push(directive);
         }
+      } else if (this.check(TokenType.LIST)) {
+        // WLS 1.0 Gap 3: LIST declaration
+        const list = this.parseListDeclaration();
+        if (list) lists.push(list);
+      } else if (this.check(TokenType.ARRAY)) {
+        // WLS 1.0 Gap 3: ARRAY declaration
+        const array = this.parseArrayDeclaration();
+        if (array) arrays.push(array);
+      } else if (this.check(TokenType.MAP)) {
+        // WLS 1.0 Gap 3: MAP declaration
+        const map = this.parseMapDeclaration();
+        if (map) maps.push(map);
       } else if (this.check(TokenType.NEWLINE)) {
         this.advance();
       } else if (this.check(TokenType.COMMENT)) {
@@ -238,6 +265,9 @@ export class Parser {
       type: 'story',
       metadata,
       variables,
+      lists,
+      arrays,
+      maps,
       passages,
       location: this.getLocation(start),
     };
@@ -331,6 +361,282 @@ export class Parser {
   private skipWhitespaceOnLine(): void {
     // Skip tokens that represent whitespace (handled by lexer)
     // Our lexer doesn't emit whitespace tokens, so this is a no-op
+  }
+
+  // ============================================================================
+  // Collection Declaration Parsing (WLS 1.0 - Gap 3)
+  // ============================================================================
+
+  /**
+   * Parse a LIST declaration: LIST name = value1, (active_value), value2
+   */
+  private parseListDeclaration(): ListDeclarationNode | null {
+    const start = this.advance(); // consume LIST
+    this.skipWhitespaceOnLine();
+
+    // Parse list name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected list name after LIST', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Provide a name for the list: LIST moods = happy, sad',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+
+    // Expect =
+    if (!this.match(TokenType.ASSIGN)) {
+      this.addError('Expected "=" after list name', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Add "=" after the list name: LIST moods = happy, sad',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    // Parse list values
+    const values: ListValueNode[] = [];
+    let expectComma = false;
+
+    while (!this.isAtEnd() && !this.check(TokenType.NEWLINE) && !this.check(TokenType.PASSAGE_MARKER)) {
+      if (expectComma) {
+        if (this.match(TokenType.COMMA)) {
+          expectComma = false;
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      // Check for active value: (value)
+      if (this.match(TokenType.LPAREN)) {
+        if (this.check(TokenType.IDENTIFIER)) {
+          values.push({ value: this.advance().value, active: true });
+        } else {
+          this.addError('Expected identifier inside parentheses');
+        }
+        this.expect(TokenType.RPAREN, 'Expected ")" after active value');
+        expectComma = true;
+      } else if (this.check(TokenType.IDENTIFIER)) {
+        values.push({ value: this.advance().value, active: false });
+        expectComma = true;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      type: 'list_declaration',
+      name,
+      values,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse an ARRAY declaration: ARRAY name = [elem1, elem2] or [0: elem1, 2: elem2]
+   */
+  private parseArrayDeclaration(): ArrayDeclarationNode | null {
+    const start = this.advance(); // consume ARRAY
+    this.skipWhitespaceOnLine();
+
+    // Parse array name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected array name after ARRAY', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Provide a name for the array: ARRAY items = [1, 2, 3]',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+
+    // Expect =
+    if (!this.match(TokenType.ASSIGN)) {
+      this.addError('Expected "=" after array name', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Add "=" after the array name: ARRAY items = [1, 2, 3]',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    // Expect [
+    if (!this.match(TokenType.LBRACKET)) {
+      this.addError('Expected "[" to start array', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Arrays must be enclosed in brackets: [1, 2, 3]',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    // Parse array elements
+    const elements: ArrayElementNode[] = [];
+    let autoIndex = 0;
+    let expectComma = false;
+
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
+      if (expectComma) {
+        if (this.match(TokenType.COMMA)) {
+          expectComma = false;
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      const element = this.parseArrayElement(autoIndex);
+      if (element) {
+        elements.push(element);
+        // Update auto-index based on what was used
+        if (element.index !== null) {
+          autoIndex = element.index + 1;
+        } else {
+          autoIndex++;
+        }
+        expectComma = true;
+      } else {
+        break;
+      }
+    }
+
+    this.expect(TokenType.RBRACKET, 'Expected "]" to close array');
+
+    return {
+      type: 'array_declaration',
+      name,
+      elements,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a single array element with optional explicit index
+   */
+  private parseArrayElement(autoIndex: number): ArrayElementNode | null {
+    // Check for explicit index: NUMBER COLON value
+    if (this.check(TokenType.NUMBER)) {
+      const indexToken = this.peek();
+      const maybeIndex = parseFloat(indexToken.value);
+
+      // Look ahead for colon
+      if (this.peekNext().type === TokenType.COLON) {
+        this.advance(); // consume number
+        this.advance(); // consume colon
+        const value = this.parseExpression();
+        return { index: maybeIndex, value };
+      }
+    }
+
+    // Auto-indexed element
+    const value = this.parseExpression();
+    return { index: null, value };
+  }
+
+  /**
+   * Parse a MAP declaration: MAP name = { key: value, key2: value2 }
+   */
+  private parseMapDeclaration(): MapDeclarationNode | null {
+    const start = this.advance(); // consume MAP
+    this.skipWhitespaceOnLine();
+
+    // Parse map name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected map name after MAP', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Provide a name for the map: MAP player = { name: "Hero" }',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+
+    // Expect =
+    if (!this.match(TokenType.ASSIGN)) {
+      this.addError('Expected "=" after map name', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Add "=" after the map name: MAP player = { name: "Hero" }',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    // Expect {
+    if (!this.match(TokenType.LBRACE)) {
+      this.addError('Expected "{" to start map', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Maps must be enclosed in braces: { key: value }',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    // Parse map entries
+    const entries: MapEntryNode[] = [];
+    let expectComma = false;
+
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACE)) {
+      if (expectComma) {
+        if (this.match(TokenType.COMMA)) {
+          expectComma = false;
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      const entry = this.parseMapEntry();
+      if (entry) {
+        entries.push(entry);
+        expectComma = true;
+      } else {
+        break;
+      }
+    }
+
+    this.expect(TokenType.RBRACE, 'Expected "}" to close map');
+
+    return {
+      type: 'map_declaration',
+      name,
+      entries,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a single map entry: key: value
+   */
+  private parseMapEntry(): MapEntryNode | null {
+    // Expect key (identifier or string)
+    let key: string;
+
+    if (this.check(TokenType.IDENTIFIER)) {
+      key = this.advance().value;
+    } else if (this.check(TokenType.STRING)) {
+      key = this.advance().value;
+    } else {
+      return null;
+    }
+
+    // Expect colon
+    if (!this.match(TokenType.COLON)) {
+      this.addError('Expected ":" after map key', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Map entries use colon syntax: key: value',
+      });
+      return null;
+    }
+
+    // Parse value
+    const value = this.parseExpression();
+
+    return { key, value };
   }
 
   // ============================================================================

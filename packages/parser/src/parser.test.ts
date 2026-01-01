@@ -13,6 +13,9 @@ import type {
   VariableNode,
   AssignmentExpressionNode,
   AlternativesNode,
+  ListDeclarationNode,
+  ArrayDeclarationNode,
+  MapDeclarationNode,
 } from './ast';
 
 // Helper to get first passage
@@ -780,6 +783,181 @@ Here is some help!
         const helperPassage = result.ast?.passages[1];
         const tunnelReturn = helperPassage?.content.find(c => c.type === 'tunnel_return');
         expect(tunnelReturn).toBeDefined();
+      });
+    });
+  });
+
+  describe('collection declarations (WLS 1.0 - Gap 3)', () => {
+    describe('LIST declarations', () => {
+      it('should parse LIST declaration with inactive values', () => {
+        const result = parse(`LIST moods = happy, sad, angry
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.lists).toHaveLength(1);
+        const list = result.ast?.lists[0] as ListDeclarationNode;
+        expect(list.name).toBe('moods');
+        expect(list.values).toHaveLength(3);
+        expect(list.values[0]).toEqual({ value: 'happy', active: false });
+        expect(list.values[1]).toEqual({ value: 'sad', active: false });
+        expect(list.values[2]).toEqual({ value: 'angry', active: false });
+      });
+
+      it('should parse LIST declaration with active values in parentheses', () => {
+        const result = parse(`LIST moods = happy, (sad), angry
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const list = result.ast?.lists[0] as ListDeclarationNode;
+        expect(list.values[0]).toEqual({ value: 'happy', active: false });
+        expect(list.values[1]).toEqual({ value: 'sad', active: true });
+        expect(list.values[2]).toEqual({ value: 'angry', active: false });
+      });
+
+      it('should parse LIST declaration with multiple active values', () => {
+        const result = parse(`LIST perks = (smart), (strong), agile
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const list = result.ast?.lists[0] as ListDeclarationNode;
+        expect(list.values[0].active).toBe(true);
+        expect(list.values[1].active).toBe(true);
+        expect(list.values[2].active).toBe(false);
+      });
+
+      it('should parse multiple LIST declarations', () => {
+        const result = parse(`LIST moods = happy, sad
+LIST colors = red, blue, green
+:: Start
+Hello`);
+        expect(result.ast?.lists).toHaveLength(2);
+        expect(result.ast?.lists[0].name).toBe('moods');
+        expect(result.ast?.lists[1].name).toBe('colors');
+      });
+    });
+
+    describe('ARRAY declarations', () => {
+      it('should parse ARRAY declaration with numeric values', () => {
+        const result = parse(`ARRAY scores = [100, 85, 92]
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.arrays).toHaveLength(1);
+        const array = result.ast?.arrays[0] as ArrayDeclarationNode;
+        expect(array.name).toBe('scores');
+        expect(array.elements).toHaveLength(3);
+        expect(array.elements[0].index).toBeNull();
+        expect((array.elements[0].value as LiteralNode).value).toBe(100);
+      });
+
+      it('should parse ARRAY declaration with string values', () => {
+        const result = parse(`ARRAY names = ["Alice", "Bob", "Charlie"]
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const array = result.ast?.arrays[0] as ArrayDeclarationNode;
+        expect(array.elements).toHaveLength(3);
+        expect((array.elements[0].value as LiteralNode).value).toBe('Alice');
+      });
+
+      it('should parse ARRAY declaration with explicit indices', () => {
+        const result = parse(`ARRAY sparse = [0: "first", 5: "sixth"]
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const array = result.ast?.arrays[0] as ArrayDeclarationNode;
+        expect(array.elements[0].index).toBe(0);
+        expect(array.elements[1].index).toBe(5);
+      });
+
+      it('should parse empty ARRAY declaration', () => {
+        const result = parse(`ARRAY empty = []
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const array = result.ast?.arrays[0] as ArrayDeclarationNode;
+        expect(array.elements).toHaveLength(0);
+      });
+
+      it('should parse multiple ARRAY declarations', () => {
+        const result = parse(`ARRAY nums = [1, 2, 3]
+ARRAY chars = ["a", "b"]
+:: Start
+Hello`);
+        expect(result.ast?.arrays).toHaveLength(2);
+      });
+    });
+
+    describe('MAP declarations', () => {
+      it('should parse MAP declaration with simple values', () => {
+        const result = parse(`MAP player = { name: "Hero", health: 100 }
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.maps).toHaveLength(1);
+        const map = result.ast?.maps[0] as MapDeclarationNode;
+        expect(map.name).toBe('player');
+        expect(map.entries).toHaveLength(2);
+        expect(map.entries[0].key).toBe('name');
+        expect((map.entries[0].value as LiteralNode).value).toBe('Hero');
+        expect(map.entries[1].key).toBe('health');
+        expect((map.entries[1].value as LiteralNode).value).toBe(100);
+      });
+
+      it('should parse MAP declaration with mixed value types', () => {
+        const result = parse(`MAP config = { debug: true, level: 5, title: "Game" }
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const map = result.ast?.maps[0] as MapDeclarationNode;
+        expect(map.entries).toHaveLength(3);
+        expect((map.entries[0].value as LiteralNode).value).toBe(true);
+        expect((map.entries[1].value as LiteralNode).value).toBe(5);
+        expect((map.entries[2].value as LiteralNode).value).toBe('Game');
+      });
+
+      it('should parse empty MAP declaration', () => {
+        const result = parse(`MAP empty = {}
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        const map = result.ast?.maps[0] as MapDeclarationNode;
+        expect(map.entries).toHaveLength(0);
+      });
+
+      it('should parse multiple MAP declarations', () => {
+        const result = parse(`MAP player = { hp: 100 }
+MAP enemy = { hp: 50 }
+:: Start
+Hello`);
+        expect(result.ast?.maps).toHaveLength(2);
+        expect(result.ast?.maps[0].name).toBe('player');
+        expect(result.ast?.maps[1].name).toBe('enemy');
+      });
+    });
+
+    describe('mixed collection declarations', () => {
+      it('should parse story with all collection types', () => {
+        const result = parse(`@title: Test
+LIST moods = happy, (sad)
+ARRAY items = ["sword", "shield"]
+MAP player = { name: "Hero", level: 1 }
+:: Start
+Welcome!`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.lists).toHaveLength(1);
+        expect(result.ast?.arrays).toHaveLength(1);
+        expect(result.ast?.maps).toHaveLength(1);
+        expect(result.ast?.passages).toHaveLength(1);
+      });
+
+      it('should place collections before passages', () => {
+        const result = parse(`LIST test = a, b
+:: Start
+Content`);
+        expect(result.ast?.lists).toHaveLength(1);
+        expect(result.ast?.passages).toHaveLength(1);
+        expect(result.ast?.passages[0].name).toBe('Start');
       });
     });
   });

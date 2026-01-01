@@ -41,6 +41,28 @@ export interface WhiskerObject {
  */
 export type WhiskerValue = string | number | boolean | null | WhiskerValue[] | WhiskerObject;
 
+// ============================================================================
+// WLS 1.0 Gap 3: Collection Types
+// ============================================================================
+
+/**
+ * WLS 1.0 LIST type - enumerated set with active/inactive states
+ */
+export interface WLSList {
+  values: string[];           // All possible values
+  active: Set<string>;        // Currently active values
+}
+
+/**
+ * WLS 1.0 ARRAY type - 0-indexed collection
+ */
+export type WLSArray = WhiskerValue[];
+
+/**
+ * WLS 1.0 MAP type - key-value object
+ */
+export type WLSMap = Record<string, WhiskerValue>;
+
 /**
  * Runtime context interface
  * The hosting application must provide this to connect the API to game state
@@ -53,6 +75,50 @@ export interface WhiskerRuntimeContext {
   deleteVariable(key: string): void;
   getAllVariables(): Record<string, WhiskerValue>;
   resetVariables(): void;
+
+  // ============================================
+  // WLS 1.0 Gap 3: LIST Operations
+  // ============================================
+  getList(name: string): WLSList | undefined;
+  hasList(name: string): boolean;
+  getListValues(name: string): string[] | undefined;
+  getListActive(name: string): string[];
+  listContains(name: string, value: string): boolean;
+  listAdd(name: string, value: string): boolean;
+  listRemove(name: string, value: string): boolean;
+  listToggle(name: string, value: string): boolean;
+  listCount(name: string): number;
+  setList(name: string, list: WLSList): void;
+
+  // ============================================
+  // WLS 1.0 Gap 3: ARRAY Operations
+  // ============================================
+  getArray(name: string): WLSArray | undefined;
+  hasArray(name: string): boolean;
+  arrayGet(name: string, index: number): WhiskerValue | undefined;
+  arraySet(name: string, index: number, value: WhiskerValue): boolean;
+  arrayLength(name: string): number;
+  arrayPush(name: string, value: WhiskerValue): number;
+  arrayPop(name: string): WhiskerValue | undefined;
+  arrayInsert(name: string, index: number, value: WhiskerValue): void;
+  arrayRemove(name: string, index: number): WhiskerValue | undefined;
+  arrayContains(name: string, value: WhiskerValue): boolean;
+  arrayIndexOf(name: string, value: WhiskerValue): number;
+  setArray(name: string, array: WLSArray): void;
+
+  // ============================================
+  // WLS 1.0 Gap 3: MAP Operations
+  // ============================================
+  getMap(name: string): WLSMap | undefined;
+  hasMap(name: string): boolean;
+  mapGet(name: string, key: string): WhiskerValue | undefined;
+  mapSet(name: string, key: string, value: WhiskerValue): void;
+  mapHas(name: string, key: string): boolean;
+  mapDelete(name: string, key: string): WhiskerValue | undefined;
+  mapKeys(name: string): string[];
+  mapValues(name: string): WhiskerValue[];
+  mapSize(name: string): number;
+  setMap(name: string, map: WLSMap): void;
 
   // Passage management
   getCurrentPassage(): WhiskerPassage | null;
@@ -99,6 +165,11 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   private choices: WhiskerChoice[] = [];
   private output: string[] = [];
 
+  // WLS 1.0 Gap 3: Collection storage
+  private lists: Map<string, WLSList> = new Map();
+  private arrays: Map<string, WLSArray> = new Map();
+  private maps: Map<string, WLSMap> = new Map();
+
   // State management
   getVariable(key: string): WhiskerValue | undefined {
     return this.variables.get(key);
@@ -126,6 +197,206 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
 
   resetVariables(): void {
     this.variables.clear();
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: LIST Operations
+  // ============================================
+
+  getList(name: string): WLSList | undefined {
+    return this.lists.get(name);
+  }
+
+  hasList(name: string): boolean {
+    return this.lists.has(name);
+  }
+
+  getListValues(name: string): string[] | undefined {
+    const list = this.lists.get(name);
+    return list?.values;
+  }
+
+  getListActive(name: string): string[] {
+    const list = this.lists.get(name);
+    if (!list) return [];
+    return Array.from(list.active);
+  }
+
+  listContains(name: string, value: string): boolean {
+    const list = this.lists.get(name);
+    if (!list) return false;
+    return list.active.has(value);
+  }
+
+  listAdd(name: string, value: string): boolean {
+    const list = this.lists.get(name);
+    if (!list) return false;
+    // Verify value is in possible values
+    if (!list.values.includes(value)) return false;
+    list.active.add(value);
+    return true;
+  }
+
+  listRemove(name: string, value: string): boolean {
+    const list = this.lists.get(name);
+    if (!list) return false;
+    list.active.delete(value);
+    return true;
+  }
+
+  listToggle(name: string, value: string): boolean {
+    const list = this.lists.get(name);
+    if (!list) return false;
+    if (list.active.has(value)) {
+      list.active.delete(value);
+      return false;
+    } else {
+      list.active.add(value);
+      return true;
+    }
+  }
+
+  listCount(name: string): number {
+    const list = this.lists.get(name);
+    if (!list) return 0;
+    return list.active.size;
+  }
+
+  setList(name: string, list: WLSList): void {
+    this.lists.set(name, list);
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: ARRAY Operations
+  // ============================================
+
+  getArray(name: string): WLSArray | undefined {
+    return this.arrays.get(name);
+  }
+
+  hasArray(name: string): boolean {
+    return this.arrays.has(name);
+  }
+
+  arrayGet(name: string, index: number): WhiskerValue | undefined {
+    const arr = this.arrays.get(name);
+    if (!arr) return undefined;
+    return arr[index];
+  }
+
+  arraySet(name: string, index: number, value: WhiskerValue): boolean {
+    const arr = this.arrays.get(name);
+    if (!arr) return false;
+    arr[index] = value;
+    return true;
+  }
+
+  arrayLength(name: string): number {
+    const arr = this.arrays.get(name);
+    if (!arr) return 0;
+    return arr.length;
+  }
+
+  arrayPush(name: string, value: WhiskerValue): number {
+    const arr = this.arrays.get(name);
+    if (!arr) return 0;
+    arr.push(value);
+    return arr.length;
+  }
+
+  arrayPop(name: string): WhiskerValue | undefined {
+    const arr = this.arrays.get(name);
+    if (!arr || arr.length === 0) return undefined;
+    return arr.pop();
+  }
+
+  arrayInsert(name: string, index: number, value: WhiskerValue): void {
+    const arr = this.arrays.get(name);
+    if (!arr) return;
+    arr.splice(index, 0, value);
+  }
+
+  arrayRemove(name: string, index: number): WhiskerValue | undefined {
+    const arr = this.arrays.get(name);
+    if (!arr) return undefined;
+    const removed = arr.splice(index, 1);
+    return removed[0];
+  }
+
+  arrayContains(name: string, value: WhiskerValue): boolean {
+    const arr = this.arrays.get(name);
+    if (!arr) return false;
+    return arr.includes(value);
+  }
+
+  arrayIndexOf(name: string, value: WhiskerValue): number {
+    const arr = this.arrays.get(name);
+    if (!arr) return -1;
+    return arr.indexOf(value);
+  }
+
+  setArray(name: string, array: WLSArray): void {
+    this.arrays.set(name, array);
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: MAP Operations
+  // ============================================
+
+  getMap(name: string): WLSMap | undefined {
+    return this.maps.get(name);
+  }
+
+  hasMap(name: string): boolean {
+    return this.maps.has(name);
+  }
+
+  mapGet(name: string, key: string): WhiskerValue | undefined {
+    const map = this.maps.get(name);
+    if (!map) return undefined;
+    return map[key];
+  }
+
+  mapSet(name: string, key: string, value: WhiskerValue): void {
+    const map = this.maps.get(name);
+    if (!map) return;
+    map[key] = value;
+  }
+
+  mapHas(name: string, key: string): boolean {
+    const map = this.maps.get(name);
+    if (!map) return false;
+    return key in map;
+  }
+
+  mapDelete(name: string, key: string): WhiskerValue | undefined {
+    const map = this.maps.get(name);
+    if (!map) return undefined;
+    const old = map[key];
+    delete map[key];
+    return old;
+  }
+
+  mapKeys(name: string): string[] {
+    const map = this.maps.get(name);
+    if (!map) return [];
+    return Object.keys(map);
+  }
+
+  mapValues(name: string): WhiskerValue[] {
+    const map = this.maps.get(name);
+    if (!map) return [];
+    return Object.values(map);
+  }
+
+  mapSize(name: string): number {
+    const map = this.maps.get(name);
+    if (!map) return 0;
+    return Object.keys(map).length;
+  }
+
+  setMap(name: string, map: WLSMap): void {
+    this.maps.set(name, map);
   }
 
   // Passage management
@@ -329,6 +600,163 @@ export class WhiskerStateApi {
    */
   reset(): void {
     this.context.resetVariables();
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: LIST Operations
+  // ============================================
+
+  /** Get list by name */
+  getList(name: string): WLSList | null {
+    return this.context.getList(name) ?? null;
+  }
+
+  /** Check if list exists */
+  hasList(name: string): boolean {
+    return this.context.hasList(name);
+  }
+
+  /** Get possible values in a list */
+  listValues(name: string): string[] | null {
+    return this.context.getListValues(name) ?? null;
+  }
+
+  /** Get active values in a list */
+  listActive(name: string): string[] {
+    return this.context.getListActive(name);
+  }
+
+  /** Check if value is active in list */
+  listContains(name: string, value: string): boolean {
+    return this.context.listContains(name, value);
+  }
+
+  /** Add/activate value in list */
+  listAdd(name: string, value: string): boolean {
+    return this.context.listAdd(name, value);
+  }
+
+  /** Remove/deactivate value from list */
+  listRemove(name: string, value: string): boolean {
+    return this.context.listRemove(name, value);
+  }
+
+  /** Toggle value in list */
+  listToggle(name: string, value: string): boolean {
+    return this.context.listToggle(name, value);
+  }
+
+  /** Get count of active values */
+  listCount(name: string): number {
+    return this.context.listCount(name);
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: ARRAY Operations
+  // ============================================
+
+  /** Get array by name */
+  getArray(name: string): WLSArray | null {
+    return this.context.getArray(name) ?? null;
+  }
+
+  /** Check if array exists */
+  hasArray(name: string): boolean {
+    return this.context.hasArray(name);
+  }
+
+  /** Get array element (0-based index) */
+  arrayGet(name: string, index: number): WhiskerValue | null {
+    return this.context.arrayGet(name, index) ?? null;
+  }
+
+  /** Set array element (0-based index) */
+  arraySet(name: string, index: number, value: WhiskerValue): boolean {
+    return this.context.arraySet(name, index, value);
+  }
+
+  /** Get array length */
+  arrayLength(name: string): number {
+    return this.context.arrayLength(name);
+  }
+
+  /** Append to array */
+  arrayPush(name: string, value: WhiskerValue): number {
+    return this.context.arrayPush(name, value);
+  }
+
+  /** Pop from array */
+  arrayPop(name: string): WhiskerValue | null {
+    return this.context.arrayPop(name) ?? null;
+  }
+
+  /** Insert at index */
+  arrayInsert(name: string, index: number, value: WhiskerValue): void {
+    this.context.arrayInsert(name, index, value);
+  }
+
+  /** Remove at index */
+  arrayRemove(name: string, index: number): WhiskerValue | null {
+    return this.context.arrayRemove(name, index) ?? null;
+  }
+
+  /** Check if array contains value */
+  arrayContains(name: string, value: WhiskerValue): boolean {
+    return this.context.arrayContains(name, value);
+  }
+
+  /** Find index of value (returns 0-based, -1 if not found) */
+  arrayIndexOf(name: string, value: WhiskerValue): number {
+    return this.context.arrayIndexOf(name, value);
+  }
+
+  // ============================================
+  // WLS 1.0 Gap 3: MAP Operations
+  // ============================================
+
+  /** Get map by name */
+  getMap(name: string): WLSMap | null {
+    return this.context.getMap(name) ?? null;
+  }
+
+  /** Check if map exists */
+  hasMap(name: string): boolean {
+    return this.context.hasMap(name);
+  }
+
+  /** Get map value by key */
+  mapGet(name: string, key: string): WhiskerValue | null {
+    return this.context.mapGet(name, key) ?? null;
+  }
+
+  /** Set map value by key */
+  mapSet(name: string, key: string, value: WhiskerValue): void {
+    this.context.mapSet(name, key, value);
+  }
+
+  /** Check if map has key */
+  mapHas(name: string, key: string): boolean {
+    return this.context.mapHas(name, key);
+  }
+
+  /** Delete key from map */
+  mapDelete(name: string, key: string): WhiskerValue | null {
+    return this.context.mapDelete(name, key) ?? null;
+  }
+
+  /** Get all keys in map */
+  mapKeys(name: string): string[] {
+    return this.context.mapKeys(name);
+  }
+
+  /** Get all values in map */
+  mapValues(name: string): WhiskerValue[] {
+    return this.context.mapValues(name);
+  }
+
+  /** Get entry count in map */
+  mapSize(name: string): number {
+    return this.context.mapSize(name);
   }
 }
 

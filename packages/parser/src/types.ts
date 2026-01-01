@@ -28,7 +28,9 @@ export enum TokenType {
   PASSAGE_MARKER = 'PASSAGE_MARKER',           // ::
   ONCE_CHOICE_MARKER = 'ONCE_CHOICE_MARKER',   // + (once-only choice)
   STICKY_CHOICE_MARKER = 'STICKY_CHOICE_MARKER', // * (sticky choice)
+  GATHER = 'GATHER',                           // - (gather point at line start)
   ARROW = 'ARROW',                             // ->
+  TUNNEL_RETURN = 'TUNNEL_RETURN',             // <- (return from tunnel)
 
   // Directives
   DIRECTIVE = 'DIRECTIVE',                     // @title, @author, @vars, etc.

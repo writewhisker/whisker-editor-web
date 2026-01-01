@@ -678,4 +678,109 @@ Content three`);
       expect(result.ast?.passages.map(p => p.name)).toEqual(['One', 'Two', 'Three']);
     });
   });
+
+  describe('advanced flow control (WLS 1.0)', () => {
+    describe('gather points', () => {
+      it('should parse simple gather point', () => {
+        const result = parse(`:: Start
++ [Option A]
++ [Option B]
+- Continue here`);
+        const passage = result.ast?.passages[0];
+        const gather = passage?.content.find(c => c.type === 'gather');
+        expect(gather).toBeDefined();
+        expect(gather?.type).toBe('gather');
+      });
+
+      it('should parse gather point with depth 1', () => {
+        const result = parse(`:: Start
+- Gathered content`);
+        const passage = result.ast?.passages[0];
+        const gather = passage?.content.find(c => c.type === 'gather');
+        expect(gather).toBeDefined();
+        if (gather?.type === 'gather') {
+          expect(gather.depth).toBe(1);
+        }
+      });
+
+      it('should parse nested gather point with depth 2', () => {
+        const result = parse(`:: Start
+- - Deeply nested`);
+        const passage = result.ast?.passages[0];
+        const gather = passage?.content.find(c => c.type === 'gather');
+        expect(gather).toBeDefined();
+        if (gather?.type === 'gather') {
+          expect(gather.depth).toBe(2);
+        }
+      });
+
+      it('should parse gather point with content', () => {
+        const result = parse(`:: Start
+- This is gathered text`);
+        const passage = result.ast?.passages[0];
+        const gather = passage?.content.find(c => c.type === 'gather');
+        expect(gather).toBeDefined();
+        if (gather?.type === 'gather') {
+          expect(gather.content.length).toBeGreaterThan(0);
+        }
+      });
+    });
+
+    describe('tunnel calls', () => {
+      it('should parse tunnel call (-> Target ->)', () => {
+        const result = parse(`:: Start
+-> Helper ->`);
+        const passage = result.ast?.passages[0];
+        const tunnelCall = passage?.content.find(c => c.type === 'tunnel_call');
+        expect(tunnelCall).toBeDefined();
+        if (tunnelCall?.type === 'tunnel_call') {
+          expect(tunnelCall.target).toBe('Helper');
+        }
+      });
+
+      it('should distinguish tunnel call from navigation', () => {
+        const result = parse(`:: Start
+-> Helper ->`);
+        const passage = result.ast?.passages[0];
+        const tunnelCall = passage?.content.find(c => c.type === 'tunnel_call');
+        expect(tunnelCall?.type).toBe('tunnel_call');
+      });
+    });
+
+    describe('tunnel returns', () => {
+      it('should parse tunnel return (<-)', () => {
+        const result = parse(`:: Helper
+Some content
+<-`);
+        const passage = result.ast?.passages[0];
+        const tunnelReturn = passage?.content.find(c => c.type === 'tunnel_return');
+        expect(tunnelReturn).toBeDefined();
+        expect(tunnelReturn?.type).toBe('tunnel_return');
+      });
+    });
+
+    describe('combined flow control', () => {
+      it('should parse story with choices, gathers, and tunnels', () => {
+        const result = parse(`:: Start
++ [Ask for help] -> Helper ->
++ [Continue alone]
+- Both paths converge here
+
+:: Helper
+Here is some help!
+<-`);
+        expect(result.ast?.passages).toHaveLength(2);
+
+        const startPassage = result.ast?.passages[0];
+        const choices = startPassage?.content.filter(c => c.type === 'choice');
+        const gathers = startPassage?.content.filter(c => c.type === 'gather');
+        expect(choices?.length).toBeGreaterThanOrEqual(2);
+        expect(gathers?.length).toBeGreaterThanOrEqual(1);
+
+        const helperPassage = result.ast?.passages[1];
+        const tunnelReturn = helperPassage?.content.find(c => c.type === 'tunnel_return');
+        expect(tunnelReturn).toBeDefined();
+      });
+    });
+  });
 });

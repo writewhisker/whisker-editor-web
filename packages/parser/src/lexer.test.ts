@@ -51,6 +51,40 @@ describe('Lexer', () => {
       expect(types).toContain(TokenType.STICKY_CHOICE_MARKER);
       expect(types).toContain(TokenType.STAR);
     });
+
+    it('should tokenize gather point (-) at line start', () => {
+      expect(hasToken('- continue', TokenType.GATHER, '-')).toBe(true);
+    });
+
+    it('should differentiate - at line start (gather) vs in expression', () => {
+      const result = tokenize('- gather\n5 - 3');
+      const types = result.tokens.map(t => t.type);
+      expect(types).toContain(TokenType.GATHER);
+      expect(types).toContain(TokenType.MINUS);
+    });
+
+    it('should tokenize nested gather points', () => {
+      const result = tokenize('- - nested');
+      const gatherCount = result.tokens.filter(t => t.type === TokenType.GATHER).length;
+      expect(gatherCount).toBe(2);
+    });
+
+    it('should tokenize tunnel return (<-)', () => {
+      expect(hasToken('<-', TokenType.TUNNEL_RETURN, '<-')).toBe(true);
+    });
+
+    it('should differentiate <- (tunnel return) from < and -', () => {
+      const result = tokenize('<-\n1 < 2');
+      const types = result.tokens.map(t => t.type);
+      expect(types).toContain(TokenType.TUNNEL_RETURN);
+      expect(types).toContain(TokenType.LT);
+    });
+
+    it('should tokenize tunnel call pattern (-> Target ->)', () => {
+      const result = tokenize('-> Target ->');
+      const arrowCount = result.tokens.filter(t => t.type === TokenType.ARROW).length;
+      expect(arrowCount).toBe(2);
+    });
   });
 
   describe('delimiters', () => {

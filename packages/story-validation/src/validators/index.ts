@@ -29,3 +29,4 @@ export { WlsSyntaxValidator } from './WlsSyntaxValidator';
 export { WlsSpecialTargetsValidator } from './WlsSpecialTargetsValidator';
 export { WlsVariableValidator } from './WlsVariableValidator';
 export { WlsExpressionValidator } from './WlsExpressionValidator';
+export { WlsCollectionValidator } from './WlsCollectionValidator';  // WLS 1.0 Gap 3

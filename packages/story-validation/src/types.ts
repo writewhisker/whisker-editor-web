@@ -22,7 +22,8 @@ export type ValidationCategory =
   | 'content'
   | 'quality'
   | 'syntax'
-  | 'expression';
+  | 'expression'
+  | 'collections';  // WLS 1.0 Gap 3
 
 /**
  * Individual validation issue

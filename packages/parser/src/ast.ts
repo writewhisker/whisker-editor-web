@@ -28,9 +28,14 @@ export interface StoryNode extends BaseNode {
   type: 'story';
   metadata: MetadataNode[];
   variables: VariableDeclarationNode[];
-  lists: ListDeclarationNode[];         // WLS 1.0 Gap 3: LIST declarations
-  arrays: ArrayDeclarationNode[];       // WLS 1.0 Gap 3: ARRAY declarations
-  maps: MapDeclarationNode[];           // WLS 1.0 Gap 3: MAP declarations
+  lists: ListDeclarationNode[];             // WLS 1.0 Gap 3: LIST declarations
+  arrays: ArrayDeclarationNode[];           // WLS 1.0 Gap 3: ARRAY declarations
+  maps: MapDeclarationNode[];               // WLS 1.0 Gap 3: MAP declarations
+  includes: IncludeDeclarationNode[];       // WLS 1.0 Gap 4: INCLUDE declarations
+  functions: FunctionDeclarationNode[];     // WLS 1.0 Gap 4: FUNCTION definitions
+  namespaces: NamespaceDeclarationNode[];   // WLS 1.0 Gap 4: NAMESPACE blocks
+  theme: ThemeDirectiveNode | null;         // WLS 1.0 Gap 5: Theme directive
+  styles: StyleBlockNode | null;            // WLS 1.0 Gap 5: Style block
   passages: PassageNode[];
 }
 
@@ -112,6 +117,49 @@ export interface MapDeclarationNode extends BaseNode {
 }
 
 // ============================================================================
+// Module Declarations (WLS 1.0 - Gap 4)
+// ============================================================================
+
+/**
+ * INCLUDE declaration: import external file
+ * Example: INCLUDE "path/to/file.ws"
+ */
+export interface IncludeDeclarationNode extends BaseNode {
+  type: 'include_declaration';
+  path: string;
+}
+
+/**
+ * FUNCTION parameter
+ */
+export interface FunctionParameterNode {
+  name: string;
+}
+
+/**
+ * FUNCTION declaration: reusable logic block
+ * Example: FUNCTION greet(name) ... RETURN ... END
+ */
+export interface FunctionDeclarationNode extends BaseNode {
+  type: 'function_declaration';
+  name: string;
+  params: FunctionParameterNode[];
+  body: ContentNode[];
+}
+
+/**
+ * NAMESPACE declaration: passage grouping
+ * Example: NAMESPACE Combat ... END NAMESPACE
+ */
+export interface NamespaceDeclarationNode extends BaseNode {
+  type: 'namespace_declaration';
+  name: string;
+  passages: PassageNode[];
+  functions: FunctionDeclarationNode[];
+  nestedNamespaces: NamespaceDeclarationNode[];
+}
+
+// ============================================================================
 // Passage Structure
 // ============================================================================
 
@@ -120,7 +168,9 @@ export interface MapDeclarationNode extends BaseNode {
  */
 export interface PassageNode extends BaseNode {
   type: 'passage';
-  name: string;
+  name: string;              // Fully qualified name (with namespace prefix)
+  originalName?: string;     // WLS 1.0 Gap 4: Name as written in source
+  namespace?: string;        // WLS 1.0 Gap 4: Namespace the passage belongs to
   tags: string[];
   metadata: PassageMetadataNode[];
   content: ContentNode[];
@@ -152,7 +202,17 @@ export type ContentNode =
   | AlternativesNode
   | GatherNode
   | TunnelCallNode
-  | TunnelReturnNode;
+  | TunnelReturnNode
+  | FormattedTextNode      // WLS 1.0 Gap 5: Rich text
+  | BlockquoteNode         // WLS 1.0 Gap 5: Blockquotes
+  | ListNode               // WLS 1.0 Gap 5: Lists
+  | HorizontalRuleNode     // WLS 1.0 Gap 5: Horizontal rules
+  | ClassedBlockNode       // WLS 1.0 Gap 5: CSS classes
+  | ClassedInlineNode      // WLS 1.0 Gap 5: Inline CSS classes
+  | ImageNode              // WLS 1.0 Gap 5: Images
+  | AudioNode              // WLS 1.0 Gap 5: Audio
+  | VideoNode              // WLS 1.0 Gap 5: Video
+  | EmbedNode;             // WLS 1.0 Gap 5: Embedded content
 
 /**
  * Plain text content
@@ -253,6 +313,164 @@ export interface TunnelCallNode extends BaseNode {
  */
 export interface TunnelReturnNode extends BaseNode {
   type: 'tunnel_return';
+}
+
+// ============================================================================
+// Presentation Nodes (WLS 1.0 - Gap 5)
+// ============================================================================
+
+/**
+ * Formatted text (bold, italic, code, strikethrough)
+ */
+export interface FormattedTextNode extends BaseNode {
+  type: 'formatted_text';
+  format: 'bold' | 'italic' | 'bold_italic' | 'code' | 'strikethrough';
+  content: ContentNode[];
+}
+
+/**
+ * Blockquote (> text)
+ */
+export interface BlockquoteNode extends BaseNode {
+  type: 'blockquote';
+  content: ContentNode[];
+  depth: number;
+}
+
+/**
+ * List (ordered or unordered)
+ */
+export interface ListNode extends BaseNode {
+  type: 'list';
+  ordered: boolean;
+  items: ListItemNode[];
+}
+
+/**
+ * List item
+ */
+export interface ListItemNode extends BaseNode {
+  type: 'list_item';
+  content: ContentNode[];
+  children: ListNode | null;  // For nested lists
+}
+
+/**
+ * Horizontal rule (---)
+ */
+export interface HorizontalRuleNode extends BaseNode {
+  type: 'horizontal_rule';
+}
+
+/**
+ * Block with CSS classes (.class { content })
+ */
+export interface ClassedBlockNode extends BaseNode {
+  type: 'classed_block';
+  classes: string[];
+  content: ContentNode[];
+}
+
+/**
+ * Inline content with CSS classes ([.class text])
+ */
+export interface ClassedInlineNode extends BaseNode {
+  type: 'classed_inline';
+  classes: string[];
+  content: ContentNode[];
+}
+
+/**
+ * Media attributes
+ */
+export interface MediaAttributes {
+  width?: string;
+  height?: string;
+  align?: 'left' | 'center' | 'right';
+  class?: string;
+}
+
+/**
+ * Audio-specific attributes
+ */
+export interface AudioAttributes extends MediaAttributes {
+  loop?: boolean;
+  autoplay?: boolean;
+  controls?: boolean;
+  volume?: number;
+  id?: string;
+}
+
+/**
+ * Video-specific attributes
+ */
+export interface VideoAttributes extends MediaAttributes {
+  loop?: boolean;
+  autoplay?: boolean;
+  controls?: boolean;
+  muted?: boolean;
+  poster?: string;
+}
+
+/**
+ * Embed-specific attributes
+ */
+export interface EmbedAttributes extends MediaAttributes {
+  sandbox?: boolean;
+  allow?: string;
+}
+
+/**
+ * Image node (![alt](src){attributes})
+ */
+export interface ImageNode extends BaseNode {
+  type: 'image';
+  alt: string;
+  src: string;
+  attributes: MediaAttributes;
+}
+
+/**
+ * Audio node ([audio](src){attributes})
+ */
+export interface AudioNode extends BaseNode {
+  type: 'audio';
+  src: string;
+  attributes: AudioAttributes;
+}
+
+/**
+ * Video node ([video](src){attributes})
+ */
+export interface VideoNode extends BaseNode {
+  type: 'video';
+  src: string;
+  attributes: VideoAttributes;
+}
+
+/**
+ * Embed node ([embed](src){attributes})
+ */
+export interface EmbedNode extends BaseNode {
+  type: 'embed';
+  src: string;
+  attributes: EmbedAttributes;
+}
+
+/**
+ * Theme directive (THEME "name")
+ */
+export interface ThemeDirectiveNode extends BaseNode {
+  type: 'theme_directive';
+  themeName: string;
+}
+
+/**
+ * Style block (STYLE { properties })
+ */
+export interface StyleBlockNode extends BaseNode {
+  type: 'style_block';
+  properties: Map<string, string>;
 }
 
 // ============================================================================
@@ -474,5 +692,16 @@ export function isContent(node: BaseNode): node is ContentNode {
     'gather',
     'tunnel_call',
     'tunnel_return',
+    // WLS 1.0 Gap 5: Presentation nodes
+    'formatted_text',
+    'blockquote',
+    'list',
+    'horizontal_rule',
+    'classed_block',
+    'classed_inline',
+    'image',
+    'audio',
+    'video',
+    'embed',
   ].includes(node.type);
 }

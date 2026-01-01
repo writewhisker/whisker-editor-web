@@ -18,6 +18,10 @@ import type {
   ArrayElementNode,
   MapDeclarationNode,
   MapEntryNode,
+  IncludeDeclarationNode,
+  FunctionDeclarationNode,
+  FunctionParameterNode,
+  NamespaceDeclarationNode,
   ContentNode,
   TextNode,
   InterpolationNode,
@@ -48,6 +52,7 @@ export class Parser {
   private tokens: Token[] = [];
   private pos: number = 0;
   private errors: ParseError[] = [];
+  private namespaceStack: string[] = [];  // WLS 1.0 Gap 4: Current namespace context
 
   /**
    * Parse source code into an AST
@@ -80,6 +85,9 @@ export class Parser {
           lists: [],
           arrays: [],
           maps: [],
+          includes: [],
+          functions: [],
+          namespaces: [],
           passages: [],
           location: emptyLocation,
         },
@@ -194,7 +202,12 @@ export class Parser {
     const lists: ListDeclarationNode[] = [];
     const arrays: ArrayDeclarationNode[] = [];
     const maps: MapDeclarationNode[] = [];
+    const includes: IncludeDeclarationNode[] = [];
+    const functions: FunctionDeclarationNode[] = [];
+    const namespaces: NamespaceDeclarationNode[] = [];
     const passages: PassageNode[] = [];
+
+    this.namespaceStack = [];  // Reset namespace context
 
     this.skipNewlines();
 
@@ -207,12 +220,15 @@ export class Parser {
         lists,
         arrays,
         maps,
+        includes,
+        functions,
+        namespaces,
         passages,
         location: this.getLocation(start),
       };
     }
 
-    // Parse metadata, variables, and collections before first passage
+    // Parse metadata, variables, collections, and modules before first passage
     while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER)) {
       if (this.check(TokenType.DIRECTIVE)) {
         const directive = this.parseDirective();
@@ -233,6 +249,21 @@ export class Parser {
         // WLS 1.0 Gap 3: MAP declaration
         const map = this.parseMapDeclaration();
         if (map) maps.push(map);
+      } else if (this.check(TokenType.INCLUDE)) {
+        // WLS 1.0 Gap 4: INCLUDE declaration
+        const include = this.parseIncludeDeclaration();
+        if (include) includes.push(include);
+      } else if (this.check(TokenType.FUNCTION)) {
+        // WLS 1.0 Gap 4: FUNCTION declaration
+        const func = this.parseFunctionDeclaration();
+        if (func) functions.push(func);
+      } else if (this.check(TokenType.NAMESPACE)) {
+        // WLS 1.0 Gap 4: NAMESPACE block
+        const ns = this.parseNamespaceDeclaration(passages, functions);
+        if (ns) namespaces.push(ns);
+      } else if (this.check(TokenType.END)) {
+        // WLS 1.0 Gap 4: END NAMESPACE
+        this.parseEndNamespace();
       } else if (this.check(TokenType.NEWLINE)) {
         this.advance();
       } else if (this.check(TokenType.COMMENT)) {
@@ -247,10 +278,21 @@ export class Parser {
       }
     }
 
-    // Parse passages
+    // Parse passages (and handle interleaved namespace/function declarations)
     while (!this.isAtEnd()) {
       if (this.check(TokenType.PASSAGE_MARKER)) {
         passages.push(this.parsePassage());
+      } else if (this.check(TokenType.NAMESPACE)) {
+        // WLS 1.0 Gap 4: NAMESPACE block in passage section
+        const ns = this.parseNamespaceDeclaration(passages, functions);
+        if (ns) namespaces.push(ns);
+      } else if (this.check(TokenType.END)) {
+        // WLS 1.0 Gap 4: END NAMESPACE
+        this.parseEndNamespace();
+      } else if (this.check(TokenType.FUNCTION)) {
+        // WLS 1.0 Gap 4: FUNCTION in passage section
+        const func = this.parseFunctionDeclaration();
+        if (func) functions.push(func);
       } else if (this.check(TokenType.NEWLINE) || this.check(TokenType.COMMENT)) {
         this.advance();
       } else {
@@ -268,6 +310,9 @@ export class Parser {
       lists,
       arrays,
       maps,
+      includes,
+      functions,
+      namespaces,
       passages,
       location: this.getLocation(start),
     };
@@ -640,6 +685,180 @@ export class Parser {
   }
 
   // ============================================================================
+  // Module Declarations (WLS 1.0 - Gap 4)
+  // ============================================================================
+
+  /**
+   * Parse an INCLUDE declaration: INCLUDE "path/to/file.ws"
+   */
+  private parseIncludeDeclaration(): IncludeDeclarationNode | null {
+    const start = this.advance(); // consume INCLUDE
+    this.skipWhitespaceOnLine();
+
+    // Parse path string
+    if (!this.check(TokenType.STRING)) {
+      this.addError('Expected path string after INCLUDE', {
+        code: 'WLS-MOD-001' as WLSErrorCode,
+        suggestion: 'Provide a quoted path: INCLUDE "path/to/file.ws"',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const path = this.advance().value;
+
+    this.skipToNextLine();
+
+    return {
+      type: 'include_declaration',
+      path,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a FUNCTION declaration: FUNCTION name(param1, param2) ... END
+   */
+  private parseFunctionDeclaration(): FunctionDeclarationNode | null {
+    const start = this.advance(); // consume FUNCTION
+    this.skipWhitespaceOnLine();
+
+    // Parse function name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected function name after FUNCTION', {
+        code: 'WLS-MOD-006' as WLSErrorCode,
+        suggestion: 'Provide a name: FUNCTION myFunction(param1)',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+
+    // Parse optional parameters
+    const params: FunctionParameterNode[] = [];
+    if (this.match(TokenType.LPAREN)) {
+      while (!this.isAtEnd() && !this.check(TokenType.RPAREN)) {
+        if (this.check(TokenType.IDENTIFIER)) {
+          params.push({ name: this.advance().value });
+        }
+        if (!this.check(TokenType.RPAREN)) {
+          this.match(TokenType.COMMA);
+        }
+      }
+      this.expect(TokenType.RPAREN, 'Expected ")" after parameters');
+    }
+
+    this.skipNewlines();
+
+    // Parse function body until END
+    const body: ContentNode[] = [];
+    let depth = 1;
+
+    while (!this.isAtEnd() && depth > 0) {
+      if (this.check(TokenType.FUNCTION) || this.check(TokenType.NAMESPACE)) {
+        depth++;
+        this.advance();
+      } else if (this.check(TokenType.END)) {
+        depth--;
+        if (depth === 0) {
+          this.advance(); // consume END
+          break;
+        }
+        this.advance();
+      } else if (this.check(TokenType.NEWLINE)) {
+        this.advance();
+      } else {
+        // For now, skip tokens in function body - full parsing would need expression/statement parsing
+        this.advance();
+      }
+    }
+
+    return {
+      type: 'function_declaration',
+      name,
+      params,
+      body,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a NAMESPACE declaration: NAMESPACE Name
+   * Pushes namespace onto stack for subsequent passages
+   */
+  private parseNamespaceDeclaration(
+    passages: PassageNode[],
+    functions: FunctionDeclarationNode[]
+  ): NamespaceDeclarationNode | null {
+    const start = this.advance(); // consume NAMESPACE
+    this.skipWhitespaceOnLine();
+
+    // Parse namespace name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected namespace name after NAMESPACE', {
+        code: 'WLS-MOD-007' as WLSErrorCode,
+        suggestion: 'Provide a name: NAMESPACE MyNamespace',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+
+    // Push onto namespace stack
+    this.namespaceStack.push(name);
+
+    this.skipToNextLine();
+
+    // Note: Actual namespace node is created for tracking purposes
+    // Passages within the namespace are added to the main passages array
+    // with their qualified names
+    return {
+      type: 'namespace_declaration',
+      name,
+      passages: [],
+      functions: [],
+      nestedNamespaces: [],
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse END NAMESPACE - pops namespace from stack
+   */
+  private parseEndNamespace(): void {
+    this.advance(); // consume END
+    this.skipWhitespaceOnLine();
+
+    // Check for NAMESPACE keyword
+    if (this.check(TokenType.NAMESPACE)) {
+      this.advance(); // consume NAMESPACE
+    }
+
+    // Pop from namespace stack
+    if (this.namespaceStack.length > 0) {
+      this.namespaceStack.pop();
+    } else {
+      this.addError('END NAMESPACE without matching NAMESPACE', {
+        code: 'WLS-MOD-008' as WLSErrorCode,
+      });
+    }
+
+    this.skipToNextLine();
+  }
+
+  /**
+   * Get the current namespace prefix (for qualifying passage names)
+   */
+  private getNamespacePrefix(): string {
+    if (this.namespaceStack.length === 0) {
+      return '';
+    }
+    return this.namespaceStack.join('::') + '::';
+  }
+
+  // ============================================================================
   // Passage Parsing
   // ============================================================================
 
@@ -652,12 +871,23 @@ export class Parser {
     const tags: string[] = [];
     const metadata: PassageMetadataNode[] = [];
 
+    // WLS 1.0 Gap 4: Check for :: prefix (global namespace reference)
+    const isGlobalReference = this.check(TokenType.SCOPE_OP);
+    if (isGlobalReference) {
+      this.advance(); // consume ::
+    }
+
     if (this.check(TokenType.IDENTIFIER)) {
       name = this.advance().value;
 
-      // Check for additional name parts (e.g., "Start Room")
-      while (this.check(TokenType.IDENTIFIER)) {
-        name += ' ' + this.advance().value;
+      // Check for additional name parts (e.g., "Start Room" or "Namespace::Passage")
+      while (this.check(TokenType.IDENTIFIER) || this.check(TokenType.SCOPE_OP)) {
+        if (this.check(TokenType.SCOPE_OP)) {
+          name += '::';
+          this.advance();
+        } else {
+          name += ' ' + this.advance().value;
+        }
       }
     } else {
       this.addError('Expected passage name after ::', {
@@ -665,6 +895,20 @@ export class Parser {
         suggestion: 'Provide a name for the passage after "::"',
       });
       name = 'unnamed';
+    }
+
+    // WLS 1.0 Gap 4: Apply namespace prefix if not a global reference
+    const originalName = name;
+    let qualifiedName = name;
+    let currentNamespace: string | undefined;
+
+    if (isGlobalReference) {
+      // Global reference - use name as-is
+      qualifiedName = name;
+    } else if (this.namespaceStack.length > 0) {
+      // Apply namespace prefix
+      currentNamespace = this.namespaceStack.join('::');
+      qualifiedName = this.getNamespacePrefix() + name;
     }
 
     // Parse optional tags [tag1, tag2]
@@ -694,7 +938,9 @@ export class Parser {
 
     return {
       type: 'passage',
-      name,
+      name: qualifiedName,
+      originalName: originalName !== qualifiedName ? originalName : undefined,
+      namespace: currentNamespace,
       tags,
       metadata,
       content,
@@ -904,8 +1150,29 @@ export class Parser {
 
     // Optional target -> passage
     if (this.match(TokenType.ARROW)) {
+      // WLS 1.0 Gap 4: Also accept END keyword as target (special target)
+      // and SCOPE_OP for namespace-qualified targets
       if (this.check(TokenType.IDENTIFIER)) {
         target = this.advance().value;
+        // Handle namespace-qualified targets (e.g., Namespace::Passage)
+        while (this.check(TokenType.SCOPE_OP)) {
+          target += '::';
+          this.advance();
+          if (this.check(TokenType.IDENTIFIER)) {
+            target += this.advance().value;
+          }
+        }
+      } else if (this.check(TokenType.END)) {
+        // END is a special target (WLS 1.0 Gap 4: END is now a keyword)
+        target = 'END';
+        this.advance();
+      } else if (this.check(TokenType.SCOPE_OP)) {
+        // Global reference (::Passage)
+        target = '';
+        this.advance();
+        if (this.check(TokenType.IDENTIFIER)) {
+          target = this.advance().value;
+        }
       } else {
         this.addError('Expected passage name after "->"', {
           code: WLS_ERROR_CODES.EXPECTED_CHOICE_TARGET,

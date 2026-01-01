@@ -369,7 +369,13 @@ export class Lexer {
         break;
       case ':':
         if (this.match(':')) {
-          this.addToken(TokenType.PASSAGE_MARKER, '::', start);
+          // :: can be PASSAGE_MARKER (at line start) or SCOPE_OP (namespace reference)
+          // At line start = passage definition; otherwise = namespace separator
+          if (this.isAtLineStart(start)) {
+            this.addToken(TokenType.PASSAGE_MARKER, '::', start);
+          } else {
+            this.addToken(TokenType.SCOPE_OP, '::', start);
+          }
         } else {
           this.addToken(TokenType.COLON, ':', start);
         }

@@ -29,6 +29,9 @@ import {
   WlsSpecialTargetsValidator,
   WlsVariableValidator,
   WlsExpressionValidator,
+  WlsCollectionValidator,
+  WlsModuleValidator,
+  WlsPresentationValidator,
 } from './validators';
 
 /**
@@ -73,6 +76,15 @@ export function createDefaultValidator(): StoryValidator {
   validator.registerValidator(new ValidateStylesheetsValidator());
   validator.registerValidator(new ValidateScriptsValidator());
   validator.registerValidator(new ValidateAssetsValidator());
+
+  // Register collection validators (WLS 1.0 Gap 3)
+  validator.registerValidator(new WlsCollectionValidator());
+
+  // Register module validators (WLS 1.0 Gap 4)
+  validator.registerValidator(new WlsModuleValidator());
+
+  // Register presentation validators (WLS 1.0 Gap 5)
+  validator.registerValidator(new WlsPresentationValidator());
 
   return validator;
 }

@@ -250,6 +250,9 @@ export class Lexer {
           this.addToken(TokenType.ARROW, '->', start);
         } else if (this.match('-')) {
           this.scanLineComment(start);
+        } else if (this.isGatherContext(start)) {
+          // - at line start (similar to choice markers) is a gather point
+          this.addToken(TokenType.GATHER, '-', start);
         } else {
           this.addToken(TokenType.MINUS, '-', start);
         }
@@ -297,6 +300,9 @@ export class Lexer {
       case '<':
         if (this.match('=')) {
           this.addToken(TokenType.LTE, '<=', start);
+        } else if (this.match('-')) {
+          // <- is tunnel return
+          this.addToken(TokenType.TUNNEL_RETURN, '<-', start);
         } else {
           this.addToken(TokenType.LT, '<', start);
         }
@@ -431,6 +437,21 @@ export class Lexer {
       if (c !== ' ' && c !== '\t') return false;
     }
     return true;
+  }
+
+  /**
+   * Check if we're in a gather context (for gather point markers)
+   * Gathers can appear at line start or after another choice/gather marker
+   */
+  private isGatherContext(location: SourceLocation): boolean {
+    // At line start is valid for gather
+    if (this.isAtLineStart(location)) return true;
+
+    // After another choice or gather marker is also valid (for nested gathers)
+    const prevType = this.previousTokenType();
+    return prevType === TokenType.ONCE_CHOICE_MARKER ||
+           prevType === TokenType.STICKY_CHOICE_MARKER ||
+           prevType === TokenType.GATHER;
   }
 
   /**

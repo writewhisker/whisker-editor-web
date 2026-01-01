@@ -20,6 +20,9 @@ import type {
   ConditionalBranchNode,
   ChoiceNode,
   AlternativesNode,
+  GatherNode,
+  TunnelCallNode,
+  TunnelReturnNode,
   ExpressionNode,
   VariableNode,
   CallExpressionNode,
@@ -471,6 +474,21 @@ export class Parser {
       return this.parseChoice();
     }
 
+    // Gather point (- at line start)
+    if (this.check(TokenType.GATHER)) {
+      return this.parseGather();
+    }
+
+    // Tunnel return (<-)
+    if (this.check(TokenType.TUNNEL_RETURN)) {
+      return this.parseTunnelReturn();
+    }
+
+    // Arrow could be tunnel call (-> Target ->) or navigation
+    if (this.check(TokenType.ARROW)) {
+      return this.parseTunnelCallOrNavigation();
+    }
+
     // Conditional block
     if (this.check(TokenType.LBRACE)) {
       return this.parseConditionalOrAlternatives();
@@ -630,6 +648,100 @@ export class Parser {
       text,
       target,
       action,
+      location: this.getLocation(start),
+    };
+  }
+
+  // ============================================================================
+  // Gather and Tunnel Parsing (WLS 1.0)
+  // ============================================================================
+
+  /**
+   * Parse a gather point (- at line start)
+   * Gather points allow flow to reconverge after choices
+   */
+  private parseGather(): GatherNode {
+    const start = this.peek();
+    let depth = 0;
+
+    // Count consecutive gather markers for nesting depth
+    while (this.check(TokenType.GATHER)) {
+      this.advance();
+      depth++;
+    }
+
+    // Parse content after gather point (rest of line)
+    const content: ContentNode[] = [];
+    while (!this.isAtEnd() && !this.check(TokenType.NEWLINE) && !this.check(TokenType.PASSAGE_MARKER)) {
+      const node = this.parseContentNode();
+      if (node) {
+        content.push(node);
+      } else if (!this.isAtEnd() && !this.check(TokenType.NEWLINE)) {
+        const token = this.advance();
+        content.push({
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        });
+      } else {
+        break;
+      }
+    }
+
+    return {
+      type: 'gather',
+      depth,
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a tunnel return (<-)
+   * Returns from a tunnel to the calling passage
+   */
+  private parseTunnelReturn(): TunnelReturnNode {
+    const start = this.advance(); // consume <-
+    return {
+      type: 'tunnel_return',
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse tunnel call (-> Target ->) or simple navigation (-> Target)
+   * Tunnel calls include a trailing -> to indicate return
+   */
+  private parseTunnelCallOrNavigation(): TunnelCallNode | TextNode {
+    const start = this.advance(); // consume first ->
+
+    // Get target passage name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      // Just an arrow without target, treat as text
+      return {
+        type: 'text',
+        value: '->',
+        location: this.getLocation(start),
+      };
+    }
+
+    const target = this.advance().value;
+
+    // Check for trailing -> (makes it a tunnel call)
+    if (this.check(TokenType.ARROW)) {
+      this.advance(); // consume trailing ->
+      return {
+        type: 'tunnel_call',
+        target,
+        location: this.getLocation(start),
+      };
+    }
+
+    // Not a tunnel call, just navigation arrow with target
+    // Return as text since navigation is handled at choice level
+    return {
+      type: 'text',
+      value: '-> ' + target,
       location: this.getLocation(start),
     };
   }

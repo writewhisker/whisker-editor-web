@@ -88,7 +88,10 @@ export type ContentNode =
   | DoBlockNode
   | ConditionalNode
   | ChoiceNode
-  | AlternativesNode;
+  | AlternativesNode
+  | GatherNode
+  | TunnelCallNode
+  | TunnelReturnNode;
 
 /**
  * Plain text content
@@ -162,6 +165,33 @@ export interface AlternativesNode extends BaseNode {
   type: 'alternatives';
   mode: 'sequence' | 'cycle' | 'shuffle' | 'once';
   options: ContentNode[][];
+}
+
+/**
+ * Gather point for flow reconvergence (-)
+ * WLS 1.0: Allows nested choices/gathers to converge
+ */
+export interface GatherNode extends BaseNode {
+  type: 'gather';
+  depth: number;  // Nesting depth (number of - markers)
+  content: ContentNode[];  // Content after the gather point
+}
+
+/**
+ * Tunnel call (-> Target ->)
+ * WLS 1.0: Call a passage as a reusable tunnel, returns to caller
+ */
+export interface TunnelCallNode extends BaseNode {
+  type: 'tunnel_call';
+  target: string;  // Target passage name
+}
+
+/**
+ * Tunnel return (<-)
+ * WLS 1.0: Return from a tunnel to the calling passage
+ */
+export interface TunnelReturnNode extends BaseNode {
+  type: 'tunnel_return';
 }
 
 // ============================================================================
@@ -283,6 +313,12 @@ export const WLS_ERROR_CODES = {
   UNDEFINED_PASSAGE: 'WLS-REF-001',
   // Structure errors (STR)
   DUPLICATE_PASSAGE: 'WLS-STR-001',
+  // Flow control errors (FLW) - WLS 1.0
+  ORPHAN_GATHER: 'WLS-FLW-007',           // Gather without preceding choice
+  TUNNEL_DEPTH_EXCEEDED: 'WLS-FLW-008',   // Too many nested tunnel calls
+  ORPHAN_TUNNEL_RETURN: 'WLS-FLW-009',    // <- outside tunnel context
+  MISSING_TUNNEL_RETURN: 'WLS-FLW-010',   // Tunnel passage without <-
+  INVALID_TUNNEL_SYNTAX: 'WLS-FLW-011',   // Malformed tunnel call
 } as const;
 
 export type WLSErrorCode = typeof WLS_ERROR_CODES[keyof typeof WLS_ERROR_CODES];
@@ -374,5 +410,8 @@ export function isContent(node: BaseNode): node is ContentNode {
     'conditional',
     'choice',
     'alternatives',
+    'gather',
+    'tunnel_call',
+    'tunnel_return',
   ].includes(node.type);
 }

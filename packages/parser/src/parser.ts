@@ -28,7 +28,9 @@ import type {
   ParseResult,
   BinaryOperator,
   AssignmentOperator,
+  WLSErrorCode,
 } from './ast';
+import { WLS_ERROR_CODES } from './ast';
 
 /**
  * Parser for WLS 1.0 format
@@ -132,11 +134,20 @@ export class Parser {
     return new Error(message);
   }
 
-  private addError(message: string, suggestion?: string): void {
+  private addError(
+    message: string,
+    options?: {
+      code?: WLSErrorCode;
+      suggestion?: string;
+      severity?: 'error' | 'warning';
+    }
+  ): void {
     this.errors.push({
       message,
       location: this.peek().location,
-      suggestion,
+      code: options?.code,
+      suggestion: options?.suggestion,
+      severity: options?.severity || 'error',
     });
   }
 
@@ -198,7 +209,10 @@ export class Parser {
         this.advance(); // Skip comments
       } else {
         // Unknown content before first passage
-        this.addError('Expected passage marker (::) or directive (@)');
+        this.addError('Expected passage marker (::) or directive (@)', {
+          code: WLS_ERROR_CODES.EXPECTED_PASSAGE_MARKER,
+          suggestion: 'Add "::" before passage name or "@" before directive',
+        });
         this.skipToNextLine();
       }
     }
@@ -210,7 +224,9 @@ export class Parser {
       } else if (this.check(TokenType.NEWLINE) || this.check(TokenType.COMMENT)) {
         this.advance();
       } else {
-        this.addError('Expected passage marker (::)');
+        this.addError('Expected passage marker (::)', {
+          code: WLS_ERROR_CODES.EXPECTED_PASSAGE_MARKER,
+        });
         this.skipToNextLine();
       }
     }
@@ -335,7 +351,10 @@ export class Parser {
         name += ' ' + this.advance().value;
       }
     } else {
-      this.addError('Expected passage name after ::');
+      this.addError('Expected passage name after ::', {
+        code: WLS_ERROR_CODES.EXPECTED_PASSAGE_NAME,
+        suggestion: 'Provide a name for the passage after "::"',
+      });
       name = 'unnamed';
     }
 
@@ -564,7 +583,10 @@ export class Parser {
       if (this.check(TokenType.IDENTIFIER)) {
         target = this.advance().value;
       } else {
-        this.addError('Expected passage name after "->"');
+        this.addError('Expected passage name after "->"', {
+          code: WLS_ERROR_CODES.EXPECTED_CHOICE_TARGET,
+          suggestion: 'Provide a target passage name after "->"',
+        });
       }
     }
 
@@ -864,7 +886,10 @@ export class Parser {
     } else if (this.check(TokenType.IDENTIFIER)) {
       name = this.advance().value;
     } else {
-      this.addError('Expected variable name after "$"');
+      this.addError('Expected variable name after "$"', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'Provide a variable name after "$"',
+      });
       name = '';
     }
 
@@ -935,7 +960,10 @@ export class Parser {
 
       // Allow variable, identifier, or member_expression as assignment target
       if (expr.type !== 'variable' && expr.type !== 'identifier' && expr.type !== 'member_expression') {
-        this.addError('Invalid assignment target');
+        this.addError('Invalid assignment target', {
+          code: WLS_ERROR_CODES.UNEXPECTED_TOKEN,
+          suggestion: 'Assignment target must be a variable or property access',
+        });
       }
 
       return {
@@ -1140,7 +1168,9 @@ export class Parser {
             location: this.getLocation(this.tokens[this.pos - 1]),
           };
         } else {
-          this.addError('Expected property name after "."');
+          this.addError('Expected property name after "."', {
+            code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+          });
         }
       } else {
         break;
@@ -1238,7 +1268,10 @@ export class Parser {
           name = name.replace(/^_/, '');
         }
       } else {
-        this.addError('Expected variable name after "$"');
+        this.addError('Expected variable name after "$"', {
+          code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+          suggestion: 'Provide a variable name after "$"',
+        });
         name = '';
       }
 
@@ -1287,7 +1320,9 @@ export class Parser {
     }
 
     // Error fallback
-    this.addError(`Unexpected token: ${this.peek().value}`);
+    this.addError(`Unexpected token: ${this.peek().value}`, {
+      code: WLS_ERROR_CODES.UNEXPECTED_TOKEN,
+    });
     this.advance();
     return {
       type: 'literal',

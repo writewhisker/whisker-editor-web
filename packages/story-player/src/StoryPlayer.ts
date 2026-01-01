@@ -620,6 +620,52 @@ export class StoryPlayer {
   }
 
   /**
+   * Safe expression evaluator - evaluates simple expressions without Function()
+   * Supports: numbers, strings, booleans, variables, basic arithmetic
+   */
+  private safeEvaluateExpression(expr: string, context: Map<string, any>): any {
+    const trimmed = expr.trim();
+
+    // Handle string literals
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      return trimmed.slice(1, -1);
+    }
+
+    // Handle boolean literals
+    if (trimmed === 'true') return true;
+    if (trimmed === 'false') return false;
+
+    // Handle number literals
+    if (/^-?\d+\.?\d*$/.test(trimmed)) {
+      return parseFloat(trimmed);
+    }
+
+    // Handle variable references
+    if (/^\w+$/.test(trimmed) && context.has(trimmed)) {
+      return context.get(trimmed);
+    }
+
+    // Handle simple arithmetic: number op number or var op number
+    const arithmeticMatch = trimmed.match(/^(\w+|\d+\.?\d*)\s*([+\-*/])\s*(\w+|\d+\.?\d*)$/);
+    if (arithmeticMatch) {
+      const [, leftStr, op, rightStr] = arithmeticMatch;
+      const left = /^\d/.test(leftStr) ? parseFloat(leftStr) : (context.get(leftStr) || 0);
+      const right = /^\d/.test(rightStr) ? parseFloat(rightStr) : (context.get(rightStr) || 0);
+
+      switch (op) {
+        case '+': return Number(left) + Number(right);
+        case '-': return Number(left) - Number(right);
+        case '*': return Number(left) * Number(right);
+        case '/': return right !== 0 ? Number(left) / Number(right) : 0;
+      }
+    }
+
+    // Default: try to look up as variable, otherwise return as-is
+    return context.has(trimmed) ? context.get(trimmed) : trimmed;
+  }
+
+  /**
    * Simple JavaScript-based script executor for basic variable assignments
    * Handles: simple assignments (x = 5), compound assignments (x += 5, x -= 5, x *= 2, x /= 2)
    */
@@ -637,18 +683,8 @@ export class StoryPlayer {
 
       const [, varName, operator, valueExpr] = match;
 
-      // Evaluate the right-hand side expression
-      const context: Record<string, any> = {};
-      this.variables.forEach((value, key) => {
-        context[key] = value;
-      });
-
-      const varNames = Object.keys(context);
-      const varValues = Object.values(context);
-
-      // Create function to evaluate the expression
-      const func = new Function(...varNames, `return (${valueExpr});`);
-      let newValue = func(...varValues);
+      // Evaluate the right-hand side expression using safe evaluator
+      let newValue = this.safeEvaluateExpression(valueExpr, this.variables);
 
       // Apply the operator
       const oldValue = this.variables.get(varName);
@@ -745,30 +781,53 @@ export class StoryPlayer {
   }
 
   /**
-   * Simple JavaScript-based condition evaluator for basic cases
-   * Handles: variable comparisons, boolean logic, numeric comparisons
+   * Safe condition evaluator - evaluates conditions without Function()
+   * Handles: comparisons (==, !=, <, >, <=, >=), boolean logic (and, or, not), variables
    */
   private evaluateSimpleCondition(condition: string): boolean {
     try {
-      // Create a context object with all variables
-      const context: Record<string, any> = {};
-      this.variables.forEach((value, key) => {
-        context[key] = value;
-      });
+      const trimmed = condition.trim();
 
-      // Use Function constructor to safely evaluate the expression
-      // This creates a new function with the variables as parameters
-      const varNames = Object.keys(context);
-      const varValues = Object.values(context);
+      // Handle 'and' operator
+      if (trimmed.includes(' and ')) {
+        const parts = trimmed.split(' and ');
+        return parts.every(p => this.evaluateSimpleCondition(p.trim()));
+      }
 
-      // Create function that evaluates the condition
-      const func = new Function(...varNames, `return (${condition});`);
+      // Handle 'or' operator
+      if (trimmed.includes(' or ')) {
+        const parts = trimmed.split(' or ');
+        return parts.some(p => this.evaluateSimpleCondition(p.trim()));
+      }
 
-      // Execute with variable values
-      const result = func(...varValues);
+      // Handle 'not' operator
+      if (trimmed.startsWith('not ')) {
+        return !this.evaluateSimpleCondition(trimmed.substring(4).trim());
+      }
 
-      // Convert to boolean
-      return Boolean(result);
+      // Handle comparison operators
+      const comparisonPatterns = [
+        { op: '==', fn: (a: any, b: any) => a === b },
+        { op: '~=', fn: (a: any, b: any) => a !== b },
+        { op: '!=', fn: (a: any, b: any) => a !== b },
+        { op: '<=', fn: (a: any, b: any) => Number(a) <= Number(b) },
+        { op: '>=', fn: (a: any, b: any) => Number(a) >= Number(b) },
+        { op: '<', fn: (a: any, b: any) => Number(a) < Number(b) },
+        { op: '>', fn: (a: any, b: any) => Number(a) > Number(b) },
+      ];
+
+      for (const { op, fn } of comparisonPatterns) {
+        if (trimmed.includes(op)) {
+          const [leftStr, rightStr] = trimmed.split(op).map(s => s.trim());
+          const left = this.safeEvaluateExpression(leftStr, this.variables);
+          const right = this.safeEvaluateExpression(rightStr, this.variables);
+          return fn(left, right);
+        }
+      }
+
+      // Handle simple variable or literal as boolean
+      const value = this.safeEvaluateExpression(trimmed, this.variables);
+      return Boolean(value);
     } catch (error) {
       console.warn('Simple condition evaluation failed:', condition, error);
       return false;

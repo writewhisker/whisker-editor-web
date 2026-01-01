@@ -14,6 +14,7 @@ export { Comment, type CommentData } from './Comment';
 export { Collaborator } from './Collaborator';
 
 export type * from './types';
+export { SpecialTargets, isSpecialTarget } from './types';
 
 // Utilities
 export { generateId } from './idGenerator';

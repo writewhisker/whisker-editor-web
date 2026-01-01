@@ -65,7 +65,7 @@ export class StoryValidator {
       includeWarnings: options.includeWarnings ?? true,
       includeInfo: options.includeInfo ?? true,
       skipSlowChecks: options.skipSlowChecks ?? false,
-      categories: options.categories ?? ['structure', 'links', 'variables', 'content', 'quality'],
+      categories: options.categories ?? ['structure', 'links', 'variables', 'content', 'quality', 'syntax', 'expression'],
     };
 
     // Collect all issues
@@ -91,6 +91,7 @@ export class StoryValidator {
         // Add error as validation issue
         allIssues.push({
           id: `validator_error_${validator.name}`,
+          code: 'WLS-INT-001',
           severity: 'error',
           category: validator.category,
           message: `Validator error: ${validator.name}`,

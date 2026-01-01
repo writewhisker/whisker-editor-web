@@ -22,6 +22,7 @@ export class ValidateIFIDValidator implements Validator {
     if (!story.metadata.ifid) {
       issues.push({
         id: 'missing_ifid',
+        code: 'WLS-META-001',
         severity: 'warning',
         category: 'structure',
         message: 'Missing IFID',
@@ -39,10 +40,12 @@ export class ValidateIFIDValidator implements Validator {
     if (!this.UUID_V4_PATTERN.test(story.metadata.ifid)) {
       issues.push({
         id: 'invalid_ifid',
+        code: 'WLS-META-002',
         severity: 'error',
         category: 'structure',
         message: 'Invalid IFID format',
         description: `IFID "${story.metadata.ifid}" is not a valid UUID v4 format. Expected format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx`,
+        context: { ifid: story.metadata.ifid },
         fixable: true,
         fixDescription: 'Generate a new valid IFID',
         fixAction: () => {

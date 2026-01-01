@@ -1,5 +1,50 @@
 // Core data types for Whisker Visual Editor
 
+// ============================================================================
+// WLS 1.0 Type Definitions
+// ============================================================================
+
+/**
+ * Choice type determines visibility after selection (WLS 1.0)
+ * - 'once': Choice disappears after being selected (+ marker in .ws format)
+ * - 'sticky': Choice remains visible after selection (* marker in .ws format)
+ */
+export type ChoiceType = 'once' | 'sticky';
+
+/**
+ * Variable scope determines persistence (WLS 1.0)
+ * - 'story': Persists for entire playthrough, saved to files ($var prefix)
+ * - 'temp': Passage-scoped, cleared on passage change, NOT saved (_var prefix)
+ */
+export type VariableScope = 'story' | 'temp';
+
+/**
+ * Special navigation targets (WLS 1.0)
+ */
+export const SpecialTargets = {
+  /** Ends the story */
+  END: 'END',
+  /** Returns to previous passage */
+  BACK: 'BACK',
+  /** Restarts the story from beginning */
+  RESTART: 'RESTART',
+} as const;
+
+export type SpecialTarget = typeof SpecialTargets[keyof typeof SpecialTargets];
+
+/**
+ * Check if a target is a special navigation target
+ */
+export function isSpecialTarget(target: string): target is SpecialTarget {
+  return target === SpecialTargets.END ||
+         target === SpecialTargets.BACK ||
+         target === SpecialTargets.RESTART;
+}
+
+// ============================================================================
+// Core Types
+// ============================================================================
+
 export interface Position {
   x: number;
   y: number;
@@ -16,6 +61,7 @@ export interface ChoiceData {
   target: string;
   condition?: string;
   action?: string;
+  choiceType?: ChoiceType;  // WLS 1.0: 'once' (default) or 'sticky'
   metadata?: Record<string, any>;  // Custom choice metadata (whisker-core compat)
 }
 
@@ -41,6 +87,7 @@ export interface VariableData {
   name: string;
   type: 'string' | 'number' | 'boolean';
   initial: string | number | boolean;
+  scope?: VariableScope;  // WLS 1.0: 'story' (default) or 'temp'
 }
 
 // Variable usage tracking (whisker-core Phase 3 compat)

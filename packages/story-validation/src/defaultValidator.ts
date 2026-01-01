@@ -17,6 +17,18 @@ import {
   ValidateScriptsValidator,
   ValidateAssetsValidator,
   ValidatePassageMetadataValidator,
+  DuplicatePassagesValidator,
+  SelfLinkValidator,
+  EmptyChoiceTargetValidator,
+  OrphanPassagesValidator,
+  NoTerminalValidator,
+  BottleneckValidator,
+  CycleDetectorValidator,
+  InfiniteLoopValidator,
+  WlsSyntaxValidator,
+  WlsSpecialTargetsValidator,
+  WlsVariableValidator,
+  WlsExpressionValidator,
 } from './validators';
 
 /**
@@ -25,18 +37,42 @@ import {
 export function createDefaultValidator(): StoryValidator {
   const validator = new StoryValidator();
 
-  // Register all standard validators
+  // Register structural validators
   validator.registerValidator(new MissingStartPassageValidator());
   validator.registerValidator(new UnreachablePassagesValidator());
+  validator.registerValidator(new DuplicatePassagesValidator());
+  validator.registerValidator(new EmptyPassagesValidator());
+  validator.registerValidator(new OrphanPassagesValidator());
+  validator.registerValidator(new NoTerminalValidator());
+  validator.registerValidator(new BottleneckValidator());
+  validator.registerValidator(new CycleDetectorValidator());
+  validator.registerValidator(new InfiniteLoopValidator());
+
+  // Register link validators
   validator.registerValidator(new DeadLinksValidator());
+  validator.registerValidator(new SelfLinkValidator());
+  validator.registerValidator(new EmptyChoiceTargetValidator());
+  validator.registerValidator(new WlsSpecialTargetsValidator());
+
+  // Register variable validators
   validator.registerValidator(new UndefinedVariablesValidator());
   validator.registerValidator(new UnusedVariablesValidator());
-  validator.registerValidator(new EmptyPassagesValidator());
+  validator.registerValidator(new WlsVariableValidator());
+
+  // Register expression validators
+  validator.registerValidator(new WlsExpressionValidator());
+
+  // Register syntax validators
+  validator.registerValidator(new WlsSyntaxValidator());
+
+  // Register metadata validators
   validator.registerValidator(new ValidateIFIDValidator());
+  validator.registerValidator(new ValidatePassageMetadataValidator());
+
+  // Register content validators
   validator.registerValidator(new ValidateStylesheetsValidator());
   validator.registerValidator(new ValidateScriptsValidator());
   validator.registerValidator(new ValidateAssetsValidator());
-  validator.registerValidator(new ValidatePassageMetadataValidator());
 
   return validator;
 }

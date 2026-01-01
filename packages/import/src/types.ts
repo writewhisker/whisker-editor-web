@@ -10,7 +10,7 @@ import type { ValidationResult } from '@writewhisker/core-ts';
 /**
  * Supported import formats
  */
-export type ImportFormat = 'json' | 'twine' | 'ink' | 'yarn';
+export type ImportFormat = 'json' | 'twine' | 'ink' | 'yarn' | 'wls';
 
 /**
  * Import options configuration

@@ -20,13 +20,18 @@ export type ValidationCategory =
   | 'links'
   | 'variables'
   | 'content'
-  | 'quality';
+  | 'quality'
+  | 'syntax'
+  | 'expression';
 
 /**
  * Individual validation issue
  */
 export interface ValidationIssue {
+  /** Unique identifier for this issue type */
   id: string;
+  /** WLS 1.0 unified error code (e.g., "WLS-LNK-001") */
+  code: string;
   severity: ValidationSeverity;
   category: ValidationCategory;
   message: string;
@@ -37,6 +42,8 @@ export interface ValidationIssue {
   passageTitle?: string;
   choiceId?: string;
   variableName?: string;
+  /** Additional context for error message formatting */
+  context?: Record<string, unknown>;
 
   // Auto-fix
   fixable: boolean;

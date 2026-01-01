@@ -46,8 +46,9 @@ describe('UnusedVariablesValidator', () => {
     const issues = validator.validate(story);
 
     expect(issues).toHaveLength(1);
-    expect(issues[0].severity).toBe('info');
+    expect(issues[0].severity).toBe('warning');
     expect(issues[0].category).toBe('variables');
+    expect(issues[0].code).toBe('WLS-VAR-002');
     expect(issues[0].variableName).toBe('unused');
     expect(issues[0].fixable).toBe(true);
   });

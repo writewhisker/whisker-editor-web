@@ -358,9 +358,9 @@ export class StaticSiteExporter implements IExporter {
                 title.textContent = passage.title;
                 passageEl.appendChild(title);
 
-                // Content
+                // Content (safe - use textContent instead of innerHTML)
                 const content = document.createElement('div');
-                content.innerHTML = this.processContent(passage.content);
+                content.textContent = this.processContent(passage.content);
                 passageEl.appendChild(content);
 
                 // Choices
@@ -388,20 +388,61 @@ export class StaticSiteExporter implements IExporter {
             }
 
             processContent(content) {
-                // Simple variable substitution
+                // Simple variable substitution (returns plain text, not HTML)
                 return content.replace(/\\{\\{(\\w+)\\}\\}/g, (match, varName) => {
-                    return this.variables[varName] !== undefined ? this.variables[varName] : match;
+                    return this.variables[varName] !== undefined ? String(this.variables[varName]) : match;
                 });
+            }
+
+            escapeHTML(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
             }
 
             evaluateCondition(condition) {
                 if (!condition) return true;
-                // Simple condition evaluation (would need more robust implementation)
+                // Safe condition evaluation without eval()
                 try {
-                    return eval(condition.replace(/\\{\\{(\\w+)\\}\\}/g, (m, v) => this.variables[v]));
+                    // Replace variables in condition
+                    let expr = condition.replace(/\\{\\{(\\w+)\\}\\}/g, (m, v) => {
+                        const val = this.variables[v];
+                        if (typeof val === 'string') return '"' + val + '"';
+                        return val !== undefined ? String(val) : 'undefined';
+                    });
+
+                    // Parse simple comparisons: a == b, a != b, a > b, etc.
+                    const compOps = [
+                        { pat: /(.+)==(.+)/, fn: (a, b) => a === b },
+                        { pat: /(.+)!=(.+)/, fn: (a, b) => a !== b },
+                        { pat: /(.+)<=(.+)/, fn: (a, b) => Number(a) <= Number(b) },
+                        { pat: /(.+)>=(.+)/, fn: (a, b) => Number(a) >= Number(b) },
+                        { pat: /(.+)<(.+)/, fn: (a, b) => Number(a) < Number(b) },
+                        { pat: /(.+)>(.+)/, fn: (a, b) => Number(a) > Number(b) }
+                    ];
+
+                    for (const { pat, fn } of compOps) {
+                        const m = expr.match(pat);
+                        if (m) {
+                            const left = this.parseValue(m[1].trim());
+                            const right = this.parseValue(m[2].trim());
+                            return fn(left, right);
+                        }
+                    }
+
+                    // Handle simple boolean
+                    return Boolean(this.parseValue(expr.trim()));
                 } catch (e) {
                     return true;
                 }
+            }
+
+            parseValue(str) {
+                if (str === 'true') return true;
+                if (str === 'false') return false;
+                if (/^-?\\d+\\.?\\d*$/.test(str)) return parseFloat(str);
+                if (str.startsWith('"') && str.endsWith('"')) return str.slice(1, -1);
+                return str;
             }
 
             makeChoice(choice) {

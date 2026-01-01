@@ -9,6 +9,7 @@ export { AutoFixer } from './AutoFixer';
 export { QualityAnalyzer, createQualityAnalyzer } from './QualityAnalyzer';
 export { createDefaultValidator } from './defaultValidator';
 export * from './validators';
+export * from './error-codes';
 export type * from './types';
 
 // Re-export AutoFixer creator for convenience

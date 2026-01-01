@@ -178,9 +178,9 @@ export class StoryPlayer extends WhiskerElement {
     const title = this.createElement('h2', { className: 'passage-title' }, [passage.title]);
     container.appendChild(title);
 
-    // Add content with links
+    // Add content with links (safely processed)
     const content = this.createElement('div', { className: 'passage-content' });
-    content.innerHTML = this.processContent(passage.content);
+    this.renderContentWithLinks(content, passage.content);
     container.appendChild(content);
 
     this.shadow.appendChild(container);
@@ -199,14 +199,38 @@ export class StoryPlayer extends WhiskerElement {
   }
 
   /**
-   * Process content with links
+   * Render content with links safely using DOM methods (no innerHTML)
    */
-  private processContent(content: string): string {
-    return content.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (match, p1, p2) => {
-      const text = p2 ? p1 : p1;
-      const target = p2 || p1;
-      return `<button class="link" data-target="${this.escapeHTML(target)}">${this.escapeHTML(text)}</button>`;
-    });
+  private renderContentWithLinks(container: HTMLElement, content: string): void {
+    // Parse content and create elements safely
+    const linkPattern = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = linkPattern.exec(content)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        const textNode = document.createTextNode(content.substring(lastIndex, match.index));
+        container.appendChild(textNode);
+      }
+
+      // Create the link button safely
+      const text = match[2] ? match[1] : match[1];
+      const target = match[2] || match[1];
+      const button = document.createElement('button');
+      button.className = 'link';
+      button.setAttribute('data-target', target);
+      button.textContent = text;
+      container.appendChild(button);
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text after last link
+    if (lastIndex < content.length) {
+      const textNode = document.createTextNode(content.substring(lastIndex));
+      container.appendChild(textNode);
+    }
   }
 
   /**

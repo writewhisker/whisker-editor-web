@@ -641,19 +641,87 @@ export function generateHTMLPlayer(
   }
 
   evaluateArithmetic(expr) {
-    const jsExpr = expr.replace(/\\\\b(\\\\w+)\\\\b/g, (match) => {
-      if (this.globalScope.has(match)) {
-        const val = this.globalScope.get(match);
-        return typeof val === 'string' ? '"' + val + '"' : String(val);
-      }
-      return match;
-    });
+    // Safe arithmetic evaluation without Function constructor
+    const tokens = this.tokenizeArithmetic(expr);
+    return this.evaluateArithmeticTokens(tokens);
+  }
 
-    try {
-      return Function('"use strict"; return (' + jsExpr + ')')();
-    } catch (error) {
-      throw new Error('Arithmetic evaluation failed: ' + error);
+  tokenizeArithmetic(expr) {
+    const tokens = [];
+    let current = '';
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      if (char === ' ') {
+        if (current) {
+          tokens.push(this.resolveArithmeticToken(current));
+          current = '';
+        }
+        continue;
+      }
+
+      if (['+', '-', '*', '/', '%'].includes(char)) {
+        if (current) {
+          tokens.push(this.resolveArithmeticToken(current));
+          current = '';
+        }
+        tokens.push(char);
+      } else {
+        current += char;
+      }
     }
+
+    if (current) {
+      tokens.push(this.resolveArithmeticToken(current));
+    }
+
+    return tokens;
+  }
+
+  resolveArithmeticToken(token) {
+    if (/^-?\\d+\\.?\\d*$/.test(token)) {
+      return parseFloat(token);
+    }
+    if (this.globalScope.has(token)) {
+      const val = this.globalScope.get(token);
+      return typeof val === 'number' ? val : 0;
+    }
+    return token;
+  }
+
+  evaluateArithmeticTokens(tokens) {
+    // Handle * / % first
+    let result = [];
+    let i = 0;
+
+    while (i < tokens.length) {
+      const token = tokens[i];
+      if (token === '*' || token === '/' || token === '%') {
+        const left = result.pop();
+        const right = tokens[++i];
+        if (token === '*') result.push(left * right);
+        else if (token === '/') result.push(right !== 0 ? left / right : 0);
+        else result.push(left % right);
+      } else {
+        result.push(token);
+      }
+      i++;
+    }
+
+    // Handle + -
+    let value = typeof result[0] === 'number' ? result[0] : 0;
+    i = 1;
+
+    while (i < result.length) {
+      const op = result[i];
+      const right = result[++i];
+      if (op === '+') value += right;
+      else if (op === '-') value -= right;
+      i++;
+    }
+
+    return value;
   }
 
   evaluateStringConcat(expr) {
@@ -1032,31 +1100,51 @@ export function generateHTMLPlayer(
         }
       }
 
-      // Modal Management
+      // Modal Management - uses safe DOM methods instead of innerHTML
       showSaveModal() {
         const modal = document.getElementById('save-modal');
         const container = document.getElementById('save-slots-container');
         const slots = this.getSaveSlots();
 
-        let html = '';
+        // Clear container safely
+        container.textContent = '';
+
         slots.forEach(slot => {
+          const slotEl = document.createElement('div');
+          slotEl.className = slot.exists ? 'save-slot' : 'save-slot empty';
+          slotEl.onclick = () => player.handleSaveSlot(slot.slot);
+
           if (slot.exists) {
             const date = new Date(slot.timestamp);
-            html += '<div class="save-slot" onclick="player.handleSaveSlot(' + slot.slot + ')">';
-            html += '  <div class="save-slot-header">';
-            html += '    <div class="save-slot-title">Slot ' + (slot.slot + 1) + '</div>';
-            html += '    <div class="save-slot-date">' + date.toLocaleString() + '</div>';
-            html += '  </div>';
-            html += '  <div class="save-slot-info">' + this.escapeHTML(slot.passageTitle) + '</div>';
-            html += '</div>';
+            const header = document.createElement('div');
+            header.className = 'save-slot-header';
+
+            const title = document.createElement('div');
+            title.className = 'save-slot-title';
+            title.textContent = 'Slot ' + (slot.slot + 1);
+
+            const dateEl = document.createElement('div');
+            dateEl.className = 'save-slot-date';
+            dateEl.textContent = date.toLocaleString();
+
+            header.appendChild(title);
+            header.appendChild(dateEl);
+            slotEl.appendChild(header);
+
+            const info = document.createElement('div');
+            info.className = 'save-slot-info';
+            info.textContent = slot.passageTitle;
+            slotEl.appendChild(info);
           } else {
-            html += '<div class="save-slot empty" onclick="player.handleSaveSlot(' + slot.slot + ')">';
-            html += '  <div class="save-slot-title">Slot ' + (slot.slot + 1) + ' - Empty</div>';
-            html += '</div>';
+            const title = document.createElement('div');
+            title.className = 'save-slot-title';
+            title.textContent = 'Slot ' + (slot.slot + 1) + ' - Empty';
+            slotEl.appendChild(title);
           }
+
+          container.appendChild(slotEl);
         });
 
-        container.innerHTML = html;
         modal.classList.add('active');
       }
 
@@ -1065,25 +1153,47 @@ export function generateHTMLPlayer(
         const container = document.getElementById('load-slots-container');
         const slots = this.getSaveSlots();
 
-        let html = '';
+        // Clear container safely
+        container.textContent = '';
+
         slots.forEach(slot => {
+          const slotEl = document.createElement('div');
+
           if (slot.exists) {
+            slotEl.className = 'save-slot';
+            slotEl.onclick = () => player.handleLoadSlot(slot.slot);
+
             const date = new Date(slot.timestamp);
-            html += '<div class="save-slot" onclick="player.handleLoadSlot(' + slot.slot + ')">';
-            html += '  <div class="save-slot-header">';
-            html += '    <div class="save-slot-title">Slot ' + (slot.slot + 1) + '</div>';
-            html += '    <div class="save-slot-date">' + date.toLocaleString() + '</div>';
-            html += '  </div>';
-            html += '  <div class="save-slot-info">' + this.escapeHTML(slot.passageTitle) + '</div>';
-            html += '</div>';
+            const header = document.createElement('div');
+            header.className = 'save-slot-header';
+
+            const title = document.createElement('div');
+            title.className = 'save-slot-title';
+            title.textContent = 'Slot ' + (slot.slot + 1);
+
+            const dateEl = document.createElement('div');
+            dateEl.className = 'save-slot-date';
+            dateEl.textContent = date.toLocaleString();
+
+            header.appendChild(title);
+            header.appendChild(dateEl);
+            slotEl.appendChild(header);
+
+            const info = document.createElement('div');
+            info.className = 'save-slot-info';
+            info.textContent = slot.passageTitle;
+            slotEl.appendChild(info);
           } else {
-            html += '<div class="save-slot empty">';
-            html += '  <div class="save-slot-title">Slot ' + (slot.slot + 1) + ' - Empty</div>';
-            html += '</div>';
+            slotEl.className = 'save-slot empty';
+            const title = document.createElement('div');
+            title.className = 'save-slot-title';
+            title.textContent = 'Slot ' + (slot.slot + 1) + ' - Empty';
+            slotEl.appendChild(title);
           }
+
+          container.appendChild(slotEl);
         });
 
-        container.innerHTML = html;
         modal.classList.add('active');
       }
 

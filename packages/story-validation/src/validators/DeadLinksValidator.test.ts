@@ -42,7 +42,8 @@ describe('DeadLinksValidator', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('error');
     expect(issues[0].category).toBe('links');
-    expect(issues[0].message).toContain('Dead link');
+    expect(issues[0].message).toContain('non-existent');
+    expect(issues[0].code).toBe('WLS-LNK-001');
     expect(issues[0].passageId).toBe(p1.id);
     expect(issues[0].choiceId).toBeDefined();
     expect(issues[0].fixable).toBe(true);
@@ -109,7 +110,7 @@ describe('DeadLinksValidator', () => {
     expect(issues[0].passageTitle).toBe('Start');
     expect(issues[0].choiceId).toBe(choice.id);
     expect(issues[0].description).toContain('Go somewhere');
-    expect(issues[0].description).toContain('missing');
+    expect(issues[0].context?.targetPassage).toBe('missing');
   });
 
   it('should handle story with no passages', () => {
@@ -131,6 +132,6 @@ describe('DeadLinksValidator', () => {
     const validator = new DeadLinksValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fixDescription).toBe('Remove this choice');
+    expect(issues[0].fixDescription).toBe('Remove this choice or create the target passage');
   });
 });

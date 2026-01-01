@@ -11,7 +11,7 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: ['@writewhisker/story-models'],
+      external: ['@writewhisker/story-models', '@writewhisker/parser'],
       output: {
         preserveModules: true,
         preserveModulesRoot: 'src',

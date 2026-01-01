@@ -5,8 +5,9 @@
 [![TypeScript](https://img.shields.io/badge/typescript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-776%20passing-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
 [![Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen.svg)](https://github.com/writewhisker/whisker-editor-web/actions)
+[![WLS](https://img.shields.io/badge/WLS-1.0-orange.svg)](https://github.com/writewhisker/whisker-language-specification)
 
-**Modern visual story editor for whisker interactive fiction.** Create and edit interactive stories with an intuitive web-based interface featuring visual node graphs, real-time editing, and powerful story management tools.
+**Modern visual story editor for whisker interactive fiction.** Create and edit interactive stories with an intuitive web-based interface featuring visual node graphs, real-time editing, and powerful story management tools. Now with full **WLS 1.0** (Whisker Language Specification) support.
 
 > **Part of the writewhisker ecosystem**
 > - Core library: [whisker-core](https://github.com/writewhisker/whisker-core) (MIT License)
@@ -32,8 +33,8 @@
 
 ✅ **Story Management** - Create, save, load, and manage complete interactive fiction projects
 ✅ **Passage Editing** - Edit text, choices, conditions, and metadata for each story passage
-✅ **Choice System** - Create branching narratives with conditional and unconditional choices
-✅ **Variable System** - Track and manage story state with variables
+✅ **Choice System** - Create branching narratives with once-only (`+`) and sticky (`*`) choices
+✅ **Variable System** - Track and manage story state with story-scoped (`$var`) and temp-scoped (`_var`) variables
 ✅ **History/Undo** - 50-level undo/redo for all edits
 ✅ **Visual Graph** - Interactive node-based view with drag-and-drop, zoom, pan, and minimap
 ✅ **Connection Validation** - Detect orphaned connections, dead-end passages, and unreachable content
@@ -110,7 +111,7 @@ npm run preview
 ### Planning & Design
 
 - **[Architecture Overview](https://github.com/writewhisker/whisker-implementation/blob/main/visual-editor/editor-web/ARCHITECTURE.md)** - Technical architecture and patterns
-- **[Whisker Format Specification](https://github.com/writewhisker/whisker-implementation/blob/main/specifications/WHISKER_FORMAT_SPEC_V2.1.md)** - Story format specification
+- **[WLS 1.0 Specification](https://github.com/writewhisker/whisker-language-specification)** - Whisker Language Specification 1.0
 - **[Project Roadmap](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/ROADMAP.md)** - Development roadmap and timelines
 - **[Feature Catalog](https://github.com/writewhisker/whisker-implementation/blob/main/editor-web/FEATURES.md)** - Complete feature list with status
 - **[Architecture Decisions](https://github.com/writewhisker/whisker-implementation/tree/main/editor-web/decisions)** - Technical decision records
@@ -225,6 +226,7 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 ## 🔗 Related Projects
 
 - **[whisker-core](https://github.com/writewhisker/whisker-core)** - Core Lua library (MIT)
+- **[whisker-language-specification](https://github.com/writewhisker/whisker-language-specification)** - WLS 1.0 Specification
 - **[whisker-editor-desktop](https://github.com/writewhisker/whisker-editor-desktop)** - Desktop editor with Tauri (AGPLv3)
 - **[whisker-implementation](https://github.com/writewhisker/whisker-implementation)** - Planning & design docs
 - **[writewhisker](https://github.com/writewhisker)** - Organization home

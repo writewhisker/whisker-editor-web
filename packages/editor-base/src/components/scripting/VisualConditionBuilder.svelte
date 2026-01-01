@@ -3,7 +3,7 @@
    * VisualConditionBuilder - Build conditional logic visually
    *
    * Creates visual conditions for passage choices and script logic.
-   * Generates Whisker {{if}} syntax or Lua code.
+   * Generates WLS 1.0 syntax ($var), legacy Whisker {{if}} syntax, or Lua code.
    */
   import { nanoid } from 'nanoid';
   import { currentStory } from '../../stores/storyStateStore';
@@ -13,14 +13,15 @@
   let {
     onConditionChange,
     initialCondition = '',
-    outputFormat = 'whisker'
+    outputFormat = 'wls'
   }: {
     onConditionChange?: (condition: string) => void;
     initialCondition?: string;
-    outputFormat?: 'whisker' | 'lua';
+    outputFormat?: 'wls' | 'whisker' | 'lua';
   } = $props();
 
-  type ComparisonOperator = '==' | '!=' | '>' | '<' | '>=' | '<=';
+  // WLS 1.0 uses Lua operators: ~= for not-equal
+  type ComparisonOperator = '==' | '~=' | '>' | '<' | '>=' | '<=';
   type LogicalOperator = 'AND' | 'OR';
 
   interface ConditionRule {
@@ -85,11 +86,24 @@
           if (rule.valueType === 'string') {
             value = `"${value}"`;
           } else if (rule.valueType === 'variable') {
-            // Reference another variable
-            value = outputFormat === 'whisker' ? `{{${value}}}` : value;
+            // Reference another variable - use format-appropriate syntax
+            if (outputFormat === 'wls') {
+              value = `$${value}`;
+            } else if (outputFormat === 'whisker') {
+              value = `{{${value}}}`;
+            }
+            // lua format: plain variable name
           }
 
-          const varRef = outputFormat === 'whisker' ? `{{${varName}}}` : varName;
+          // Variable reference syntax depends on output format
+          let varRef: string;
+          if (outputFormat === 'wls') {
+            varRef = `$${varName}`;
+          } else if (outputFormat === 'whisker') {
+            varRef = `{{${varName}}}`;
+          } else {
+            varRef = varName; // lua format
+          }
 
           return `${varRef} ${rule.operator} ${value}`;
         });
@@ -224,7 +238,8 @@
       <div class="option-group">
         <label for="output-format">Output Format:</label>
         <select id="output-format" bind:value={outputFormat}>
-          <option value="whisker">Whisker ({'{{var}}'})</option>
+          <option value="wls">WLS 1.0 ($var)</option>
+          <option value="whisker">Legacy Whisker ({'{{var}}'})</option>
           <option value="lua">Lua</option>
         </select>
       </div>
@@ -287,7 +302,7 @@
                 {/each}
               </select>
 
-              <!-- Operator selector -->
+              <!-- Operator selector (WLS 1.0 uses Lua operators) -->
               <select
                 class="rule-select operator-select"
                 value={rule.operator}
@@ -297,7 +312,7 @@
                 }}
               >
                 <option value="==">equals (==)</option>
-                <option value="!=">not equals (!=)</option>
+                <option value="~=">not equals (~=)</option>
                 <option value=">">greater than (&gt;)</option>
                 <option value="<">less than (&lt;)</option>
                 <option value=">=">greater or equal (&gt;=)</option>

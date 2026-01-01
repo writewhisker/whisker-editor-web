@@ -92,6 +92,81 @@ describe('Choice', () => {
     });
   });
 
+  // WLS 1.0: Choice Type Tests
+  describe('choiceType (WLS 1.0)', () => {
+    it('should default to once-only choice type', () => {
+      const choice = new Choice({ text: 'Test', target: 'target' });
+      expect(choice.choiceType).toBe('once');
+    });
+
+    it('should accept once choice type in constructor', () => {
+      const choice = new Choice({
+        text: 'Test',
+        target: 'target',
+        choiceType: 'once',
+      });
+      expect(choice.choiceType).toBe('once');
+    });
+
+    it('should accept sticky choice type in constructor', () => {
+      const choice = new Choice({
+        text: 'Test',
+        target: 'target',
+        choiceType: 'sticky',
+      });
+      expect(choice.choiceType).toBe('sticky');
+    });
+
+    it('should return true for isOnce() when choice type is once', () => {
+      const choice = new Choice({ text: 'Test', target: 'target', choiceType: 'once' });
+      expect(choice.isOnce()).toBe(true);
+      expect(choice.isSticky()).toBe(false);
+    });
+
+    it('should return true for isSticky() when choice type is sticky', () => {
+      const choice = new Choice({ text: 'Test', target: 'target', choiceType: 'sticky' });
+      expect(choice.isSticky()).toBe(true);
+      expect(choice.isOnce()).toBe(false);
+    });
+
+    it('should serialize choiceType only when sticky', () => {
+      const onceChoice = new Choice({ text: 'Test', target: 'target', choiceType: 'once' });
+      const stickyChoice = new Choice({ text: 'Test', target: 'target', choiceType: 'sticky' });
+
+      expect(onceChoice.serialize().choiceType).toBeUndefined();
+      expect(stickyChoice.serialize().choiceType).toBe('sticky');
+    });
+
+    it('should deserialize choiceType from ChoiceData', () => {
+      const stickyData = {
+        id: 'test-id',
+        text: 'Sticky choice',
+        target: 'target',
+        choiceType: 'sticky' as const,
+      };
+
+      const choice = Choice.deserialize(stickyData);
+      expect(choice.choiceType).toBe('sticky');
+    });
+
+    it('should default to once when deserializing without choiceType', () => {
+      const data = {
+        id: 'test-id',
+        text: 'Test',
+        target: 'target',
+      };
+
+      const choice = Choice.deserialize(data);
+      expect(choice.choiceType).toBe('once');
+    });
+
+    it('should preserve choiceType when cloning', () => {
+      const stickyChoice = new Choice({ text: 'Test', target: 'target', choiceType: 'sticky' });
+      const cloned = stickyChoice.clone();
+      expect(cloned.choiceType).toBe('sticky');
+    });
+  });
+
   describe('metadata property', () => {
     it('should initialize with empty metadata object', () => {
       const choice = new Choice({ text: 'Test', target: 'target' });

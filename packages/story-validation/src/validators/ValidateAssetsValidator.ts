@@ -25,6 +25,7 @@ export class ValidateAssetsValidator implements Validator {
         if (!asset.id) {
           issues.push({
             id: `asset_missing_id`,
+            code: 'WLS-AST-001',
             severity: 'error',
             category: 'content',
             message: 'Asset missing ID',
@@ -36,10 +37,12 @@ export class ValidateAssetsValidator implements Validator {
         if (!asset.name) {
           issues.push({
             id: `asset_${asset.id}_missing_name`,
+            code: 'WLS-AST-005',
             severity: 'warning',
             category: 'content',
             message: `Asset "${asset.id}": Missing name`,
             description: 'Asset should have a descriptive name.',
+            context: { assetId: asset.id },
             fixable: false,
           });
         }
@@ -47,10 +50,12 @@ export class ValidateAssetsValidator implements Validator {
         if (!asset.path) {
           issues.push({
             id: `asset_${asset.id}_missing_path`,
+            code: 'WLS-AST-002',
             severity: 'error',
             category: 'content',
             message: `Asset "${asset.id}": Missing path`,
             description: 'Asset must have a path or data URI.',
+            context: { assetId: asset.id },
             fixable: false,
           });
         }
@@ -58,10 +63,12 @@ export class ValidateAssetsValidator implements Validator {
         if (!asset.mimeType) {
           issues.push({
             id: `asset_${asset.id}_missing_mimetype`,
+            code: 'WLS-AST-006',
             severity: 'warning',
             category: 'content',
             message: `Asset "${asset.id}": Missing MIME type`,
             description: 'Asset should specify a MIME type (e.g., image/png).',
+            context: { assetId: asset.id },
             fixable: false,
           });
         }
@@ -70,10 +77,12 @@ export class ValidateAssetsValidator implements Validator {
         if (asset.size && asset.size > 5 * 1024 * 1024) {
           issues.push({
             id: `asset_${asset.id}_too_large`,
+            code: 'WLS-AST-007',
             severity: 'warning',
             category: 'content',
             message: `Asset "${asset.name}": Very large`,
             description: `Asset is ${(asset.size / 1024 / 1024).toFixed(1)}MB. Consider optimizing or using external hosting.`,
+            context: { assetName: asset.name, size: `${(asset.size / 1024 / 1024).toFixed(1)}MB` },
             fixable: false,
           });
         }
@@ -94,10 +103,12 @@ export class ValidateAssetsValidator implements Validator {
         if (!assetIds.has(assetId)) {
           issues.push({
             id: `passage_${passageId}_broken_asset_${assetId}`,
+            code: 'WLS-AST-003',
             severity: 'error',
             category: 'content',
             message: `Broken asset reference in passage "${passage.title}"`,
             description: `Asset "asset://${assetId}" does not exist.`,
+            context: { assetId, passageName: passage.title },
             fixable: false,
             passageId,
           });
@@ -116,10 +127,12 @@ export class ValidateAssetsValidator implements Validator {
               const scriptType = scriptIndex === 0 ? 'onEnterScript' : 'onExitScript';
               issues.push({
                 id: `passage_${passageId}_${scriptType}_broken_asset_${assetId}`,
+                code: 'WLS-AST-003',
                 severity: 'error',
                 category: 'content',
                 message: `Broken asset reference in passage "${passage.title}" ${scriptType}`,
                 description: `Asset "asset://${assetId}" does not exist.`,
+                context: { assetId, passageName: passage.title },
                 fixable: false,
                 passageId,
               });
@@ -135,10 +148,12 @@ export class ValidateAssetsValidator implements Validator {
         const asset = story.getAsset(assetId);
         issues.push({
           id: `asset_${assetId}_unused`,
+          code: 'WLS-AST-004',
           severity: 'info',
           category: 'content',
           message: `Unused asset "${asset?.name || assetId}"`,
           description: 'This asset is not referenced in any passage.',
+          context: { assetName: asset?.name || assetId },
           fixable: true,
           fixDescription: 'Remove unused asset',
           fixAction: () => {

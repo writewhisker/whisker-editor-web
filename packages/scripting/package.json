@@ -21,7 +21,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@writewhisker/core-ts": "workspace:*",
+    "@writewhisker/parser": "workspace:*",
     "wasmoon": "^1.16.0"
   },
   "peerDependencies": {

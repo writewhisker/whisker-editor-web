@@ -604,4 +604,45 @@ describe('Lexer', () => {
       expect(hasToken(':: Start\nHello 世界!', TokenType.PASSAGE_MARKER, '::')).toBe(true);
     });
   });
+
+  describe('collection keywords (WLS 1.0 - Gap 3)', () => {
+    it('should tokenize LIST keyword', () => {
+      expect(hasToken('LIST moods = happy, sad', TokenType.LIST, 'LIST')).toBe(true);
+    });
+
+    it('should tokenize ARRAY keyword', () => {
+      expect(hasToken('ARRAY items = []', TokenType.ARRAY, 'ARRAY')).toBe(true);
+    });
+
+    it('should tokenize MAP keyword', () => {
+      expect(hasToken('MAP player = {}', TokenType.MAP, 'MAP')).toBe(true);
+    });
+
+    it('should tokenize ? as QUESTION operator', () => {
+      expect(hasToken('$inventory ? sword', TokenType.QUESTION, '?')).toBe(true);
+    });
+
+    it('should tokenize array literal brackets', () => {
+      const result = tokenize('[1, 2, 3]');
+      expect(hasToken('[1, 2, 3]', TokenType.LBRACKET, '[')).toBe(true);
+      expect(hasToken('[1, 2, 3]', TokenType.RBRACKET, ']')).toBe(true);
+    });
+
+    it('should tokenize map literal with colons', () => {
+      const result = tokenize('{ name: "Hero" }');
+      expect(hasToken('{ name: "Hero" }', TokenType.COLON, ':')).toBe(true);
+    });
+
+    it('should tokenize list values with commas', () => {
+      const result = tokenize('happy, sad, angry');
+      const commas = result.tokens.filter(t => t.type === TokenType.COMMA);
+      expect(commas.length).toBe(2);
+    });
+
+    it('should tokenize list active markers with parentheses', () => {
+      const result = tokenize('(active), inactive');
+      expect(hasToken('(active), inactive', TokenType.LPAREN, '(')).toBe(true);
+      expect(hasToken('(active), inactive', TokenType.RPAREN, ')')).toBe(true);
+    });
+  });
 });

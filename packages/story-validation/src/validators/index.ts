@@ -15,3 +15,17 @@ export { ValidateStylesheetsValidator } from './ValidateStylesheetsValidator';
 export { ValidateScriptsValidator } from './ValidateScriptsValidator';
 export { ValidateAssetsValidator } from './ValidateAssetsValidator';
 export { ValidatePassageMetadataValidator } from './ValidatePassageMetadataValidator';
+export { DuplicatePassagesValidator } from './DuplicatePassagesValidator';
+export { SelfLinkValidator } from './SelfLinkValidator';
+export { EmptyChoiceTargetValidator } from './EmptyChoiceTargetValidator';
+export { OrphanPassagesValidator } from './OrphanPassagesValidator';
+export { NoTerminalValidator } from './NoTerminalValidator';
+export { BottleneckValidator } from './BottleneckValidator';
+export { CycleDetectorValidator } from './CycleDetectorValidator';
+export { InfiniteLoopValidator } from './InfiniteLoopValidator';
+
+// WLS 1.0 validators
+export { WlsSyntaxValidator } from './WlsSyntaxValidator';
+export { WlsSpecialTargetsValidator } from './WlsSpecialTargetsValidator';
+export { WlsVariableValidator } from './WlsVariableValidator';
+export { WlsExpressionValidator } from './WlsExpressionValidator';

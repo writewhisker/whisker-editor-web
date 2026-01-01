@@ -2,6 +2,7 @@
  * Undefined Variables Validator
  *
  * Finds variable references in conditions/scripts that are not defined in the story.
+ * Error code: WLS-VAR-001
  */
 
 import type { Story } from '@writewhisker/story-models';
@@ -84,13 +85,15 @@ export class UndefinedVariablesValidator implements Validator {
         for (const ref of uniquePassages.values()) {
           issues.push({
             id: `undefined_var_${varName}_${ref.passageId}`,
+            code: 'WLS-VAR-001',
             severity: 'error',
             category: 'variables',
-            message: `Undefined variable: ${varName}`,
+            message: `Undefined variable: "${varName}"`,
             description: `Variable "${varName}" is used in ${ref.context} but is not defined in the story.`,
             passageId: ref.passageId,
             passageTitle: ref.passageTitle,
             variableName: varName,
+            context: { variableName: varName },
             fixable: true,
             fixDescription: `Add variable "${varName}" to story definitions`,
           });

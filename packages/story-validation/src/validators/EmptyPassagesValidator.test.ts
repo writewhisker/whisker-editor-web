@@ -59,7 +59,8 @@ describe('EmptyPassagesValidator', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('warning');
     expect(issues[0].category).toBe('content');
-    expect(issues[0].message).toContain('Empty passage');
+    expect(issues[0].message).toContain('is empty');
+    expect(issues[0].code).toBe('WLS-STR-004');
     expect(issues[0].passageId).toBe(empty.id);
     expect(issues[0].passageTitle).toBe('Empty Passage');
   });
@@ -74,7 +75,7 @@ describe('EmptyPassagesValidator', () => {
 
     expect(issues.some(i => i.severity === 'warning')).toBe(true);
     const emptyIssue = issues.find(i => i.severity === 'warning');
-    expect(emptyIssue?.message).toContain('Empty passage');
+    expect(emptyIssue?.message).toContain('is empty');
   });
 
   it('should detect terminal passages (no choices) as info', () => {
@@ -88,7 +89,8 @@ describe('EmptyPassagesValidator', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('info');
     expect(issues[0].category).toBe('content');
-    expect(issues[0].message).toContain('Terminal passage');
+    expect(issues[0].message).toContain('dead end');
+    expect(issues[0].code).toBe('WLS-FLW-001');
     expect(issues[0].passageId).toBe(terminal.id);
   });
 
@@ -115,7 +117,7 @@ describe('EmptyPassagesValidator', () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('info');
-    expect(issues[0].description).toContain('This is fine if intentional');
+    expect(issues[0].description).toContain('may be an intentional');
   });
 
   it('should handle story with no passages', () => {

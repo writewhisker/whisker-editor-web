@@ -24,6 +24,7 @@ export class ValidateScriptsValidator implements Validator {
       if (script.trim().length === 0) {
         issues.push({
           id: `script_${index}_empty`,
+          code: 'WLS-SCR-001',
           severity: 'info',
           category: 'content',
           message: `Script ${index + 1}: Empty`,
@@ -42,6 +43,7 @@ export class ValidateScriptsValidator implements Validator {
       luaErrors.forEach(error => {
         issues.push({
           id: `script_${index}_${error.type}`,
+          code: 'WLS-SCR-002',
           severity: 'error',
           category: 'content',
           message: `Script ${index + 1}: ${error.message}`,
@@ -54,10 +56,12 @@ export class ValidateScriptsValidator implements Validator {
       if (script.length > 50000) {
         issues.push({
           id: `script_${index}_too_large`,
+          code: 'WLS-SCR-004',
           severity: 'warning',
           category: 'content',
           message: `Script ${index + 1}: Very large`,
           description: `Script is ${(script.length / 1024).toFixed(1)}KB. Consider splitting into smaller files or optimizing.`,
+          context: { size: `${(script.length / 1024).toFixed(1)}KB` },
           fixable: false,
         });
       }
@@ -68,10 +72,12 @@ export class ValidateScriptsValidator implements Validator {
         if (script.includes(func)) {
           issues.push({
             id: `script_${index}_dangerous_${func}`,
+            code: 'WLS-SCR-003',
             severity: 'warning',
             category: 'content',
             message: `Script ${index + 1}: Potentially unsafe function "${func}"`,
             description: `The function "${func}" may not be available in sandboxed execution environments.`,
+            context: { function: func },
             fixable: false,
           });
         }

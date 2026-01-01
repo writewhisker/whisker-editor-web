@@ -2,6 +2,7 @@
  * Unused Variables Validator
  *
  * Finds variables that are defined but never referenced in the story.
+ * Error code: WLS-VAR-002
  */
 
 import type { Story } from '@writewhisker/story-models';
@@ -26,6 +27,13 @@ export class UnusedVariablesValidator implements Validator {
     const allPassages = Array.from(story.passages.values());
 
     for (const passage of allPassages) {
+      // Check passage content for $variable references
+      if (passage.content) {
+        this.extractContentVariables(passage.content).forEach(varName => {
+          referencedVariables.add(varName);
+        });
+      }
+
       // Check passage scripts
       if (passage.onEnterScript) {
         this.extractVariables(passage.onEnterScript).forEach(varName => {
@@ -51,14 +59,21 @@ export class UnusedVariablesValidator implements Validator {
 
     // Find unused variables
     for (const [varName] of definedVariables) {
+      // Skip invalid variable names - they'll be caught by WLS-VAR-003
+      if (!this.isValidVariableName(varName)) {
+        continue;
+      }
+
       if (!referencedVariables.has(varName)) {
         issues.push({
           id: `unused_var_${varName}`,
-          severity: 'info',
+          code: 'WLS-VAR-002',
+          severity: 'warning',
           category: 'variables',
-          message: `Unused variable: ${varName}`,
+          message: `Unused variable: "${varName}"`,
           description: `Variable "${varName}" is defined but never used in any passage, condition, or script.`,
           variableName: varName,
+          context: { variableName: varName },
           fixable: true,
           fixDescription: `Remove variable "${varName}" from story definitions`,
         });
@@ -66,6 +81,14 @@ export class UnusedVariablesValidator implements Validator {
     }
 
     return issues;
+  }
+
+  /**
+   * Check if a variable name is valid (starts with letter or underscore)
+   */
+  private isValidVariableName(name: string): boolean {
+    if (!name || name.length === 0) return false;
+    return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
   }
 
   /**
@@ -91,6 +114,23 @@ export class UnusedVariablesValidator implements Validator {
       if (!luaKeywords.has(varName)) {
         variables.add(varName);
       }
+    }
+
+    return variables;
+  }
+
+  /**
+   * Extract variable names from content text ($variable syntax)
+   */
+  private extractContentVariables(content: string): Set<string> {
+    const variables = new Set<string>();
+
+    // Match $variable patterns
+    const pattern = /\$([a-zA-Z_][a-zA-Z0-9_]*)\b/g;
+    let match;
+
+    while ((match = pattern.exec(content)) !== null) {
+      variables.add(match[1]);
     }
 
     return variables;

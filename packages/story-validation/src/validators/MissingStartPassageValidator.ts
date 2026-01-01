@@ -2,6 +2,7 @@
  * Missing Start Passage Validator
  *
  * Ensures the story has a valid start passage defined.
+ * Error code: WLS-STR-001
  */
 
 import type { Story } from '@writewhisker/story-models';
@@ -19,10 +20,11 @@ export class MissingStartPassageValidator implements Validator {
     if (!story.startPassage) {
       issues.push({
         id: 'missing_start_passage',
+        code: 'WLS-STR-001',
         severity: 'error',
         category: 'structure',
         message: 'No start passage defined',
-        description: 'The story must have a start passage. Set one in the story settings.',
+        description: 'Every story must have a passage named "Start" or specify a start passage via @start: directive.',
         fixable: false,
       });
       return issues;
@@ -33,10 +35,12 @@ export class MissingStartPassageValidator implements Validator {
     if (!startPassage) {
       issues.push({
         id: 'invalid_start_passage',
+        code: 'WLS-STR-001',
         severity: 'error',
         category: 'structure',
         message: 'Start passage does not exist',
         description: `The start passage ID "${story.startPassage}" does not exist in the story.`,
+        context: { passageName: story.startPassage },
         fixable: false,
       });
     }

@@ -27,10 +27,12 @@ export class ValidateStylesheetsValidator implements Validator {
       if (openBraces !== closeBraces) {
         issues.push({
           id: `stylesheet_${index}_unmatched_braces`,
+          code: 'WLS-SYN-002',
           severity: 'error',
           category: 'content',
           message: `Stylesheet ${index + 1}: Unmatched braces`,
           description: `Stylesheet has ${openBraces} opening braces but ${closeBraces} closing braces.`,
+          context: { openBraces, closeBraces },
           fixable: false,
         });
       }
@@ -39,6 +41,7 @@ export class ValidateStylesheetsValidator implements Validator {
       if (css.trim().length === 0) {
         issues.push({
           id: `stylesheet_${index}_empty`,
+          code: 'WLS-SCR-001',
           severity: 'info',
           category: 'content',
           message: `Stylesheet ${index + 1}: Empty`,
@@ -55,10 +58,12 @@ export class ValidateStylesheetsValidator implements Validator {
       if (css.length > 50000) {
         issues.push({
           id: `stylesheet_${index}_too_large`,
+          code: 'WLS-SCR-004',
           severity: 'warning',
           category: 'content',
           message: `Stylesheet ${index + 1}: Very large`,
           description: `Stylesheet is ${(css.length / 1024).toFixed(1)}KB. Consider splitting into smaller files or optimizing.`,
+          context: { size: `${(css.length / 1024).toFixed(1)}KB` },
           fixable: false,
         });
       }

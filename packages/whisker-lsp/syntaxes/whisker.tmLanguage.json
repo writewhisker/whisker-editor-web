@@ -1,0 +1,299 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Whisker",
+  "scopeName": "source.whisker",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#directives" },
+    { "include": "#passages" },
+    { "include": "#keywords" },
+    { "include": "#choices" },
+    { "include": "#conditionals" },
+    { "include": "#variables" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#css-classes" },
+    { "include": "#markdown" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-dash.whisker",
+          "match": "--.*$"
+        },
+        {
+          "name": "comment.block.whisker",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "meta.directive.whisker",
+          "match": "^(@(?:title|author|version|ifid|start|vars|/vars|assets|/assets|scripts|/scripts|styles|/styles))(?::\\s*(.*))?$",
+          "captures": {
+            "1": { "name": "keyword.control.directive.whisker" },
+            "2": { "name": "string.unquoted.directive-value.whisker" }
+          }
+        }
+      ]
+    },
+    "passages": {
+      "patterns": [
+        {
+          "name": "meta.passage.header.whisker",
+          "match": "^(::)\\s*([A-Za-z_][A-Za-z0-9_]*)(?:\\s*(\\[.*\\]))?",
+          "captures": {
+            "1": { "name": "keyword.control.passage-marker.whisker" },
+            "2": { "name": "entity.name.passage.whisker" },
+            "3": { "name": "entity.other.attribute-name.tags.whisker" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.whisker",
+          "match": "\\b(if|else|elif|do|not|and|or)\\b"
+        },
+        {
+          "name": "keyword.other.whisker",
+          "match": "\\b(LIST|ARRAY|MAP|INCLUDE|FUNCTION|RETURN|END|NAMESPACE|THEME|STYLE)\\b"
+        },
+        {
+          "name": "constant.language.boolean.whisker",
+          "match": "\\b(true|false|nil)\\b"
+        },
+        {
+          "name": "constant.language.special-target.whisker",
+          "match": "\\b(END|BACK|RESTART)\\b"
+        }
+      ]
+    },
+    "choices": {
+      "patterns": [
+        {
+          "name": "meta.choice.whisker",
+          "begin": "^(\\+|\\*)\\s*",
+          "end": "$",
+          "beginCaptures": {
+            "1": { "name": "keyword.operator.choice.whisker" }
+          },
+          "patterns": [
+            { "include": "#choice-text" },
+            { "include": "#arrow" },
+            { "include": "#conditionals" },
+            { "include": "#variables" }
+          ]
+        }
+      ]
+    },
+    "choice-text": {
+      "patterns": [
+        {
+          "name": "string.quoted.brackets.choice-text.whisker",
+          "begin": "\\[",
+          "end": "\\]",
+          "patterns": [
+            { "include": "#variables" },
+            { "include": "#css-classes-inline" }
+          ]
+        }
+      ]
+    },
+    "arrow": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.whisker",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.tunnel-return.whisker",
+          "match": "<-"
+        }
+      ]
+    },
+    "conditionals": {
+      "patterns": [
+        {
+          "name": "meta.conditional.whisker",
+          "begin": "\\{(?!/)",
+          "end": "\\}",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.block.begin.whisker" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.block.end.whisker" }
+          },
+          "patterns": [
+            { "include": "#keywords" },
+            { "include": "#variables" },
+            { "include": "#operators" },
+            { "include": "#strings" },
+            { "include": "#numbers" }
+          ]
+        },
+        {
+          "name": "keyword.control.conditional-end.whisker",
+          "match": "\\{/\\}"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.story.whisker",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "variable.other.temp.whisker",
+          "match": "\\$_[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "meta.interpolation.whisker",
+          "begin": "\\$\\{",
+          "end": "\\}",
+          "beginCaptures": {
+            "0": { "name": "punctuation.definition.interpolation.begin.whisker" }
+          },
+          "endCaptures": {
+            "0": { "name": "punctuation.definition.interpolation.end.whisker" }
+          },
+          "patterns": [
+            { "include": "#variables" },
+            { "include": "#operators" },
+            { "include": "#strings" },
+            { "include": "#numbers" }
+          ]
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.whisker",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.whisker",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.whisker",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.whisker",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.whisker",
+          "match": "\\b\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.whisker",
+          "match": "==|~=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.assignment.whisker",
+          "match": "\\+=|-=|\\*=|/=|="
+        },
+        {
+          "name": "keyword.operator.arithmetic.whisker",
+          "match": "\\+|-|\\*|/|%|\\^"
+        },
+        {
+          "name": "keyword.operator.string.whisker",
+          "match": "\\.\\."
+        },
+        {
+          "name": "keyword.operator.length.whisker",
+          "match": "#"
+        },
+        {
+          "name": "keyword.operator.contains.whisker",
+          "match": "\\?"
+        }
+      ]
+    },
+    "css-classes": {
+      "patterns": [
+        {
+          "name": "meta.css-class-block.whisker",
+          "begin": "^(\\.[A-Za-z_-][A-Za-z0-9_-]*(?:\\.[A-Za-z_-][A-Za-z0-9_-]*)*)\\s*\\{",
+          "end": "\\}",
+          "beginCaptures": {
+            "1": { "name": "entity.other.attribute-name.class.whisker" }
+          },
+          "patterns": [
+            { "include": "#variables" },
+            { "include": "#markdown" }
+          ]
+        }
+      ]
+    },
+    "css-classes-inline": {
+      "patterns": [
+        {
+          "name": "entity.other.attribute-name.class.inline.whisker",
+          "match": "\\.[A-Za-z_-][A-Za-z0-9_-]*"
+        }
+      ]
+    },
+    "markdown": {
+      "patterns": [
+        {
+          "name": "markup.heading.whisker",
+          "match": "^(#{1,6})\\s+(.*)$",
+          "captures": {
+            "1": { "name": "punctuation.definition.heading.whisker" },
+            "2": { "name": "entity.name.section.whisker" }
+          }
+        },
+        {
+          "name": "markup.bold.whisker",
+          "match": "\\*\\*[^*]+\\*\\*"
+        },
+        {
+          "name": "markup.italic.whisker",
+          "match": "\\*[^*]+\\*"
+        },
+        {
+          "name": "markup.quote.whisker",
+          "match": "^>\\s+.*$"
+        },
+        {
+          "name": "markup.list.unnumbered.whisker",
+          "match": "^\\s*-\\s+"
+        },
+        {
+          "name": "markup.list.numbered.whisker",
+          "match": "^\\s*\\d+\\.\\s+"
+        },
+        {
+          "name": "markup.raw.inline.whisker",
+          "match": "`[^`]+`"
+        }
+      ]
+    }
+  }
+}

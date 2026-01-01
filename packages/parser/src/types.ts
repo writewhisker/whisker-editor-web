@@ -98,6 +98,18 @@ export enum TokenType {
   ARRAY = 'ARRAY',                             // ARRAY name = ...
   MAP = 'MAP',                                 // MAP name = ...
 
+  // Module keywords (WLS 1.0 - Gap 4)
+  INCLUDE = 'INCLUDE',                         // INCLUDE "path"
+  FUNCTION = 'FUNCTION',                       // FUNCTION name(params)
+  RETURN = 'RETURN',                           // RETURN value
+  END = 'END',                                 // END (function/namespace)
+  NAMESPACE = 'NAMESPACE',                     // NAMESPACE Name
+  SCOPE_OP = 'SCOPE_OP',                       // :: (namespace separator)
+
+  // Presentation keywords (WLS 1.0 - Gap 5)
+  THEME = 'THEME',                             // THEME "name"
+  STYLE = 'STYLE',                             // STYLE { ... }
+
   // Text content
   TEXT = 'TEXT',                               // Plain text content
 
@@ -175,6 +187,15 @@ export const KEYWORDS: Record<string, TokenType> = {
   'LIST': TokenType.LIST,
   'ARRAY': TokenType.ARRAY,
   'MAP': TokenType.MAP,
+  // Module keywords (WLS 1.0 - Gap 4)
+  'INCLUDE': TokenType.INCLUDE,
+  'FUNCTION': TokenType.FUNCTION,
+  'RETURN': TokenType.RETURN,
+  'END': TokenType.END,
+  'NAMESPACE': TokenType.NAMESPACE,
+  // Presentation keywords (WLS 1.0 - Gap 5)
+  'THEME': TokenType.THEME,
+  'STYLE': TokenType.STYLE,
 };
 
 /**

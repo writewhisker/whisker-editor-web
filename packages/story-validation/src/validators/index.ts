@@ -30,3 +30,5 @@ export { WlsSpecialTargetsValidator } from './WlsSpecialTargetsValidator';
 export { WlsVariableValidator } from './WlsVariableValidator';
 export { WlsExpressionValidator } from './WlsExpressionValidator';
 export { WlsCollectionValidator } from './WlsCollectionValidator';  // WLS 1.0 Gap 3
+export { WlsModuleValidator } from './WlsModuleValidator';          // WLS 1.0 Gap 4
+export { WlsPresentationValidator } from './WlsPresentationValidator';  // WLS 1.0 Gap 5

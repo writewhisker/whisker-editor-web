@@ -82,3 +82,17 @@ export {
   type EffectController,
   type CSSKeyframe,
 } from './TextEffects';
+
+// WLS 2.0 Parameterized Passages
+export {
+  ParameterizedPassageManager,
+  createParameterizedPassageManager,
+  parsePassageHeader,
+  parsePassageCall,
+  formatPassageCall,
+  type PassageParameter,
+  type ParameterizedPassage,
+  type ParameterBindingResult,
+  type ParameterBindingError,
+  type ParameterManagerOptions,
+} from './ParameterizedPassages';

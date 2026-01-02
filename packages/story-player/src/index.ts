@@ -67,3 +67,18 @@ export {
   type AudioBackend,
   type AudioManagerOptions,
 } from './AudioManager';
+
+// WLS 2.0 Text Effects and Transitions
+export {
+  TextEffectManager,
+  createTextEffectManager,
+  parseEffectDeclaration,
+  EFFECT_CSS,
+  type EffectOptions,
+  type EffectFrame,
+  type EffectRenderer,
+  type EffectComplete,
+  type TextEffect,
+  type EffectController,
+  type CSSKeyframe,
+} from './TextEffects';

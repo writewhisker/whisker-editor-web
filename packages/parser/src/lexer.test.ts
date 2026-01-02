@@ -645,4 +645,44 @@ describe('Lexer', () => {
       expect(hasToken('(active), inactive', TokenType.RPAREN, ')')).toBe(true);
     });
   });
+
+  // ============================================================================
+  // WLS 2.0 Thread Tokens
+  // ============================================================================
+
+  describe('WLS 2.0 thread tokens', () => {
+    it('should tokenize == at line start as THREAD_MARKER', () => {
+      const result = tokenize('== ThreadPassage');
+      expect(hasToken('== ThreadPassage', TokenType.THREAD_MARKER, '==')).toBe(true);
+    });
+
+    it('should tokenize == in expression as EQ', () => {
+      const result = tokenize('{$x == 5}');
+      expect(hasToken('{$x == 5}', TokenType.EQ, '==')).toBe(true);
+    });
+
+    it('should tokenize await keyword', () => {
+      const result = tokenize('{await Investigation}');
+      expect(hasToken('{await Investigation}', TokenType.AWAIT, 'await')).toBe(true);
+    });
+
+    it('should tokenize spawn keyword', () => {
+      const result = tokenize('{spawn BackgroundThread}');
+      expect(hasToken('{spawn BackgroundThread}', TokenType.SPAWN, 'spawn')).toBe(true);
+    });
+
+    it('should differentiate == position correctly in full story', () => {
+      const source = `:: Start
+{$x == 5}
+Content
+
+== Thread
+More content`;
+      const result = tokenize(source);
+      const eqTokens = result.tokens.filter(t => t.type === TokenType.EQ);
+      const threadTokens = result.tokens.filter(t => t.type === TokenType.THREAD_MARKER);
+      expect(eqTokens.length).toBe(1);
+      expect(threadTokens.length).toBe(1);
+    });
+  });
 });

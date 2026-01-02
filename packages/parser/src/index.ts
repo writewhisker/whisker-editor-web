@@ -42,6 +42,11 @@ export type {
   ConditionalBranchNode,
   ChoiceNode,
   AlternativesNode,
+  // WLS 2.0 Thread types
+  ThreadPassageNode,
+  AwaitExpressionNode,
+  SpawnExpressionNode,
+  // Expression types
   ExpressionNode,
   IdentifierNode,
   VariableNode,

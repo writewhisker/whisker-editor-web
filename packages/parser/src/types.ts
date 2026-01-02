@@ -26,6 +26,7 @@ export interface SourceSpan {
 export enum TokenType {
   // Structure markers
   PASSAGE_MARKER = 'PASSAGE_MARKER',           // ::
+  THREAD_MARKER = 'THREAD_MARKER',             // == (WLS 2.0 thread passage)
   ONCE_CHOICE_MARKER = 'ONCE_CHOICE_MARKER',   // + (once-only choice)
   STICKY_CHOICE_MARKER = 'STICKY_CHOICE_MARKER', // * (sticky choice)
   GATHER = 'GATHER',                           // - (gather point at line start)
@@ -92,6 +93,10 @@ export enum TokenType {
   ELSE = 'ELSE',                               // else
   ELIF = 'ELIF',                               // elif
   DO = 'DO',                                   // do (in choice actions)
+
+  // Thread keywords (WLS 2.0)
+  AWAIT = 'AWAIT',                             // await (wait for thread)
+  SPAWN = 'SPAWN',                             // spawn (explicit spawn, optional)
 
   // Collection keywords (WLS 1.0 - Gap 3)
   LIST = 'LIST',                               // LIST name = ...
@@ -183,6 +188,9 @@ export const KEYWORDS: Record<string, TokenType> = {
   'else': TokenType.ELSE,
   'elif': TokenType.ELIF,
   'do': TokenType.DO,
+  // Thread keywords (WLS 2.0)
+  'await': TokenType.AWAIT,
+  'spawn': TokenType.SPAWN,
   // Collection keywords (WLS 1.0 - Gap 3)
   'LIST': TokenType.LIST,
   'ARRAY': TokenType.ARRAY,

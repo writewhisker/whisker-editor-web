@@ -285,7 +285,12 @@ export class Lexer {
       // Comparison and assignment
       case '=':
         if (this.match('=')) {
-          this.addToken(TokenType.EQ, '==', start);
+          // == can be THREAD_MARKER (at line start) or EQ (equality)
+          if (this.isAtLineStart(start)) {
+            this.addToken(TokenType.THREAD_MARKER, '==', start);
+          } else {
+            this.addToken(TokenType.EQ, '==', start);
+          }
         } else {
           this.addToken(TokenType.ASSIGN, '=', start);
         }

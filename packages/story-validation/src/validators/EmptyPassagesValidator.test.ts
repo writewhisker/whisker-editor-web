@@ -50,7 +50,7 @@ describe('EmptyPassagesValidator', () => {
   it('should detect passages with empty content', () => {
     const story = createStory();
     const empty = new Passage({ title: 'Empty Passage', content: '' });
-    empty.addChoice(new Choice({ text: 'Go somewhere' }));
+    empty.addChoice(new Choice({ text: 'Go somewhere', target: 'other' }));
     story.addPassage(empty);
 
     const validator = new EmptyPassagesValidator();

@@ -5,7 +5,7 @@
  */
 
 import type { ValidationIssue, ValidationSeverity } from './types';
-import { WLS_ERROR_CODES, formatErrorMessage } from './error-codes';
+import { WLS_ERROR_CODES } from './error-codes';
 
 /**
  * Options for error formatting

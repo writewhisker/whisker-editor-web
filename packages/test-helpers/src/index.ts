@@ -20,7 +20,7 @@ export interface ParseResult {
   passageCount: number;
   variableCount: number;
   choiceCount: number;
-  errors: string[];
+  parseErrors: string[];
   warnings: string[];
 }
 
@@ -128,7 +128,7 @@ export function parseWLS(content: string): ParseResult {
       passageCount: passages.size,
       variableCount: variables.size,
       choiceCount,
-      errors,
+      parseErrors: errors,
       warnings,
     };
   } catch (error) {
@@ -137,7 +137,7 @@ export function parseWLS(content: string): ParseResult {
       passageCount: 0,
       variableCount: 0,
       choiceCount: 0,
-      errors: [error instanceof Error ? error.message : String(error)],
+      parseErrors: [error instanceof Error ? error.message : String(error)],
       warnings,
     };
   }
@@ -308,7 +308,7 @@ export function runStory(content: string, choices: number[] = []): PlaythroughRe
       passages: [],
       finalVariables: {},
       choicesMade: 0,
-      error: parseResult.errors.join(', '),
+      error: parseResult.parseErrors.join(', '),
     };
   }
 

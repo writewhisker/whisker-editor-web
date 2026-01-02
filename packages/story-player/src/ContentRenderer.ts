@@ -18,6 +18,9 @@ import type {
   ChoiceNode,
   AlternativesNode,
   ExpressionNode,
+  GatherNode,
+  TunnelCallNode,
+  TunnelReturnNode,
 } from '@writewhisker/parser';
 
 import type { WhiskerRuntimeContext, WhiskerValue } from '@writewhisker/scripting';
@@ -26,6 +29,16 @@ import { ExpressionEvaluator } from '@writewhisker/scripting';
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Tunnel call result (for handling by player)
+ */
+export interface TunnelCall {
+  /** Target passage for the tunnel */
+  target: string;
+  /** Position in content where tunnel was called */
+  position: number;
+}
 
 /**
  * Rendered content result
@@ -37,6 +50,12 @@ export interface RenderResult {
   errors: RenderError[];
   /** Choices extracted from content (for passage rendering) */
   choices: RenderedChoice[];
+  /** Tunnel call encountered (if any) - execution should pause for player to handle */
+  tunnelCall?: TunnelCall;
+  /** Tunnel return encountered - player should pop call stack */
+  tunnelReturn?: boolean;
+  /** Gather points encountered (for flow tracking) */
+  gatherPoints: number[];
 }
 
 /**
@@ -106,6 +125,10 @@ export class ContentRenderer {
   private readonly errors: RenderError[] = [];
   private alternativesState: AlternativesState;
   private choiceState: ChoiceState;
+  private tunnelCall: TunnelCall | undefined;
+  private tunnelReturn: boolean = false;
+  private gatherPoints: number[] = [];
+  private currentPosition: number = 0;
 
   constructor(
     private readonly context: WhiskerRuntimeContext,
@@ -127,12 +150,21 @@ export class ContentRenderer {
    */
   render(nodes: ContentNode[], options: RenderOptions = {}): RenderResult {
     this.errors.length = 0;
+    this.tunnelCall = undefined;
+    this.tunnelReturn = false;
+    this.gatherPoints = [];
+    this.currentPosition = 0;
     const choices: RenderedChoice[] = [];
     let text = '';
 
     for (const node of nodes) {
+      // Stop rendering if we hit a tunnel call or return
+      if (this.tunnelCall || this.tunnelReturn) {
+        break;
+      }
       const result = this.renderNode(node, choices);
       text += result;
+      this.currentPosition++;
     }
 
     // Post-processing
@@ -147,6 +179,9 @@ export class ContentRenderer {
       text,
       errors: [...this.errors],
       choices,
+      tunnelCall: this.tunnelCall,
+      tunnelReturn: this.tunnelReturn,
+      gatherPoints: [...this.gatherPoints],
     };
   }
 
@@ -167,6 +202,12 @@ export class ContentRenderer {
         return this.renderChoice(node, choices);
       case 'alternatives':
         return this.renderAlternatives(node, choices);
+      case 'gather':
+        return this.renderGather(node as GatherNode, choices);
+      case 'tunnel_call':
+        return this.renderTunnelCall(node as TunnelCallNode);
+      case 'tunnel_return':
+        return this.renderTunnelReturn(node as TunnelReturnNode);
       default:
         this.addError(`Unknown content node type: ${(node as ContentNode).type}`, node);
         return '';
@@ -364,6 +405,46 @@ export class ContentRenderer {
     }
 
     return this.renderNodes(selectedOption, choices);
+  }
+
+  /**
+   * Render a gather point
+   * Gather points collect divergent choice paths and continue with shared content
+   */
+  private renderGather(node: GatherNode, choices: RenderedChoice[]): string {
+    // Record this gather point
+    this.gatherPoints.push(node.depth);
+
+    // Render the content after the gather point
+    if (node.content && node.content.length > 0) {
+      return this.renderNodes(node.content, choices);
+    }
+    return '';
+  }
+
+  /**
+   * Render a tunnel call (-> PassageName ->)
+   * Signals to the player to push return location and navigate to target
+   */
+  private renderTunnelCall(node: TunnelCallNode): string {
+    // Set the tunnel call - player will handle navigation
+    this.tunnelCall = {
+      target: node.target,
+      position: this.currentPosition,
+    };
+    // Tunnel calls don't produce text output
+    return '';
+  }
+
+  /**
+   * Render a tunnel return (<-)
+   * Signals to the player to pop the call stack and return
+   */
+  private renderTunnelReturn(_node: TunnelReturnNode): string {
+    // Set the tunnel return flag - player will handle return
+    this.tunnelReturn = true;
+    // Tunnel returns don't produce text output
+    return '';
   }
 
   /**

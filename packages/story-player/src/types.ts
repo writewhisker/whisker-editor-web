@@ -66,6 +66,30 @@ export type PlayerEvent =
 export type PlayerEventCallback = (data: any) => void;
 
 /**
+ * Tunnel call frame for tracking nested tunnel calls
+ */
+export interface TunnelFrame {
+  /** The passage to return to when tunnel completes */
+  returnPassageId: string;
+  /** Position within the passage content to resume from */
+  returnPosition: number;
+  /** Local/temporary variables scoped to this tunnel */
+  localVariables: Record<string, any>;
+}
+
+/**
+ * Gather point state for tracking flow reconvergence
+ */
+export interface GatherState {
+  /** Current choice depth level */
+  choiceDepth: number;
+  /** Whether we're currently in a choice branch */
+  inChoiceBranch: boolean;
+  /** Content accumulated after gather point */
+  postGatherContent: string[];
+}
+
+/**
  * Player state snapshot
  */
 export interface PlayerState {
@@ -74,4 +98,6 @@ export interface PlayerState {
   visitedPassages: Record<string, number>;
   history: PlayerPlaythroughStep[];
   timestamp: number;
+  /** Tunnel call stack for nested tunnel calls */
+  tunnelStack: TunnelFrame[];
 }

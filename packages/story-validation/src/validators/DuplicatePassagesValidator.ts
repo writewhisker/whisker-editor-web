@@ -29,23 +29,24 @@ export class DuplicatePassagesValidator implements Validator {
       passagesByTitle.get(title)!.push({ id: passage.id, title: passage.title });
     }
 
-    // Find duplicates - report one error per duplicate group (using first passage)
-    for (const [titleLower, passages] of passagesByTitle) {
+    // Find duplicates - report one error per duplicate passage
+    for (const [, passages] of passagesByTitle) {
       if (passages.length > 1) {
-        // Report one error per duplicate group using the first passage
-        const firstPassage = passages[0];
-        issues.push({
-          id: `duplicate_passage_${titleLower}`,
-          code: 'WLS-STR-003',
-          severity: 'error',
-          category: 'structure',
-          message: `Duplicate passage name: "${firstPassage.title}"`,
-          description: `There are ${passages.length} passages with the name "${firstPassage.title}". Passage names must be unique.`,
-          passageId: firstPassage.id,
-          passageTitle: firstPassage.title,
-          context: { passageName: firstPassage.title, count: passages.length },
-          fixable: false,
-        });
+        // Report one error for each passage in the duplicate group
+        for (const passage of passages) {
+          issues.push({
+            id: `duplicate_passage_${passage.id}`,
+            code: 'WLS-STR-003',
+            severity: 'error',
+            category: 'structure',
+            message: `Duplicate passage name: "${passage.title}"`,
+            description: `There are ${passages.length} passages with the name "${passage.title}". Passage names must be unique.`,
+            passageId: passage.id,
+            passageTitle: passage.title,
+            context: { passageName: passage.title, count: passages.length },
+            fixable: false,
+          });
+        }
       }
     }
 

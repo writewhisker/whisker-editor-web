@@ -9,6 +9,7 @@ import type {
   PlayerEvent,
   PlayerEventCallback,
   PlayerState,
+  TunnelFrame,
 } from './types';
 // PlaythroughRecorder is optional - can be injected
 import type { Playthrough } from '@writewhisker/story-models';
@@ -34,6 +35,7 @@ export class StoryPlayer {
   private recorder: any | null = null;  // PlaythroughRecorder - optional dependency
   private currentPlaythrough: Playthrough | null = null;
   private luaEngine: any | null = null;  // LuaEngine - optional dependency
+  private tunnelStack: TunnelFrame[] = [];  // WLS 1.0: Tunnel call stack
 
   constructor() {
     // Initialize event listener maps
@@ -107,6 +109,7 @@ export class StoryPlayer {
     this.variables.clear();
     this.visitedPassages.clear();
     this.history = [];
+    this.tunnelStack = [];  // WLS 1.0: Clear tunnel call stack
     this.startTime = 0;
     this.paused = false;
     this.emit('stateChanged', this.getState());
@@ -307,6 +310,7 @@ export class StoryPlayer {
       visitedPassages: Object.fromEntries(this.visitedPassages),
       history: [...this.history],
       timestamp: Date.now(),
+      tunnelStack: [...this.tunnelStack],  // WLS 1.0: Include tunnel call stack
     };
   }
 
@@ -318,7 +322,78 @@ export class StoryPlayer {
     this.variables = new Map(Object.entries(state.variables));
     this.visitedPassages = new Map(Object.entries(state.visitedPassages));
     this.history = [...state.history];
+    this.tunnelStack = state.tunnelStack ? [...state.tunnelStack] : [];  // WLS 1.0: Restore tunnel stack
     this.emit('stateChanged', this.getState());
+  }
+
+  // =========================================================================
+  // WLS 1.0: Tunnel Support
+  // =========================================================================
+
+  /**
+   * Call a tunnel (push return location to stack and navigate)
+   */
+  callTunnel(targetPassageId: string, returnPosition: number): void {
+    if (!this.story || !this.currentPassageId) {
+      throw new Error('No active passage for tunnel call');
+    }
+
+    // Save local/temporary variables
+    const localVars: Record<string, any> = {};
+    this.variables.forEach((value, key) => {
+      if (key.startsWith('_')) {
+        localVars[key] = value;
+      }
+    });
+
+    // Push return frame to stack
+    this.tunnelStack.push({
+      returnPassageId: this.currentPassageId,
+      returnPosition,
+      localVariables: localVars,
+    });
+
+    // Navigate to tunnel target
+    this.enterPassage(targetPassageId);
+  }
+
+  /**
+   * Return from a tunnel (pop stack and return to caller)
+   */
+  returnFromTunnel(): boolean {
+    if (this.tunnelStack.length === 0) {
+      console.warn('Tunnel return with empty stack - ignoring');
+      return false;
+    }
+
+    // Pop the return frame
+    const frame = this.tunnelStack.pop()!;
+
+    // Restore local variables from the frame
+    Object.entries(frame.localVariables).forEach(([key, value]) => {
+      this.variables.set(key, value);
+    });
+
+    // Navigate back to the return passage
+    // Note: In a full implementation, we would resume at returnPosition
+    // For now, we just re-enter the passage
+    this.enterPassage(frame.returnPassageId);
+
+    return true;
+  }
+
+  /**
+   * Check if currently in a tunnel
+   */
+  isInTunnel(): boolean {
+    return this.tunnelStack.length > 0;
+  }
+
+  /**
+   * Get current tunnel depth
+   */
+  getTunnelDepth(): number {
+    return this.tunnelStack.length;
   }
 
   /**

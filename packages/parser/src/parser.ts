@@ -88,6 +88,8 @@ export class Parser {
           includes: [],
           functions: [],
           namespaces: [],
+          theme: null,
+          styles: null,
           passages: [],
           location: emptyLocation,
         },
@@ -223,6 +225,8 @@ export class Parser {
         includes,
         functions,
         namespaces,
+        theme: null,
+        styles: null,
         passages,
         location: this.getLocation(start),
       };
@@ -313,6 +317,8 @@ export class Parser {
       includes,
       functions,
       namespaces,
+      theme: null,
+      styles: null,
       passages,
       location: this.getLocation(start),
     };
@@ -562,7 +568,7 @@ export class Parser {
   /**
    * Parse a single array element with optional explicit index
    */
-  private parseArrayElement(autoIndex: number): ArrayElementNode | null {
+  private parseArrayElement(_autoIndex: number): ArrayElementNode | null {
     // Check for explicit index: NUMBER COLON value
     if (this.check(TokenType.NUMBER)) {
       const indexToken = this.peek();
@@ -788,8 +794,8 @@ export class Parser {
    * Pushes namespace onto stack for subsequent passages
    */
   private parseNamespaceDeclaration(
-    passages: PassageNode[],
-    functions: FunctionDeclarationNode[]
+    _passages: PassageNode[],
+    _functions: FunctionDeclarationNode[]
   ): NamespaceDeclarationNode | null {
     const start = this.advance(); // consume NAMESPACE
     this.skipWhitespaceOnLine();

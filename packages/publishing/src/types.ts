@@ -9,7 +9,7 @@ import type { Story } from '@writewhisker/core-ts';
 /**
  * Publishing platforms
  */
-export type PublishPlatform = 'static' | 'github-pages' | 'itch-io' | 'link';
+export type PublishPlatform = 'static' | 'github-pages' | 'itch-io' | 'ifdb' | 'link';
 
 /**
  * Publishing status

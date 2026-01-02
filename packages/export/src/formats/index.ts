@@ -11,4 +11,5 @@ export { EPUBExporter } from './EPUBExporter';
 export { WhiskerCoreExporter } from './WhiskerCoreExporter';
 export { PDFExporter } from './PDFExporter';
 export { WLSExporter } from './WLSExporter';
+export { PWAExporter } from './PWAExporter';
 export { generateHTMLPlayer } from './HTMLPlayerTemplate';

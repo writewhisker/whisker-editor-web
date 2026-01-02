@@ -37,3 +37,11 @@ export {
   type EvalResult,
   type EvalOptions,
 } from './expressions';
+
+// WLS 2.0 LIST State Machine Operations
+export {
+  ListValue,
+  ListRegistry,
+  parseListDeclaration,
+  evaluateListOperator,
+} from './list-operations';

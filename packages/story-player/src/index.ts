@@ -31,3 +31,14 @@ export {
   type ThreadEvent,
   type ThreadEventCallback,
 } from './ThreadScheduler';
+
+// WLS 2.0 Timed Content Manager
+export {
+  TimedContentManager,
+  createTimedContentManager,
+  parseTimeString,
+  type TimedBlock,
+  type ScheduleOptions,
+  type TimerEvent,
+  type TimerEventCallback,
+} from './TimedContentManager';

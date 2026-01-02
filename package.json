@@ -29,7 +29,11 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,svelte}\"",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build --filter='./packages/*' && changeset publish"
+    "release": "turbo run build --filter='./packages/*' && changeset publish",
+    "docs:api": "typedoc",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
     "@octokit/oauth-app": "^8.0.3",
@@ -80,6 +84,9 @@
     "typescript": "~5.9.3",
     "vite": "^7.1.7",
     "vite-plugin-monaco-editor": "^1.1.0",
-    "vitest": "^3.2.4"
+    "vitepress": "^1.6.3",
+    "vitest": "^3.2.4",
+    "typedoc": "^0.27.9",
+    "typedoc-plugin-markdown": "^4.6.3"
   }
 }

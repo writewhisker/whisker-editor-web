@@ -1,0 +1,36 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/parser/src/index.ts",
+    "packages/story-models/src/index.ts",
+    "packages/story-validation/src/index.ts",
+    "packages/story-player/src/index.ts",
+    "packages/scripting/src/index.ts",
+    "packages/import/src/index.ts",
+    "packages/export/src/index.ts",
+    "packages/publishing/src/index.ts"
+  ],
+  "out": "docs/api/typescript",
+  "name": "Whisker Editor API",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "readme": "none",
+  "plugin": ["typedoc-plugin-markdown"],
+  "navigationLinks": {
+    "Docs": "https://wls.whisker.dev",
+    "GitHub": "https://github.com/writewhisker/whisker-editor-web"
+  },
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Parser",
+    "Story Models",
+    "Validation",
+    "Player",
+    "Scripting",
+    "Import",
+    "Export",
+    "Publishing",
+    "*"
+  ]
+}

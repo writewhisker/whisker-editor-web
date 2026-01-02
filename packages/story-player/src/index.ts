@@ -42,3 +42,15 @@ export {
   type TimerEvent,
   type TimerEventCallback,
 } from './TimedContentManager';
+
+// WLS 2.0 External Function Binding
+export {
+  ExternalFunctionRegistry,
+  createExternalFunctionRegistry,
+  parseExternalDeclaration,
+  type ExternalFunction,
+  type FunctionParameter,
+  type FunctionDeclaration,
+  type CallResult,
+  type RegistryOptions,
+} from './ExternalFunctions';

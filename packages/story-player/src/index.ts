@@ -20,3 +20,14 @@ export {
   type AlternativesState,
   type ChoiceState,
 } from './ContentRenderer';
+
+// WLS 2.0 Thread Scheduler
+export {
+  ThreadScheduler,
+  createThreadScheduler,
+  type Thread,
+  type ThreadOutput,
+  type ThreadSchedulerOptions,
+  type ThreadEvent,
+  type ThreadEventCallback,
+} from './ThreadScheduler';

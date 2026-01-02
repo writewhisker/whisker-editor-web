@@ -54,3 +54,16 @@ export {
   type CallResult,
   type RegistryOptions,
 } from './ExternalFunctions';
+
+// WLS 2.0 Audio/Media API
+export {
+  AudioManager,
+  MockAudioBackend,
+  createAudioManager,
+  parseAudioDeclaration,
+  type AudioChannel,
+  type AudioTrack,
+  type PlayingAudio,
+  type AudioBackend,
+  type AudioManagerOptions,
+} from './AudioManager';

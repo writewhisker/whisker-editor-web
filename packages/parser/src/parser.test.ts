@@ -961,4 +961,130 @@ Content`);
       });
     });
   });
+
+  // ============================================================================
+  // WLS 2.0 Thread Syntax Tests
+  // ============================================================================
+
+  describe('WLS 2.0 Thread Syntax', () => {
+    describe('thread passage parsing', () => {
+      it('should parse thread passage with ==', () => {
+        const result = parse(`:: Start
+Hello
+
+== BackgroundMusic
+{~|Music plays.|Quiet melody.}
+-> BackgroundMusic`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.passages).toHaveLength(1);
+        expect(result.ast?.threads).toHaveLength(1);
+        expect(result.ast?.threads[0].name).toBe('BackgroundMusic');
+        expect(result.ast?.threads[0].type).toBe('thread_passage');
+      });
+
+      it('should parse thread passage with tags', () => {
+        const result = parse(`:: Start
+Hello
+
+== Ambiance [loop, background]
+Content here`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.threads).toHaveLength(1);
+        expect(result.ast?.threads[0].tags).toEqual(['loop', 'background']);
+      });
+
+      it('should parse multiple thread passages', () => {
+        const result = parse(`:: Start
+Main story
+
+== Thread1
+First thread
+
+== Thread2
+Second thread`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.threads).toHaveLength(2);
+        expect(result.ast?.threads[0].name).toBe('Thread1');
+        expect(result.ast?.threads[1].name).toBe('Thread2');
+      });
+
+      it('should parse thread with multi-word name', () => {
+        const result = parse(`:: Start
+Hello
+
+== Background Music Player
+Some content`);
+        expect(result.ast?.threads[0].name).toBe('Background Music Player');
+      });
+    });
+
+    describe('await expression parsing', () => {
+      it('should parse await expression', () => {
+        const result = parse(`:: Start
+{await Investigation}
+Now we know.`);
+        expect(result.errors).toHaveLength(0);
+        const content = result.ast?.passages[0].content || [];
+        const awaitNode = content.find(n => n.type === 'await_expression');
+        expect(awaitNode).toBeDefined();
+        expect((awaitNode as any).threadName).toBe('Investigation');
+      });
+
+      it('should parse await with multi-word thread name', () => {
+        const result = parse(`:: Start
+{await Background Search}
+Done.`);
+        expect(result.errors).toHaveLength(0);
+        const content = result.ast?.passages[0].content || [];
+        const awaitNode = content.find(n => n.type === 'await_expression');
+        expect((awaitNode as any).threadName).toBe('Background Search');
+      });
+    });
+
+    describe('spawn expression parsing', () => {
+      it('should parse spawn expression with arrow', () => {
+        const result = parse(`:: Start
+{spawn -> BackgroundThread}
+Continue.`);
+        expect(result.errors).toHaveLength(0);
+        const content = result.ast?.passages[0].content || [];
+        const spawnNode = content.find(n => n.type === 'spawn_expression');
+        expect(spawnNode).toBeDefined();
+        expect((spawnNode as any).passageName).toBe('BackgroundThread');
+      });
+
+      it('should parse spawn expression without arrow', () => {
+        const result = parse(`:: Start
+{spawn BackgroundThread}
+Continue.`);
+        expect(result.errors).toHaveLength(0);
+        const content = result.ast?.passages[0].content || [];
+        const spawnNode = content.find(n => n.type === 'spawn_expression');
+        expect((spawnNode as any).passageName).toBe('BackgroundThread');
+      });
+    });
+
+    describe('thread marker vs equality operator', () => {
+      it('should parse == at line start as thread marker', () => {
+        const result = parse(`:: Start
+Hello
+
+== ThreadPassage
+Content`);
+        expect(result.ast?.threads).toHaveLength(1);
+      });
+
+      it('should parse == in expression as equality', () => {
+        const result = parse(`:: Start
+{$x == 5}
+Equal!
+{/}`);
+        expect(result.errors).toHaveLength(0);
+        const conditional = result.ast?.passages[0].content.find(n => n.type === 'conditional');
+        expect(conditional).toBeDefined();
+        const condition = (conditional as any).condition;
+        expect(condition.operator).toBe('==');
+      });
+    });
+  });
 });

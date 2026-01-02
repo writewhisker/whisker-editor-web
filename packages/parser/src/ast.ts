@@ -37,6 +37,7 @@ export interface StoryNode extends BaseNode {
   theme: ThemeDirectiveNode | null;         // WLS 1.0 Gap 5: Theme directive
   styles: StyleBlockNode | null;            // WLS 1.0 Gap 5: Style block
   passages: PassageNode[];
+  threads: ThreadPassageNode[];             // WLS 2.0: Thread passages
 }
 
 /**
@@ -203,6 +204,8 @@ export type ContentNode =
   | GatherNode
   | TunnelCallNode
   | TunnelReturnNode
+  | AwaitExpressionNode    // WLS 2.0: Thread await
+  | SpawnExpressionNode    // WLS 2.0: Thread spawn
   | FormattedTextNode      // WLS 1.0 Gap 5: Rich text
   | BlockquoteNode         // WLS 1.0 Gap 5: Blockquotes
   | ListNode               // WLS 1.0 Gap 5: Lists
@@ -313,6 +316,41 @@ export interface TunnelCallNode extends BaseNode {
  */
 export interface TunnelReturnNode extends BaseNode {
   type: 'tunnel_return';
+}
+
+// ============================================================================
+// Thread Nodes (WLS 2.0)
+// ============================================================================
+
+/**
+ * Thread passage declaration (== PassageName)
+ * WLS 2.0: Thread passages run in parallel with the main narrative
+ */
+export interface ThreadPassageNode extends BaseNode {
+  type: 'thread_passage';
+  name: string;
+  tags: string[];
+  metadata: PassageMetadataNode[];
+  content: ContentNode[];
+}
+
+/**
+ * Await expression ({await ThreadName})
+ * WLS 2.0: Wait for a thread to complete before continuing
+ */
+export interface AwaitExpressionNode extends BaseNode {
+  type: 'await_expression';
+  threadName: string;
+}
+
+/**
+ * Spawn expression ({spawn -> PassageName})
+ * WLS 2.0: Explicitly spawn a thread (alternative to implicit -> ThreadPassage)
+ */
+export interface SpawnExpressionNode extends BaseNode {
+  type: 'spawn_expression';
+  passageName: string;
+  priority?: number;
 }
 
 // ============================================================================
@@ -692,6 +730,9 @@ export function isContent(node: BaseNode): node is ContentNode {
     'gather',
     'tunnel_call',
     'tunnel_return',
+    // WLS 2.0: Thread nodes
+    'await_expression',
+    'spawn_expression',
     // WLS 1.0 Gap 5: Presentation nodes
     'formatted_text',
     'blockquote',

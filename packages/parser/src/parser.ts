@@ -33,6 +33,9 @@ import type {
   GatherNode,
   TunnelCallNode,
   TunnelReturnNode,
+  ThreadPassageNode,
+  AwaitExpressionNode,
+  SpawnExpressionNode,
   ExpressionNode,
   VariableNode,
   CallExpressionNode,
@@ -208,6 +211,7 @@ export class Parser {
     const functions: FunctionDeclarationNode[] = [];
     const namespaces: NamespaceDeclarationNode[] = [];
     const passages: PassageNode[] = [];
+    const threads: ThreadPassageNode[] = [];  // WLS 2.0: Thread passages
 
     this.namespaceStack = [];  // Reset namespace context
 
@@ -228,12 +232,13 @@ export class Parser {
         theme: null,
         styles: null,
         passages,
+        threads,
         location: this.getLocation(start),
       };
     }
 
     // Parse metadata, variables, collections, and modules before first passage
-    while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER)) {
+    while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER) && !this.check(TokenType.THREAD_MARKER)) {
       if (this.check(TokenType.DIRECTIVE)) {
         const directive = this.parseDirective();
         if (directive.type === 'metadata') {
@@ -282,10 +287,13 @@ export class Parser {
       }
     }
 
-    // Parse passages (and handle interleaved namespace/function declarations)
+    // Parse passages, threads, and handle interleaved namespace/function declarations
     while (!this.isAtEnd()) {
       if (this.check(TokenType.PASSAGE_MARKER)) {
         passages.push(this.parsePassage());
+      } else if (this.check(TokenType.THREAD_MARKER)) {
+        // WLS 2.0: Thread passage
+        threads.push(this.parseThreadPassage());
       } else if (this.check(TokenType.NAMESPACE)) {
         // WLS 1.0 Gap 4: NAMESPACE block in passage section
         const ns = this.parseNamespaceDeclaration(passages, functions);
@@ -300,7 +308,7 @@ export class Parser {
       } else if (this.check(TokenType.NEWLINE) || this.check(TokenType.COMMENT)) {
         this.advance();
       } else {
-        this.addError('Expected passage marker (::)', {
+        this.addError('Expected passage marker (::) or thread marker (==)', {
           code: WLS_ERROR_CODES.EXPECTED_PASSAGE_MARKER,
         });
         this.skipToNextLine();
@@ -320,6 +328,7 @@ export class Parser {
       theme: null,
       styles: null,
       passages,
+      threads,
       location: this.getLocation(start),
     };
   }
@@ -954,6 +963,72 @@ export class Parser {
     };
   }
 
+  // ============================================================================
+  // WLS 2.0 Thread Passage Parsing
+  // ============================================================================
+
+  /**
+   * Parse a thread passage (== ThreadName)
+   * Thread passages run in parallel with the main narrative
+   */
+  private parseThreadPassage(): ThreadPassageNode {
+    const start = this.expect(TokenType.THREAD_MARKER, 'Expected "=="');
+    this.skipWhitespaceOnLine();
+
+    // Parse thread passage name
+    let name = '';
+    const tags: string[] = [];
+    const metadata: PassageMetadataNode[] = [];
+
+    if (this.check(TokenType.IDENTIFIER)) {
+      name = this.advance().value;
+      // Check for additional name parts (e.g., "Background Music")
+      while (this.check(TokenType.IDENTIFIER)) {
+        name += ' ' + this.advance().value;
+      }
+    } else {
+      this.addError('Expected thread passage name after ==', {
+        code: WLS_ERROR_CODES.EXPECTED_PASSAGE_NAME,
+        suggestion: 'Provide a name for the thread passage after "=="',
+      });
+      name = 'unnamed_thread';
+    }
+
+    // Parse optional tags [tag1, tag2]
+    if (this.match(TokenType.LBRACKET)) {
+      while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
+        if (this.check(TokenType.IDENTIFIER)) {
+          tags.push(this.advance().value);
+        }
+        this.match(TokenType.COMMA);
+      }
+      this.expect(TokenType.RBRACKET, 'Expected "]" after tags');
+    }
+
+    this.skipNewlines();
+
+    // Parse passage-level metadata directives
+    while (this.check(TokenType.DIRECTIVE)) {
+      const meta = this.parsePassageMetadata();
+      if (meta) {
+        metadata.push(meta);
+      }
+      this.skipNewlines();
+    }
+
+    // Parse passage content
+    const content = this.parsePassageContent();
+
+    return {
+      type: 'thread_passage',
+      name,
+      tags,
+      metadata,
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
   /**
    * Parse a passage-level metadata directive (@fallback: PassageName)
    */
@@ -998,7 +1073,7 @@ export class Parser {
   private parsePassageContent(): ContentNode[] {
     const content: ContentNode[] = [];
 
-    while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER)) {
+    while (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER) && !this.check(TokenType.THREAD_MARKER)) {
       const node = this.parseContentNode();
       if (node) {
         content.push(node);
@@ -1012,7 +1087,7 @@ export class Parser {
         this.advance();
       } else if (this.check(TokenType.COMMENT)) {
         this.advance(); // Skip comments in content
-      } else if (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER)) {
+      } else if (!this.isAtEnd() && !this.check(TokenType.PASSAGE_MARKER) && !this.check(TokenType.THREAD_MARKER)) {
         // Unknown token, add as text and continue
         const token = this.advance();
         content.push({
@@ -1367,6 +1442,51 @@ export class Parser {
         actions,
         location: { start: start.location.start, end: this.tokens[this.pos - 1].location.end },
       } as DoBlockNode;
+    }
+
+    // WLS 2.0: Await expression ({await ThreadName})
+    if (this.check(TokenType.AWAIT)) {
+      this.advance(); // consume 'await'
+      let threadName = '';
+      if (this.check(TokenType.IDENTIFIER)) {
+        threadName = this.advance().value;
+        // Allow multi-word thread names
+        while (this.check(TokenType.IDENTIFIER)) {
+          threadName += ' ' + this.advance().value;
+        }
+      } else {
+        this.addError('Expected thread name after await');
+        threadName = 'unknown';
+      }
+      this.expect(TokenType.RBRACE, 'Expected "}" after await');
+      return {
+        type: 'await_expression',
+        threadName,
+        location: { start: start.location.start, end: this.tokens[this.pos - 1].location.end },
+      } as AwaitExpressionNode;
+    }
+
+    // WLS 2.0: Spawn expression ({spawn -> PassageName} or {spawn PassageName})
+    if (this.check(TokenType.SPAWN)) {
+      this.advance(); // consume 'spawn'
+      this.match(TokenType.ARROW); // optional arrow
+      let passageName = '';
+      if (this.check(TokenType.IDENTIFIER)) {
+        passageName = this.advance().value;
+        // Allow multi-word passage names
+        while (this.check(TokenType.IDENTIFIER)) {
+          passageName += ' ' + this.advance().value;
+        }
+      } else {
+        this.addError('Expected passage name after spawn');
+        passageName = 'unknown';
+      }
+      this.expect(TokenType.RBRACE, 'Expected "}" after spawn');
+      return {
+        type: 'spawn_expression',
+        passageName,
+        location: { start: start.location.start, end: this.tokens[this.pos - 1].location.end },
+      } as SpawnExpressionNode;
     }
 
     // Conditional block

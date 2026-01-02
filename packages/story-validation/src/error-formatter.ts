@@ -244,7 +244,7 @@ export function formatErrorAsJson(
  */
 export function formatErrorsAsSarif(
   issues: ValidationIssue[],
-  source: string,
+  _source: string,
   filePath: string
 ): object {
   const results = issues.map(issue => ({

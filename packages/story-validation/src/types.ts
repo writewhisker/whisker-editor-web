@@ -40,6 +40,16 @@ export interface ValidationIssue {
   message: string;
   description?: string;
 
+  // Location
+  /** Line number (1-based) */
+  line?: number;
+  /** Column number (1-based) */
+  column?: number;
+  /** Length of the error span */
+  length?: number;
+  /** Name of the passage where the error occurred */
+  passageName?: string;
+
   // Context
   passageId?: string;
   passageTitle?: string;
@@ -47,6 +57,10 @@ export interface ValidationIssue {
   variableName?: string;
   /** Additional context for error message formatting */
   context?: Record<string, unknown>;
+  /** Detailed explanation of the issue */
+  details?: string;
+  /** Suggested fix or improvement */
+  suggestion?: string;
 
   // Auto-fix
   fixable: boolean;

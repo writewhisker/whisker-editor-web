@@ -165,13 +165,8 @@ function runCorpusTest(test: CorpusTest): { passed: boolean; message: string } {
 // Check if corpus exists
 const corpusExists = existsSync(CORPUS_PATH);
 
-describe('WLS 1.0 Test Corpus', () => {
-  if (!corpusExists) {
-    it.skip('Corpus not found - skipping tests', () => {
-      console.warn(`Test corpus not found at: ${CORPUS_PATH}`);
-    });
-    return;
-  }
+// Skip entire test suite if corpus doesn't exist
+describe.skipIf(!corpusExists)('WLS 1.0 Test Corpus', () => {
 
   describe('Syntax Tests', () => {
     const tests = loadCorpusFile('syntax');

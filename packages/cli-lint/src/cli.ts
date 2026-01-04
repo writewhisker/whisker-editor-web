@@ -7,8 +7,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { lintFile, lintContent, type LintResult, type LintOptions } from './index.js';
-import { formatErrors, formatErrorsAsSarif, formatSummary } from '@writewhisker/story-validation';
+import { lintFile, type LintResult, type LintOptions, type LintIssue } from './index.js';
 
 /**
  * CLI argument parsing
@@ -64,6 +63,114 @@ function parseArgs(args: string[]): CLIArgs {
   }
 
   return result;
+}
+
+/**
+ * Format issues as text output
+ */
+function formatIssues(issues: LintIssue[], content: string, useColors: boolean): string {
+  const lines = content.split('\n');
+  const output: string[] = [];
+
+  for (const issue of issues) {
+    const line = issue.line ?? 1;
+    const col = issue.column ?? 1;
+    const severity = issue.severity.toUpperCase();
+    const code = issue.code ? `[${issue.code}] ` : '';
+
+    // Color codes
+    const red = useColors ? '\x1b[31m' : '';
+    const yellow = useColors ? '\x1b[33m' : '';
+    const cyan = useColors ? '\x1b[36m' : '';
+    const reset = useColors ? '\x1b[0m' : '';
+
+    const color = issue.severity === 'error' ? red : issue.severity === 'warning' ? yellow : cyan;
+
+    output.push(`  ${color}${severity}${reset} ${code}${issue.message}`);
+    output.push(`    at line ${line}, column ${col}`);
+
+    // Show the source line if available
+    if (line > 0 && line <= lines.length) {
+      output.push(`    ${lines[line - 1]}`);
+      output.push(`    ${' '.repeat(col - 1)}^`);
+    }
+
+    if (issue.suggestion) {
+      output.push(`    Suggestion: ${issue.suggestion}`);
+    }
+
+    output.push('');
+  }
+
+  return output.join('\n');
+}
+
+/**
+ * Format summary line
+ */
+function formatSummary(issues: LintIssue[], useColors: boolean): string {
+  const errors = issues.filter(i => i.severity === 'error').length;
+  const warnings = issues.filter(i => i.severity === 'warning').length;
+  const info = issues.filter(i => i.severity === 'info').length;
+
+  const red = useColors ? '\x1b[31m' : '';
+  const yellow = useColors ? '\x1b[33m' : '';
+  const cyan = useColors ? '\x1b[36m' : '';
+  const green = useColors ? '\x1b[32m' : '';
+  const reset = useColors ? '\x1b[0m' : '';
+
+  if (errors === 0 && warnings === 0 && info === 0) {
+    return `${green}No issues found.${reset}`;
+  }
+
+  const parts: string[] = [];
+  if (errors > 0) parts.push(`${red}${errors} error${errors !== 1 ? 's' : ''}${reset}`);
+  if (warnings > 0) parts.push(`${yellow}${warnings} warning${warnings !== 1 ? 's' : ''}${reset}`);
+  if (info > 0) parts.push(`${cyan}${info} info${reset}`);
+
+  return `Found ${parts.join(', ')}.`;
+}
+
+/**
+ * Format issues as SARIF
+ */
+function formatAsSarif(issues: LintIssue[], filePath: string): object {
+  return {
+    $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+    version: '2.1.0',
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: 'whisker-lint',
+            version: '1.0.0',
+            informationUri: 'https://writewhisker.io',
+            rules: [],
+          },
+        },
+        results: issues.map((issue, index) => ({
+          ruleId: issue.code || `issue-${index}`,
+          level: issue.severity === 'error' ? 'error' : issue.severity === 'warning' ? 'warning' : 'note',
+          message: {
+            text: issue.message,
+          },
+          locations: [
+            {
+              physicalLocation: {
+                artifactLocation: {
+                  uri: filePath,
+                },
+                region: {
+                  startLine: issue.line ?? 1,
+                  startColumn: issue.column ?? 1,
+                },
+              },
+            },
+          ],
+        })),
+      },
+    ],
+  };
 }
 
 /**
@@ -180,7 +287,7 @@ async function main(): Promise<void> {
     // Combine all issues for SARIF output
     const allIssues = allResults.flatMap(r => r.issues);
     const firstFile = files[0] || 'story.ws';
-    const sarif = formatErrorsAsSarif(allIssues, '', firstFile);
+    const sarif = formatAsSarif(allIssues, firstFile);
     console.log(JSON.stringify(sarif, null, 2));
   } else {
     // Text output
@@ -188,7 +295,7 @@ async function main(): Promise<void> {
       if (!args.quiet || result.errorCount > 0) {
         console.log(`\n${result.file}:`);
         if (result.issues.length > 0) {
-          console.log(formatErrors(result.issues, result.content, { useColors: args.colors }));
+          console.log(formatIssues(result.issues, result.content, args.colors));
         } else {
           console.log('  No issues found.');
         }
@@ -198,7 +305,7 @@ async function main(): Promise<void> {
     // Summary
     if (!args.quiet) {
       const totalIssues = allResults.flatMap(r => r.issues);
-      console.log('\n' + formatSummary(totalIssues, { useColors: args.colors }));
+      console.log('\n' + formatSummary(totalIssues, args.colors));
     }
   }
 

@@ -14,7 +14,7 @@
   // Get sample passages (first 3)
   let samplePassages: Passage[] = [];
   $: samplePassages = result.story
-    ? Array.from(result.story.passages.values()).slice(0, 3)
+    ? Array.from(result.story.passages.values() as Iterable<Passage>).slice(0, 3)
     : [];
 
   // Format quality percentage

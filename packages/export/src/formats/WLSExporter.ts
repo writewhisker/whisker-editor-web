@@ -4,7 +4,7 @@
  * Exports stories to WLS (Whisker Language Specification) 1.0 text format.
  */
 
-import type { Story } from '@writewhisker/core-ts';
+import type { Story, Passage, Variable } from '@writewhisker/core-ts';
 import type {
   ExportContext,
   ExportResult,
@@ -124,7 +124,7 @@ export class WLSExporter implements IExporter {
    * Add variable declarations
    */
   private addVariables(lines: string[], story: Story): void {
-    const variables = Array.from(story.variables.values());
+    const variables: Variable[] = Array.from(story.variables.values());
 
     if (variables.length === 0) {
       return;
@@ -146,7 +146,7 @@ export class WLSExporter implements IExporter {
    * Add passages
    */
   private addPassages(lines: string[], story: Story, warnings: string[]): void {
-    const passages = Array.from(story.passages.values());
+    const passages: Passage[] = Array.from(story.passages.values());
 
     for (let i = 0; i < passages.length; i++) {
       const passage = passages[i];

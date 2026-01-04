@@ -6,7 +6,23 @@
 
 import * as fs from 'fs';
 import { Parser } from '@writewhisker/parser';
-import { createDefaultValidator, type ValidationIssue } from '@writewhisker/story-validation';
+
+/**
+ * Lint issue severity
+ */
+export type LintSeverity = 'error' | 'warning' | 'info';
+
+/**
+ * Individual lint issue
+ */
+export interface LintIssue {
+  severity: LintSeverity;
+  message: string;
+  line?: number;
+  column?: number;
+  code?: string;
+  suggestion?: string;
+}
 
 /**
  * Lint options
@@ -31,7 +47,7 @@ export interface LintResult {
   /** File content */
   content: string;
   /** All validation issues */
-  issues: ValidationIssue[];
+  issues: LintIssue[];
   /** Count of errors */
   errorCount: number;
   /** Count of warnings */
@@ -76,16 +92,16 @@ export function lintContent(
   // Parse the content
   const parser = new Parser();
   const parseResult = parser.parse(content);
-  const story = parseResult.story;
+  const ast = parseResult.ast;
 
   // Collect issues
-  const issues: ValidationIssue[] = [];
+  const issues: LintIssue[] = [];
 
   // Add parse errors
   for (const error of parseResult.errors) {
     issues.push({
-      message: error.message,
       severity: 'error',
+      message: error.message,
       line: error.location.start.line,
       column: error.location.start.column,
       code: error.code,
@@ -93,11 +109,28 @@ export function lintContent(
     });
   }
 
-  // Validate if parsing succeeded
-  if (story) {
-    const validator = createDefaultValidator();
-    const validationIssues = validator.validate(story);
-    issues.push(...validationIssues);
+  // Add structural warnings based on AST
+  if (ast) {
+    // Check for missing start passage
+    const hasStart = ast.metadata.some(m => m.key === 'start');
+    if (!hasStart && ast.passages.length > 0) {
+      issues.push({
+        severity: 'warning',
+        message: 'No @start directive found. First passage will be used as start.',
+        line: 1,
+      });
+    }
+
+    // Check for empty passages
+    for (const passage of ast.passages) {
+      if (passage.content.length === 0) {
+        issues.push({
+          severity: 'info',
+          message: `Passage "${passage.name}" has no content.`,
+          line: passage.location.start.line,
+        });
+      }
+    }
   }
 
   // Filter issues by severity

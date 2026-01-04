@@ -133,7 +133,7 @@
   }
 
   let passages: Passage[] = [];
-  $: passages = $currentStory ? Array.from($currentStory.passages.values()) : [];
+  $: passages = $currentStory ? Array.from($currentStory.passages.values() as Iterable<Passage>) : [];
   $: hasScenarios = $scenarioCount > 0;
 </script>
 

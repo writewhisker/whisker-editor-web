@@ -65,6 +65,13 @@ export class WLSImporter implements IImporter {
       }
 
       // Convert AST to Story model
+      if (!parseResult.ast) {
+        return {
+          success: false,
+          error: 'Failed to parse WLS content',
+          duration: Date.now() - startTime,
+        };
+      }
       const story = this.convertToStory(parseResult.ast, issues);
 
       // Add warnings from parse errors
@@ -158,7 +165,9 @@ export class WLSImporter implements IImporter {
     }
 
     // Check for required content
-    if (parseResult.ast.passages.length === 0) {
+    if (!parseResult.ast) {
+      errors.push('Failed to parse WLS file');
+    } else if (parseResult.ast.passages.length === 0) {
       errors.push('No passages found in WLS file');
     }
 
@@ -183,39 +192,38 @@ export class WLSImporter implements IImporter {
    */
   private convertToStory(ast: StoryNode, issues: ConversionIssue[]): Story {
     // Extract metadata from directives
-    const metadata: Record<string, unknown> = {
-      title: 'Untitled Story',
-    };
+    let title = 'Untitled Story';
+    let author = '';
+    let version = '1.0.0';
+    let description: string | undefined;
+    let ifid: string | undefined;
 
     // Parser uses 'key' for directive name
     for (const directive of ast.metadata) {
       switch (directive.key) {
         case 'title':
-          metadata.title = directive.value;
+          title = directive.value;
           break;
         case 'author':
-          metadata.author = directive.value;
+          author = directive.value;
           break;
         case 'version':
-          metadata.version = directive.value;
+          version = directive.value;
           break;
         case 'ifid':
-          metadata.ifid = directive.value;
+          ifid = directive.value;
           break;
         case 'start':
           // Will be used for startPassage
           break;
         case 'description':
-          metadata.description = directive.value;
+          description = directive.value;
           break;
-        default:
-          // Store unknown directives in metadata
-          metadata[directive.key] = directive.value;
       }
     }
 
     // Convert passages first to build the passages map
-    const passagesMap: Record<string, object> = {};
+    const passagesMap: Record<string, ReturnType<Passage['serialize']>> = {};
     const convertedPassages: Passage[] = [];
     for (const passageNode of ast.passages) {
       const passage = this.convertPassage(passageNode, issues);
@@ -224,8 +232,17 @@ export class WLSImporter implements IImporter {
     }
 
     // Create story with passages (avoids default "Start" passage creation)
+    const now = new Date().toISOString();
     const story = new Story({
-      metadata,
+      metadata: {
+        title,
+        author,
+        version,
+        description,
+        ifid,
+        created: now,
+        modified: now,
+      },
       passages: passagesMap,
     });
 
@@ -255,9 +272,31 @@ export class WLSImporter implements IImporter {
    * Convert variable declaration to Variable model
    */
   private convertVariable(varDecl: VariableDeclarationNode): Variable {
+    // Convert AST expression to initial value
+    let initial: string | number | boolean = '';
+    let type: 'string' | 'number' | 'boolean' = 'string';
+
+    if (varDecl.initialValue) {
+      const expr = varDecl.initialValue;
+      if (expr.type === 'literal' && 'value' in expr) {
+        const value = (expr as { value: unknown }).value;
+        if (typeof value === 'number') {
+          initial = value;
+          type = 'number';
+        } else if (typeof value === 'boolean') {
+          initial = value;
+          type = 'boolean';
+        } else {
+          initial = String(value);
+          type = 'string';
+        }
+      }
+    }
+
     return new Variable({
       name: varDecl.name,
-      value: varDecl.value,
+      type,
+      initial,
       scope: varDecl.scope || 'story',
     });
   }
@@ -366,34 +405,29 @@ export class WLSImporter implements IImporter {
 
         case 'conditional': {
           const cond = node as ConditionalNode;
-          if (cond.inline && cond.trueBranch && cond.falseBranch) {
-            // Inline conditional: { cond : true | false }
-            result += `{${this.expressionToString(cond.condition)} : ${this.contentToText(cond.trueBranch, issues)} | ${this.contentToText(cond.falseBranch, issues)}}`;
-          } else {
-            // Block conditional
-            result += `{${this.expressionToString(cond.condition)}}`;
-            if (cond.trueBranch) {
-              result += this.contentToText(cond.trueBranch, issues);
-            }
-            if (cond.elifBranches) {
-              for (const elif of cond.elifBranches) {
-                result += `{elif ${this.expressionToString(elif.condition)}}`;
-                result += this.contentToText(elif.content, issues);
-              }
-            }
-            if (cond.falseBranch) {
-              result += `{else}`;
-              result += this.contentToText(cond.falseBranch, issues);
-            }
-            result += `{/}`;
+          // Block conditional
+          result += `{${this.expressionToString(cond.condition)}}`;
+          if (cond.consequent) {
+            result += this.contentToText(cond.consequent, issues);
           }
+          if (cond.alternatives) {
+            for (const elif of cond.alternatives) {
+              result += `{elif ${this.expressionToString(elif.condition)}}`;
+              result += this.contentToText(elif.content, issues);
+            }
+          }
+          if (cond.alternate) {
+            result += `{else}`;
+            result += this.contentToText(cond.alternate, issues);
+          }
+          result += `{/}`;
           break;
         }
 
         case 'alternatives': {
           const alt = node as AlternativesNode;
           const mode = alt.mode !== 'sequence' ? `:${alt.mode}` : '';
-          const items = alt.items.map(item => this.contentToText(item, issues)).join(' | ');
+          const items = alt.options.map(item => this.contentToText(item, issues)).join(' | ');
           result += `{|${mode} ${items}}`;
           break;
         }

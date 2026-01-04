@@ -91,6 +91,7 @@ export class Parser {
           includes: [],
           functions: [],
           namespaces: [],
+          threads: [],
           theme: null,
           styles: null,
           passages: [],

@@ -50,7 +50,9 @@
       package: '.zip',
       epub: '.epub',
       twine: '.html',
-      pdf: '.pdf'
+      pdf: '.pdf',
+      wls: '.ws',
+      pwa: '.zip'
     };
     customFilename = `${storyTitle}${extensions[selectedFormat]}`;
   }

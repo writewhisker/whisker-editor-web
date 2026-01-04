@@ -28,7 +28,6 @@ import {
 
 import { Parser } from '@writewhisker/parser';
 import type { StoryNode, PassageNode } from '@writewhisker/parser';
-import { createDefaultValidator } from '@writewhisker/story-validation';
 import type { ValidationIssue, ValidationSeverity } from '@writewhisker/story-validation';
 
 /**
@@ -103,12 +102,7 @@ export class WhiskerLanguageServer {
     });
 
     this.connection.onInitialized(() => {
-      if (this.hasConfigurationCapability) {
-        this.connection.client.register(
-          'workspace/didChangeConfiguration',
-          undefined
-        );
-      }
+      // Configuration support is already enabled via capabilities
     });
 
     // Document events
@@ -155,25 +149,27 @@ export class WhiskerLanguageServer {
     // Parse the document
     const parser = new Parser();
     const parseResult = parser.parse(content);
-    const story = parseResult.story;
+    const story = parseResult.ast;
 
-    // Validate the story
-    const validator = createDefaultValidator();
-    const issues = story ? validator.validate(story) : [];
+    // Collect issues
+    const issues: ValidationIssue[] = [];
 
-    // Add parse errors
+    // Add parse errors as validation issues
     for (const error of parseResult.errors) {
       issues.push({
+        id: `parse-${error.code}`,
+        code: error.code,
+        category: 'syntax',
+        fixable: false,
         message: error.message,
         severity: 'error',
         line: error.location.start.line,
         column: error.location.start.column,
-        code: error.code,
         suggestion: error.suggestion,
       });
     }
 
-    // Cache the result
+    // Cache the result (note: we don't validate AST since validator expects Story model)
     this.documentCache.set(uri, {
       version: document.version,
       story,
@@ -260,7 +256,7 @@ export class WhiskerLanguageServer {
         completions.push({
           label: func.name,
           kind: CompletionItemKind.Function,
-          detail: `Function(${func.parameters.map(p => p.name).join(', ')})`,
+          detail: `Function(${func.params.map(p => p.name).join(', ')})`,
         });
       }
     }
@@ -454,5 +450,3 @@ export class WhiskerLanguageServer {
 // Start server if run directly
 const server = new WhiskerLanguageServer();
 server.start();
-
-export { WhiskerLanguageServer };

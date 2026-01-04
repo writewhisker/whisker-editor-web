@@ -32,6 +32,17 @@ export {
   type ThreadEventCallback,
 } from './ThreadScheduler';
 
+// WLS 2.0 Threaded Story Player
+export {
+  ThreadedStoryPlayer,
+  createThreadedStoryPlayer,
+  type ThreadedPlayerState,
+  type ThreadStateInfo,
+  type ThreadExecutionOptions,
+  type ThreadStepResult,
+  type ThreadedPlayerEvent,
+} from './ThreadedStoryPlayer';
+
 // WLS 2.0 Timed Content Manager
 export {
   TimedContentManager,

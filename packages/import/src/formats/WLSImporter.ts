@@ -232,6 +232,7 @@ export class WLSImporter implements IImporter {
     }
 
     // Create story with passages (avoids default "Start" passage creation)
+    const now = new Date().toISOString();
     const story = new Story({
       metadata: {
         title,
@@ -239,6 +240,8 @@ export class WLSImporter implements IImporter {
         version,
         description,
         ifid,
+        created: now,
+        modified: now,
       },
       passages: passagesMap,
     });

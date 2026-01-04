@@ -5,7 +5,7 @@
  */
 
 import { writable, derived, get } from 'svelte/store';
-import type { Story } from '@writewhisker/core-ts';
+import type { Story, Passage } from '@writewhisker/core-ts';
 
 /**
  * Detected story version
@@ -78,7 +78,7 @@ export const recentMigrations = derived(migrationHistory, ($history) => {
  */
 export function detectStoryVersion(story: Story): StoryVersion {
   // Check for WLS 1.0 markers
-  const passages = Array.from(story.passages.values());
+  const passages = Array.from(story.passages.values() as Iterable<Passage>);
 
   let hasLegacySyntax = false;
   let hasWLS1Syntax = false;
@@ -195,7 +195,7 @@ export function generateMigrationPreview(story: Story): MigrationPreview {
     };
   }
 
-  const passages = Array.from(story.passages.values());
+  const passages = Array.from(story.passages.values() as Iterable<Passage>);
 
   for (const passage of passages) {
     const content = passage.content || '';

@@ -339,7 +339,7 @@
 
   // All passages for autocomplete (including current passage)
   $: allPassages = $currentStory
-    ? Array.from($currentStory.passages.values())
+    ? Array.from($currentStory.passages.values() as Iterable<Passage>)
     : [];
 </script>
 

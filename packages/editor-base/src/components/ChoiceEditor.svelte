@@ -11,7 +11,7 @@
    */
   import { nanoid } from 'nanoid';
   import { currentStory } from '../stores/storyStateStore';
-  import type { ChoiceType } from '@writewhisker/story-models';
+  import type { ChoiceType, Passage } from '@writewhisker/core-ts';
 
   interface ChoiceData {
     id: string;
@@ -41,7 +41,7 @@
     availablePassages.length > 0
       ? availablePassages
       : $currentStory
-        ? Array.from($currentStory.passages.values()).map(p => p.title)
+        ? Array.from($currentStory.passages.values() as Iterable<Passage>).map(p => p.title)
         : []
   );
 

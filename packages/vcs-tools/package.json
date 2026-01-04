@@ -1,0 +1,29 @@
+{
+  "name": "@writewhisker/vcs-tools",
+  "version": "1.0.0",
+  "description": "VCS tools for diffing and merging Whisker stories",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "@writewhisker/story-models": "workspace:*",
+    "@writewhisker/conflict-detection": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "keywords": ["whisker", "vcs", "diff", "merge", "story"],
+  "license": "MIT"
+}

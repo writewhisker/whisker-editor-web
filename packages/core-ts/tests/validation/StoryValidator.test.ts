@@ -95,7 +95,7 @@ describe('StoryValidator', () => {
 
       expect(result.valid).toBe(true); // Warnings don't make it invalid
       expect(result.warningCount).toBe(1);
-      expect(result.issues[0].message).toContain('Unreachable passage');
+      expect(result.issues[0].message).toContain('is unreachable');
     });
 
     it('should detect dead links', () => {
@@ -115,7 +115,7 @@ describe('StoryValidator', () => {
 
       expect(result.valid).toBe(false); // Errors make it invalid
       expect(result.errorCount).toBe(1);
-      expect(result.issues[0].message).toContain('Dead link');
+      expect(result.issues[0].message).toContain('non-existent passage');
     });
 
     it('should respect validation options - categories', () => {

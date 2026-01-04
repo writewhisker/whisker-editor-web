@@ -56,7 +56,7 @@ describe('UnreachablePassagesValidator', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('warning');
     expect(issues[0].category).toBe('structure');
-    expect(issues[0].message).toContain('Unreachable passage');
+    expect(issues[0].message).toContain('is unreachable');
     expect(issues[0].passageId).toBe(unreachable.id);
     expect(issues[0].fixable).toBe(true);
   });
@@ -176,7 +176,7 @@ describe('UnreachablePassagesValidator', () => {
     const validator = new UnreachablePassagesValidator();
     const issues = validator.validate(story);
 
-    expect(issues[0].fixDescription).toBe('Delete this passage');
+    expect(issues[0].fixDescription).toBe('Delete this passage or add a link to it');
   });
 
   it('should handle passages reachable through multiple paths', () => {

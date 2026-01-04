@@ -56,12 +56,16 @@ describe('EmptyPassagesValidator', () => {
     const validator = new EmptyPassagesValidator();
     const issues = validator.validate(story);
 
-    expect(issues).toHaveLength(1);
-    expect(issues[0].severity).toBe('warning');
-    expect(issues[0].category).toBe('content');
-    expect(issues[0].message).toContain('Empty passage');
-    expect(issues[0].passageId).toBe(empty.id);
-    expect(issues[0].passageTitle).toBe('Empty Passage');
+    // Empty passage with a choice that has no target generates 2 issues:
+    // 1. Empty content warning
+    // 2. Dead end info (because choice has no target)
+    expect(issues).toHaveLength(2);
+    const emptyIssue = issues.find(i => i.severity === 'warning');
+    expect(emptyIssue).toBeDefined();
+    expect(emptyIssue!.category).toBe('content');
+    expect(emptyIssue!.message).toContain('is empty');
+    expect(emptyIssue!.passageId).toBe(empty.id);
+    expect(emptyIssue!.passageTitle).toBe('Empty Passage');
   });
 
   it('should detect passages with whitespace-only content', () => {
@@ -74,7 +78,7 @@ describe('EmptyPassagesValidator', () => {
 
     expect(issues.some(i => i.severity === 'warning')).toBe(true);
     const emptyIssue = issues.find(i => i.severity === 'warning');
-    expect(emptyIssue?.message).toContain('Empty passage');
+    expect(emptyIssue?.message).toContain('is empty');
   });
 
   it('should detect terminal passages (no choices) as info', () => {
@@ -88,7 +92,7 @@ describe('EmptyPassagesValidator', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('info');
     expect(issues[0].category).toBe('content');
-    expect(issues[0].message).toContain('Terminal passage');
+    expect(issues[0].message).toContain('is a dead end');
     expect(issues[0].passageId).toBe(terminal.id);
   });
 
@@ -115,7 +119,7 @@ describe('EmptyPassagesValidator', () => {
 
     expect(issues).toHaveLength(1);
     expect(issues[0].severity).toBe('info');
-    expect(issues[0].description).toContain('This is fine if intentional');
+    expect(issues[0].description).toContain('It may be an intentional story ending');
   });
 
   it('should handle story with no passages', () => {

@@ -329,6 +329,14 @@ export const WLS_ERROR_CODES = {
     message: 'Story has many variables ({count})',
     description: 'Story has more variables than threshold.',
   },
+  'WLS-QUA-006': {
+    code: 'WLS-QUA-006',
+    name: 'too_many_choices',
+    category: 'quality' as ValidationCategory,
+    severity: 'info' as ValidationSeverity,
+    message: 'Passage "{passageName}" has too many choices ({count})',
+    description: 'Passage has more choices than recommended threshold.',
+  },
 
   // Syntax (SYN)
   'WLS-SYN-001': {
@@ -546,6 +554,30 @@ export const WLS_ERROR_CODES = {
     severity: 'error' as ValidationSeverity,
     message: 'Invalid key "{key}" in MAP "{mapName}"',
     description: 'MAP keys must be valid identifiers or strings.',
+  },
+  'WLS-COL-008': {
+    code: 'WLS-COL-008',
+    name: 'undefined_list',
+    category: 'collections' as ValidationCategory,
+    severity: 'error' as ValidationSeverity,
+    message: 'Undefined LIST: "{listName}"',
+    description: 'Referenced LIST is not defined.',
+  },
+  'WLS-COL-009': {
+    code: 'WLS-COL-009',
+    name: 'undefined_array',
+    category: 'collections' as ValidationCategory,
+    severity: 'error' as ValidationSeverity,
+    message: 'Undefined ARRAY: "{arrayName}"',
+    description: 'Referenced ARRAY is not defined.',
+  },
+  'WLS-COL-010': {
+    code: 'WLS-COL-010',
+    name: 'undefined_map',
+    category: 'collections' as ValidationCategory,
+    severity: 'error' as ValidationSeverity,
+    message: 'Undefined MAP: "{mapName}"',
+    description: 'Referenced MAP is not defined.',
   },
 
   // Modules (MOD) - WLS 1.0 Gap 4

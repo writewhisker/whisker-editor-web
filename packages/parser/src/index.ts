@@ -42,6 +42,27 @@ export type {
   ConditionalBranchNode,
   ChoiceNode,
   AlternativesNode,
+  // WLS 1.0 Flow Control types
+  GatherNode,
+  TunnelCallNode,
+  TunnelReturnNode,
+  // WLS 1.0 Rich Text types
+  FormattedTextNode,
+  BlockquoteNode,
+  ListNode,
+  ListItemNode,
+  HorizontalRuleNode,
+  ClassedBlockNode,
+  ClassedInlineNode,
+  // WLS 1.0 Media types
+  MediaAttributes,
+  AudioAttributes,
+  VideoAttributes,
+  EmbedAttributes,
+  ImageNode,
+  AudioNode,
+  VideoNode,
+  EmbedNode,
   // WLS 2.0 Thread types
   ThreadPassageNode,
   AwaitExpressionNode,

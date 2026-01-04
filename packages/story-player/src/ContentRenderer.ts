@@ -21,6 +21,19 @@ import type {
   GatherNode,
   TunnelCallNode,
   TunnelReturnNode,
+  // Rich text types
+  FormattedTextNode,
+  BlockquoteNode,
+  ListNode,
+  ListItemNode,
+  HorizontalRuleNode,
+  ClassedBlockNode,
+  ClassedInlineNode,
+  // Media types
+  ImageNode,
+  AudioNode,
+  VideoNode,
+  EmbedNode,
 } from '@writewhisker/parser';
 
 import type { WhiskerRuntimeContext, WhiskerValue } from '@writewhisker/scripting';
@@ -208,6 +221,28 @@ export class ContentRenderer {
         return this.renderTunnelCall(node as TunnelCallNode);
       case 'tunnel_return':
         return this.renderTunnelReturn(node as TunnelReturnNode);
+      // Rich text nodes
+      case 'formatted_text':
+        return this.renderFormattedText(node as FormattedTextNode, choices);
+      case 'blockquote':
+        return this.renderBlockquote(node as BlockquoteNode, choices);
+      case 'list':
+        return this.renderList(node as ListNode, choices);
+      case 'horizontal_rule':
+        return this.renderHorizontalRule(node as HorizontalRuleNode);
+      case 'classed_block':
+        return this.renderClassedBlock(node as ClassedBlockNode, choices);
+      case 'classed_inline':
+        return this.renderClassedInline(node as ClassedInlineNode, choices);
+      // Media nodes
+      case 'image':
+        return this.renderImage(node as ImageNode);
+      case 'audio':
+        return this.renderAudio(node as AudioNode);
+      case 'video':
+        return this.renderVideo(node as VideoNode);
+      case 'embed':
+        return this.renderEmbed(node as EmbedNode);
       default:
         this.addError(`Unknown content node type: ${(node as ContentNode).type}`, node);
         return '';
@@ -445,6 +480,221 @@ export class ContentRenderer {
     this.tunnelReturn = true;
     // Tunnel returns don't produce text output
     return '';
+  }
+
+  // ============================================================================
+  // Rich Text Rendering
+  // ============================================================================
+
+  /**
+   * Render formatted text (bold, italic, code, strikethrough)
+   */
+  private renderFormattedText(node: FormattedTextNode, choices: RenderedChoice[]): string {
+    const content = this.renderNodes(node.content, choices);
+
+    switch (node.format) {
+      case 'bold':
+        return `<strong>${content}</strong>`;
+      case 'italic':
+        return `<em>${content}</em>`;
+      case 'bold_italic':
+        return `<strong><em>${content}</em></strong>`;
+      case 'code':
+        return `<code>${content}</code>`;
+      case 'strikethrough':
+        return `<del>${content}</del>`;
+      default:
+        return content;
+    }
+  }
+
+  /**
+   * Render blockquote (> text)
+   */
+  private renderBlockquote(node: BlockquoteNode, choices: RenderedChoice[]): string {
+    const content = this.renderNodes(node.content, choices);
+    // Support nested blockquotes via depth
+    const indent = '  '.repeat(node.depth - 1);
+    return `${indent}<blockquote>${content}</blockquote>`;
+  }
+
+  /**
+   * Render list (ordered or unordered)
+   */
+  private renderList(node: ListNode, choices: RenderedChoice[]): string {
+    const tag = node.ordered ? 'ol' : 'ul';
+    const items = node.items
+      .map((item: ListItemNode) => {
+        const content = this.renderNodes(item.content, choices);
+        return `<li>${content}</li>`;
+      })
+      .join('\n');
+
+    return `<${tag}>\n${items}\n</${tag}>`;
+  }
+
+  /**
+   * Render horizontal rule (---)
+   */
+  private renderHorizontalRule(_node: HorizontalRuleNode): string {
+    return '<hr />';
+  }
+
+  /**
+   * Render block with CSS classes (.class { content })
+   */
+  private renderClassedBlock(node: ClassedBlockNode, choices: RenderedChoice[]): string {
+    const content = this.renderNodes(node.content, choices);
+    const classAttr = node.classes.join(' ');
+    return `<div class="${classAttr}">${content}</div>`;
+  }
+
+  /**
+   * Render inline content with CSS classes ([.class text])
+   */
+  private renderClassedInline(node: ClassedInlineNode, choices: RenderedChoice[]): string {
+    const content = this.renderNodes(node.content, choices);
+    const classAttr = node.classes.join(' ');
+    return `<span class="${classAttr}">${content}</span>`;
+  }
+
+  // ============================================================================
+  // Media Rendering
+  // ============================================================================
+
+  /**
+   * Render image (![alt](src){attributes})
+   */
+  private renderImage(node: ImageNode): string {
+    const attrs: string[] = [`src="${this.escapeAttr(node.src)}"`, `alt="${this.escapeAttr(node.alt)}"`];
+
+    if (node.attributes.width) {
+      attrs.push(`width="${this.escapeAttr(node.attributes.width)}"`);
+    }
+    if (node.attributes.height) {
+      attrs.push(`height="${this.escapeAttr(node.attributes.height)}"`);
+    }
+    if (node.attributes.title) {
+      attrs.push(`title="${this.escapeAttr(node.attributes.title)}"`);
+    }
+    if (node.attributes.id) {
+      attrs.push(`id="${this.escapeAttr(node.attributes.id)}"`);
+    }
+    if (node.attributes.classes && node.attributes.classes.length > 0) {
+      attrs.push(`class="${this.escapeAttr(node.attributes.classes.join(' '))}"`);
+    }
+
+    return `<img ${attrs.join(' ')} />`;
+  }
+
+  /**
+   * Render audio ([audio](src){attributes})
+   */
+  private renderAudio(node: AudioNode): string {
+    const attrs: string[] = [`src="${this.escapeAttr(node.src)}"`];
+
+    if (node.attributes.loop) {
+      attrs.push('loop');
+    }
+    if (node.attributes.autoplay) {
+      attrs.push('autoplay');
+    }
+    if (node.attributes.controls !== false) {
+      attrs.push('controls');
+    }
+    if (node.attributes.muted) {
+      attrs.push('muted');
+    }
+    if (node.attributes.preload) {
+      attrs.push(`preload="${this.escapeAttr(node.attributes.preload)}"`);
+    }
+    if (node.attributes.id) {
+      attrs.push(`id="${this.escapeAttr(node.attributes.id)}"`);
+    }
+    if (node.attributes.classes && node.attributes.classes.length > 0) {
+      attrs.push(`class="${this.escapeAttr(node.attributes.classes.join(' '))}"`);
+    }
+
+    return `<audio ${attrs.join(' ')}></audio>`;
+  }
+
+  /**
+   * Render video ([video](src){attributes})
+   */
+  private renderVideo(node: VideoNode): string {
+    const attrs: string[] = [`src="${this.escapeAttr(node.src)}"`];
+
+    if (node.attributes.width) {
+      attrs.push(`width="${this.escapeAttr(node.attributes.width)}"`);
+    }
+    if (node.attributes.height) {
+      attrs.push(`height="${this.escapeAttr(node.attributes.height)}"`);
+    }
+    if (node.attributes.loop) {
+      attrs.push('loop');
+    }
+    if (node.attributes.autoplay) {
+      attrs.push('autoplay');
+    }
+    if (node.attributes.controls !== false) {
+      attrs.push('controls');
+    }
+    if (node.attributes.muted) {
+      attrs.push('muted');
+    }
+    if (node.attributes.poster) {
+      attrs.push(`poster="${this.escapeAttr(node.attributes.poster)}"`);
+    }
+    if (node.attributes.preload) {
+      attrs.push(`preload="${this.escapeAttr(node.attributes.preload)}"`);
+    }
+    if (node.attributes.id) {
+      attrs.push(`id="${this.escapeAttr(node.attributes.id)}"`);
+    }
+    if (node.attributes.classes && node.attributes.classes.length > 0) {
+      attrs.push(`class="${this.escapeAttr(node.attributes.classes.join(' '))}"`);
+    }
+
+    return `<video ${attrs.join(' ')}></video>`;
+  }
+
+  /**
+   * Render embed ([embed](src){attributes})
+   */
+  private renderEmbed(node: EmbedNode): string {
+    const attrs: string[] = [`src="${this.escapeAttr(node.src)}"`];
+
+    if (node.attributes.width) {
+      attrs.push(`width="${this.escapeAttr(node.attributes.width)}"`);
+    }
+    if (node.attributes.height) {
+      attrs.push(`height="${this.escapeAttr(node.attributes.height)}"`);
+    }
+    if (node.attributes.id) {
+      attrs.push(`id="${this.escapeAttr(node.attributes.id)}"`);
+    }
+    if (node.attributes.classes && node.attributes.classes.length > 0) {
+      attrs.push(`class="${this.escapeAttr(node.attributes.classes.join(' '))}"`);
+    }
+    if (node.attributes.sandbox) {
+      attrs.push('sandbox');
+    }
+    if (node.attributes.allow) {
+      attrs.push(`allow="${this.escapeAttr(node.attributes.allow)}"`);
+    }
+
+    return `<iframe ${attrs.join(' ')} frameborder="0" allowfullscreen></iframe>`;
+  }
+
+  /**
+   * Escape HTML attribute value
+   */
+  private escapeAttr(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   /**

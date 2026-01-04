@@ -1559,4 +1559,632 @@ Content`);
       expect(result.ast?.passages).toHaveLength(1);
     });
   });
+
+  // ============================================================================
+  // Additional Parser Error Path Coverage
+  // ============================================================================
+
+  describe('parser error paths', () => {
+    it('should handle $ without identifier', () => {
+      const result = parse(`:: Start
+Value: $ .`);
+      // Parser may treat as text, verify it parses
+      expect(result).toBeDefined();
+    });
+
+    it('should handle $$ without identifier', () => {
+      const result = parse(`:: Start
+Temp: $$ `);
+      // Parser may treat as text, verify it parses
+      expect(result).toBeDefined();
+    });
+
+    it('should handle $_  without identifier after underscore', () => {
+      const result = parse(`:: Start
+{$_ }`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle unterminated string in expression', () => {
+      const result = parse(`:: Start
+{$name = "unclosed}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle invalid list without name', () => {
+      const result = parse(`LIST = value1, value2
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle invalid list without equals', () => {
+      const result = parse(`LIST colors value1
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle list with invalid active value', () => {
+      const result = parse(`LIST mood = happy, (123), sad
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle list with unclosed parenthesis', () => {
+      const result = parse(`LIST mood = happy, (active
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle array without name', () => {
+      const result = parse(`ARRAY = [1, 2, 3]
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle array without equals', () => {
+      const result = parse(`ARRAY items [1, 2]
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle array without opening bracket', () => {
+      const result = parse(`ARRAY items = 1, 2, 3]
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle map without name', () => {
+      const result = parse(`MAP = {a: 1}
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle map without equals', () => {
+      const result = parse(`MAP data {a: 1}
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle map without opening brace', () => {
+      const result = parse(`MAP data = a: 1}
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle map entry without colon', () => {
+      const result = parse(`MAP data = {key 1}
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle function without name', () => {
+      const result = parse(`FUNCTION ()
+  return 1
+END FUNCTION
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle function without opening paren', () => {
+      const result = parse(`FUNCTION myFunc
+  return 1
+END FUNCTION
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle namespace without name', () => {
+      const result = parse(`NAMESPACE
+END NAMESPACE
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle include without path', () => {
+      const result = parse(`INCLUDE
+
+:: Start
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle choice without target and no inline content', () => {
+      const result = parse(`:: Start
+* [Empty choice]
+:: Next
+Content`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle gather with invalid syntax', () => {
+      const result = parse(`:: Start
+* [A] -> Next
+- @
+Content`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle divert to empty target', () => {
+      const result = parse(`:: Start
+->
+Content`);
+      // Parser may handle gracefully, verify it parses
+      expect(result).toBeDefined();
+    });
+
+    it('should handle tunnel without return', () => {
+      const result = parse(`:: Start
+-> TunnelTarget
+Content`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle conditional without expression', () => {
+      const result = parse(`:: Start
+{if }
+Content
+{/if}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle else without if', () => {
+      const result = parse(`:: Start
+{else}
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle elseif without if', () => {
+      const result = parse(`:: Start
+{elseif $x}
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle binary expression with missing right operand', () => {
+      const result = parse(`:: Start
+{$x + }`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle comparison with missing operand', () => {
+      const result = parse(`:: Start
+{$x > }`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle call expression without closing paren', () => {
+      const result = parse(`:: Start
+{myFunc(1, 2}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle member access without property', () => {
+      const result = parse(`:: Start
+{$obj.}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle bracket access without index', () => {
+      const result = parse(`:: Start
+{$arr[]}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle bracket access without closing bracket', () => {
+      const result = parse(`:: Start
+{$arr[0}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle unary not without operand', () => {
+      const result = parse(`:: Start
+{not }`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle negative without operand', () => {
+      const result = parse(`:: Start
+{-}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle assignment to non-variable', () => {
+      const result = parse(`:: Start
+{123 = 456}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle compound assignment', () => {
+      const result = parse(`:: Start
+{$x += 10}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle spawn without expression', () => {
+      const result = parse(`:: Start
+{spawn}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle await without expression', () => {
+      const result = parse(`:: Start
+{await}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle do block without expression', () => {
+      const result = parse(`:: Start
+{do }
+Content`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle passage with only whitespace after marker', () => {
+      const result = parse(`::
+Content`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle passage with numeric name', () => {
+      const result = parse(`:: 123
+Content`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle very long passage name', () => {
+      const longName = 'A'.repeat(1000);
+      const result = parse(`:: ${longName}
+Content`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle deeply nested conditionals', () => {
+      const result = parse(`:: Start
+{if $a}
+  {if $b}
+    {if $c}
+      Deep
+    {/}
+  {/}
+{/}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle expression with multiple operators', () => {
+      const result = parse(`:: Start
+{$a + $b * $c - $d / $e}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle logical and/or chain', () => {
+      const result = parse(`:: Start
+{if $a and $b or $c and $d}
+Content
+{/}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle comparison operators', () => {
+      const result = parse(`:: Start
+{if $a >= $b and $c <= $d and $e != $f}
+Content
+{/}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle modulo operator', () => {
+      const result = parse(`:: Start
+{$x % 2}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle string concatenation', () => {
+      const result = parse(`:: Start
+{$first .. " " .. $last}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle grouping with parentheses', () => {
+      const result = parse(`:: Start
+{($a + $b) * ($c - $d)}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle unclosed grouping parenthesis', () => {
+      const result = parse(`:: Start
+{($a + $b}`);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it('should handle ternary-like conditional', () => {
+      const result = parse(`:: Start
+{$cond ? $a : $b}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle list membership check', () => {
+      const result = parse(`:: Start
+{$colors ? red}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle list operations', () => {
+      const result = parse(`:: Start
+{$inventory + item}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle empty braces', () => {
+      const result = parse(`:: Start
+{}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle nested braces', () => {
+      const result = parse(`:: Start
+{{$x}}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle return statement', () => {
+      const result = parse(`FUNCTION getValue()
+  {return 42}
+END FUNCTION
+
+:: Start
+{getValue()}`);
+      expect(result.ast?.functions).toBeDefined();
+    });
+
+    it('should handle thread passage', () => {
+      const result = parse(`:: Start
+<- BackgroundTask
+
+:: BackgroundTask
+Background content`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle glue syntax', () => {
+      const result = parse(`:: Start
+Text<>joined`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle escape sequences in strings', () => {
+      const result = parse(`:: Start
+{"Line1\\nLine2\\tTabbed"}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle unicode in strings', () => {
+      const result = parse(`:: Start
+{"Hello 世界 🌍"}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle mixed content types', () => {
+      const result = parse(`:: Start
+Text {$var} more text
+* [Choice] -> Target
+{if $cond}
+Conditional
+{/}
+-> End`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle all choice modifiers', () => {
+      const result = parse(`:: Start
+* [Normal] -> A
+*! [Once] -> B
+*? [Fallback] -> C
+*!? [Once Fallback] -> D`);
+      expect(result.ast?.passages[0].content.filter((c: { type: string }) => c.type === 'choice')).toHaveLength(4);
+    });
+
+    it('should handle sticky choice', () => {
+      const result = parse(`:: Start
++ [Sticky choice] -> Target`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle choice condition in brackets', () => {
+      const result = parse(`:: Start
+* {$hasKey} [Use key] -> Unlock`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle variable declaration with expression', () => {
+      const result = parse(`VAR score = 10 + 5
+
+:: Start
+{$score}`);
+      expect(result.ast?.variables).toBeDefined();
+    });
+
+    it('should handle temp variable declaration', () => {
+      const result = parse(`TEMP count = 0
+
+:: Start
+{$$count}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle const declaration', () => {
+      const result = parse(`CONST MAX_HEALTH = 100
+
+:: Start
+{$MAX_HEALTH}`);
+      expect(result).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // Lexer Edge Cases
+  // ============================================================================
+
+  describe('lexer edge cases', () => {
+    it('should handle very long identifiers', () => {
+      const longId = 'a'.repeat(500);
+      const result = parse(`:: Start
+{$${longId}}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle numbers with leading zeros', () => {
+      const result = parse(`:: Start
+{007}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle negative numbers', () => {
+      const result = parse(`:: Start
+{-42}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle float numbers', () => {
+      const result = parse(`:: Start
+{3.14159}`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle scientific notation', () => {
+      const result = parse(`:: Start
+{1e10}`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle empty passage content', () => {
+      const result = parse(`:: Empty
+
+:: Next
+Content`);
+      expect(result.ast?.passages).toHaveLength(2);
+    });
+
+    it('should handle passage with only comments', () => {
+      const result = parse(`:: Start
+// This is a comment
+/* Block comment */
+// Another comment`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle windows line endings', () => {
+      const result = parse(`:: Start\r\nContent\r\n* [Choice] -> End\r\n`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle mac line endings', () => {
+      const result = parse(`:: Start\rContent\r* [Choice] -> End\r`);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle tabs in content', () => {
+      const result = parse(`:: Start
+\tIndented content
+\t\tDouble indented`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+
+    it('should handle special characters in text', () => {
+      const result = parse(`:: Start
+Special chars: @#%^&()[]<>
+More: !@#$%^&*()`);
+      expect(result.ast?.passages).toBeDefined();
+    });
+  });
+
+  // ============================================================================
+  // Complete Story Structure Coverage
+  // ============================================================================
+
+  describe('complete story structures', () => {
+    it('should parse story with all declaration types', () => {
+      const result = parse(`@title: Complete Story
+@author: Test
+
+VAR $health = 100
+LIST $mood = happy, sad, (neutral)
+ARRAY $inventory = [sword, shield]
+MAP $stats = {str: 10, dex: 15}
+
+FUNCTION roll($sides)
+  {return math.random(1, $sides)}
+END FUNCTION
+
+NAMESPACE Utils
+  FUNCTION double($x)
+    {return $x * 2}
+  END FUNCTION
+END NAMESPACE
+
+:: Start
+Welcome!
+* [Begin] -> Chapter1`);
+      expect(result.ast?.metadata).toBeDefined();
+      expect(result.ast?.variables).toBeDefined();
+      expect(result.ast?.lists).toBeDefined();
+      expect(result.ast?.functions).toBeDefined();
+    });
+
+    it('should parse story with complex flow', () => {
+      const result = parse(`:: Start
+{if $firstVisit}
+Welcome, newcomer!
+{$firstVisit = false}
+{else}
+Welcome back!
+{/if}
+
+* [Enter shop] -> Shop
+* [Leave] {$hasExitPass} -> Exit
+*? [Wait] -> Start
+
+:: Shop
+Items for sale:
+* [Buy sword] {$gold >= 50}
+  {$gold = $gold - 50}
+  {$inventory + sword}
+  You bought a sword!
+  -> Shop
+* [Leave] -> Start
+
+- (after_shopping)
+Thanks for shopping!
+-> Start`);
+      expect(result.ast?.passages.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });

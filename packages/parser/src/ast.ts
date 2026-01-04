@@ -426,6 +426,9 @@ export interface MediaAttributes {
   height?: string;
   align?: 'left' | 'center' | 'right';
   class?: string;
+  classes?: string[];
+  id?: string;
+  title?: string;
 }
 
 /**
@@ -436,7 +439,8 @@ export interface AudioAttributes extends MediaAttributes {
   autoplay?: boolean;
   controls?: boolean;
   volume?: number;
-  id?: string;
+  muted?: boolean;
+  preload?: string;
 }
 
 /**
@@ -448,6 +452,7 @@ export interface VideoAttributes extends MediaAttributes {
   controls?: boolean;
   muted?: boolean;
   poster?: string;
+  preload?: string;
 }
 
 /**

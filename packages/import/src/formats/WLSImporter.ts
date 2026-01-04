@@ -257,7 +257,7 @@ export class WLSImporter implements IImporter {
   private convertVariable(varDecl: VariableDeclarationNode): Variable {
     return new Variable({
       name: varDecl.name,
-      value: varDecl.value,
+      value: varDecl.initialValue,
       scope: varDecl.scope || 'story',
     });
   }
@@ -366,34 +366,29 @@ export class WLSImporter implements IImporter {
 
         case 'conditional': {
           const cond = node as ConditionalNode;
-          if (cond.inline && cond.trueBranch && cond.falseBranch) {
-            // Inline conditional: { cond : true | false }
-            result += `{${this.expressionToString(cond.condition)} : ${this.contentToText(cond.trueBranch, issues)} | ${this.contentToText(cond.falseBranch, issues)}}`;
-          } else {
-            // Block conditional
-            result += `{${this.expressionToString(cond.condition)}}`;
-            if (cond.trueBranch) {
-              result += this.contentToText(cond.trueBranch, issues);
-            }
-            if (cond.elifBranches) {
-              for (const elif of cond.elifBranches) {
-                result += `{elif ${this.expressionToString(elif.condition)}}`;
-                result += this.contentToText(elif.content, issues);
-              }
-            }
-            if (cond.falseBranch) {
-              result += `{else}`;
-              result += this.contentToText(cond.falseBranch, issues);
-            }
-            result += `{/}`;
+          // Block conditional
+          result += `{${this.expressionToString(cond.condition)}}`;
+          if (cond.consequent) {
+            result += this.contentToText(cond.consequent, issues);
           }
+          if (cond.alternatives) {
+            for (const elif of cond.alternatives) {
+              result += `{elif ${this.expressionToString(elif.condition)}}`;
+              result += this.contentToText(elif.content, issues);
+            }
+          }
+          if (cond.alternate) {
+            result += `{else}`;
+            result += this.contentToText(cond.alternate, issues);
+          }
+          result += `{/}`;
           break;
         }
 
         case 'alternatives': {
           const alt = node as AlternativesNode;
           const mode = alt.mode !== 'sequence' ? `:${alt.mode}` : '';
-          const items = alt.items.map(item => this.contentToText(item, issues)).join(' | ');
+          const items = alt.options.map(item => this.contentToText(item, issues)).join(' | ');
           result += `{|${mode} ${items}}`;
           break;
         }

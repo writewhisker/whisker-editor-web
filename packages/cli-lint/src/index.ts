@@ -76,7 +76,7 @@ export function lintContent(
   // Parse the content
   const parser = new Parser();
   const parseResult = parser.parse(content);
-  const story = parseResult.story;
+  const story = parseResult.ast;
 
   // Collect issues
   const issues: ValidationIssue[] = [];

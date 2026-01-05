@@ -68,12 +68,6 @@ export {
 } from './backends';
 export type { HttpBackendConfig } from './backends';
 
-// Existing analytics modules
-export * from './PlaythroughAnalytics';
-export * from './PlaythroughRecorder';
-export * from './StoryAnalytics';
-export * from './StorySimulator';
-
 // Import classes for factory function
 import { ConsentManager } from './ConsentManager';
 import { EventTaxonomy } from './EventTaxonomy';

@@ -64,9 +64,20 @@ export {
   MemoryBackend,
   HttpBackend,
   CallbackBackend,
+  NullBackend,
+  LocalStorageBackend,
+  GoogleAnalytics4Backend,
   BackendRegistry,
 } from './backends';
-export type { HttpBackendConfig } from './backends';
+export type {
+  HttpBackendConfig,
+  LocalStorageBackendConfig,
+  GoogleAnalytics4BackendConfig,
+} from './backends';
+
+// Session Manager
+export { SessionManager, SESSION_EVENTS } from './SessionManager';
+export type { SessionState, SessionConfig } from './SessionManager';
 
 // Import classes for factory function
 import { ConsentManager } from './ConsentManager';
@@ -177,4 +188,21 @@ export function createEventTaxonomy(): EventTaxonomy {
  */
 export function createPrivacyFilter(consentManager?: ConsentManager): PrivacyFilter {
   return PrivacyFilter.create(consentManager);
+}
+
+// Import SessionManager for factory function
+import { SessionManager } from './SessionManager';
+import type { SessionConfig } from './SessionManager';
+
+/**
+ * Create a standalone session manager
+ */
+export function createSessionManager(
+  config?: SessionConfig,
+  storage?: StorageAdapter,
+  logger?: Logger
+): SessionManager {
+  const manager = SessionManager.create(config, storage, logger);
+  manager.initialize();
+  return manager;
 }

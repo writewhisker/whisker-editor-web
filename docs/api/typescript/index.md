@@ -83,6 +83,78 @@ const publisher = new GitHubPublisher();
 await publisher.publish(story, options);
 ```
 
+### @writewhisker/i18n
+
+Internationalization support - translations, pluralization, RTL/BiDi, locale detection.
+
+```typescript
+import { createI18nSystem } from '@writewhisker/i18n';
+
+const { i18n } = createI18nSystem({ defaultLocale: 'en' });
+const greeting = i18n.t('greeting', { name: 'World' });
+```
+
+[Full i18n API Reference →](./i18n.md)
+
+### @writewhisker/plugins
+
+Plugin infrastructure - lifecycle management, hook system, and registry.
+
+```typescript
+import { initializePluginSystem, STORY } from '@writewhisker/plugins';
+
+const registry = initializePluginSystem();
+await registry.register(myPlugin);
+registry.emit(STORY.START, storyData);
+```
+
+[Full Plugins API Reference →](./plugins.md)
+
+### @writewhisker/analytics
+
+Analytics infrastructure - event collection, consent management, privacy filtering.
+
+```typescript
+import { createAnalyticsSystem, ConsentLevel } from '@writewhisker/analytics';
+
+const { collector, consentManager } = createAnalyticsSystem();
+consentManager.setConsent(ConsentLevel.ANALYTICS);
+collector.track('story.start', { storyId: 'adventure-1' });
+```
+
+[Full Analytics API Reference →](./analytics.md)
+
+### @writewhisker/a11y
+
+WCAG 2.1 accessibility - ARIA, contrast, focus, keyboard, motion, screen readers.
+
+```typescript
+import { createA11ySystem } from '@writewhisker/a11y';
+
+const { ariaManager, contrastChecker, focusManager } = createA11ySystem();
+const attrs = ariaManager.getPassageAttributes(passage);
+```
+
+[Full Accessibility API Reference →](./a11y.md)
+
+### @writewhisker/cli-migrate
+
+Migration tools - version upgrades, WLS syntax migration, batch operations.
+
+```typescript
+import { migrateStory, batchMigrate } from '@writewhisker/cli-migrate';
+
+const result = await migrateStory(story, '2.0.0');
+```
+
+[Full CLI Migration API Reference →](./cli-migrate.md)
+
 ## Full API Reference
 
-See the generated documentation in the subdirectories for complete API details.
+See the detailed documentation for each package:
+
+- [i18n (Internationalization)](./i18n.md)
+- [plugins (Plugin System)](./plugins.md)
+- [analytics (Analytics)](./analytics.md)
+- [a11y (Accessibility)](./a11y.md)
+- [cli-migrate (Migration Tools)](./cli-migrate.md)

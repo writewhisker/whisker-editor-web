@@ -170,7 +170,7 @@ describe('PrivacyFilter', () => {
       expect(result?.metadata?.feedbackText).toBe('[redacted]');
     });
 
-    it('anonymizes save names', () => {
+    it('anonymizes save names with SHA-256 hash', () => {
       const event = createTestEvent({
         category: 'save',
         action: 'create',
@@ -179,7 +179,8 @@ describe('PrivacyFilter', () => {
         },
       });
       const result = filter.apply(event);
-      expect(result?.metadata?.saveName).toMatch(/^Save_\d+$/);
+      // SHA-256 produces hex output, we use first 12 characters
+      expect(result?.metadata?.saveName).toMatch(/^Save_[0-9a-f]{12}$/);
     });
 
     it('uses session-scoped ID', () => {

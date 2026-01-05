@@ -10,6 +10,7 @@ import type {
   AnalyticsBackend,
   EventMetadata,
   Logger,
+  StorageAdapter,
 } from './types';
 import type { EventTaxonomy } from './EventTaxonomy';
 import type { PrivacyFilter } from './PrivacyFilter';
@@ -35,6 +36,10 @@ const DEFAULT_CONFIG: Required<CollectorConfig> = {
   maxRetries: 3,
   retryBackoff: 2,
   initialRetryDelay: 1000,
+  persistQueue: false,
+  queueStorageKey: 'whisker_analytics_queue',
+  useSendBeacon: true,
+  beaconEndpoint: '',
 };
 
 /**
@@ -43,6 +48,7 @@ const DEFAULT_CONFIG: Required<CollectorConfig> = {
 export class Collector {
   private config: Required<CollectorConfig>;
   private log?: Logger;
+  private storage?: StorageAdapter;
 
   private eventTaxonomy?: EventTaxonomy;
   private privacyFilter?: PrivacyFilter;
@@ -53,6 +59,8 @@ export class Collector {
   private initialized = false;
   private _lastFlushTime = 0;
   private flushTimerId: unknown = null;
+  private visibilityHandler?: () => void;
+  private beforeUnloadHandler?: () => void;
 
   private timers: TimerFunctions = {
     setTimeout: (cb, delay) => setTimeout(cb, delay),
@@ -101,6 +109,7 @@ export class Collector {
   setDependencies(deps: {
     eventTaxonomy?: EventTaxonomy;
     privacyFilter?: PrivacyFilter;
+    storage?: StorageAdapter;
   }): void {
     if (deps.eventTaxonomy) {
       this.eventTaxonomy = deps.eventTaxonomy;
@@ -108,6 +117,16 @@ export class Collector {
     if (deps.privacyFilter) {
       this.privacyFilter = deps.privacyFilter;
     }
+    if (deps.storage) {
+      this.storage = deps.storage;
+    }
+  }
+
+  /**
+   * Set storage adapter
+   */
+  setStorage(storage: StorageAdapter): void {
+    this.storage = storage;
   }
 
   /**
@@ -158,6 +177,14 @@ export class Collector {
     this.sessionStart = Date.now();
     this._lastFlushTime = Date.now();
 
+    // Load persisted queue if enabled
+    if (this.config.persistQueue) {
+      this.loadPersistedQueue();
+    }
+
+    // Setup page unload handlers
+    this.setupUnloadHandlers();
+
     // Start periodic flush timer
     this.startFlushTimer();
 
@@ -170,7 +197,14 @@ export class Collector {
    */
   shutdown(): void {
     this.stopFlushTimer();
+    this.removeUnloadHandlers();
     this.flushSync();
+
+    // Persist remaining queue if enabled
+    if (this.config.persistQueue) {
+      this.persistQueue();
+    }
+
     this.initialized = false;
     this.log?.debug('Collector shutdown');
   }
@@ -399,6 +433,172 @@ export class Collector {
   }
 
   /**
+   * Persist queue to storage
+   */
+  private persistQueue(): void {
+    if (!this.storage || !this.config.persistQueue) {
+      return;
+    }
+
+    try {
+      this.storage.set(this.config.queueStorageKey, this.queue);
+      this.log?.debug(`Persisted ${this.queue.length} events to storage`);
+    } catch (error) {
+      this.log?.warn('Failed to persist queue', error);
+    }
+  }
+
+  /**
+   * Load persisted queue from storage
+   */
+  private loadPersistedQueue(): void {
+    if (!this.storage || !this.config.persistQueue) {
+      return;
+    }
+
+    try {
+      const stored = this.storage.get<AnalyticsEvent[]>(this.config.queueStorageKey);
+      if (stored && Array.isArray(stored)) {
+        this.queue = stored;
+        this.stats.queueSize = this.queue.length;
+        this.log?.debug(`Loaded ${this.queue.length} events from storage`);
+
+        // Clear stored queue after loading
+        this.storage.remove(this.config.queueStorageKey);
+
+        // Trigger flush if there are restored events
+        if (this.queue.length > 0) {
+          this.triggerFlush('queue_restored');
+        }
+      }
+    } catch (error) {
+      this.log?.warn('Failed to load persisted queue', error);
+    }
+  }
+
+  /**
+   * Setup page unload handlers
+   */
+  private setupUnloadHandlers(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    // Handle visibility change (tab hidden)
+    this.visibilityHandler = () => {
+      if (document.visibilityState === 'hidden') {
+        this.handlePageHide();
+      }
+    };
+    document.addEventListener('visibilitychange', this.visibilityHandler);
+
+    // Handle page unload
+    this.beforeUnloadHandler = () => {
+      this.handlePageHide();
+    };
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
+  }
+
+  /**
+   * Remove page unload handlers
+   */
+  private removeUnloadHandlers(): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    if (this.visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = undefined;
+    }
+
+    if (this.beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+      this.beforeUnloadHandler = undefined;
+    }
+  }
+
+  /**
+   * Handle page hide/unload
+   */
+  private handlePageHide(): void {
+    // Try sendBeacon first if enabled and endpoint configured
+    if (this.config.useSendBeacon && this.config.beaconEndpoint && this.queue.length > 0) {
+      this.flushWithBeacon();
+    }
+
+    // Persist remaining queue
+    if (this.config.persistQueue) {
+      this.persistQueue();
+    }
+  }
+
+  /**
+   * Flush queue using sendBeacon API
+   */
+  private flushWithBeacon(): void {
+    if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') {
+      this.log?.debug('sendBeacon not available');
+      return;
+    }
+
+    if (this.queue.length === 0 || !this.config.beaconEndpoint) {
+      return;
+    }
+
+    try {
+      const payload = JSON.stringify({ events: this.queue });
+      const blob = new Blob([payload], { type: 'application/json' });
+      const success = navigator.sendBeacon(this.config.beaconEndpoint, blob);
+
+      if (success) {
+        this.stats.eventsExported += this.queue.length;
+        this.stats.batchesExported++;
+        this.queue = [];
+        this.stats.queueSize = 0;
+        this.log?.debug('Events sent via sendBeacon');
+      } else {
+        this.log?.warn('sendBeacon returned false');
+      }
+    } catch (error) {
+      this.log?.warn('Failed to send via sendBeacon', error);
+    }
+  }
+
+  /**
+   * Apply consent change to queued events (retroactive filtering)
+   */
+  applyConsentChange(): void {
+    if (!this.privacyFilter || this.queue.length === 0) {
+      return;
+    }
+
+    const originalLength = this.queue.length;
+    const filteredQueue: AnalyticsEvent[] = [];
+
+    for (const event of this.queue) {
+      const filtered = this.privacyFilter.apply(event);
+      if (filtered) {
+        filteredQueue.push(filtered);
+      }
+    }
+
+    const removedCount = originalLength - filteredQueue.length;
+    if (removedCount > 0) {
+      this.stats.eventsFiltered += removedCount;
+      this.log?.debug(`Retroactively filtered ${removedCount} events from queue`);
+    }
+
+    this.queue = filteredQueue;
+    this.stats.queueSize = this.queue.length;
+
+    // Persist updated queue
+    if (this.config.persistQueue) {
+      this.persistQueue();
+    }
+  }
+
+  /**
    * Generate unique ID
    */
   private generateId(): string {
@@ -478,6 +678,7 @@ export class Collector {
    */
   reset(): void {
     this.stopFlushTimer();
+    this.removeUnloadHandlers();
     this.queue = [];
     this.processing = false;
     this.initialized = false;
@@ -496,5 +697,12 @@ export class Collector {
       lastFlushTime: 0,
     };
     this.backends = [];
+  }
+
+  /**
+   * Get the current queue (for testing)
+   */
+  getQueue(): AnalyticsEvent[] {
+    return [...this.queue];
   }
 }

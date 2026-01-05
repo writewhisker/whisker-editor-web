@@ -164,6 +164,14 @@ export interface CollectorConfig {
   maxRetries?: number;
   retryBackoff?: number;
   initialRetryDelay?: number;
+  /** Enable queue persistence to localStorage */
+  persistQueue?: boolean;
+  /** Storage key for persisted queue */
+  queueStorageKey?: string;
+  /** Use sendBeacon API for page unload flush */
+  useSendBeacon?: boolean;
+  /** Endpoint for sendBeacon flush */
+  beaconEndpoint?: string;
 }
 
 /**

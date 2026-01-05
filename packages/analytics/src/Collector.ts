@@ -72,6 +72,7 @@ export class Collector {
     queueSize: 0,
     queueLimit: 0,
     processing: false,
+    lastFlushTime: 0,
   };
 
   // Session context
@@ -423,6 +424,7 @@ export class Collector {
       ...this.stats,
       queueSize: this.queue.length,
       processing: this.processing,
+      lastFlushTime: this._lastFlushTime,
     };
   }
 
@@ -491,6 +493,7 @@ export class Collector {
       queueSize: 0,
       queueLimit: this.config.maxQueueSize,
       processing: false,
+      lastFlushTime: 0,
     };
     this.backends = [];
   }

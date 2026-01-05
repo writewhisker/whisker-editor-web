@@ -41,7 +41,8 @@ const PLURAL_SUFFIXES: PluralCategory[] = ['zero', 'one', 'two', 'few', 'many', 
  * Main I18n class
  */
 export class I18n {
-  private config: Required<Omit<I18nConfig, 'onMissingTranslation'>> & {
+  private config: Required<Omit<I18nConfig, 'onMissingTranslation' | 'fallbackLocale'>> & {
+    fallbackLocale?: string;
     onMissingTranslation?: (locale: string, key: string, vars?: TranslationVars) => string;
   };
 

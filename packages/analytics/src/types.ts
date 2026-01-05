@@ -180,6 +180,7 @@ export interface CollectorStats {
   queueSize: number;
   queueLimit: number;
   processing: boolean;
+  lastFlushTime: number;
 }
 
 /**

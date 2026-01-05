@@ -15,7 +15,10 @@ import type {
  * Core data structure for translation storage and lookup
  */
 export class StringTable {
-  private config: Required<Omit<StringTableConfig, 'logger'>> & { logger?: Logger };
+  private config: Required<Omit<StringTableConfig, 'logger' | 'fallbackLocale'>> & {
+    fallbackLocale?: string;
+    logger?: Logger;
+  };
   private log?: Logger;
 
   // Hierarchical storage (as loaded)

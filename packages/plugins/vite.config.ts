@@ -9,7 +9,17 @@ export default defineConfig({
       fileName: 'index',
     },
     rollupOptions: {
-      external: [],
+      output: {
+        preserveModules: true,
+        preserveModulesRoot: 'src',
+      },
     },
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    include: ['src/**/*.test.ts'],
   },
 });

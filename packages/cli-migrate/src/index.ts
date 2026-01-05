@@ -442,3 +442,24 @@ export {
   type WLSMigrationSuggestion,
   type WLSMigrationSummary,
 } from './wlsMigration.js';
+
+// Batch Operations
+export {
+  processBatch,
+  createBatchItems,
+  filterResults,
+  formatBatchSummary,
+  formatDetailedResults,
+  createProgressBar,
+  batchMigrate,
+  batchValidate,
+  type BatchItem,
+  type BatchItemResult,
+  type BatchSummary,
+  type BatchResult,
+  type ProgressCallback,
+  type BatchOptions,
+  type BatchProcessor,
+  type BatchMigrateOptions,
+  type BatchValidateOptions,
+} from './batchOperations.js';

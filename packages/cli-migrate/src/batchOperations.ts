@@ -1094,6 +1094,257 @@ function escapeHtml(str: string): string {
 }
 
 // ============================================================================
+// CLI Progress Display
+// ============================================================================
+
+/**
+ * Spinner frames for CLI animation
+ */
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+/**
+ * CLI Spinner for progress indication
+ */
+export class CLISpinner {
+  private frameIndex = 0;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+  private message = '';
+  private stream: NodeJS.WriteStream;
+
+  constructor(stream: NodeJS.WriteStream = process.stderr) {
+    this.stream = stream;
+  }
+
+  /**
+   * Start the spinner with a message
+   */
+  start(message: string): void {
+    this.message = message;
+    this.frameIndex = 0;
+
+    if (this.intervalId) {
+      this.stop();
+    }
+
+    this.render();
+    this.intervalId = setInterval(() => {
+      this.frameIndex = (this.frameIndex + 1) % SPINNER_FRAMES.length;
+      this.render();
+    }, 80);
+  }
+
+  /**
+   * Update the spinner message
+   */
+  update(message: string): void {
+    this.message = message;
+    this.render();
+  }
+
+  /**
+   * Stop the spinner
+   */
+  stop(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    // Clear the line
+    this.stream.write('\r' + ' '.repeat(this.message.length + 10) + '\r');
+  }
+
+  /**
+   * Stop with a success message
+   */
+  succeed(message?: string): void {
+    this.stop();
+    this.stream.write(`✓ ${message || this.message}\n`);
+  }
+
+  /**
+   * Stop with a failure message
+   */
+  fail(message?: string): void {
+    this.stop();
+    this.stream.write(`✗ ${message || this.message}\n`);
+  }
+
+  /**
+   * Stop with an info message
+   */
+  info(message?: string): void {
+    this.stop();
+    this.stream.write(`ℹ ${message || this.message}\n`);
+  }
+
+  private render(): void {
+    const frame = SPINNER_FRAMES[this.frameIndex];
+    this.stream.write(`\r${frame} ${this.message}`);
+  }
+}
+
+/**
+ * Create a CLI progress display
+ */
+export function createProgressDisplay(options: {
+  total: number;
+  width?: number;
+  showPercentage?: boolean;
+  showCount?: boolean;
+  showETA?: boolean;
+  stream?: NodeJS.WriteStream;
+}): {
+  update: (current: number, message?: string) => void;
+  finish: (message?: string) => void;
+} {
+  const {
+    total,
+    width = 40,
+    showPercentage = true,
+    showCount = true,
+    showETA = true,
+    stream = process.stderr,
+  } = options;
+
+  const startTime = Date.now();
+  let lastUpdate = 0;
+
+  const update = (current: number, message?: string): void => {
+    // Throttle updates to avoid flicker
+    const now = Date.now();
+    if (now - lastUpdate < 100 && current < total) {
+      return;
+    }
+    lastUpdate = now;
+
+    const percentage = total > 0 ? current / total : 0;
+    const filled = Math.round(percentage * width);
+    const empty = width - filled;
+
+    const bar = '█'.repeat(filled) + '░'.repeat(empty);
+
+    let status = `[${bar}]`;
+
+    if (showPercentage) {
+      status += ` ${Math.round(percentage * 100)}%`;
+    }
+
+    if (showCount) {
+      status += ` (${current}/${total})`;
+    }
+
+    if (showETA && current > 0 && current < total) {
+      const elapsed = now - startTime;
+      const rate = current / elapsed;
+      const remaining = (total - current) / rate;
+      status += ` ETA: ${formatDuration(remaining)}`;
+    }
+
+    if (message) {
+      status += ` ${message}`;
+    }
+
+    stream.write(`\r${status}`);
+  };
+
+  const finish = (message?: string): void => {
+    const elapsed = Date.now() - startTime;
+    stream.write(`\r${' '.repeat(width + 50)}\r`);
+    if (message) {
+      stream.write(`${message} (${formatDuration(elapsed)})\n`);
+    }
+  };
+
+  return { update, finish };
+}
+
+// ============================================================================
+// Exit Codes
+// ============================================================================
+
+/**
+ * Standard CLI exit codes
+ */
+export const EXIT_CODES = {
+  SUCCESS: 0,
+  GENERAL_ERROR: 1,
+  MISUSE: 2,
+  CANNOT_EXECUTE: 126,
+  NOT_FOUND: 127,
+  INVALID_ARGUMENT: 128,
+  // Custom exit codes (64-113)
+  VALIDATION_ERROR: 65,
+  NO_INPUT: 66,
+  IO_ERROR: 74,
+  PARTIAL_SUCCESS: 75,
+  MIGRATION_ERROR: 80,
+  CONVERSION_ERROR: 81,
+} as const;
+
+export type ExitCode = typeof EXIT_CODES[keyof typeof EXIT_CODES];
+
+/**
+ * Get exit code for batch result
+ */
+export function getExitCodeForBatch<T>(result: BatchResult<T>): ExitCode {
+  if (result.summary.failed === 0 && result.summary.skipped === 0) {
+    return EXIT_CODES.SUCCESS;
+  }
+  if (result.summary.successful > 0 && result.summary.failed > 0) {
+    return EXIT_CODES.PARTIAL_SUCCESS;
+  }
+  if (result.summary.failed === result.summary.totalItems) {
+    return EXIT_CODES.GENERAL_ERROR;
+  }
+  return EXIT_CODES.PARTIAL_SUCCESS;
+}
+
+/**
+ * Exit the process with appropriate code
+ */
+export function exitWithCode(code: ExitCode, message?: string): never {
+  if (message) {
+    if (code === EXIT_CODES.SUCCESS) {
+      console.log(message);
+    } else {
+      console.error(message);
+    }
+  }
+  process.exit(code);
+}
+
+/**
+ * Create a CLI runner with proper exit handling
+ */
+export async function runCLI<T>(
+  operation: () => Promise<BatchResult<T>>,
+  options: {
+    successMessage?: string;
+    failureMessage?: string;
+    showProgress?: boolean;
+    onProgress?: ProgressCallback;
+  } = {}
+): Promise<never> {
+  const { successMessage, failureMessage, showProgress = true } = options;
+
+  try {
+    const result = await operation();
+    const exitCode = getExitCodeForBatch(result);
+
+    if (exitCode === EXIT_CODES.SUCCESS) {
+      exitWithCode(exitCode, successMessage || `✓ All ${result.summary.totalItems} items processed successfully`);
+    } else if (exitCode === EXIT_CODES.PARTIAL_SUCCESS) {
+      exitWithCode(exitCode, `⚠ Partial success: ${result.summary.successful} succeeded, ${result.summary.failed} failed`);
+    } else {
+      exitWithCode(exitCode, failureMessage || `✗ All ${result.summary.failed} items failed`);
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    exitWithCode(EXIT_CODES.GENERAL_ERROR, `✗ Error: ${message}`);
+  }
+}
+
+// ============================================================================
 // Output Formats
 // ============================================================================
 

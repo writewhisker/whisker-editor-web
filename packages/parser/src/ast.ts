@@ -1,9 +1,25 @@
 /**
- * WLS 1.0 Abstract Syntax Tree Types
+ * WLS 1.0/2.0 Abstract Syntax Tree Types
  * Defines the structure of parsed WLS documents
  */
 
 import type { SourceSpan } from './types';
+import type {
+  AudioDeclarationNode,
+  EffectDeclarationNode,
+  ExternalDeclarationNode,
+  DelayDirectiveNode,
+  EveryDirectiveNode,
+} from './wls2-declarations';
+
+// Re-export WLS 2.0 declaration types
+export type {
+  AudioDeclarationNode,
+  EffectDeclarationNode,
+  ExternalDeclarationNode,
+  DelayDirectiveNode,
+  EveryDirectiveNode,
+} from './wls2-declarations';
 
 // ============================================================================
 // Base Types
@@ -38,6 +54,9 @@ export interface StoryNode extends BaseNode {
   styles: StyleBlockNode | null;            // WLS 1.0 Gap 5: Style block
   passages: PassageNode[];
   threads: ThreadPassageNode[];             // WLS 2.0: Thread passages
+  audioDeclarations: AudioDeclarationNode[];      // WLS 2.0: Audio track declarations
+  effectDeclarations: EffectDeclarationNode[];    // WLS 2.0: Text effect declarations
+  externalDeclarations: ExternalDeclarationNode[]; // WLS 2.0: External function declarations
 }
 
 /**
@@ -206,6 +225,8 @@ export type ContentNode =
   | TunnelReturnNode
   | AwaitExpressionNode    // WLS 2.0: Thread await
   | SpawnExpressionNode    // WLS 2.0: Thread spawn
+  | DelayDirectiveNode     // WLS 2.0: Delayed content
+  | EveryDirectiveNode     // WLS 2.0: Repeating content
   | FormattedTextNode      // WLS 1.0 Gap 5: Rich text
   | BlockquoteNode         // WLS 1.0 Gap 5: Blockquotes
   | ListNode               // WLS 1.0 Gap 5: Lists
@@ -738,6 +759,9 @@ export function isContent(node: BaseNode): node is ContentNode {
     // WLS 2.0: Thread nodes
     'await_expression',
     'spawn_expression',
+    // WLS 2.0: Timed content nodes
+    'delay_directive',
+    'every_directive',
     // WLS 1.0 Gap 5: Presentation nodes
     'formatted_text',
     'blockquote',

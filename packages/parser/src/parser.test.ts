@@ -1087,4 +1087,90 @@ Equal!
       });
     });
   });
+
+  describe('WLS 2.0 Declarations', () => {
+    describe('@audio directive', () => {
+      it('should parse @audio declaration', () => {
+        const result = parse(`@audio bgm = "music/theme.mp3" loop
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.audioDeclarations).toHaveLength(1);
+        expect(result.ast?.audioDeclarations[0].id).toBe('bgm');
+        expect(result.ast?.audioDeclarations[0].url).toBe('music/theme.mp3');
+        expect(result.ast?.audioDeclarations[0].loop).toBe(true);
+      });
+
+      it('should parse multiple @audio declarations', () => {
+        const result = parse(`@audio bgm = "music/theme.mp3" loop
+@audio click = "sounds/click.wav" channel:sfx
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.audioDeclarations).toHaveLength(2);
+      });
+    });
+
+    describe('@effect directive', () => {
+      it('should parse @effect declaration', () => {
+        const result = parse(`@effect shake 500ms
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.effectDeclarations).toHaveLength(1);
+        expect(result.ast?.effectDeclarations[0].name).toBe('shake');
+        expect(result.ast?.effectDeclarations[0].duration).toBe(500);
+      });
+
+      it('should parse @effect with options', () => {
+        const result = parse(`@effect typewriter speed:50 delay:100
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.effectDeclarations[0].name).toBe('typewriter');
+        expect(result.ast?.effectDeclarations[0].options.speed).toBe(50);
+        expect(result.ast?.effectDeclarations[0].options.delay).toBe(100);
+      });
+    });
+
+    describe('@external directive', () => {
+      it('should parse @external declaration', () => {
+        const result = parse(`@external playSound(id: string): void
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.externalDeclarations).toHaveLength(1);
+        expect(result.ast?.externalDeclarations[0].name).toBe('playSound');
+        expect(result.ast?.externalDeclarations[0].params).toHaveLength(1);
+        expect(result.ast?.externalDeclarations[0].params[0].name).toBe('id');
+        expect(result.ast?.externalDeclarations[0].returnType).toBe('void');
+      });
+
+      it('should parse multiple @external declarations', () => {
+        const result = parse(`@external playSound(id: string): void
+@external getUserName(): string
+:: Start
+Hello`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.externalDeclarations).toHaveLength(2);
+      });
+    });
+
+    describe('combined WLS 2.0 declarations', () => {
+      it('should parse all declaration types together', () => {
+        const result = parse(`@title My Game
+@audio bgm = "music/theme.mp3" loop
+@effect shake 500ms
+@external playSound(id: string): void
+:: Start
+Welcome to the game!`);
+        expect(result.errors).toHaveLength(0);
+        expect(result.ast?.metadata).toHaveLength(1);
+        expect(result.ast?.audioDeclarations).toHaveLength(1);
+        expect(result.ast?.effectDeclarations).toHaveLength(1);
+        expect(result.ast?.externalDeclarations).toHaveLength(1);
+        expect(result.ast?.passages).toHaveLength(1);
+      });
+    });
+  });
 });

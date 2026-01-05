@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Parser Package
+ * WLS 1.0/2.0 Parser Package
  * Lexer and Parser for Whisker Language Specification
  */
 
@@ -95,3 +95,30 @@ export {
 
 // Parser
 export { Parser, parse } from './parser';
+
+// WLS 2.0 Declarations - Types
+export type {
+  AudioDeclarationNode,
+  EffectDeclarationNode,
+  ExternalDeclarationNode,
+  DelayDirectiveNode,
+  EveryDirectiveNode,
+} from './ast';
+
+// WLS 2.0 Declarations - Parsing functions
+export {
+  parseAudioDeclaration,
+  parseEffectDeclaration,
+  parseExternalDeclaration,
+  parseDelayDirective,
+  parseEveryDirective,
+  parseTimeString,
+  isAudioDeclaration,
+  isEffectDeclaration,
+  isExternalDeclaration,
+  isDelayDirective,
+  isEveryDirective,
+  type AudioChannel,
+  type ParameterType,
+  type ExternalParameterNode,
+} from './wls2-declarations';

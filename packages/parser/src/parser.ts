@@ -45,8 +45,16 @@ import type {
   BinaryOperator,
   AssignmentOperator,
   WLSErrorCode,
+  AudioDeclarationNode,
+  EffectDeclarationNode,
+  ExternalDeclarationNode,
 } from './ast';
 import { WLS_ERROR_CODES } from './ast';
+import {
+  parseAudioDeclaration,
+  parseEffectDeclaration,
+  parseExternalDeclaration,
+} from './wls2-declarations';
 
 /**
  * Parser for WLS 1.0 format
@@ -213,6 +221,9 @@ export class Parser {
     const namespaces: NamespaceDeclarationNode[] = [];
     const passages: PassageNode[] = [];
     const threads: ThreadPassageNode[] = [];  // WLS 2.0: Thread passages
+    const audioDeclarations: AudioDeclarationNode[] = [];      // WLS 2.0: Audio declarations
+    const effectDeclarations: EffectDeclarationNode[] = [];    // WLS 2.0: Effect declarations
+    const externalDeclarations: ExternalDeclarationNode[] = []; // WLS 2.0: External declarations
 
     this.namespaceStack = [];  // Reset namespace context
 
@@ -234,6 +245,9 @@ export class Parser {
         styles: null,
         passages,
         threads,
+        audioDeclarations,
+        effectDeclarations,
+        externalDeclarations,
         location: this.getLocation(start),
       };
     }
@@ -246,6 +260,12 @@ export class Parser {
           metadata.push(directive);
         } else if (directive.type === 'variable_declaration') {
           variables.push(directive);
+        } else if (directive.type === 'audio_declaration') {
+          audioDeclarations.push(directive);
+        } else if (directive.type === 'effect_declaration') {
+          effectDeclarations.push(directive);
+        } else if (directive.type === 'external_declaration') {
+          externalDeclarations.push(directive);
         }
       } else if (this.check(TokenType.LIST)) {
         // WLS 1.0 Gap 3: LIST declaration
@@ -330,6 +350,9 @@ export class Parser {
       styles: null,
       passages,
       threads,
+      audioDeclarations,
+      effectDeclarations,
+      externalDeclarations,
       location: this.getLocation(start),
     };
   }
@@ -338,12 +361,27 @@ export class Parser {
   // Directive Parsing
   // ============================================================================
 
-  private parseDirective(): MetadataNode | VariableDeclarationNode {
+  private parseDirective(): MetadataNode | VariableDeclarationNode | AudioDeclarationNode | EffectDeclarationNode | ExternalDeclarationNode {
     const start = this.advance(); // @directive
     const directiveName = start.value.slice(1); // Remove @
 
     if (directiveName === 'vars') {
       return this.parseVarsBlock(start);
+    }
+
+    // WLS 2.0: Audio declaration
+    if (directiveName === 'audio') {
+      return this.parseAudioDirective(start);
+    }
+
+    // WLS 2.0: Effect declaration
+    if (directiveName === 'effect') {
+      return this.parseEffectDirective(start);
+    }
+
+    // WLS 2.0: External function declaration
+    if (directiveName === 'external') {
+      return this.parseExternalDirective(start);
     }
 
     // Simple metadata directive
@@ -367,6 +405,112 @@ export class Parser {
       value: value.trim(),
       location: this.getLocation(start),
     };
+  }
+
+  /**
+   * Collect remaining tokens on line as a string with whitespace preserved
+   */
+  private collectLineContent(): string {
+    const parts: string[] = [];
+    let lastEnd = -1;
+
+    while (!this.isAtEnd() && !this.check(TokenType.NEWLINE)) {
+      const token = this.peek();
+
+      // Add space between tokens if there's a gap
+      if (lastEnd >= 0 && token.location.start.column > lastEnd + 1) {
+        parts.push(' ');
+      }
+
+      // Add quotes back for string tokens (lexer strips them)
+      if (token.type === TokenType.STRING) {
+        parts.push(`"${token.value}"`);
+      } else {
+        parts.push(token.value);
+      }
+
+      lastEnd = token.location.end.column - 1;
+      this.advance();
+    }
+
+    return parts.join('');
+  }
+
+  /**
+   * Parse @audio directive
+   * @audio bgm = "music/theme.mp3" loop channel:bgm
+   */
+  private parseAudioDirective(start: Token): AudioDeclarationNode {
+    this.skipWhitespaceOnLine();
+
+    const declaration = this.collectLineContent();
+
+    try {
+      return parseAudioDeclaration(declaration, this.getLocation(start));
+    } catch (e) {
+      this.addError((e as Error).message);
+      // Return a placeholder node on error
+      return {
+        type: 'audio_declaration',
+        id: 'error',
+        url: '',
+        channel: 'bgm',
+        loop: false,
+        volume: 1.0,
+        preload: false,
+        location: this.getLocation(start),
+      };
+    }
+  }
+
+  /**
+   * Parse @effect directive
+   * @effect shake 500ms
+   * @effect typewriter speed:50
+   */
+  private parseEffectDirective(start: Token): EffectDeclarationNode {
+    this.skipWhitespaceOnLine();
+
+    const declaration = this.collectLineContent();
+
+    try {
+      return parseEffectDeclaration(declaration, this.getLocation(start));
+    } catch (e) {
+      this.addError((e as Error).message);
+      // Return a placeholder node on error
+      return {
+        type: 'effect_declaration',
+        name: 'error',
+        duration: null,
+        options: {},
+        location: this.getLocation(start),
+      };
+    }
+  }
+
+  /**
+   * Parse @external directive
+   * @external playSound(id: string): void
+   * @external getUserName(): string
+   */
+  private parseExternalDirective(start: Token): ExternalDeclarationNode {
+    this.skipWhitespaceOnLine();
+
+    const declaration = this.collectLineContent();
+
+    try {
+      return parseExternalDeclaration(declaration, this.getLocation(start));
+    } catch (e) {
+      this.addError((e as Error).message);
+      // Return a placeholder node on error
+      return {
+        type: 'external_declaration',
+        name: 'error',
+        params: [],
+        returnType: null,
+        location: this.getLocation(start),
+      };
+    }
   }
 
   private parseVarsBlock(start: Token): VariableDeclarationNode {

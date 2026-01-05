@@ -292,6 +292,78 @@ export class BrowserPlatformAdapter implements PlatformAdapter {
 }
 
 /**
+ * URL parameter adapter - detects locale from URL query parameters
+ * Supports: ?lang=es, ?locale=es-MX, ?hl=fr
+ */
+export class URLParameterAdapter implements PlatformAdapter {
+  private paramNames: string[];
+
+  constructor(paramNames: string[] = ['lang', 'locale', 'hl', 'language']) {
+    this.paramNames = paramNames;
+  }
+
+  detect(): string | null {
+    if (typeof window === 'undefined' || typeof URL === 'undefined') {
+      return null;
+    }
+
+    try {
+      const url = new URL(window.location.href);
+      const params = url.searchParams;
+
+      for (const name of this.paramNames) {
+        const value = params.get(name);
+        if (value) {
+          return normalizeLocale(value);
+        }
+      }
+    } catch {
+      // URL parsing failed
+    }
+
+    return null;
+  }
+}
+
+/**
+ * Composite detector - combines multiple detection strategies with priority
+ */
+export class CompositeLocaleDetector implements PlatformAdapter {
+  private adapters: PlatformAdapter[];
+
+  constructor(adapters?: PlatformAdapter[]) {
+    this.adapters = adapters || [
+      new URLParameterAdapter(),
+      new BrowserPlatformAdapter(),
+    ];
+  }
+
+  detect(): string | null {
+    for (const adapter of this.adapters) {
+      const locale = adapter.detect();
+      if (locale) {
+        return locale;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Add an adapter with highest priority
+   */
+  addFirst(adapter: PlatformAdapter): void {
+    this.adapters.unshift(adapter);
+  }
+
+  /**
+   * Add an adapter with lowest priority
+   */
+  addLast(adapter: PlatformAdapter): void {
+    this.adapters.push(adapter);
+  }
+}
+
+/**
  * LocalStorage adapter
  */
 export class LocalStorageAdapter implements StorageAdapter {
@@ -368,7 +440,8 @@ export class Locale {
       onLocaleChange: config?.onLocaleChange,
     };
 
-    this.platformAdapter = new BrowserPlatformAdapter();
+    // Use composite detector with URL params having highest priority
+    this.platformAdapter = new CompositeLocaleDetector();
     this.currentLocale = this.config.defaultLocale;
 
     // Initialize locale

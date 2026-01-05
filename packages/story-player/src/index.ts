@@ -119,3 +119,14 @@ export {
   type ListStateMachineConfig,
   type ListStateMachineState,
 } from './ListStateMachine';
+
+// WLS 2.0 Integration (Unified Facade)
+export {
+  WLS2Integration,
+  createWLS2Player,
+  createTestWLS2Player,
+  type WLS2Config,
+  type WLS2State,
+  type WLS2Event,
+  type WLS2EventCallback,
+} from './WLS2Integration';

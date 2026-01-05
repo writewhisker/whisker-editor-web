@@ -873,20 +873,25 @@ export class LuaEngine {
       return { type: 'boolean', value: false };
     }
 
-    // Length operator (#) - unary prefix
+    // Length operator (#) - unary prefix with __len metamethod support
     if (trimmed.startsWith('#')) {
       const operand = this.evaluateExpression(trimmed.substring(1), context);
-      if (operand.type === 'string') {
-        return { type: 'number', value: (operand.value as string).length };
-      }
+
+      // Check for __len metamethod first (for tables)
       if (operand.type === 'table') {
-        // For tables, # returns the length of the array part (highest consecutive integer key)
+        const lenResult = this.tryMetamethod(operand, '__len', [operand], context);
+        if (lenResult) return lenResult;
+
+        // Standard table length: count consecutive integer keys starting at 1
         const table = operand.value as Record<string, LuaValue>;
         let length = 0;
         while (table[String(length + 1)] !== undefined) {
           length++;
         }
         return { type: 'number', value: length };
+      }
+      if (operand.type === 'string') {
+        return { type: 'number', value: (operand.value as string).length };
       }
       throw new Error(`attempt to get length of a ${operand.type} value`);
     }
@@ -1058,26 +1063,26 @@ export class LuaEngine {
 
       switch (op) {
         case '..':
-          // Lua string concatenation
-          result = { type: 'string', value: String(result.value) + String(right.value) };
+          // Lua string concatenation with __concat metamethod support
+          result = this.concat(result, right, context);
           break;
         case '+':
-          result = this.add(result, right);
+          result = this.add(result, right, context);
           break;
         case '-':
-          result = this.subtract(result, right);
+          result = this.subtract(result, right, context);
           break;
         case '*':
-          result = this.multiply(result, right);
+          result = this.multiply(result, right, context);
           break;
         case '/':
-          result = this.divide(result, right);
+          result = this.divide(result, right, context);
           break;
         case '%':
-          result = this.modulo(result, right);
+          result = this.modulo(result, right, context);
           break;
         case '^':
-          result = this.power(result, right);
+          result = this.power(result, right, context);
           break;
       }
     }
@@ -1086,7 +1091,7 @@ export class LuaEngine {
   }
 
   /**
-   * Evaluate comparison
+   * Evaluate comparison with metamethod support (__eq, __lt, __le)
    */
   private evaluateComparison(
     expr: string,
@@ -1101,26 +1106,80 @@ export class LuaEngine {
 
     switch (op) {
       case '==':
-      case '===':
-        result = leftVal.value === rightVal.value;
+      case '===': {
+        // Check for __eq metamethod (only if both are tables with same metatable)
+        const eqResult = this.tryMetamethod(leftVal, '__eq', [leftVal, rightVal], context);
+        if (eqResult) {
+          result = this.isTruthy(eqResult);
+        } else {
+          result = leftVal.value === rightVal.value;
+        }
         break;
+      }
       case '~=':
       case '!=':
-      case '!==':
-        result = leftVal.value !== rightVal.value;
+      case '!==': {
+        // __eq negated for inequality
+        const eqResult = this.tryMetamethod(leftVal, '__eq', [leftVal, rightVal], context);
+        if (eqResult) {
+          result = !this.isTruthy(eqResult);
+        } else {
+          result = leftVal.value !== rightVal.value;
+        }
         break;
-      case '<':
-        result = leftVal.value < rightVal.value;
+      }
+      case '<': {
+        // Check for __lt metamethod
+        const ltResult = this.tryMetamethod(leftVal, '__lt', [leftVal, rightVal], context);
+        if (ltResult) {
+          result = this.isTruthy(ltResult);
+        } else {
+          result = leftVal.value < rightVal.value;
+        }
         break;
-      case '>':
-        result = leftVal.value > rightVal.value;
+      }
+      case '>': {
+        // a > b is equivalent to b < a
+        const ltResult = this.tryMetamethod(rightVal, '__lt', [rightVal, leftVal], context);
+        if (ltResult) {
+          result = this.isTruthy(ltResult);
+        } else {
+          result = leftVal.value > rightVal.value;
+        }
         break;
-      case '<=':
-        result = leftVal.value <= rightVal.value;
+      }
+      case '<=': {
+        // Check for __le metamethod, or use __lt as fallback (not (b < a))
+        const leResult = this.tryMetamethod(leftVal, '__le', [leftVal, rightVal], context);
+        if (leResult) {
+          result = this.isTruthy(leResult);
+        } else {
+          // Fallback: a <= b is not (b < a)
+          const ltResult = this.tryMetamethod(rightVal, '__lt', [rightVal, leftVal], context);
+          if (ltResult) {
+            result = !this.isTruthy(ltResult);
+          } else {
+            result = leftVal.value <= rightVal.value;
+          }
+        }
         break;
-      case '>=':
-        result = leftVal.value >= rightVal.value;
+      }
+      case '>=': {
+        // Check for __le metamethod on right side, or use __lt
+        const leResult = this.tryMetamethod(rightVal, '__le', [rightVal, leftVal], context);
+        if (leResult) {
+          result = this.isTruthy(leResult);
+        } else {
+          // Fallback: a >= b is not (a < b)
+          const ltResult = this.tryMetamethod(leftVal, '__lt', [leftVal, rightVal], context);
+          if (ltResult) {
+            result = !this.isTruthy(ltResult);
+          } else {
+            result = leftVal.value >= rightVal.value;
+          }
+        }
         break;
+      }
     }
 
     return { type: 'boolean', value: result };
@@ -2078,6 +2137,15 @@ export class LuaEngine {
       }
     }
 
+    // Check if funcName is a table with __call metamethod
+    const tableVar = this.lookupVariable(funcName, context);
+    if (tableVar && tableVar.type === 'table') {
+      const callResult = this.tryMetamethod(tableVar, '__call', [tableVar, ...args], context);
+      if (callResult) {
+        return callResult;
+      }
+    }
+
     throw new Error(`Unknown function: ${funcName}`);
   }
 
@@ -2882,10 +2950,69 @@ export class LuaEngine {
   }
 
   /**
-   * Arithmetic operations
+   * Try to call a metamethod on a value
    */
-  private add(a: LuaValue | undefined, b: LuaValue): LuaValue {
+  private tryMetamethod(
+    obj: LuaValue,
+    metamethod: string,
+    args: LuaValue[],
+    context: LuaExecutionContext
+  ): LuaValue | null {
+    if (obj.type !== 'table' || !obj.metatable) {
+      return null;
+    }
+
+    const meta = obj.metatable[metamethod];
+    if (!meta) {
+      return null;
+    }
+
+    // If metamethod is a function name, call it
+    if (typeof meta === 'object' && 'type' in meta && meta.type === 'string') {
+      const funcName = meta.value;
+      const userFunc = context.functions.get(funcName);
+      if (userFunc) {
+        const funcScope = new Map<string, LuaValue>();
+        context.localScopes.push(funcScope);
+        for (let i = 0; i < userFunc.params.length && i < args.length; i++) {
+          funcScope.set(userFunc.params[i], args[i]);
+        }
+        try {
+          this.executeBlock(userFunc.body, context);
+          context.localScopes.pop();
+          return { type: 'nil', value: null };
+        } catch (error) {
+          context.localScopes.pop();
+          if (typeof error === 'object' && error !== null && 'type' in error && (error as any).type === 'return') {
+            return (error as any).value;
+          }
+          throw error;
+        }
+      }
+    }
+
+    // If metamethod is a table (for __index fallback)
+    if (typeof meta === 'object' && 'type' in meta && meta.type === 'table') {
+      return meta as LuaValue;
+    }
+
+    return null;
+  }
+
+  /**
+   * Arithmetic operations with metamethod support
+   */
+  private add(a: LuaValue | undefined, b: LuaValue, context?: LuaExecutionContext): LuaValue {
     if (!a) a = { type: 'number', value: 0 };
+
+    // Check for __add metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__add', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__add', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value + b.value };
     }
@@ -2895,24 +3022,51 @@ export class LuaEngine {
     throw new Error('Cannot add these types');
   }
 
-  private subtract(a: LuaValue | undefined, b: LuaValue): LuaValue {
+  private subtract(a: LuaValue | undefined, b: LuaValue, context?: LuaExecutionContext): LuaValue {
     if (!a) a = { type: 'number', value: 0 };
+
+    // Check for __sub metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__sub', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__sub', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value - b.value };
     }
     throw new Error('Cannot subtract non-numbers');
   }
 
-  private multiply(a: LuaValue | undefined, b: LuaValue): LuaValue {
+  private multiply(a: LuaValue | undefined, b: LuaValue, context?: LuaExecutionContext): LuaValue {
     if (!a) a = { type: 'number', value: 0 };
+
+    // Check for __mul metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__mul', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__mul', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value * b.value };
     }
     throw new Error('Cannot multiply non-numbers');
   }
 
-  private divide(a: LuaValue | undefined, b: LuaValue): LuaValue {
+  private divide(a: LuaValue | undefined, b: LuaValue, context?: LuaExecutionContext): LuaValue {
     if (!a) a = { type: 'number', value: 0 };
+
+    // Check for __div metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__div', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__div', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       if (b.value === 0) return { type: 'number', value: 0 }; // Safely return 0 for division by zero
       return { type: 'number', value: a.value / b.value };
@@ -2920,18 +3074,45 @@ export class LuaEngine {
     throw new Error('Cannot divide non-numbers');
   }
 
-  private modulo(a: LuaValue, b: LuaValue): LuaValue {
+  private modulo(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __mod metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__mod', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__mod', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: a.value % b.value };
     }
     throw new Error('Cannot modulo non-numbers');
   }
 
-  private power(a: LuaValue, b: LuaValue): LuaValue {
+  private power(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __pow metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__pow', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__pow', [a, b], context);
+      if (result2) return result2;
+    }
+
     if (a.type === 'number' && b.type === 'number') {
       return { type: 'number', value: Math.pow(a.value, b.value) };
     }
     throw new Error('Cannot exponentiate non-numbers');
+  }
+
+  private concat(a: LuaValue, b: LuaValue, context: LuaExecutionContext): LuaValue {
+    // Check for __concat metamethod
+    const result = this.tryMetamethod(a, '__concat', [a, b], context);
+    if (result) return result;
+    const result2 = this.tryMetamethod(b, '__concat', [a, b], context);
+    if (result2) return result2;
+
+    // Standard string concatenation
+    return { type: 'string', value: String(a.value) + String(b.value) };
   }
 
   /**

@@ -57,7 +57,7 @@ export async function migrateStory(
       success: true,
       fromVersion: currentVersion,
       toVersion: targetVersion,
-      changes: ['No migration needed - already at target version'],
+      changes: ['No migration needed'],
     };
   }
 
@@ -251,39 +251,57 @@ registerMigration('2.0.0', '1.0.0', (story: any) => {
  */
 export function validateMigratedStory(story: Story): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
+  // Cast to any for optional properties that may not be in all Story versions
+  const s = story as any;
 
-  if (!story.metadata?.title) {
-    errors.push('Story is missing a title in metadata');
+  // Check story-level required fields
+  if (!s.id) {
+    errors.push('Story is missing an ID');
   }
 
-  if (!story.passages || !(story.passages instanceof Map)) {
-    errors.push('Story passages must be a Map');
+  if (!s.name) {
+    errors.push('Story is missing a name');
   }
 
-  if (story.passages instanceof Map) {
-    const passages = Array.from(story.passages.values());
+  // Handle passages - can be array or Map
+  const passages: Passage[] = [];
+  if (!story.passages) {
+    errors.push('Story passages must be an array');
+  } else if (Array.isArray(story.passages)) {
+    passages.push(...story.passages);
+  } else if (story.passages instanceof Map) {
+    passages.push(...Array.from(story.passages.values()));
+  } else {
+    errors.push('Story passages must be an array');
+  }
 
-    for (let i = 0; i < passages.length; i++) {
-      const passage = passages[i];
+  // Validate passages
+  const ids = new Set<string>();
+  const titles = new Set<string>();
 
-      if (!passage.id) {
-        errors.push(`Passage ${i} is missing an ID`);
+  for (let i = 0; i < passages.length; i++) {
+    const passage = passages[i];
+
+    if (!passage.id) {
+      errors.push(`Passage ${i} is missing an ID`);
+    } else {
+      if (ids.has(passage.id)) {
+        errors.push(`Duplicate passage IDs: ${passage.id}`);
       }
-
-      if (!passage.title) {
-        errors.push(`Passage ${i} is missing a title`);
-      }
-
-      if (passage.content === undefined) {
-        errors.push(`Passage ${i} is missing content`);
-      }
+      ids.add(passage.id);
     }
 
-    // Check for duplicate titles
-    const titles = passages.map(p => p.title);
-    const duplicateTitles = titles.filter((title, index) => titles.indexOf(title) !== index);
-    if (duplicateTitles.length > 0) {
-      errors.push(`Duplicate passage titles: ${Array.from(new Set(duplicateTitles)).join(', ')}`);
+    if (!passage.title) {
+      errors.push(`Passage ${i} is missing a title`);
+    } else {
+      if (titles.has(passage.title)) {
+        errors.push(`Duplicate passage titles: ${passage.title}`);
+      }
+      titles.add(passage.title);
+    }
+
+    if (passage.content === undefined) {
+      errors.push(`Passage ${i} is missing content`);
     }
   }
 
@@ -556,6 +574,14 @@ export {
   transformToWLS2,
   formatDeprecationWarnings,
   validateWLS2Compatibility,
+  // Thread Migration
+  THREAD_PATTERNS,
+  transformThreadPatterns,
+  // Timed Content Migration
+  TIMED_CONTENT_PATTERNS,
+  transformTimedContentPatterns,
+  // Full Content Transformation
+  transformFullContent,
   type WLSMigrationOptions,
   type WLSMigrationResult,
   type WLSMigrationChange,
@@ -567,6 +593,9 @@ export {
   type ASTTransformResult,
   type ASTChange,
   type DeprecationWarning,
+  // Thread/Timed Types
+  type ThreadMigrationResult,
+  type TimedContentMigrationResult,
 } from './wlsMigration.js';
 
 // Batch Operations
@@ -588,6 +617,14 @@ export {
   formatAsSarif,
   // Format Results
   formatResults,
+  // CLI Progress Display
+  CLISpinner,
+  createProgressDisplay,
+  // Exit Codes
+  EXIT_CODES,
+  getExitCodeForBatch,
+  exitWithCode,
+  runCLI,
   // Types
   type BatchItem,
   type BatchItemResult,
@@ -609,4 +646,5 @@ export {
   type SarifRule,
   type SarifResultItem,
   type SarifInvocation,
+  type ExitCode,
 } from './batchOperations.js';

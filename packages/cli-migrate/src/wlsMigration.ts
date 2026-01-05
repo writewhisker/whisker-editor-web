@@ -901,3 +901,401 @@ export function validateWLS2Compatibility(content: string): {
     issues,
   };
 }
+
+// ============================================================================
+// Thread Migration Patterns
+// ============================================================================
+
+/**
+ * Thread migration patterns for WLS 1.0 to 2.0
+ */
+export const THREAD_PATTERNS = {
+  // Legacy spawn patterns
+  spawn: /\bspawn\s+["']?(\w+)["']?\s*(?:\((.*?)\))?/g,
+  // Legacy await patterns
+  await: /\bawait\s+["']?(\w+)["']?/g,
+  // Legacy parallel block
+  parallel: /@parallel\s*\{([^}]+)\}/g,
+  // Legacy thread join
+  join: /\bjoin\s+["']?(\w+)["']?/g,
+  // Legacy thread cancel
+  cancel: /\bcancel\s+["']?(\w+)["']?/g,
+};
+
+/**
+ * Thread migration result
+ */
+export interface ThreadMigrationResult {
+  transformed: string;
+  threadDeclarations: string[];
+  changes: Array<{
+    type: 'spawn' | 'await' | 'parallel' | 'join' | 'cancel';
+    original: string;
+    replacement: string;
+    line: number;
+  }>;
+}
+
+/**
+ * Transform thread patterns from WLS 1.0 to WLS 2.0
+ */
+export function transformThreadPatterns(content: string): ThreadMigrationResult {
+  let transformed = content;
+  const changes: ThreadMigrationResult['changes'] = [];
+  const threadDeclarations: string[] = [];
+  const detectedThreads = new Set<string>();
+
+  // Transform spawn patterns
+  transformed = transformed.replace(
+    /\bspawn\s+["']?(\w+)["']?\s*(?:\((.*?)\))?/g,
+    (match, threadName, args, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      detectedThreads.add(threadName);
+
+      const replacement = args
+        ? `ThreadedStoryPlayer.spawnThread("${threadName}", { args: [${args}] })`
+        : `ThreadedStoryPlayer.spawnThread("${threadName}")`;
+
+      changes.push({
+        type: 'spawn',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform await patterns
+  transformed = transformed.replace(
+    /\bawait\s+["']?(\w+)["']?/g,
+    (match, threadName, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const replacement = `await ThreadedStoryPlayer.awaitThread("${threadName}")`;
+
+      changes.push({
+        type: 'await',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform parallel blocks
+  transformed = transformed.replace(
+    /@parallel\s*\{([^}]+)\}/g,
+    (match, body, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const statements = body.split(';').map((s: string) => s.trim()).filter((s: string) => s);
+
+      const replacement = `await ThreadedStoryPlayer.parallel([\n${statements.map((s: string) => `    () => ${s}`).join(',\n')}\n  ])`;
+
+      changes.push({
+        type: 'parallel',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform join patterns
+  transformed = transformed.replace(
+    /\bjoin\s+["']?(\w+)["']?/g,
+    (match, threadName, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const replacement = `await ThreadedStoryPlayer.joinThread("${threadName}")`;
+
+      changes.push({
+        type: 'join',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform cancel patterns
+  transformed = transformed.replace(
+    /\bcancel\s+["']?(\w+)["']?/g,
+    (match, threadName, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const replacement = `ThreadedStoryPlayer.cancelThread("${threadName}")`;
+
+      changes.push({
+        type: 'cancel',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Generate thread declarations
+  for (const thread of detectedThreads) {
+    threadDeclarations.push(`THREAD ${thread}: { passage: "${thread}", autoStart: false }`);
+  }
+
+  return {
+    transformed,
+    threadDeclarations,
+    changes,
+  };
+}
+
+// ============================================================================
+// Timed Content Migration Patterns
+// ============================================================================
+
+/**
+ * Timed content patterns for WLS 1.0 to 2.0
+ */
+export const TIMED_CONTENT_PATTERNS = {
+  // Delay pattern: @delay(1000) or @delay(1s) or @delay 500ms
+  delay: /@delay\s*\(?\s*(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?)?\s*\)?/gi,
+  // Wait pattern: wait 1000 or wait 1s
+  wait: /\bwait\s+(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?)?/gi,
+  // Typewriter effect: <typewriter>text</typewriter> or <typewriter speed="50">
+  typewriter: /<typewriter(?:\s+speed\s*=\s*["']?(\d+)["']?)?>([^<]*)<\/typewriter>/gi,
+  // Timed text: {text|delay:1000}
+  timedText: /\{([^|]+)\|delay:(\d+)\}/g,
+  // Auto-advance: @auto(5000) or @auto 5s
+  autoAdvance: /@auto\s*\(?\s*(\d+(?:\.\d+)?)\s*(s|ms)?\s*\)?/gi,
+  // Pause: @pause or @pause(click)
+  pause: /@pause\s*(?:\(([^)]*)\))?/gi,
+};
+
+/**
+ * Timed content migration result
+ */
+export interface TimedContentMigrationResult {
+  transformed: string;
+  changes: Array<{
+    type: 'delay' | 'wait' | 'typewriter' | 'timedText' | 'autoAdvance' | 'pause';
+    original: string;
+    replacement: string;
+    line: number;
+  }>;
+}
+
+/**
+ * Convert time value to milliseconds
+ */
+function toMilliseconds(value: number, unit?: string): number {
+  if (!unit) return value; // Assume milliseconds if no unit
+  const u = unit.toLowerCase();
+  if (u === 's' || u === 'sec' || u === 'second' || u === 'seconds') {
+    return value * 1000;
+  }
+  return value; // Default to milliseconds
+}
+
+/**
+ * Transform timed content patterns from WLS 1.0 to WLS 2.0
+ */
+export function transformTimedContentPatterns(content: string): TimedContentMigrationResult {
+  let transformed = content;
+  const changes: TimedContentMigrationResult['changes'] = [];
+
+  // Transform delay patterns
+  transformed = transformed.replace(
+    /@delay\s*\(?\s*(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?)?\s*\)?/gi,
+    (match, time, unit, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const ms = toMilliseconds(parseFloat(time), unit);
+      const replacement = `await TimedContentManager.delay(${ms})`;
+
+      changes.push({
+        type: 'delay',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform wait patterns
+  transformed = transformed.replace(
+    /\bwait\s+(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?)?/gi,
+    (match, time, unit, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const ms = toMilliseconds(parseFloat(time), unit);
+      const replacement = `await TimedContentManager.delay(${ms})`;
+
+      changes.push({
+        type: 'wait',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform typewriter effects
+  transformed = transformed.replace(
+    /<typewriter(?:\s+speed\s*=\s*["']?(\d+)["']?)?>([^<]*)<\/typewriter>/gi,
+    (match, speed, text, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const speedVal = speed ? parseInt(speed) : 50;
+      const replacement = `<span data-effect="typewriter" data-speed="${speedVal}">${text}</span>`;
+
+      changes.push({
+        type: 'typewriter',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform timed text patterns
+  transformed = transformed.replace(
+    /\{([^|]+)\|delay:(\d+)\}/g,
+    (match, text, delayMs, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const replacement = `<span data-timed="${delayMs}">${text}</span>`;
+
+      changes.push({
+        type: 'timedText',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform auto-advance patterns
+  transformed = transformed.replace(
+    /@auto\s*\(?\s*(\d+(?:\.\d+)?)\s*(s|ms)?\s*\)?/gi,
+    (match, time, unit, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const ms = toMilliseconds(parseFloat(time), unit);
+      const replacement = `TimedContentManager.setAutoAdvance(${ms})`;
+
+      changes.push({
+        type: 'autoAdvance',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  // Transform pause patterns
+  transformed = transformed.replace(
+    /@pause\s*(?:\(([^)]*)\))?/gi,
+    (match, trigger, offset) => {
+      const lineNum = content.substring(0, offset).split('\n').length;
+      const triggerType = trigger?.trim() || 'click';
+      const replacement = `await TimedContentManager.waitForTrigger("${triggerType}")`;
+
+      changes.push({
+        type: 'pause',
+        original: match,
+        replacement,
+        line: lineNum,
+      });
+
+      return replacement;
+    }
+  );
+
+  return {
+    transformed,
+    changes,
+  };
+}
+
+/**
+ * Full WLS 1.0 to 2.0 content transformation
+ * Combines all transformation functions
+ */
+export function transformFullContent(
+  content: string,
+  options: {
+    transformThreads?: boolean;
+    transformTimedContent?: boolean;
+    transformVariables?: boolean;
+    transformLists?: boolean;
+    renameReservedWords?: boolean;
+    generateWarnings?: boolean;
+  } = {}
+): {
+  transformed: string;
+  threadChanges: ThreadMigrationResult['changes'];
+  timedContentChanges: TimedContentMigrationResult['changes'];
+  astChanges: ASTChange[];
+  warnings: DeprecationWarning[];
+  declarations: string[];
+} {
+  const {
+    transformThreads = true,
+    transformTimedContent = true,
+    transformVariables = true,
+    transformLists = true,
+    renameReservedWords: doRenameReserved = true,
+    generateWarnings = true,
+  } = options;
+
+  let result = content;
+  let threadChanges: ThreadMigrationResult['changes'] = [];
+  let timedContentChanges: TimedContentMigrationResult['changes'] = [];
+  let astChanges: ASTChange[] = [];
+  let warnings: DeprecationWarning[] = [];
+  const declarations: string[] = [];
+
+  // 1. Transform thread patterns
+  if (transformThreads) {
+    const threadResult = transformThreadPatterns(result);
+    result = threadResult.transformed;
+    threadChanges = threadResult.changes;
+    declarations.push(...threadResult.threadDeclarations);
+  }
+
+  // 2. Transform timed content patterns
+  if (transformTimedContent) {
+    const timedResult = transformTimedContentPatterns(result);
+    result = timedResult.transformed;
+    timedContentChanges = timedResult.changes;
+  }
+
+  // 3. Apply AST transformations (variables, lists, reserved words)
+  const astResult = transformToWLS2(result, {
+    transformVariables,
+    transformLists,
+    renameReservedWords: doRenameReserved,
+    generateDeprecationWarnings: generateWarnings,
+  });
+  result = astResult.transformed;
+  astChanges = astResult.changes;
+  warnings = astResult.warnings;
+
+  return {
+    transformed: result,
+    threadChanges,
+    timedContentChanges,
+    astChanges,
+    warnings,
+    declarations,
+  };
+}

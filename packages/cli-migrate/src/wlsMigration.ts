@@ -484,3 +484,420 @@ export function formatMigrationReport(summary: WLSMigrationSummary): string {
 
   return lines.join('\n');
 }
+
+// ============================================================================
+// AST Transformation Support
+// ============================================================================
+
+/**
+ * WLS 2.0 reserved words that need renaming if used as identifiers
+ */
+export const WLS2_RESERVED_WORDS = [
+  // Control flow
+  'spawn', 'await', 'thread', 'parallel',
+  // Type keywords
+  'state', 'machine', 'effect', 'audio',
+  // Built-in functions
+  'emit', 'subscribe', 'transition',
+  // Modifiers
+  'exclusive', 'concurrent', 'async',
+];
+
+/**
+ * Deprecated patterns in WLS 1.0
+ */
+export const DEPRECATED_PATTERNS = [
+  {
+    pattern: /\bLIST\s+\w+\s*=\s*\([^)]+\)/g,
+    message: 'LIST declarations with parenthesized active states are deprecated',
+    replacement: 'Use ListStateMachine.create() instead',
+    severity: 'warning' as const,
+  },
+  {
+    pattern: /\+\+\s*(\w+)|\(\s*(\w+)\s*\+\+\s*\)/g,
+    message: 'Increment operators (++) on list values are deprecated',
+    replacement: 'Use stateMachine.transition(value) instead',
+    severity: 'warning' as const,
+  },
+  {
+    pattern: /--\s*(\w+)|\(\s*(\w+)\s*--\s*\)/g,
+    message: 'Decrement operators (--) on list values are deprecated',
+    replacement: 'Use stateMachine.reset() instead',
+    severity: 'warning' as const,
+  },
+  {
+    pattern: /\bEXTERNAL\s+\w+\s*\(/g,
+    message: 'EXTERNAL function declarations will require explicit registration in WLS 2.0',
+    replacement: 'Register with ExternalFunctionRegistry.register()',
+    severity: 'info' as const,
+  },
+  {
+    pattern: /\bTUNNEL\s*:/g,
+    message: 'TUNNEL syntax is deprecated',
+    replacement: 'Use explicit function calls with return values',
+    severity: 'warning' as const,
+  },
+];
+
+/**
+ * AST node types for WLS transformation
+ */
+export interface WLSASTNode {
+  type: string;
+  value?: string;
+  children?: WLSASTNode[];
+  line?: number;
+  column?: number;
+}
+
+/**
+ * AST transformation options
+ */
+export interface ASTTransformOptions {
+  /** Transform LIST declarations to state machine calls */
+  transformLists?: boolean;
+  /** Rename reserved words */
+  renameReservedWords?: boolean;
+  /** Transform variable syntax */
+  transformVariables?: boolean;
+  /** Generate deprecation warnings */
+  generateDeprecationWarnings?: boolean;
+  /** Custom reserved word prefix for renaming */
+  reservedWordPrefix?: string;
+}
+
+/**
+ * AST transformation result
+ */
+export interface ASTTransformResult {
+  transformed: string;
+  changes: ASTChange[];
+  warnings: DeprecationWarning[];
+  renamedIdentifiers: Map<string, string>;
+}
+
+/**
+ * AST change record
+ */
+export interface ASTChange {
+  type: 'rename' | 'transform' | 'remove' | 'add';
+  original: string;
+  replacement: string;
+  line: number;
+  description: string;
+}
+
+/**
+ * Deprecation warning
+ */
+export interface DeprecationWarning {
+  message: string;
+  replacement: string;
+  severity: 'info' | 'warning' | 'error';
+  line: number;
+  code: string;
+}
+
+/**
+ * Detect reserved word usage in content
+ */
+export function detectReservedWords(content: string): Array<{
+  word: string;
+  line: number;
+  column: number;
+  context: string;
+}> {
+  const results: Array<{ word: string; line: number; column: number; context: string }> = [];
+  const lines = content.split('\n');
+
+  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+    const line = lines[lineNum];
+
+    for (const word of WLS2_RESERVED_WORDS) {
+      // Match word as identifier (not inside string or comment)
+      const regex = new RegExp(`\\b${word}\\b(?=\\s*[=:(])`, 'g');
+      let match;
+
+      while ((match = regex.exec(line)) !== null) {
+        // Skip if inside string or comment
+        const beforeMatch = line.substring(0, match.index);
+        const inString = (beforeMatch.match(/"/g) || []).length % 2 !== 0;
+        const inComment = beforeMatch.includes('//') || beforeMatch.includes('--');
+
+        if (!inString && !inComment) {
+          results.push({
+            word,
+            line: lineNum + 1,
+            column: match.index + 1,
+            context: line.trim(),
+          });
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Rename reserved words in content
+ */
+export function renameReservedWords(
+  content: string,
+  options: { prefix?: string; suffix?: string } = {}
+): { content: string; renames: Map<string, string> } {
+  const prefix = options.prefix || '_wls_';
+  const suffix = options.suffix || '';
+  const renames = new Map<string, string>();
+  let result = content;
+
+  for (const word of WLS2_RESERVED_WORDS) {
+    // Only rename if used as identifier
+    const identifierRegex = new RegExp(`\\b(${word})\\b(?=\\s*[=:(])`, 'g');
+
+    if (identifierRegex.test(result)) {
+      const newName = `${prefix}${word}${suffix}`;
+      renames.set(word, newName);
+
+      // Replace all occurrences as identifiers
+      result = result.replace(
+        new RegExp(`\\b${word}\\b`, 'g'),
+        (match, offset) => {
+          const beforeMatch = result.substring(0, offset);
+          const inString = (beforeMatch.match(/"/g) || []).length % 2 !== 0;
+          const inComment = beforeMatch.includes('//') || beforeMatch.includes('--');
+          return inString || inComment ? match : newName;
+        }
+      );
+    }
+  }
+
+  return { content: result, renames };
+}
+
+/**
+ * Detect deprecated patterns in content
+ */
+export function detectDeprecations(content: string): DeprecationWarning[] {
+  const warnings: DeprecationWarning[] = [];
+  const lines = content.split('\n');
+
+  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+    const line = lines[lineNum];
+
+    for (const deprecated of DEPRECATED_PATTERNS) {
+      const matches = line.match(deprecated.pattern);
+      if (matches) {
+        warnings.push({
+          message: deprecated.message,
+          replacement: deprecated.replacement,
+          severity: deprecated.severity,
+          line: lineNum + 1,
+          code: line.trim(),
+        });
+      }
+    }
+  }
+
+  return warnings;
+}
+
+/**
+ * Transform WLS 1.0 content to WLS 2.0 syntax
+ */
+export function transformToWLS2(
+  content: string,
+  options: ASTTransformOptions = {}
+): ASTTransformResult {
+  const {
+    transformLists = true,
+    renameReservedWords: doRename = true,
+    transformVariables = true,
+    generateDeprecationWarnings = true,
+    reservedWordPrefix = '_wls_',
+  } = options;
+
+  let transformed = content;
+  const changes: ASTChange[] = [];
+  const warnings: DeprecationWarning[] = [];
+  let renamedIdentifiers = new Map<string, string>();
+
+  const lines = content.split('\n');
+
+  // 1. Detect and add deprecation warnings
+  if (generateDeprecationWarnings) {
+    warnings.push(...detectDeprecations(content));
+  }
+
+  // 2. Rename reserved words
+  if (doRename) {
+    const reserved = detectReservedWords(content);
+    if (reserved.length > 0) {
+      const result = renameReservedWords(transformed, { prefix: reservedWordPrefix });
+      transformed = result.content;
+      renamedIdentifiers = result.renames;
+
+      for (const [original, newName] of result.renames) {
+        changes.push({
+          type: 'rename',
+          original,
+          replacement: newName,
+          line: 0, // Applies to all occurrences
+          description: `Renamed reserved word '${original}' to '${newName}'`,
+        });
+      }
+    }
+  }
+
+  // 3. Transform LIST declarations to state machine calls
+  if (transformLists) {
+    transformed = transformed.replace(
+      /^(\s*)LIST\s+(\w+)\s*=\s*(.+)$/gm,
+      (match, indent, name, values, offset) => {
+        const lineNum = content.substring(0, offset).split('\n').length;
+
+        // Parse values
+        const valueList = values.split(',').map((v: string) => v.trim());
+        const hasActiveState = valueList.some((v: string) => v.startsWith('(') && v.endsWith(')'));
+
+        // Determine active state if any
+        let activeState = '';
+        const cleanValues = valueList.map((v: string) => {
+          if (v.startsWith('(') && v.endsWith(')')) {
+            activeState = v.slice(1, -1);
+            return activeState;
+          }
+          return v;
+        });
+
+        changes.push({
+          type: 'transform',
+          original: match.trim(),
+          replacement: `${indent}-- STATE_MACHINE: ${name}`,
+          line: lineNum,
+          description: `Transformed LIST '${name}' to state machine declaration`,
+        });
+
+        // Generate state machine style comment/code
+        const stateList = cleanValues.map((v: string) => `"${v}"`).join(', ');
+        const declaration = `${indent}-- WLS 2.0: Use createExclusiveStateMachine("${name}", [${stateList}])`;
+        const initialState = activeState ? `\n${indent}-- Initial state: "${activeState}"` : '';
+
+        return declaration + initialState;
+      }
+    );
+  }
+
+  // 4. Transform variable syntax
+  if (transformVariables) {
+    // Transform ${var} to {var}
+    const dollarBraceCount = (transformed.match(/\$\{(\w+)\}/g) || []).length;
+    if (dollarBraceCount > 0) {
+      transformed = transformed.replace(/\$\{(\w+)\}/g, '{$1}');
+      changes.push({
+        type: 'transform',
+        original: '${var}',
+        replacement: '{var}',
+        line: 0,
+        description: `Transformed ${dollarBraceCount} variable interpolation(s) from \${var} to {var}`,
+      });
+    }
+
+    // Transform $var to {var} (outside of conditions)
+    transformed = transformed.replace(
+      /(?<![{])\$(\w+)(?![}])/g,
+      (match, varName, offset) => {
+        // Don't transform inside conditions or existing braces
+        const before = transformed.substring(Math.max(0, offset - 10), offset);
+        if (before.includes('{') || before.includes('if ') || before.includes('when ')) {
+          return match;
+        }
+        return `{${varName}}`;
+      }
+    );
+  }
+
+  return {
+    transformed,
+    changes,
+    warnings,
+    renamedIdentifiers,
+  };
+}
+
+/**
+ * Format deprecation warnings for display
+ */
+export function formatDeprecationWarnings(warnings: DeprecationWarning[]): string {
+  if (warnings.length === 0) {
+    return '';
+  }
+
+  const lines: string[] = [
+    '',
+    '⚠️  Deprecation Warnings',
+    '─'.repeat(40),
+  ];
+
+  const grouped = new Map<string, DeprecationWarning[]>();
+
+  for (const warning of warnings) {
+    const key = warning.message;
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+    grouped.get(key)!.push(warning);
+  }
+
+  for (const [message, items] of grouped) {
+    const icon = items[0].severity === 'error' ? '❌' : items[0].severity === 'warning' ? '⚠️' : 'ℹ️';
+    lines.push(`${icon} ${message}`);
+    lines.push(`   Replacement: ${items[0].replacement}`);
+    lines.push(`   Occurrences: ${items.length}`);
+    if (items.length <= 3) {
+      for (const item of items) {
+        lines.push(`     Line ${item.line}: ${item.code.substring(0, 50)}${item.code.length > 50 ? '...' : ''}`);
+      }
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Validate content for WLS 2.0 compatibility
+ */
+export function validateWLS2Compatibility(content: string): {
+  compatible: boolean;
+  issues: Array<{ type: string; message: string; line: number }>;
+} {
+  const issues: Array<{ type: string; message: string; line: number }> = [];
+
+  // Check for reserved words
+  const reservedWords = detectReservedWords(content);
+  for (const usage of reservedWords) {
+    issues.push({
+      type: 'reserved_word',
+      message: `'${usage.word}' is a reserved word in WLS 2.0`,
+      line: usage.line,
+    });
+  }
+
+  // Check for deprecated patterns
+  const deprecations = detectDeprecations(content);
+  for (const dep of deprecations) {
+    if (dep.severity === 'error') {
+      issues.push({
+        type: 'deprecated',
+        message: dep.message,
+        line: dep.line,
+      });
+    }
+  }
+
+  return {
+    compatible: issues.length === 0,
+    issues,
+  };
+}

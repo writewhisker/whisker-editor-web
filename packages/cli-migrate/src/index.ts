@@ -316,6 +316,60 @@ export function getMigrationInfo(fromVersion: string, toVersion: string): {
 }
 
 /**
+ * Rollback a migration using a backup file
+ */
+export async function rollbackMigration(
+  originalPath: string,
+  backupPath: string
+): Promise<{ success: boolean; message: string }> {
+  const fs = await import('fs/promises');
+
+  try {
+    // Verify backup exists
+    await fs.access(backupPath);
+
+    // Restore from backup
+    await fs.copyFile(backupPath, originalPath);
+
+    return {
+      success: true,
+      message: `Successfully rolled back to backup: ${backupPath}`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Rollback failed: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+/**
+ * Find most recent backup for a file
+ */
+export async function findLatestBackup(filePath: string): Promise<string | null> {
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  const dir = path.dirname(filePath);
+  const base = path.basename(filePath, path.extname(filePath));
+  const ext = path.extname(filePath);
+
+  try {
+    const files = await fs.readdir(dir);
+    const backups = files
+      .filter(f => f.startsWith(`${base}.backup-`) && f.endsWith(ext))
+      .sort()
+      .reverse();
+
+    if (backups.length === 0) return null;
+
+    return path.join(dir, backups[0]);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Migrate command
  */
 export const migrateCommand: Command = {
@@ -355,6 +409,20 @@ export const migrateCommand: Command = {
       type: 'boolean',
       default: true,
     },
+    {
+      name: 'dry-run',
+      alias: 'd',
+      description: 'Preview changes without modifying files',
+      type: 'boolean',
+      default: false,
+    },
+    {
+      name: 'rollback',
+      alias: 'r',
+      description: 'Rollback to the most recent backup',
+      type: 'boolean',
+      default: false,
+    },
   ],
   execute: async (context: CommandContext) => {
     const { options, cwd } = context;
@@ -364,6 +432,38 @@ export const migrateCommand: Command = {
     const inputPath = path.resolve(cwd, options.input);
     const outputPath = options.output ? path.resolve(cwd, options.output) : inputPath;
     const targetVersion = options.version as MigrationVersion;
+    const isDryRun = options['dry-run'] === true;
+    const isRollback = options.rollback === true;
+
+    // Handle rollback
+    if (isRollback) {
+      console.log('Rolling back migration...');
+      console.log(`  Target file: ${inputPath}`);
+      console.log('');
+
+      const backupPath = await findLatestBackup(inputPath);
+      if (!backupPath) {
+        console.error('✗ No backup found for this file');
+        process.exit(1);
+      }
+
+      console.log(`  Found backup: ${backupPath}`);
+      const result = await rollbackMigration(inputPath, backupPath);
+
+      if (!result.success) {
+        console.error(`✗ ${result.message}`);
+        process.exit(1);
+      }
+
+      console.log(`✓ ${result.message}`);
+      return;
+    }
+
+    // Normal migration
+    if (isDryRun) {
+      console.log('DRY RUN - No files will be modified');
+      console.log('');
+    }
 
     console.log('Migrating story...');
     console.log(`  Input: ${inputPath}`);
@@ -383,8 +483,8 @@ export const migrateCommand: Command = {
     console.log(`  ${info.description}`);
     console.log('');
 
-    // Create backup if requested
-    if (options.backup !== false && outputPath === inputPath) {
+    // Create backup if requested (not in dry-run mode)
+    if (!isDryRun && options.backup !== false && outputPath === inputPath) {
       const backupPath = await createBackup(inputPath);
       console.log(`✓ Backup created: ${backupPath}`);
       console.log('');
@@ -417,15 +517,26 @@ export const migrateCommand: Command = {
         for (const error of validation.errors) {
           console.error(`  - ${error}`);
         }
-        process.exit(1);
+        if (!isDryRun) {
+          process.exit(1);
+        }
+      } else {
+        console.log('✓ Validation passed');
       }
-      console.log('✓ Validation passed');
       console.log('');
     }
 
-    // Write output
-    await fs.writeFile(outputPath, JSON.stringify(story, null, 2));
-    console.log(`✓ Migration complete: ${outputPath}`);
+    // Write output (not in dry-run mode)
+    if (isDryRun) {
+      console.log('DRY RUN COMPLETE - No files were modified');
+      console.log('');
+      console.log('The following changes would be made:');
+      console.log(`  Output file: ${outputPath}`);
+      console.log(`  New version: ${targetVersion}`);
+    } else {
+      await fs.writeFile(outputPath, JSON.stringify(story, null, 2));
+      console.log(`✓ Migration complete: ${outputPath}`);
+    }
   },
 };
 
@@ -436,11 +547,26 @@ export {
   migrateStoryContent,
   generateDeclarations,
   formatMigrationReport,
+  // AST Transformation
+  WLS2_RESERVED_WORDS,
+  DEPRECATED_PATTERNS,
+  detectReservedWords,
+  renameReservedWords,
+  detectDeprecations,
+  transformToWLS2,
+  formatDeprecationWarnings,
+  validateWLS2Compatibility,
   type WLSMigrationOptions,
   type WLSMigrationResult,
   type WLSMigrationChange,
   type WLSMigrationSuggestion,
   type WLSMigrationSummary,
+  // AST Types
+  type WLSASTNode,
+  type ASTTransformOptions,
+  type ASTTransformResult,
+  type ASTChange,
+  type DeprecationWarning,
 } from './wlsMigration.js';
 
 // Batch Operations
@@ -453,6 +579,16 @@ export {
   createProgressBar,
   batchMigrate,
   batchValidate,
+  // Glob Pattern Selection
+  globFiles,
+  // Batch Conversion
+  batchConvert,
+  // SARIF Output
+  toSarif,
+  formatAsSarif,
+  // Format Results
+  formatResults,
+  // Types
   type BatchItem,
   type BatchItemResult,
   type BatchSummary,
@@ -462,4 +598,15 @@ export {
   type BatchProcessor,
   type BatchMigrateOptions,
   type BatchValidateOptions,
+  type GlobOptions,
+  type BatchConvertOptions,
+  type ConversionResult,
+  type ExportFormat,
+  type OutputFormat,
+  type FormatOptions,
+  type SarifResult,
+  type SarifRun,
+  type SarifRule,
+  type SarifResultItem,
+  type SarifInvocation,
 } from './batchOperations.js';

@@ -3,6 +3,12 @@
  *
  * Provides parallel batch processing for migration and validation operations.
  * Supports progress tracking, concurrency control, and comprehensive reporting.
+ *
+ * Features:
+ * - Glob pattern file selection
+ * - Batch conversion with format selection
+ * - Multiple output formats (JSON, text, SARIF)
+ * - Concurrency control and progress tracking
  */
 
 
@@ -476,4 +482,662 @@ export async function batchValidate(options: BatchValidateOptions): Promise<Batc
       onProgress: options.onProgress,
     }
   );
+}
+
+// ============================================================================
+// Glob Pattern File Selection
+// ============================================================================
+
+/**
+ * Glob pattern options
+ */
+export interface GlobOptions {
+  /** Base directory to search from */
+  cwd?: string;
+  /** Include pattern(s) */
+  include?: string | string[];
+  /** Exclude pattern(s) */
+  exclude?: string | string[];
+  /** Follow symbolic links */
+  followSymlinks?: boolean;
+  /** Include directories in results */
+  includeDirectories?: boolean;
+}
+
+/**
+ * Match files using glob patterns
+ * Uses minimatch-style patterns
+ */
+export async function globFiles(
+  patterns: string | string[],
+  options: GlobOptions = {}
+): Promise<string[]> {
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  const {
+    cwd = process.cwd(),
+    exclude = [],
+    followSymlinks = true,
+    includeDirectories = false,
+  } = options;
+
+  const patternList = Array.isArray(patterns) ? patterns : [patterns];
+  const excludeList = Array.isArray(exclude) ? exclude : [exclude];
+  const results: string[] = [];
+  const seen = new Set<string>();
+
+  // Simple glob pattern matching
+  const matchPattern = (filePath: string, pattern: string): boolean => {
+    // Convert glob pattern to regex
+    let regex = pattern
+      .replace(/\./g, '\\.')
+      .replace(/\*\*/g, '{{GLOBSTAR}}')
+      .replace(/\*/g, '[^/]*')
+      .replace(/\?/g, '.')
+      .replace(/\{\{GLOBSTAR\}\}/g, '.*');
+
+    // Handle patterns starting with **/
+    if (pattern.startsWith('**/')) {
+      regex = '(.*/)?' + regex.substring(4);
+    }
+
+    return new RegExp(`^${regex}$`).test(filePath);
+  };
+
+  // Recursively walk directory
+  const walkDir = async (dir: string, relativeBase = ''): Promise<void> => {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.join(relativeBase, entry.name);
+
+      // Check if symlink and handle accordingly
+      let stats = entry;
+      if (entry.isSymbolicLink() && followSymlinks) {
+        try {
+          const realStats = await fs.stat(fullPath);
+          stats = {
+            ...entry,
+            isDirectory: () => realStats.isDirectory(),
+            isFile: () => realStats.isFile(),
+          } as typeof entry;
+        } catch {
+          continue; // Skip broken symlinks
+        }
+      }
+
+      // Check exclusions
+      const isExcluded = excludeList.some(p => matchPattern(relativePath, p));
+      if (isExcluded) continue;
+
+      if (stats.isDirectory()) {
+        if (includeDirectories) {
+          for (const pattern of patternList) {
+            if (matchPattern(relativePath, pattern) && !seen.has(fullPath)) {
+              seen.add(fullPath);
+              results.push(fullPath);
+            }
+          }
+        }
+        await walkDir(fullPath, relativePath);
+      } else if (stats.isFile()) {
+        for (const pattern of patternList) {
+          if (matchPattern(relativePath, pattern) && !seen.has(fullPath)) {
+            seen.add(fullPath);
+            results.push(fullPath);
+          }
+        }
+      }
+    }
+  };
+
+  await walkDir(cwd);
+  return results.sort();
+}
+
+// ============================================================================
+// SARIF Output Format
+// ============================================================================
+
+/**
+ * SARIF (Static Analysis Results Interchange Format) result
+ */
+export interface SarifResult {
+  version: '2.1.0';
+  $schema: string;
+  runs: SarifRun[];
+}
+
+/**
+ * SARIF run
+ */
+export interface SarifRun {
+  tool: {
+    driver: {
+      name: string;
+      version: string;
+      informationUri?: string;
+      rules?: SarifRule[];
+    };
+  };
+  results: SarifResultItem[];
+  invocations?: SarifInvocation[];
+}
+
+/**
+ * SARIF rule
+ */
+export interface SarifRule {
+  id: string;
+  name: string;
+  shortDescription: { text: string };
+  fullDescription?: { text: string };
+  helpUri?: string;
+  defaultConfiguration?: {
+    level: 'none' | 'note' | 'warning' | 'error';
+  };
+}
+
+/**
+ * SARIF result item
+ */
+export interface SarifResultItem {
+  ruleId: string;
+  level: 'none' | 'note' | 'warning' | 'error';
+  message: { text: string };
+  locations?: Array<{
+    physicalLocation: {
+      artifactLocation: {
+        uri: string;
+        uriBaseId?: string;
+      };
+      region?: {
+        startLine?: number;
+        startColumn?: number;
+        endLine?: number;
+        endColumn?: number;
+      };
+    };
+  }>;
+}
+
+/**
+ * SARIF invocation
+ */
+export interface SarifInvocation {
+  executionSuccessful: boolean;
+  startTimeUtc?: string;
+  endTimeUtc?: string;
+  exitCode?: number;
+}
+
+/**
+ * Convert batch results to SARIF format
+ */
+export function toSarif<T>(
+  results: BatchResult<T>,
+  options: {
+    toolName: string;
+    toolVersion: string;
+    toolUri?: string;
+    ruleId?: string;
+    ruleName?: string;
+  }
+): SarifResult {
+  const {
+    toolName,
+    toolVersion,
+    toolUri,
+    ruleId = 'batch-operation',
+    ruleName = 'Batch Operation Result',
+  } = options;
+
+  const sarifResults: SarifResultItem[] = [];
+
+  for (const result of results.results) {
+    sarifResults.push({
+      ruleId,
+      level: result.success ? 'none' : 'error',
+      message: {
+        text: result.success
+          ? `Successfully processed: ${result.path}`
+          : `Failed: ${result.error || 'Unknown error'}`,
+      },
+      locations: [
+        {
+          physicalLocation: {
+            artifactLocation: {
+              uri: result.path,
+            },
+          },
+        },
+      ],
+    });
+  }
+
+  return {
+    version: '2.1.0',
+    $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: toolName,
+            version: toolVersion,
+            informationUri: toolUri,
+            rules: [
+              {
+                id: ruleId,
+                name: ruleName,
+                shortDescription: { text: ruleName },
+                defaultConfiguration: { level: 'error' },
+              },
+            ],
+          },
+        },
+        results: sarifResults,
+        invocations: [
+          {
+            executionSuccessful: results.summary.failed === 0,
+            exitCode: results.summary.failed > 0 ? 1 : 0,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/**
+ * Format batch results as SARIF JSON
+ */
+export function formatAsSarif<T>(
+  results: BatchResult<T>,
+  options: {
+    toolName: string;
+    toolVersion: string;
+    toolUri?: string;
+  }
+): string {
+  const sarif = toSarif(results, options);
+  return JSON.stringify(sarif, null, 2);
+}
+
+// ============================================================================
+// Batch Conversion
+// ============================================================================
+
+/**
+ * Supported export formats
+ */
+export type ExportFormat = 'html' | 'json' | 'markdown' | 'ink' | 'text' | 'pdf' | 'epub';
+
+/**
+ * Batch conversion options
+ */
+export interface BatchConvertOptions {
+  /** Files to convert (paths or glob patterns) */
+  files: string[];
+  /** Use glob patterns for file selection */
+  useGlob?: boolean;
+  /** Glob options */
+  globOptions?: GlobOptions;
+  /** Target format */
+  format: ExportFormat;
+  /** Output directory */
+  outputDir: string;
+  /** Concurrency level */
+  concurrency?: number;
+  /** Continue on error */
+  continueOnError?: boolean;
+  /** Progress callback */
+  onProgress?: ProgressCallback;
+  /** Abort signal */
+  signal?: AbortSignal;
+}
+
+/**
+ * Conversion result
+ */
+export interface ConversionResult {
+  inputPath: string;
+  outputPath: string;
+  format: ExportFormat;
+  size: number;
+}
+
+/**
+ * Run batch conversion on multiple files
+ */
+export async function batchConvert(options: BatchConvertOptions): Promise<BatchResult<ConversionResult>> {
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  // Resolve files (use glob if enabled)
+  let filePaths: string[];
+  if (options.useGlob) {
+    filePaths = await globFiles(options.files, options.globOptions);
+  } else {
+    filePaths = options.files;
+  }
+
+  const items = createBatchItems(filePaths);
+
+  return processBatch<unknown, ConversionResult>(
+    items,
+    async (item) => {
+      const content = await fs.readFile(item.path, 'utf-8');
+      const story = JSON.parse(content);
+
+      // Generate output filename
+      const baseName = path.basename(item.path, path.extname(item.path));
+      const extension = getExtensionForFormat(options.format);
+      const outputPath = path.join(options.outputDir, `${baseName}${extension}`);
+
+      // Convert content based on format
+      let outputContent: string;
+      switch (options.format) {
+        case 'json':
+          outputContent = JSON.stringify(story, null, 2);
+          break;
+        case 'markdown':
+          outputContent = convertToMarkdown(story);
+          break;
+        case 'text':
+          outputContent = convertToPlainText(story);
+          break;
+        case 'html':
+          outputContent = convertToHtml(story);
+          break;
+        case 'ink':
+          outputContent = convertToInk(story);
+          break;
+        default:
+          outputContent = JSON.stringify(story, null, 2);
+      }
+
+      // Ensure output directory exists
+      await fs.mkdir(options.outputDir, { recursive: true });
+
+      // Write output
+      await fs.writeFile(outputPath, outputContent);
+
+      return {
+        inputPath: item.path,
+        outputPath,
+        format: options.format,
+        size: outputContent.length,
+      };
+    },
+    {
+      concurrency: options.concurrency ?? 4,
+      continueOnError: options.continueOnError ?? true,
+      onProgress: options.onProgress,
+      signal: options.signal,
+    }
+  );
+}
+
+/**
+ * Get file extension for format
+ */
+function getExtensionForFormat(format: ExportFormat): string {
+  switch (format) {
+    case 'html': return '.html';
+    case 'json': return '.json';
+    case 'markdown': return '.md';
+    case 'ink': return '.ink';
+    case 'text': return '.txt';
+    case 'pdf': return '.pdf';
+    case 'epub': return '.epub';
+    default: return '.json';
+  }
+}
+
+/**
+ * Convert story to Markdown format
+ */
+function convertToMarkdown(story: any): string {
+  const lines: string[] = [];
+
+  // Title and metadata
+  lines.push(`# ${story.metadata?.title || 'Untitled Story'}`);
+  lines.push('');
+  if (story.metadata?.author) {
+    lines.push(`*By ${story.metadata.author}*`);
+    lines.push('');
+  }
+  if (story.metadata?.description) {
+    lines.push(story.metadata.description);
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+
+  // Passages
+  const passages = story.passages || [];
+  for (const passage of passages) {
+    lines.push(`## ${passage.title || 'Unnamed Passage'}`);
+    lines.push('');
+    if (passage.content) {
+      lines.push(passage.content);
+      lines.push('');
+    }
+    if (passage.choices && passage.choices.length > 0) {
+      for (const choice of passage.choices) {
+        lines.push(`- **${choice.text}** → ${choice.target || 'END'}`);
+      }
+      lines.push('');
+    }
+    lines.push('---');
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Convert story to plain text format
+ */
+function convertToPlainText(story: any): string {
+  const lines: string[] = [];
+
+  // Title
+  lines.push(story.metadata?.title || 'Untitled Story');
+  lines.push('='.repeat(40));
+  lines.push('');
+
+  if (story.metadata?.author) {
+    lines.push(`By ${story.metadata.author}`);
+    lines.push('');
+  }
+
+  // Passages
+  const passages = story.passages || [];
+  for (const passage of passages) {
+    lines.push(`[${passage.title || 'Unnamed'}]`);
+    lines.push('-'.repeat(20));
+    if (passage.content) {
+      lines.push(passage.content);
+    }
+    if (passage.choices && passage.choices.length > 0) {
+      lines.push('');
+      lines.push('Choices:');
+      for (let i = 0; i < passage.choices.length; i++) {
+        lines.push(`  ${i + 1}. ${passage.choices[i].text}`);
+      }
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Convert story to HTML format
+ */
+function convertToHtml(story: any): string {
+  const title = story.metadata?.title || 'Untitled Story';
+  const author = story.metadata?.author || '';
+
+  let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+    h1 { border-bottom: 2px solid #333; }
+    .passage { margin: 2rem 0; padding: 1rem; background: #f9f9f9; border-radius: 4px; }
+    .passage-title { color: #333; margin-bottom: 0.5rem; }
+    .choices { list-style-type: none; padding: 0; }
+    .choices li { padding: 0.5rem; margin: 0.25rem 0; background: #e9e9e9; border-radius: 4px; }
+    .choice-target { color: #666; font-style: italic; }
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(title)}</h1>
+  ${author ? `<p><em>By ${escapeHtml(author)}</em></p>` : ''}
+`;
+
+  const passages = story.passages || [];
+  for (const passage of passages) {
+    html += `
+  <div class="passage" id="${escapeHtml(passage.id || passage.title)}">
+    <h2 class="passage-title">${escapeHtml(passage.title || 'Unnamed')}</h2>
+    <p>${escapeHtml(passage.content || '')}</p>`;
+
+    if (passage.choices && passage.choices.length > 0) {
+      html += '\n    <ul class="choices">';
+      for (const choice of passage.choices) {
+        html += `\n      <li>${escapeHtml(choice.text)} <span class="choice-target">→ ${escapeHtml(choice.target || 'END')}</span></li>`;
+      }
+      html += '\n    </ul>';
+    }
+
+    html += '\n  </div>';
+  }
+
+  html += '\n</body>\n</html>';
+  return html;
+}
+
+/**
+ * Convert story to Ink format
+ */
+function convertToInk(story: any): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push(`// ${story.metadata?.title || 'Untitled Story'}`);
+  if (story.metadata?.author) {
+    lines.push(`// by ${story.metadata.author}`);
+  }
+  lines.push(`// Exported from Whisker`);
+  lines.push('');
+
+  // Variables
+  if (story.variables) {
+    for (const [name, variable] of Object.entries(story.variables as Record<string, any>)) {
+      const value = typeof variable.initial === 'string'
+        ? `"${variable.initial}"`
+        : String(variable.initial);
+      lines.push(`VAR ${name} = ${value}`);
+    }
+    lines.push('');
+  }
+
+  // Passages as knots
+  const passages = story.passages || [];
+  for (const passage of passages) {
+    const knotName = (passage.title || 'unnamed')
+      .replace(/[^a-zA-Z0-9_]/g, '_')
+      .replace(/^(\d)/, '_$1');
+
+    lines.push(`=== ${knotName} ===`);
+
+    if (passage.content) {
+      lines.push(passage.content);
+    }
+
+    if (passage.choices && passage.choices.length > 0) {
+      for (const choice of passage.choices) {
+        const target = choice.target
+          ? (choice.target.replace(/[^a-zA-Z0-9_]/g, '_').replace(/^(\d)/, '_$1'))
+          : 'END';
+        lines.push(`* [${choice.text}]`);
+        lines.push(`    -> ${target}`);
+      }
+    } else {
+      lines.push('-> END');
+    }
+
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Escape HTML special characters
+ */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ============================================================================
+// Output Formats
+// ============================================================================
+
+/**
+ * Output format type
+ */
+export type OutputFormat = 'json' | 'text' | 'sarif';
+
+/**
+ * Format options
+ */
+export interface FormatOptions {
+  /** Output format */
+  format: OutputFormat;
+  /** Tool name (for SARIF) */
+  toolName?: string;
+  /** Tool version (for SARIF) */
+  toolVersion?: string;
+  /** Pretty print JSON */
+  pretty?: boolean;
+}
+
+/**
+ * Format batch results according to specified format
+ */
+export function formatResults<T>(
+  results: BatchResult<T>,
+  options: FormatOptions
+): string {
+  switch (options.format) {
+    case 'json':
+      return options.pretty !== false
+        ? JSON.stringify(results, null, 2)
+        : JSON.stringify(results);
+
+    case 'sarif':
+      return formatAsSarif(results, {
+        toolName: options.toolName || 'whisker-cli',
+        toolVersion: options.toolVersion || '1.0.0',
+      });
+
+    case 'text':
+    default:
+      return formatBatchSummary(results.summary) + '\n' +
+        formatDetailedResults(results.results);
+  }
 }

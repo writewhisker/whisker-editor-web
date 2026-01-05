@@ -11,9 +11,24 @@ import {
   createBackup,
   validateMigratedStory,
   getMigrationInfo,
+  isReservedWord,
+  getReservedWordCategory,
+  getSafeVariableName,
+  findReservedWordsInContent,
+  findDeprecatedPatterns,
+  analyzeStory,
+  renameReservedWords,
+  generateTextReport,
+  createMigrationReport,
+  LUA_KEYWORDS,
+  LUA_BUILTINS,
+  STORY_API_RESERVED,
+  ALL_RESERVED_WORDS,
   type MigrationVersion,
   type MigrationResult,
   type MigrationFunction,
+  type ContentIssue,
+  type MigrationReport,
 } from './index.js';
 import type { Story } from '@writewhisker/story-models';
 
@@ -111,7 +126,7 @@ describe('migrateStory', () => {
     expect(result.success).toBe(true);
     expect(result.fromVersion).toBe('2.0.0');
     expect(result.toVersion).toBe('2.0.0');
-    expect(result.changes).toContain('No migration needed');
+    expect(result.changes.some(c => c.includes('No migration needed'))).toBe(true);
   });
 
   it('should migrate from 1.0.0 to 2.0.0', async () => {
@@ -845,5 +860,506 @@ describe('migrateCommand', () => {
 
     expect(jsonContent).toContain('\n');
     expect(jsonContent).toMatch(/  \"/);
+  });
+});
+
+// ============================================================
+// Reserved Word Detection Tests
+// ============================================================
+
+describe('Reserved Word Detection', () => {
+  describe('isReservedWord', () => {
+    it('should detect Lua keywords', () => {
+      expect(isReservedWord('if')).toBe(true);
+      expect(isReservedWord('else')).toBe(true);
+      expect(isReservedWord('for')).toBe(true);
+      expect(isReservedWord('while')).toBe(true);
+      expect(isReservedWord('function')).toBe(true);
+      expect(isReservedWord('end')).toBe(true);
+      expect(isReservedWord('local')).toBe(true);
+      expect(isReservedWord('return')).toBe(true);
+    });
+
+    it('should detect Lua builtins', () => {
+      expect(isReservedWord('print')).toBe(true);
+      expect(isReservedWord('tostring')).toBe(true);
+      expect(isReservedWord('pairs')).toBe(true);
+      expect(isReservedWord('ipairs')).toBe(true);
+      expect(isReservedWord('type')).toBe(true);
+      expect(isReservedWord('error')).toBe(true);
+    });
+
+    it('should detect Story API reserved words', () => {
+      expect(isReservedWord('game_state')).toBe(true);
+      expect(isReservedWord('passages')).toBe(true);
+      expect(isReservedWord('history')).toBe(true);
+      expect(isReservedWord('save')).toBe(true);
+      expect(isReservedWord('load')).toBe(true);
+    });
+
+    it('should be case-insensitive', () => {
+      expect(isReservedWord('IF')).toBe(true);
+      expect(isReservedWord('Print')).toBe(true);
+      expect(isReservedWord('GAME_STATE')).toBe(true);
+    });
+
+    it('should return false for non-reserved words', () => {
+      expect(isReservedWord('myVariable')).toBe(false);
+      expect(isReservedWord('playerHealth')).toBe(false);
+      expect(isReservedWord('customFunction')).toBe(false);
+    });
+  });
+
+  describe('getReservedWordCategory', () => {
+    it('should return lua-keyword for Lua keywords', () => {
+      expect(getReservedWordCategory('if')).toBe('lua-keyword');
+      expect(getReservedWordCategory('else')).toBe('lua-keyword');
+      expect(getReservedWordCategory('function')).toBe('lua-keyword');
+    });
+
+    it('should return lua-builtin for Lua builtins', () => {
+      expect(getReservedWordCategory('print')).toBe('lua-builtin');
+      expect(getReservedWordCategory('tostring')).toBe('lua-builtin');
+      expect(getReservedWordCategory('pairs')).toBe('lua-builtin');
+    });
+
+    it('should return story-api for Story API words', () => {
+      expect(getReservedWordCategory('game_state')).toBe('story-api');
+      expect(getReservedWordCategory('passages')).toBe('story-api');
+    });
+
+    it('should return null for non-reserved words', () => {
+      expect(getReservedWordCategory('myVariable')).toBeNull();
+    });
+  });
+
+  describe('getSafeVariableName', () => {
+    it('should add _var suffix', () => {
+      expect(getSafeVariableName('if')).toBe('if_var');
+      expect(getSafeVariableName('print')).toBe('print_var');
+      expect(getSafeVariableName('game_state')).toBe('game_state_var');
+    });
+  });
+
+  describe('findReservedWordsInContent', () => {
+    it('should find reserved words in variable assignments', () => {
+      const content = 'if = 10';
+      const issues = findReservedWordsInContent(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].original).toBe('if');
+      expect(issues[0].type).toBe('reserved-word');
+      expect(issues[0].category).toBe('lua-keyword');
+      expect(issues[0].suggested).toBe('if_var');
+    });
+
+    it('should find multiple reserved words', () => {
+      const content = `print = "hello"
+for = 5
+while = true`;
+      const issues = findReservedWordsInContent(content);
+
+      expect(issues.length).toBe(3);
+      expect(issues[0].original).toBe('print');
+      expect(issues[1].original).toBe('for');
+      expect(issues[2].original).toBe('while');
+    });
+
+    it('should track line and column numbers', () => {
+      const content = `x = 10
+print = "test"`;
+      const issues = findReservedWordsInContent(content);
+
+      expect(issues[0].line).toBe(2);
+      expect(issues[0].column).toBe(1);
+    });
+
+    it('should not flag valid variable names', () => {
+      const content = `playerHealth = 100
+score = 0
+myPrint = function() end`;
+      const issues = findReservedWordsInContent(content);
+
+      expect(issues.length).toBe(0);
+    });
+  });
+});
+
+// ============================================================
+// Deprecated Pattern Detection Tests
+// ============================================================
+
+describe('Deprecated Pattern Detection', () => {
+  describe('findDeprecatedPatterns', () => {
+    it('should detect <<if>> macro', () => {
+      const content = '<<if condition>>';
+      const issues = findDeprecatedPatterns(content);
+
+      const ifIssue = issues.find(i => i.category === 'twine-if-macro');
+      expect(ifIssue).toBeDefined();
+      expect(ifIssue?.description).toContain('<<if>>');
+    });
+
+    it('should detect <<else>> macro', () => {
+      const content = '<<else>>';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-else-macro');
+    });
+
+    it('should detect <<endif>> macro', () => {
+      const content = '<<endif>>';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-endif-macro');
+    });
+
+    it('should detect <<set>> macro', () => {
+      const content = '<<set $health = 100>>';
+      const issues = findDeprecatedPatterns(content);
+
+      // May detect multiple patterns (set and variable)
+      const setIssue = issues.find(i => i.category === 'twine-set-macro');
+      expect(setIssue).toBeDefined();
+      expect(setIssue?.suggested).toBe('health = 100');
+    });
+
+    it('should detect [[text|target]] link syntax', () => {
+      const content = '[[Go to the forest|forest]]';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-link-pipe');
+      expect(issues[0].suggested).toBe('@link{text="Go to the forest", target="forest"}');
+    });
+
+    it('should detect [[text->target]] link syntax', () => {
+      const content = '[[Go to the forest->forest]]';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-link-arrow');
+    });
+
+    it('should detect [[passage]] simple link syntax', () => {
+      const content = '[[forest]]';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-link-simple');
+      expect(issues[0].suggested).toBe('@link{target="forest"}');
+    });
+
+    it('should detect $variable syntax', () => {
+      const content = 'Your health is $health points.';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBe(1);
+      expect(issues[0].category).toBe('twine-variable');
+      expect(issues[0].original).toBe('$health');
+    });
+
+    it('should find multiple patterns on same line', () => {
+      const content = '<<if $x > 0>>You have $x items<<endif>>';
+      const issues = findDeprecatedPatterns(content);
+
+      expect(issues.length).toBeGreaterThan(2);
+    });
+
+    it('should track line numbers correctly', () => {
+      const content = `Line 1
+<<if condition>>
+Line 3`;
+      const issues = findDeprecatedPatterns(content);
+
+      const ifIssue = issues.find(i => i.category === 'twine-if-macro');
+      expect(ifIssue?.line).toBe(2);
+    });
+  });
+});
+
+// ============================================================
+// Story Analysis Tests
+// ============================================================
+
+describe('analyzeStory', () => {
+  it('should analyze all passages for issues', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'print = "hello"'
+        },
+        {
+          title: 'Middle',
+          content: '<<if condition>>test<<endif>>'
+        }
+      ]
+    };
+
+    const issues = analyzeStory(story);
+
+    expect(issues.length).toBeGreaterThan(0);
+    expect(issues.some(i => i.type === 'reserved-word')).toBe(true);
+    expect(issues.some(i => i.type === 'deprecated-pattern')).toBe(true);
+  });
+
+  it('should include passage title in issue description', () => {
+    const story = {
+      passages: [
+        {
+          title: 'MyPassage',
+          content: 'if = 5'
+        }
+      ]
+    };
+
+    const issues = analyzeStory(story);
+
+    expect(issues[0].description).toContain('[MyPassage]');
+  });
+
+  it('should handle empty passages array', () => {
+    const story = { passages: [] };
+    const issues = analyzeStory(story);
+
+    expect(issues.length).toBe(0);
+  });
+
+  it('should handle missing passages', () => {
+    const story = {};
+    const issues = analyzeStory(story);
+
+    expect(issues.length).toBe(0);
+  });
+});
+
+// ============================================================
+// Reserved Word Renaming Tests
+// ============================================================
+
+describe('renameReservedWords', () => {
+  it('should rename reserved words in passage content', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'if = 10\nresult = if + 5'
+        }
+      ]
+    };
+
+    const { story: fixedStory, renames } = renameReservedWords(story);
+
+    expect(renames.get('if')).toBe('if_var');
+    expect(fixedStory.passages[0].content).toContain('if_var');
+    expect(fixedStory.passages[0].content).not.toMatch(/\bif\s*=/);
+  });
+
+  it('should track all renames', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'print = "a"\nfor = 5'
+        }
+      ]
+    };
+
+    const { renames } = renameReservedWords(story);
+
+    expect(renames.size).toBe(2);
+    expect(renames.has('print')).toBe(true);
+    expect(renames.has('for')).toBe(true);
+  });
+
+  it('should not modify original story', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'if = 10'
+        }
+      ]
+    };
+
+    renameReservedWords(story);
+
+    expect(story.passages[0].content).toBe('if = 10');
+  });
+});
+
+// ============================================================
+// Migration Report Tests
+// ============================================================
+
+describe('createMigrationReport', () => {
+  it('should create a report with correct structure', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'x = 10'
+        }
+      ]
+    };
+
+    const report = createMigrationReport(
+      story,
+      '1.0.0',
+      '2.0.0',
+      ['Migrated from 1.0.0 to 2.0.0'],
+      [],
+      '/test/story.json'
+    );
+
+    expect(report.fromVersion).toBe('1.0.0');
+    expect(report.toVersion).toBe('2.0.0');
+    expect(report.success).toBe(true);
+    expect(report.inputFile).toBe('/test/story.json');
+    expect(report.summary).toBeDefined();
+    expect(report.changes).toEqual(['Migrated from 1.0.0 to 2.0.0']);
+  });
+
+  it('should count issues correctly', () => {
+    const story = {
+      passages: [
+        {
+          title: 'Start',
+          content: 'print = "hello"\n<<if condition>>'
+        }
+      ]
+    };
+
+    const report = createMigrationReport(story, '1.0.0', '2.0.0', [], []);
+
+    expect(report.summary.reservedWordIssues).toBe(1);
+    expect(report.summary.deprecatedPatternIssues).toBeGreaterThan(0);
+    expect(report.summary.totalIssues).toBeGreaterThan(1);
+  });
+
+  it('should mark failed when errors exist', () => {
+    const story = { passages: [] };
+
+    const report = createMigrationReport(
+      story,
+      '1.0.0',
+      '2.0.0',
+      [],
+      ['Migration failed']
+    );
+
+    expect(report.success).toBe(false);
+    expect(report.errors).toContain('Migration failed');
+  });
+});
+
+describe('generateTextReport', () => {
+  it('should generate readable text report', () => {
+    const report: MigrationReport = {
+      timestamp: '2024-01-01T00:00:00.000Z',
+      inputFile: '/test/story.json',
+      fromVersion: '1.0.0',
+      toVersion: '2.0.0',
+      success: true,
+      summary: {
+        totalIssues: 2,
+        reservedWordIssues: 1,
+        deprecatedPatternIssues: 1,
+        passagesAnalyzed: 1,
+        passagesWithIssues: 1,
+        automaticFixes: 1,
+        manualFixesRequired: 1
+      },
+      changes: ['Migrated from 1.0.0 to 2.0.0'],
+      issues: [
+        {
+          type: 'reserved-word',
+          category: 'lua-keyword',
+          line: 1,
+          column: 1,
+          original: 'if',
+          suggested: 'if_var',
+          description: '[Start] if is a Lua keyword'
+        }
+      ],
+      errors: []
+    };
+
+    const text = generateTextReport(report);
+
+    expect(text).toContain('WHISKER MIGRATION REPORT');
+    expect(text).toContain('1.0.0');
+    expect(text).toContain('2.0.0');
+    expect(text).toContain('SUCCESS');
+    expect(text).toContain('Total Issues Found: 2');
+    expect(text).toContain('if_var');
+  });
+
+  it('should include errors in failed report', () => {
+    const report: MigrationReport = {
+      timestamp: '2024-01-01T00:00:00.000Z',
+      fromVersion: '1.0.0',
+      toVersion: '2.0.0',
+      success: false,
+      summary: {
+        totalIssues: 0,
+        reservedWordIssues: 0,
+        deprecatedPatternIssues: 0,
+        passagesAnalyzed: 0,
+        passagesWithIssues: 0,
+        automaticFixes: 0,
+        manualFixesRequired: 0
+      },
+      changes: [],
+      issues: [],
+      errors: ['Migration failed: invalid format']
+    };
+
+    const text = generateTextReport(report);
+
+    expect(text).toContain('FAILED');
+    expect(text).toContain('ERRORS');
+    expect(text).toContain('invalid format');
+  });
+});
+
+// ============================================================
+// Reserved Word Sets Tests
+// ============================================================
+
+describe('Reserved Word Sets', () => {
+  it('should have all Lua keywords', () => {
+    const keywords = ['if', 'else', 'elseif', 'then', 'end', 'for', 'while', 'do',
+      'repeat', 'until', 'break', 'return', 'local', 'function',
+      'in', 'and', 'or', 'not', 'nil', 'true', 'false', 'goto'];
+
+    for (const kw of keywords) {
+      expect(LUA_KEYWORDS.has(kw)).toBe(true);
+    }
+  });
+
+  it('should have all Lua builtins', () => {
+    const builtins = ['print', 'tostring', 'tonumber', 'pairs', 'ipairs', 'type', 'error'];
+
+    for (const b of builtins) {
+      expect(LUA_BUILTINS.has(b)).toBe(true);
+    }
+  });
+
+  it('should have Story API reserved words', () => {
+    const apiWords = ['game_state', 'passages', 'history', 'tags', 'save', 'load'];
+
+    for (const w of apiWords) {
+      expect(STORY_API_RESERVED.has(w)).toBe(true);
+    }
+  });
+
+  it('should combine all reserved words', () => {
+    expect(ALL_RESERVED_WORDS.has('if')).toBe(true);
+    expect(ALL_RESERVED_WORDS.has('print')).toBe(true);
+    expect(ALL_RESERVED_WORDS.has('game_state')).toBe(true);
   });
 });

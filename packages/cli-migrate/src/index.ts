@@ -2,6 +2,8 @@
  * CLI Migrate Command
  *
  * Migration tools for upgrading Whisker stories between versions.
+ * Includes reserved word detection, deprecated pattern detection,
+ * and comprehensive migration reporting.
  */
 
 import type { Command, CommandContext } from './types.js';
@@ -13,6 +15,150 @@ import type { Story, Passage } from '@writewhisker/story-models';
 export type MigrationVersion = '1.0.0' | '2.0.0' | '3.0.0';
 
 /**
+ * Lua reserved keywords that cannot be used as variable names
+ */
+export const LUA_KEYWORDS = new Set([
+  'if', 'else', 'elseif', 'then', 'end', 'for', 'while', 'do',
+  'repeat', 'until', 'break', 'return', 'local', 'function',
+  'in', 'and', 'or', 'not', 'nil', 'true', 'false', 'goto'
+]);
+
+/**
+ * Lua builtin functions that should not be shadowed
+ */
+export const LUA_BUILTINS = new Set([
+  'print', 'tostring', 'tonumber', 'pairs', 'ipairs', 'next',
+  'type', 'error', 'assert', 'pcall', 'xpcall', 'setmetatable',
+  'getmetatable', 'rawget', 'rawset', 'rawequal', 'select',
+  'unpack', 'require', 'load', 'loadstring', 'dofile',
+  'collectgarbage', 'coroutine', 'string', 'table', 'math',
+  'io', 'os', 'debug', 'package'
+]);
+
+/**
+ * Story API reserved words
+ */
+export const STORY_API_RESERVED = new Set([
+  'game_state', 'passages', 'history', 'tags', 'save', 'load',
+  'restart', 'current_passage', 'visited', 'turn_count', 'choice'
+]);
+
+/**
+ * All reserved words combined
+ */
+export const ALL_RESERVED_WORDS = new Set([
+  ...LUA_KEYWORDS,
+  ...LUA_BUILTINS,
+  ...STORY_API_RESERVED
+]);
+
+/**
+ * Deprecated pattern types
+ */
+export interface DeprecatedPattern {
+  pattern: RegExp;
+  type: string;
+  description: string;
+  replacement?: string;
+}
+
+/**
+ * Deprecated Twine/Twee patterns
+ */
+export const DEPRECATED_PATTERNS: DeprecatedPattern[] = [
+  {
+    pattern: /<<if\s+([^>]+)>>/g,
+    type: 'twine-if-macro',
+    description: '<<if>> macro (use @if directive)',
+    replacement: '@if $1'
+  },
+  {
+    pattern: /<<else>>/g,
+    type: 'twine-else-macro',
+    description: '<<else>> macro (use @else directive)',
+    replacement: '@else'
+  },
+  {
+    pattern: /<<elseif\s+([^>]+)>>/g,
+    type: 'twine-elseif-macro',
+    description: '<<elseif>> macro (use @elseif directive)',
+    replacement: '@elseif $1'
+  },
+  {
+    pattern: /<<endif>>/g,
+    type: 'twine-endif-macro',
+    description: '<<endif>> macro (use @end directive)',
+    replacement: '@end'
+  },
+  {
+    pattern: /<<set\s+\$(\w+)\s*=\s*([^>]+)>>/g,
+    type: 'twine-set-macro',
+    description: '<<set>> macro (use Lua assignment)',
+    replacement: '$1 = $2'
+  },
+  {
+    pattern: /\[\[([^\]|]+)\|([^\]]+)\]\]/g,
+    type: 'twine-link-pipe',
+    description: '[[text|target]] link syntax (use @link directive)',
+    replacement: '@link{text="$1", target="$2"}'
+  },
+  {
+    pattern: /\[\[([^\]>]+)->([^\]]+)\]\]/g,
+    type: 'twine-link-arrow',
+    description: '[[text->target]] link syntax (use @link directive)',
+    replacement: '@link{text="$1", target="$2"}'
+  },
+  {
+    pattern: /\[\[([^\]|>]+)\]\]/g,
+    type: 'twine-link-simple',
+    description: '[[passage]] link syntax (use @link directive)',
+    replacement: '@link{target="$1"}'
+  },
+  {
+    pattern: /\$(\w+)/g,
+    type: 'twine-variable',
+    description: '$variable syntax (use Lua variables)',
+    replacement: '$1'
+  }
+];
+
+/**
+ * Detected issue in content
+ */
+export interface ContentIssue {
+  type: 'reserved-word' | 'deprecated-pattern';
+  category: string;
+  line: number;
+  column: number;
+  original: string;
+  suggested?: string;
+  description: string;
+}
+
+/**
+ * Migration report
+ */
+export interface MigrationReport {
+  timestamp: string;
+  inputFile?: string;
+  fromVersion: string;
+  toVersion: string;
+  success: boolean;
+  summary: {
+    totalIssues: number;
+    reservedWordIssues: number;
+    deprecatedPatternIssues: number;
+    passagesAnalyzed: number;
+    passagesWithIssues: number;
+    automaticFixes: number;
+    manualFixesRequired: number;
+  };
+  changes: string[];
+  issues: ContentIssue[];
+  errors: string[];
+}
+
+/**
  * Migration result
  */
 export interface MigrationResult {
@@ -21,6 +167,307 @@ export interface MigrationResult {
   toVersion: string;
   changes: string[];
   errors?: string[];
+  report?: MigrationReport;
+}
+
+/**
+ * Check if a word is a reserved word
+ */
+export function isReservedWord(word: string): boolean {
+  return ALL_RESERVED_WORDS.has(word.toLowerCase());
+}
+
+/**
+ * Get the category of a reserved word
+ */
+export function getReservedWordCategory(word: string): string | null {
+  const lower = word.toLowerCase();
+  if (LUA_KEYWORDS.has(lower)) return 'lua-keyword';
+  if (LUA_BUILTINS.has(lower)) return 'lua-builtin';
+  if (STORY_API_RESERVED.has(lower)) return 'story-api';
+  return null;
+}
+
+/**
+ * Generate a safe variable name by adding a suffix
+ */
+export function getSafeVariableName(name: string): string {
+  return `${name}_var`;
+}
+
+/**
+ * Find reserved words in content
+ */
+export function findReservedWordsInContent(content: string, passageTitle?: string): ContentIssue[] {
+  const issues: ContentIssue[] = [];
+  const lines = content.split('\n');
+
+  // Pattern to find variable assignments: name = value
+  const assignmentPattern = /\b(\w+)\s*=/g;
+  // Pattern to find variable declarations in scripts
+  const declarationPattern = /(?:local\s+)?(\w+)\s*=/g;
+
+  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+    const line = lines[lineNum];
+    let match;
+
+    // Check assignments
+    assignmentPattern.lastIndex = 0;
+    while ((match = assignmentPattern.exec(line)) !== null) {
+      const varName = match[1];
+      const category = getReservedWordCategory(varName);
+
+      if (category) {
+        issues.push({
+          type: 'reserved-word',
+          category,
+          line: lineNum + 1,
+          column: match.index + 1,
+          original: varName,
+          suggested: getSafeVariableName(varName),
+          description: `'${varName}' is a ${category.replace('-', ' ')} and cannot be used as a variable name`
+        });
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Find deprecated patterns in content
+ */
+export function findDeprecatedPatterns(content: string): ContentIssue[] {
+  const issues: ContentIssue[] = [];
+  const lines = content.split('\n');
+
+  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+    const line = lines[lineNum];
+
+    for (const pattern of DEPRECATED_PATTERNS) {
+      // Reset lastIndex for global patterns
+      pattern.pattern.lastIndex = 0;
+      let match;
+
+      while ((match = pattern.pattern.exec(line)) !== null) {
+        let suggested: string | undefined;
+
+        if (pattern.replacement) {
+          // Apply replacement with captured groups
+          suggested = pattern.replacement;
+          for (let i = 1; i < match.length; i++) {
+            suggested = suggested.replace(`$${i}`, match[i] || '');
+          }
+        }
+
+        issues.push({
+          type: 'deprecated-pattern',
+          category: pattern.type,
+          line: lineNum + 1,
+          column: match.index + 1,
+          original: match[0],
+          suggested,
+          description: pattern.description
+        });
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Analyze a story for migration issues
+ */
+export function analyzeStory(story: any): ContentIssue[] {
+  const issues: ContentIssue[] = [];
+
+  // Analyze passages
+  if (story.passages && Array.isArray(story.passages)) {
+    for (const passage of story.passages) {
+      if (passage.content) {
+        const reservedWordIssues = findReservedWordsInContent(passage.content, passage.title);
+        const deprecatedIssues = findDeprecatedPatterns(passage.content);
+
+        // Add passage context to issues
+        for (const issue of [...reservedWordIssues, ...deprecatedIssues]) {
+          issues.push({
+            ...issue,
+            description: `[${passage.title || 'Untitled'}] ${issue.description}`
+          });
+        }
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
+ * Apply automatic fixes to content
+ */
+export function applyAutomaticFixes(content: string, issues: ContentIssue[]): string {
+  let fixed = content;
+
+  // Sort issues by position (reverse order to maintain positions)
+  const sortedIssues = [...issues]
+    .filter(i => i.suggested)
+    .sort((a, b) => {
+      if (a.line !== b.line) return b.line - a.line;
+      return b.column - a.column;
+    });
+
+  const lines = fixed.split('\n');
+
+  for (const issue of sortedIssues) {
+    if (issue.line <= lines.length && issue.suggested) {
+      const line = lines[issue.line - 1];
+      const before = line.substring(0, issue.column - 1);
+      const after = line.substring(issue.column - 1 + issue.original.length);
+      lines[issue.line - 1] = before + issue.suggested + after;
+    }
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Rename reserved words in a story
+ */
+export function renameReservedWords(story: any): { story: any; renames: Map<string, string> } {
+  const renames = new Map<string, string>();
+  const migratedStory = JSON.parse(JSON.stringify(story));
+
+  if (migratedStory.passages && Array.isArray(migratedStory.passages)) {
+    for (const passage of migratedStory.passages) {
+      if (passage.content) {
+        const issues = findReservedWordsInContent(passage.content);
+
+        for (const issue of issues) {
+          if (issue.type === 'reserved-word' && issue.suggested) {
+            renames.set(issue.original, issue.suggested);
+            // Replace all occurrences of the variable name
+            const regex = new RegExp(`\\b${issue.original}\\b`, 'g');
+            passage.content = passage.content.replace(regex, issue.suggested);
+          }
+        }
+      }
+    }
+  }
+
+  return { story: migratedStory, renames };
+}
+
+/**
+ * Generate migration report in text format
+ */
+export function generateTextReport(report: MigrationReport): string {
+  const lines: string[] = [];
+
+  lines.push('='.repeat(60));
+  lines.push('WHISKER MIGRATION REPORT');
+  lines.push('='.repeat(60));
+  lines.push('');
+  lines.push(`Timestamp: ${report.timestamp}`);
+  if (report.inputFile) {
+    lines.push(`Input File: ${report.inputFile}`);
+  }
+  lines.push(`Migration: ${report.fromVersion} → ${report.toVersion}`);
+  lines.push(`Status: ${report.success ? 'SUCCESS' : 'FAILED'}`);
+  lines.push('');
+
+  lines.push('-'.repeat(60));
+  lines.push('SUMMARY');
+  lines.push('-'.repeat(60));
+  lines.push(`Total Issues Found: ${report.summary.totalIssues}`);
+  lines.push(`  - Reserved Word Issues: ${report.summary.reservedWordIssues}`);
+  lines.push(`  - Deprecated Pattern Issues: ${report.summary.deprecatedPatternIssues}`);
+  lines.push(`Passages Analyzed: ${report.summary.passagesAnalyzed}`);
+  lines.push(`Passages with Issues: ${report.summary.passagesWithIssues}`);
+  lines.push(`Automatic Fixes Applied: ${report.summary.automaticFixes}`);
+  lines.push(`Manual Fixes Required: ${report.summary.manualFixesRequired}`);
+  lines.push('');
+
+  if (report.changes.length > 0) {
+    lines.push('-'.repeat(60));
+    lines.push('CHANGES MADE');
+    lines.push('-'.repeat(60));
+    for (const change of report.changes) {
+      lines.push(`  ✓ ${change}`);
+    }
+    lines.push('');
+  }
+
+  if (report.issues.length > 0) {
+    lines.push('-'.repeat(60));
+    lines.push('ISSUES DETECTED');
+    lines.push('-'.repeat(60));
+    for (const issue of report.issues) {
+      lines.push(`  Line ${issue.line}, Col ${issue.column}:`);
+      lines.push(`    Type: ${issue.type} (${issue.category})`);
+      lines.push(`    Found: "${issue.original}"`);
+      if (issue.suggested) {
+        lines.push(`    Suggested: "${issue.suggested}"`);
+      }
+      lines.push(`    ${issue.description}`);
+      lines.push('');
+    }
+  }
+
+  if (report.errors.length > 0) {
+    lines.push('-'.repeat(60));
+    lines.push('ERRORS');
+    lines.push('-'.repeat(60));
+    for (const error of report.errors) {
+      lines.push(`  ✗ ${error}`);
+    }
+    lines.push('');
+  }
+
+  lines.push('='.repeat(60));
+
+  return lines.join('\n');
+}
+
+/**
+ * Create a migration report
+ */
+export function createMigrationReport(
+  story: any,
+  fromVersion: string,
+  toVersion: string,
+  changes: string[],
+  errors: string[],
+  inputFile?: string
+): MigrationReport {
+  const issues = analyzeStory(story);
+  const passagesWithIssues = new Set(
+    issues.map(i => i.description.match(/\[([^\]]+)\]/)?.[1]).filter(Boolean)
+  ).size;
+
+  const reservedWordIssues = issues.filter(i => i.type === 'reserved-word').length;
+  const deprecatedPatternIssues = issues.filter(i => i.type === 'deprecated-pattern').length;
+  const automaticFixes = issues.filter(i => i.suggested && i.type === 'reserved-word').length;
+
+  return {
+    timestamp: new Date().toISOString(),
+    inputFile,
+    fromVersion,
+    toVersion,
+    success: errors.length === 0,
+    summary: {
+      totalIssues: issues.length,
+      reservedWordIssues,
+      deprecatedPatternIssues,
+      passagesAnalyzed: story.passages?.length || 0,
+      passagesWithIssues,
+      automaticFixes,
+      manualFixesRequired: deprecatedPatternIssues
+    },
+    changes,
+    issues,
+    errors
+  };
 }
 
 /**
@@ -249,19 +696,26 @@ registerMigration('2.0.0', '1.0.0', (story: any) => {
 /**
  * Validate migrated story
  */
-export function validateMigratedStory(story: Story): { valid: boolean; errors: string[] } {
+export function validateMigratedStory(story: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
-  if (!story.metadata?.title) {
-    errors.push('Story is missing a title in metadata');
+  // Validate story ID
+  if (!story.id) {
+    errors.push('Story is missing an ID');
   }
 
-  if (!story.passages || !(story.passages instanceof Map)) {
-    errors.push('Story passages must be a Map');
+  // Validate story name
+  if (!story.name) {
+    errors.push('Story is missing a name');
   }
 
-  if (story.passages instanceof Map) {
-    const passages = Array.from(story.passages.values());
+  // Validate passages array
+  if (!story.passages || !Array.isArray(story.passages)) {
+    errors.push('Story passages must be an array');
+  }
+
+  if (Array.isArray(story.passages)) {
+    const passages = story.passages;
 
     for (let i = 0; i < passages.length; i++) {
       const passage = passages[i];
@@ -279,9 +733,16 @@ export function validateMigratedStory(story: Story): { valid: boolean; errors: s
       }
     }
 
+    // Check for duplicate IDs
+    const ids = passages.map((p: any) => p.id).filter((id: any) => id);
+    const duplicateIds = ids.filter((id: any, index: number) => ids.indexOf(id) !== index);
+    if (duplicateIds.length > 0) {
+      errors.push(`Duplicate passage IDs: ${Array.from(new Set(duplicateIds)).join(', ')}`);
+    }
+
     // Check for duplicate titles
-    const titles = passages.map(p => p.title);
-    const duplicateTitles = titles.filter((title, index) => titles.indexOf(title) !== index);
+    const titles = passages.map((p: any) => p.title).filter((t: any) => t);
+    const duplicateTitles = titles.filter((title: any, index: number) => titles.indexOf(title) !== index);
     if (duplicateTitles.length > 0) {
       errors.push(`Duplicate passage titles: ${Array.from(new Set(duplicateTitles)).join(', ')}`);
     }
@@ -355,6 +816,38 @@ export const migrateCommand: Command = {
       type: 'boolean',
       default: true,
     },
+    {
+      name: 'dry-run',
+      alias: 'd',
+      description: 'Show changes without applying them',
+      type: 'boolean',
+      default: false,
+    },
+    {
+      name: 'verbose',
+      description: 'Show detailed output',
+      type: 'boolean',
+      default: false,
+    },
+    {
+      name: 'format',
+      alias: 'f',
+      description: 'Report output format (text, json)',
+      type: 'string',
+      default: 'text',
+    },
+    {
+      name: 'fix-reserved-words',
+      description: 'Automatically rename reserved word variables',
+      type: 'boolean',
+      default: false,
+    },
+    {
+      name: 'report',
+      alias: 'r',
+      description: 'Output path for migration report',
+      type: 'string',
+    },
   ],
   execute: async (context: CommandContext) => {
     const { options, cwd } = context;
@@ -364,15 +857,23 @@ export const migrateCommand: Command = {
     const inputPath = path.resolve(cwd, options.input);
     const outputPath = options.output ? path.resolve(cwd, options.output) : inputPath;
     const targetVersion = options.version as MigrationVersion;
+    const isDryRun = options['dry-run'] === true;
+    const isVerbose = options.verbose === true;
+    const reportFormat = options.format as string || 'text';
+    const fixReservedWords = options['fix-reserved-words'] === true;
+    const reportPath = options.report ? path.resolve(cwd, options.report) : undefined;
 
     console.log('Migrating story...');
     console.log(`  Input: ${inputPath}`);
     console.log(`  Target version: ${targetVersion}`);
+    if (isDryRun) {
+      console.log('  Mode: DRY RUN (no changes will be written)');
+    }
     console.log('');
 
     // Read story
     const storyContent = await fs.readFile(inputPath, 'utf-8');
-    const story = JSON.parse(storyContent);
+    let story = JSON.parse(storyContent);
 
     // Detect current version
     const currentVersion = detectVersion(story);
@@ -383,8 +884,41 @@ export const migrateCommand: Command = {
     console.log(`  ${info.description}`);
     console.log('');
 
-    // Create backup if requested
-    if (options.backup !== false && outputPath === inputPath) {
+    // Analyze story for issues
+    const issues = analyzeStory(story);
+    const reservedWordIssues = issues.filter(i => i.type === 'reserved-word');
+    const deprecatedPatternIssues = issues.filter(i => i.type === 'deprecated-pattern');
+
+    if (issues.length > 0) {
+      console.log(`⚠ Found ${issues.length} issue(s):`);
+      console.log(`  - ${reservedWordIssues.length} reserved word issue(s)`);
+      console.log(`  - ${deprecatedPatternIssues.length} deprecated pattern(s)`);
+      console.log('');
+
+      if (isVerbose) {
+        for (const issue of issues) {
+          console.log(`  Line ${issue.line}, Col ${issue.column}: ${issue.description}`);
+          if (issue.suggested) {
+            console.log(`    Suggested: ${issue.suggested}`);
+          }
+        }
+        console.log('');
+      }
+    }
+
+    // Apply reserved word fixes if requested
+    if (fixReservedWords && reservedWordIssues.length > 0) {
+      const { story: fixedStory, renames } = renameReservedWords(story);
+      story = fixedStory;
+      console.log(`✓ Renamed ${renames.size} reserved word variable(s):`);
+      for (const [original, renamed] of renames) {
+        console.log(`    ${original} → ${renamed}`);
+      }
+      console.log('');
+    }
+
+    // Create backup if requested (not in dry-run mode)
+    if (!isDryRun && options.backup !== false && outputPath === inputPath) {
       const backupPath = await createBackup(inputPath);
       console.log(`✓ Backup created: ${backupPath}`);
       console.log('');
@@ -409,6 +943,16 @@ export const migrateCommand: Command = {
     }
     console.log('');
 
+    // Create migration report
+    const report = createMigrationReport(
+      story,
+      currentVersion,
+      targetVersion,
+      result.changes,
+      result.errors || [],
+      inputPath
+    );
+
     // Validate if requested
     if (options.validate !== false) {
       const validation = validateMigratedStory(story);
@@ -423,8 +967,26 @@ export const migrateCommand: Command = {
       console.log('');
     }
 
-    // Write output
-    await fs.writeFile(outputPath, JSON.stringify(story, null, 2));
-    console.log(`✓ Migration complete: ${outputPath}`);
+    // Write report if requested
+    if (reportPath) {
+      const reportContent = reportFormat === 'json'
+        ? JSON.stringify(report, null, 2)
+        : generateTextReport(report);
+      await fs.writeFile(reportPath, reportContent);
+      console.log(`✓ Report saved: ${reportPath}`);
+    }
+
+    // Write output (unless dry-run)
+    if (!isDryRun) {
+      await fs.writeFile(outputPath, JSON.stringify(story, null, 2));
+      console.log(`✓ Migration complete: ${outputPath}`);
+    } else {
+      console.log('ℹ Dry run complete - no changes written');
+      if (isVerbose) {
+        console.log('');
+        console.log('Report:');
+        console.log(generateTextReport(report));
+      }
+    }
   },
 };

@@ -1,17 +1,17 @@
 # LuaEngine Limitations & Compatibility Guide
 
 **Status**: Production Documentation
-**Last Updated**: 2025-10-29 (Updated after Priority 1 implementation)
+**Last Updated**: 2026-01-05 (Major update: Phase 1 Parity Implementation)
 **Priority**: CRITICAL
 
 ---
 
-## ⚠️ CRITICAL: Preview vs Production Runtime Differences
+## ⚠️ Preview vs Production Runtime
 
-whisker-editor-web uses a **simplified browser-based Lua engine** for preview/testing. This engine **DOES NOT** have full Lua compatibility and will behave differently than the production whisker-core runtime.
+whisker-editor-web uses a **TypeScript-based Lua engine** for preview/testing. This engine now has **~80% Lua 5.1 compatibility** and should match production behavior for most use cases.
 
 **Production Runtime**: whisker-core uses native Lua 5.1+ with full language support
-**Preview Runtime**: whisker-editor-web uses custom TypeScript Lua interpreter with limited features
+**Preview Runtime**: whisker-editor-web uses custom TypeScript Lua interpreter with high compatibility
 
 ---
 
@@ -33,6 +33,7 @@ whisker-editor-web uses a **simplified browser-based Lua engine** for preview/te
 - ✅ Multiplication: `a * b`
 - ✅ Division: `a / b`
 - ✅ Modulo: `a % b`
+- ✅ String concatenation: `a .. b`
 
 **Comparison** (Fully Supported):
 - ✅ Equal: `a == b`
@@ -47,49 +48,98 @@ whisker-editor-web uses a **simplified browser-based Lua engine** for preview/te
 - ✅ OR: `a or b`
 - ✅ NOT: `not a`
 
-### Standard Library (Limited)
+### Math Library (Comprehensive) ⚡ NEW
 
-**Math Functions**:
-- ✅ `math.random(min, max)` - Random number generation
+- ✅ `math.random([m [, n]])` - Random number generation
+- ✅ `math.randomseed(x)` - Set random seed
 - ✅ `math.floor(x)` - Floor function
 - ✅ `math.ceil(x)` - Ceiling function
 - ✅ `math.abs(x)` - Absolute value
-- ❌ Other math functions NOT supported
+- ✅ `math.min(...)` - Minimum value
+- ✅ `math.max(...)` - Maximum value
+- ✅ `math.sqrt(x)` - Square root
+- ✅ `math.pow(x, y)` - Power function
+- ✅ `math.sin(x)` - Sine
+- ✅ `math.cos(x)` - Cosine
+- ✅ `math.tan(x)` - Tangent
+- ✅ `math.log(x [, base])` - Logarithm
+- ✅ `math.exp(x)` - Exponential
+- ✅ `math.pi` - Pi constant
+- ✅ `math.huge` - Infinity
 
-**String Functions**:
+### String Library (Comprehensive) ⚡ NEW
+
 - ✅ `string.upper(s)` - Convert to uppercase
 - ✅ `string.lower(s)` - Convert to lowercase
 - ✅ `string.len(s)` - String length
-- ❌ Pattern matching NOT supported
-- ❌ String formatting NOT supported
-- ❌ Other string functions NOT supported
+- ✅ `string.sub(s, i [, j])` - Substring extraction
+- ✅ `string.find(s, pattern [, init [, plain]])` - Pattern search
+- ✅ `string.match(s, pattern [, init])` - Pattern matching
+- ✅ `string.gsub(s, pattern, repl [, n])` - Global substitution
+- ✅ `string.format(formatstring, ...)` - String formatting (%s, %d, %f, etc.)
+- ✅ `string.rep(s, n [, sep])` - Repeat string
+- ✅ `string.reverse(s)` - Reverse string
+- ✅ `string.byte(s [, i [, j]])` - Get byte value
+- ✅ `string.char(...)` - Create string from bytes
 
-**Table Functions**:
-- ✅ `table.insert(t, value)` - Insert into table
-- ❌ Other table functions NOT supported
+### Table Library (Comprehensive) ⚡ NEW
+
+- ✅ `table.insert(t, [pos,] value)` - Insert into table
+- ✅ `table.remove(t [, pos])` - Remove from table
+- ✅ `table.concat(t [, sep [, i [, j]]])` - Concatenate table elements
+- ✅ `table.sort(t [, comp])` - Sort table
+
+### Iterator Functions ⚡ NEW
+
+- ✅ `pairs(t)` - Iterate over all table keys
+- ✅ `ipairs(t)` - Iterate over array indices
+- ✅ `next(t [, k])` - Get next key-value pair
+
+### Utility Functions ⚡ NEW
+
+- ✅ `type(v)` - Get type of value
+- ✅ `tonumber(e [, base])` - Convert to number
+- ✅ `tostring(v)` - Convert to string
+- ✅ `assert(v [, message])` - Assert condition
+- ✅ `error(message [, level])` - Raise error
+- ✅ `pcall(f, ...)` - Protected call
+- ✅ `select(index, ...)` - Select from arguments
+- ✅ `unpack(list [, i [, j]])` - Unpack table
+- ✅ `rawget(t, k)` - Raw table get
+- ✅ `rawset(t, k, v)` - Raw table set
+
+### Metatable Functions ⚡ NEW
+
+- ✅ `setmetatable(t, mt)` - Set metatable
+- ✅ `getmetatable(t)` - Get metatable
+- ⚠️ Metamethod invocation (partial - __index and __newindex basic support)
 
 **Output**:
 - ✅ `print(...)` - Print to console (multi-argument)
 
-### Control Flow (Newly Implemented!) ⚡
+### Control Flow (Full Support) ⚡
 
-**If Statements** (✅ Basic support):
+**If Statements** (✅ Full support):
 - ✅ Simple if: `if condition then ... end`
 - ✅ If-else: `if condition then ... else ... end`
 - ✅ If-elseif-else: `if cond1 then ... elseif cond2 then ... else ... end`
-- ⚠️ Nested if statements may have issues in complex cases
+- ✅ Nested if statements
 
-**While Loops** (✅ Basic support):
+**While Loops** (✅ Full support):
 - ✅ Basic while: `while condition do ... end`
 - ✅ Iteration limit protection (max 10,000 iterations)
-- ⚠️ No break statement support yet
+- ✅ Break statement support
 
-**For Loops** (✅ Numeric only):
+**Numeric For Loops** (✅ Full support):
 - ✅ Basic for: `for i = 1, 10 do ... end`
 - ✅ With step: `for i = 0, 10, 2 do ... end`
 - ✅ Backward: `for i = 10, 1, -1 do ... end`
 - ✅ Iteration limit protection (max 10,000 iterations)
-- ❌ Generic for (for k,v in pairs) NOT supported
+
+**Generic For Loops** (✅ NEW - Full support):
+- ✅ `for k, v in pairs(t) do ... end` - Iterate all keys
+- ✅ `for i, v in ipairs(t) do ... end` - Iterate array indices
+- ✅ Nested generic for loops
 
 **Example that NOW WORKS**:
 ```lua
@@ -122,22 +172,20 @@ print("Sum of even numbers 1-100:", total)
 
 ## NOT Supported ❌
 
-### Control Flow - Limited Support
+### Control Flow - Minor Gaps
 
 **Still Missing**:
 - ❌ **Repeat-until loops**
-- ❌ **Break statement**
+- ❌ **Break statement** (inside loops)
 - ❌ **Return statement** (outside functions)
-- ⚠️ **Nested control structures** may have edge case issues
 
-### Functions - ALL MISSING
+### Functions - NOT IMPLEMENTED
 
 - ❌ **Function definitions**: `function myFunc() ... end`
 - ❌ **Local functions**: `local function myFunc() ... end`
 - ❌ **Anonymous functions**: `function(x) return x * 2 end`
 - ❌ **Closures**
-- ❌ **Variadic functions** (beyond built-ins)
-- ❌ **Multiple return values**
+- ❌ **Multiple return values** (beyond built-ins)
 
 **Impact**: Cannot define custom functions in preview!
 
@@ -153,35 +201,22 @@ damage = calculateDamage(50, 20)  -- ERROR
 
 **Workaround**: Use inline calculations or test in production
 
-### Tables - VERY LIMITED
+### Coroutines - NOT IMPLEMENTED
 
-**Partially Supported**:
-- ⚠️ Table literals: `{}` - Basic support only
-- ⚠️ Table access: `t.key` or `t[key]` - May not work correctly
+- ❌ `coroutine.create(f)`
+- ❌ `coroutine.resume(co, ...)`
+- ❌ `coroutine.yield(...)`
+- ❌ `coroutine.status(co)`
+- ❌ `coroutine.running()`
 
-**NOT Supported**:
-- ❌ Table constructor: `{x=1, y=2}`
-- ❌ Array-like tables: `{1, 2, 3}`
-- ❌ Mixed tables: `{x=1, [2]="two"}`
-- ❌ Table traversal: `pairs()`, `ipairs()`
-- ❌ Table metatable operations
-- ❌ `table.concat()`, `table.sort()`, etc.
+### System Libraries - NOT IMPLEMENTED
 
-**Impact**: Cannot use complex data structures in preview!
+- ❌ **Modules** (`require()`, `package`)
+- ❌ **File I/O** (`io` library)
+- ❌ **OS functions** (`os` library)
+- ❌ **Debug library** (`debug`)
 
-### Advanced Features - ALL MISSING
-
-- ❌ **Metatables and metamethods**
-- ❌ **Coroutines**
-- ❌ **Modules** (`require()`)
-- ❌ **File I/O**
-- ❌ **Error handling** (`pcall`, `xpcall`, `error`)
-- ❌ **String pattern matching**
-- ❌ **Debug library**
-- ❌ **OS library**
-- ❌ **Package library**
-
-### Lua 5.2+ Features - ALL MISSING
+### Lua 5.2+ Features - NOT IMPLEMENTED
 
 - ❌ `goto` statement
 - ❌ `_ENV` variable
@@ -198,19 +233,24 @@ damage = calculateDamage(50, 20)  -- ERROR
 | Arithmetic | ✅ Full | ✅ Full | ✅ Yes |
 | Comparison | ✅ Full | ✅ Full | ✅ Yes |
 | Logical ops | ✅ Full | ✅ Full | ✅ Yes |
-| If statements | ✅ Basic | ✅ Full | ✅ **YES** ⚡ NEW |
-| While loops | ✅ Basic | ✅ Full | ✅ **YES** ⚡ NEW |
-| For loops (numeric) | ✅ Full | ✅ Full | ✅ **YES** ⚡ NEW |
-| For loops (generic) | ❌ None | ✅ Full | ❌ **NO** |
+| If statements | ✅ Full | ✅ Full | ✅ Yes |
+| While loops | ✅ Full | ✅ Full | ✅ Yes |
+| For loops (numeric) | ✅ Full | ✅ Full | ✅ Yes |
+| For loops (generic) | ✅ Full | ✅ Full | ✅ **YES** ⚡ NEW |
+| pairs/ipairs | ✅ Full | ✅ Full | ✅ **YES** ⚡ NEW |
 | Functions | ❌ None | ✅ Full | ❌ **NO** |
-| Tables | ⚠️ Basic | ✅ Full | ⚠️ **Partial** |
-| String lib | ⚠️ 3 funcs | ✅ Full | ⚠️ **Partial** |
-| Math lib | ⚠️ 4 funcs | ✅ Full | ⚠️ **Partial** |
+| Coroutines | ❌ None | ✅ Full | ❌ **NO** |
+| Tables | ✅ Full | ✅ Full | ✅ **YES** ⚡ NEW |
+| Metatables | ⚠️ Basic | ✅ Full | ⚠️ Partial |
+| String lib | ✅ 12 funcs | ✅ Full | ✅ **YES** ⚡ NEW |
+| Math lib | ✅ 15 funcs | ✅ Full | ✅ **YES** ⚡ NEW |
+| Table lib | ✅ 4 funcs | ✅ Full | ✅ **YES** ⚡ NEW |
+| Error handling | ✅ pcall | ✅ Full | ✅ **YES** ⚡ NEW |
 | Print | ✅ Full | ✅ Full | ✅ Yes |
 
-**Overall Compatibility**: ~60% (UP from 30%!) - **Suitable for moderate complexity scripts**
+**Overall Compatibility**: ~80% - **Suitable for most story scripts**
 
-**Major Improvement**: Control flow support (if/while/for) dramatically increases compatibility!
+**Major Improvement**: Full iterator support (pairs/ipairs), comprehensive standard library!
 
 ---
 
@@ -279,6 +319,32 @@ name = "Hero"
 print(string.upper(name))
 ```
 
+### ✅ NOW Works - Tables and Iterators! ⚡ NEW
+
+```lua
+-- ✅ NOW WORKS - Tables with pairs/ipairs
+inventory = {"sword", "shield", "potion"}
+for i, item in ipairs(inventory) do
+  print(i, item)
+end
+
+-- ✅ NOW WORKS - Key-value tables
+stats = {health = 100, mana = 50, stamina = 75}
+for stat, value in pairs(stats) do
+  print(stat .. ": " .. value)
+end
+
+-- ✅ NOW WORKS - Comprehensive string operations
+name = "Hero"
+greeting = string.format("Welcome, %s!", name)
+print(string.upper(greeting))
+
+-- ✅ NOW WORKS - Math operations
+angle = math.pi / 4
+result = math.sin(angle)
+print("sin(45°):", result)
+```
+
 ### ❌ STILL Won't Work in Preview
 
 Scripts using these features will FAIL in preview but work in production:
@@ -289,16 +355,19 @@ function attack()
   return math.random(10, 20)
 end
 
--- ❌ STILL FAILS - Complex tables
-inventory = {
-  sword = {damage = 50, durability = 100},
-  shield = {defense = 30, durability = 80}
-}
-
--- ❌ STILL FAILS - Generic for loops
-for key, value in pairs(inventory) do
-  print(key, value)
+-- ❌ STILL FAILS - Closures
+function makeCounter()
+  local count = 0
+  return function()
+    count = count + 1
+    return count
+  end
 end
+
+-- ❌ STILL FAILS - Coroutines
+co = coroutine.create(function()
+  coroutine.yield("hello")
+end)
 ```
 
 ---
@@ -347,90 +416,70 @@ If your story needs:
 
 ## Known Issues
 
-### Issue #1: Misleading Documentation
+### Issue #1: No Function Definition Support
 
-**Problem**: `LuaEngine.ts` header comments claim support for:
-- Control flow (if/elseif/else, while, for)
-- Functions
+**Problem**: User-defined functions are not implemented. Authors cannot define custom functions.
 
-But these are **NOT implemented** - they throw "not yet implemented" errors.
+**Impact**: Scripts requiring reusable logic must use inline code or test in production.
 
-**Status**: Documentation bug - needs fixing
+**Mitigation**: Use production whisker-core runtime for function testing.
 
-### Issue #2: No Error Prevention
+### Issue #2: No Coroutine Support
 
-**Problem**: Editor allows authors to write unsupported syntax without warnings.
+**Problem**: Coroutines are not implemented. Cooperative multitasking patterns won't work.
 
-**Impact**: Authors discover failures at runtime, not authoring time.
+**Impact**: Scripts using `coroutine.create/resume/yield` will fail.
 
-**Mitigation**: This document + warnings in UI
+**Mitigation**: Use production whisker-core runtime for coroutine testing.
 
-### Issue #3: Incomplete Table Support
+### Issue #3: Limited Metatable Support
 
-**Problem**: Tables are partially implemented but unpredictable.
+**Problem**: While `setmetatable` and `getmetatable` work, automatic metamethod invocation (like `__index` fallback) is limited.
 
-**Impact**: May silently fail or produce incorrect results.
+**Impact**: OOP-style patterns using metatables may not work as expected.
 
-**Mitigation**: Avoid complex table operations in preview
+**Mitigation**: Test metatable-heavy code in production.
 
 ---
 
 ## Future Roadmap
 
-### Phase 1: Critical Features (High Priority)
+### ✅ COMPLETED - Phase 1: Core Features
 
-1. **Implement if/elseif/else**
-   - Essential for interactive fiction
-   - ~4-6 hours development
+1. ✅ **Control flow** - if/elseif/else, while, for loops
+2. ✅ **Generic for loops** - pairs(), ipairs(), next()
+3. ✅ **Standard library** - math, string, table (40+ functions)
+4. ✅ **Error handling** - pcall, assert, error
+5. ✅ **Metatables** - basic setmetatable/getmetatable
 
-2. **Implement while loops**
-   - Common for game logic
-   - ~2-3 hours development
+### Phase 2: Functions (Next Priority)
 
-3. **Implement numeric for loops**
-   - `for i = 1, 10 do ... end`
-   - ~2-3 hours development
+1. **Function definitions**
+   - `function name(params) ... end`
+   - `local function name(params) ... end`
+   - Anonymous functions
 
-**Total**: ~8-12 hours to add basic control flow
+2. **Closures and upvalues**
+   - Lexical scoping
+   - Captured variables
 
-### Phase 2: Functions (Medium Priority)
+3. **Multiple return values**
+   - `return a, b, c`
+   - Multiple assignment
 
-4. **Function definitions**
-   - `function name() ... end`
-   - ~4-6 hours development
+### Phase 3: Advanced Features (Lower Priority)
 
-5. **Function calls with parameters**
-   - ~2-3 hours development
+4. **Coroutines**
+   - `coroutine.create/resume/yield`
+   - Cooperative multitasking
 
-**Total**: ~6-9 hours for function support
+5. **Full metatable support**
+   - Automatic metamethod invocation
+   - All standard metamethods
 
-### Phase 3: Tables (Medium Priority)
+### Alternative: Use Wasmoon
 
-6. **Table constructors**
-   - `{x=1, y=2}`, `{1,2,3}`
-   - ~3-4 hours development
-
-7. **Table iteration**
-   - `pairs()`, `ipairs()`
-   - ~2-3 hours development
-
-**Total**: ~5-7 hours for full table support
-
-### Phase 4: Standard Library (Low Priority)
-
-8. **Expand math library**
-   - Trig functions, log, exp, etc.
-   - ~2-3 hours
-
-9. **Expand string library**
-   - Pattern matching (complex)
-   - ~6-8 hours
-
-**Total**: ~8-11 hours for expanded stdlib
-
-### Alternative: Use Wasmoon (Recommended)
-
-Instead of implementing all features, **compile whisker-core to WASM**:
+Instead of implementing remaining features, **compile whisker-core to WASM**:
 
 **Pros**:
 - 100% compatibility
@@ -442,8 +491,6 @@ Instead of implementing all features, **compile whisker-core to WASM**:
 - Larger bundle size (~500KB)
 - WASM overhead (slight performance hit)
 
-**Effort**: ~4-8 hours for WASM integration
-
 ---
 
 ## Testing Script Compatibility
@@ -453,86 +500,101 @@ Instead of implementing all features, **compile whisker-core to WASM**:
 Use this script to test what works in your environment:
 
 ```lua
--- Test 1: Variables (should work)
+-- Test 1: Variables (✅ works)
 health = 100
 print("Test 1: Variables - PASS")
 
--- Test 2: Arithmetic (should work)
+-- Test 2: Arithmetic (✅ works)
 result = 10 + 20 * 2
 print("Test 2: Arithmetic - PASS")
 
--- Test 3: If statement (will fail in preview)
+-- Test 3: If statement (✅ NOW works)
 if health > 50 then
   print("Test 3: If statement - PASS")
 else
   print("Test 3: If statement - FAIL")
 end
 
--- Test 4: While loop (will fail in preview)
-local count = 0
+-- Test 4: While loop (✅ NOW works)
+count = 0
 while count < 3 do
   count = count + 1
 end
 print("Test 4: While - PASS (count=" .. count .. ")")
 
--- Test 5: For loop (will fail in preview)
-local sum = 0
-for i = 1, 10 do
-  sum = sum + i
+-- Test 5: For loop with pairs (✅ NOW works)
+items = {"sword", "shield", "potion"}
+for i, item in ipairs(items) do
+  print("Test 5: Item " .. i .. " = " .. item)
 end
-print("Test 5: For - PASS (sum=" .. sum .. ")")
+print("Test 5: For/ipairs - PASS")
 
--- Test 6: Functions (will fail in preview)
+-- Test 6: Standard library (✅ NOW works)
+text = string.format("Pi = %.2f", math.pi)
+print("Test 6: Stdlib - PASS (" .. text .. ")")
+
+-- Test 7: Functions (❌ will fail in preview)
 function double(x)
   return x * 2
 end
-print("Test 6: Functions - PASS (double(5)=" .. double(5) .. ")")
+print("Test 7: Functions - PASS (double(5)=" .. double(5) .. ")")
 ```
 
 **Expected Results**:
-- **whisker-editor-web preview**: Tests 1-2 pass, 3-6 error
-- **whisker-core production**: Tests 1-6 all pass
+- **whisker-editor-web preview**: Tests 1-6 pass, Test 7 errors (no function support)
+- **whisker-core production**: Tests 1-7 all pass
 
 ---
 
 ## Summary
 
-### Current State (After Priority 1 Implementation)
-- ✅ Basic variable operations work
-- ✅ Arithmetic and comparisons work
-- ✅ Limited stdlib works
-- ✅ **Control flow NOW WORKS** ⚡ (if/while/for)
-- ❌ **Functions do NOT work**
-- ⚠️ **Tables barely work**
+### Current State (Phase 1 Parity Complete)
+- ✅ Full variable operations
+- ✅ Full arithmetic and comparisons
+- ✅ Full control flow (if/while/for numeric and generic)
+- ✅ Full iterator support (pairs, ipairs, next)
+- ✅ Comprehensive standard library (40+ functions)
+- ✅ Table operations (insert, remove, concat, sort)
+- ✅ String operations (sub, find, gsub, format, match, etc.)
+- ✅ Math operations (trig, logarithms, min/max, etc.)
+- ✅ Error handling (pcall, assert, error)
+- ✅ Basic metatables (setmetatable, getmetatable)
+- ❌ **User-defined functions NOT supported**
+- ❌ **Coroutines NOT supported**
 
 ### Impact
-- **~60% Lua compatibility** (UP from 30%!)
-- **Preview now suitable for moderate complexity scripts**
-- **Most common patterns now work in preview**
-- **Production testing still recommended for advanced features**
+- **~80% Lua 5.1 compatibility**
+- **Preview suitable for most story scripts**
+- **Only functions and coroutines require production testing**
 
-### What Changed (2025-10-29)
-1. ✅ **Implemented if/then/elseif/else statements**
-2. ✅ **Implemented while loops** (with 10K iteration limit)
-3. ✅ **Implemented numeric for loops** (with 10K iteration limit)
-4. ✅ **Created comprehensive test suite** (38 tests, 29 passing)
-5. ✅ **Updated documentation** to reflect new capabilities
+### What Changed (2026-01-05 - Phase 1 Parity)
+1. ✅ **Implemented pairs() and ipairs() iterators**
+2. ✅ **Implemented generic for loops** (`for k,v in pairs/ipairs`)
+3. ✅ **Expanded math library** (15 functions including trig, logarithms)
+4. ✅ **Expanded string library** (12 functions including format, gsub, find)
+5. ✅ **Expanded table library** (4 functions: insert, remove, concat, sort)
+6. ✅ **Added utility functions** (type, tonumber, tostring, assert, error, pcall)
+7. ✅ **Added metatable functions** (setmetatable, getmetatable)
+8. ✅ **Added raw table access** (rawget, rawset)
+9. ✅ **Added select and unpack** for argument handling
+10. ✅ **Comprehensive test suite** (331 tests passing)
 
 ### Known Limitations
-- ⚠️ Nested control structures may have edge cases
-- ❌ No break statement yet
-- ❌ No function definitions yet
-- ❌ No generic for loops (for k,v in pairs)
-- ❌ Tables still limited
+- ❌ No user-defined function support
+- ❌ No closure support
+- ❌ No coroutine support
+- ❌ No repeat-until loops
+- ❌ No break statement
+- ⚠️ Metatables: basic get/set only, no automatic metamethod invocation
 
-### Next Priorities
-1. **Fix nested structure edge cases** (9 failing tests)
-2. **Add break statement support**
-3. **Implement function definitions** (Phase 2)
-4. **Improve table support** (Phase 3)
-5. **Consider WASM approach** for 100% compatibility
+### Remaining for 100% Parity
+1. **Function definitions** - user-defined functions
+2. **Closures and upvalues** - lexical scoping
+3. **Coroutines** - cooperative multitasking
+4. **Full metatable support** - automatic metamethod invocation
+5. **Consider WASM approach** for guaranteed 100% compatibility
 
 ---
 
-**For Questions**: See WHISKER_ALIGNMENT_GAP_ANALYSIS.md (Gap #2)
-**Status**: Living Document - Update as features are implemented
+**Status**: Phase 1 Complete - ~80% Lua 5.1 Compatibility
+**Last Updated**: 2026-01-05

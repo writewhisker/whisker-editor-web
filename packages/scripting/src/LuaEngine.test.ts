@@ -905,4 +905,509 @@ describe('LuaEngine', () => {
       });
     });
   });
+
+  describe('Generic For Loops (pairs/ipairs)', () => {
+    it('should iterate over table with pairs', () => {
+      const code = `
+        t = {a = 1, b = 2, c = 3}
+        sum = 0
+        for k, v in pairs(t) do
+          sum = sum + v
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('sum')).toBe(6);
+    });
+
+    it('should iterate over array with ipairs', () => {
+      const code = `
+        t = {10, 20, 30, 40}
+        sum = 0
+        for i, v in ipairs(t) do
+          sum = sum + v
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('sum')).toBe(100);
+    });
+
+    it('should get keys with pairs', () => {
+      const code = `
+        t = {name = "Alice", age = 30}
+        keys = ""
+        for k, v in pairs(t) do
+          keys = keys .. k .. ","
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      const keys = engine.getVariable('keys');
+      expect(keys).toContain('name');
+      expect(keys).toContain('age');
+    });
+
+    it('should get indices with ipairs', () => {
+      const code = `
+        t = {"a", "b", "c"}
+        indices = 0
+        for i, v in ipairs(t) do
+          indices = indices + i
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('indices')).toBe(6); // 1+2+3
+    });
+
+    it('should stop ipairs at first nil', () => {
+      const code = `
+        t = {1, 2, 3}
+        t[5] = 5
+        count = 0
+        for i, v in ipairs(t) do
+          count = count + 1
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('count')).toBe(3); // Stops at index 4 (nil)
+    });
+  });
+
+  describe('Extended Math Library', () => {
+    it('should calculate math.min', () => {
+      const code = 'result = math.min(5, 3, 8, 1, 9)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(1);
+    });
+
+    it('should calculate math.max', () => {
+      const code = 'result = math.max(5, 3, 8, 1, 9)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(9);
+    });
+
+    it('should calculate math.sqrt', () => {
+      const code = 'result = math.sqrt(16)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(4);
+    });
+
+    it('should calculate math.pow', () => {
+      const code = 'result = math.pow(2, 10)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(1024);
+    });
+
+    it('should calculate math.sin', () => {
+      const code = 'result = math.sin(0)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeCloseTo(0);
+    });
+
+    it('should calculate math.cos', () => {
+      const code = 'result = math.cos(0)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeCloseTo(1);
+    });
+
+    it('should access math.pi constant', () => {
+      const code = 'result = math.pi';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeCloseTo(Math.PI);
+    });
+
+    it('should calculate math.log', () => {
+      const code = 'result = math.log(math.exp(1))';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeCloseTo(1);
+    });
+  });
+
+  describe('Extended String Library', () => {
+    it('should use string.sub', () => {
+      const code = 'result = string.sub("Hello World", 1, 5)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Hello');
+    });
+
+    it('should use string.sub with negative indices', () => {
+      const code = 'result = string.sub("Hello World", -5)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('World');
+    });
+
+    it('should use string.find', () => {
+      const code = 'result = string.find("Hello World", "World")';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(7);
+    });
+
+    it('should use string.gsub', () => {
+      const code = 'result = string.gsub("hello hello", "hello", "world")';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('world world');
+    });
+
+    it('should use string.format', () => {
+      const code = 'result = string.format("Name: %s, Age: %d", "Alice", 30)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Name: Alice, Age: 30');
+    });
+
+    it('should use string.rep', () => {
+      const code = 'result = string.rep("ab", 3)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('ababab');
+    });
+
+    it('should use string.reverse', () => {
+      const code = 'result = string.reverse("hello")';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('olleh');
+    });
+
+    it('should use string.byte', () => {
+      const code = 'result = string.byte("A")';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(65);
+    });
+
+    it('should use string.char', () => {
+      const code = 'result = string.char(65, 66, 67)';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('ABC');
+    });
+  });
+
+  describe('Extended Table Library', () => {
+    it('should use table.remove', () => {
+      const code = `
+        t = {1, 2, 3, 4, 5}
+        removed = table.remove(t)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('removed')).toBe(5);
+    });
+
+    it('should use table.concat', () => {
+      const code = `
+        t = {"a", "b", "c"}
+        result = table.concat(t, "-")
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('a-b-c');
+    });
+
+    it('should use table.sort', () => {
+      const code = `
+        t = {3, 1, 4, 1, 5, 9, 2, 6}
+        table.sort(t)
+        first = t[1]
+        last = t[8]
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('first')).toBe(1);
+      expect(engine.getVariable('last')).toBe(9);
+    });
+  });
+
+  describe('Utility Functions', () => {
+    it('should use type()', () => {
+      const code = `
+        t1 = type(42)
+        t2 = type("hello")
+        t3 = type(true)
+        t4 = type(nil)
+        t5 = type({})
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('t1')).toBe('number');
+      expect(engine.getVariable('t2')).toBe('string');
+      expect(engine.getVariable('t3')).toBe('boolean');
+      expect(engine.getVariable('t4')).toBe('nil');
+      expect(engine.getVariable('t5')).toBe('table');
+    });
+
+    it('should use tonumber()', () => {
+      const code = `
+        n1 = tonumber("42")
+        n2 = tonumber("3.14")
+        n3 = tonumber("ff", 16)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('n1')).toBe(42);
+      expect(engine.getVariable('n2')).toBe(3);
+      expect(engine.getVariable('n3')).toBe(255);
+    });
+
+    it('should use tostring()', () => {
+      const code = `
+        s1 = tostring(42)
+        s2 = tostring(true)
+        s3 = tostring(nil)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('s1')).toBe('42');
+      expect(engine.getVariable('s2')).toBe('true');
+      expect(engine.getVariable('s3')).toBe('nil');
+    });
+
+    it('should use assert()', () => {
+      const code1 = 'assert(true, "should pass")';
+      const result1 = engine.execute(code1);
+      expect(result1.success).toBe(true);
+
+      const code2 = 'assert(false, "should fail")';
+      const result2 = engine.execute(code2);
+      expect(result2.success).toBe(false);
+      expect(result2.errors[0]).toContain('should fail');
+    });
+
+    it('should use error()', () => {
+      const code = 'error("test error")';
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(false);
+      expect(result.errors[0]).toContain('test error');
+    });
+  });
+
+  describe('Metatables', () => {
+    it('should set and get metatable', () => {
+      const code = `
+        t = {}
+        mt = {__index = {x = 10}}
+        setmetatable(t, mt)
+        got_mt = getmetatable(t)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('got_mt')).toBeDefined();
+    });
+
+    it('should remove metatable with nil', () => {
+      const code = `
+        t = {}
+        mt = {}
+        setmetatable(t, mt)
+        setmetatable(t, nil)
+        got_mt = getmetatable(t)
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('got_mt')).toBeNull();
+    });
+  });
+
+  describe('Raw Table Access', () => {
+    it('should use rawget', () => {
+      const code = `
+        t = {a = 10, b = 20}
+        result = rawget(t, "a")
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(10);
+    });
+
+    it('should use rawset', () => {
+      const code = `
+        t = {}
+        rawset(t, "key", "value")
+        result = t.key
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('value');
+    });
+  });
+
+  describe('Select and Unpack', () => {
+    it('should use select', () => {
+      const code = `
+        result = select(2, "a", "b", "c")
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('b');
+    });
+  });
+
+  describe('Complex Integration Tests', () => {
+    it('should calculate sum of values using pairs', () => {
+      const code = `
+        data = {x = 10, y = 20, z = 30}
+        total = 0
+        for key, value in pairs(data) do
+          total = total + value
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('total')).toBe(60);
+    });
+
+    it('should filter array elements', () => {
+      const code = `
+        numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+        evens = {}
+        count = 0
+        for i, v in ipairs(numbers) do
+          if v % 2 == 0 then
+            count = count + 1
+            evens[count] = v
+          end
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('count')).toBe(5);
+      const evens = engine.getVariable('evens');
+      expect(evens).toEqual({ '1': 2, '2': 4, '3': 6, '4': 8, '5': 10 });
+    });
+
+    it('should build a string from table values', () => {
+      const code = `
+        parts = {"Hello", " ", "World", "!"}
+        result = ""
+        for i, part in ipairs(parts) do
+          result = result .. part
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Hello World!');
+    });
+
+    it('should count specific values', () => {
+      const code = `
+        items = {10, 20, 30, 40, 50}
+        count = 0
+        for i, v in ipairs(items) do
+          if v > 20 then
+            count = count + 1
+          end
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('count')).toBe(3); // 30, 40, 50 are > 20
+    });
+
+    it('should transform table values', () => {
+      const code = `
+        source = {a = 10, b = 20, c = 30}
+        total = 0
+        for k, v in pairs(source) do
+          total = total + v * 2
+        end
+      `;
+
+      const result = engine.execute(code);
+
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('total')).toBe(120); // (10+20+30)*2
+    });
+  });
 });

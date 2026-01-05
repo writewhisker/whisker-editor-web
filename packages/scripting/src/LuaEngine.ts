@@ -37,6 +37,14 @@ export interface LuaTable {
 export interface LuaFunction {
   params: string[];
   body: string;
+  upvalues?: Map<string, LuaValue>; // For closures
+}
+
+export interface LuaIterator {
+  type: 'pairs' | 'ipairs' | 'custom';
+  table: LuaTable;
+  keys?: string[];
+  currentIndex: number;
 }
 
 export interface LuaExecutionContext {
@@ -203,6 +211,204 @@ export class LuaEngine {
     this.globalContext.functions.set('table.insert', {
       params: ['t', 'value'],
       body: '__builtin_table_insert',
+    });
+
+    this.globalContext.functions.set('table.remove', {
+      params: ['t', 'pos'],
+      body: '__builtin_table_remove',
+    });
+
+    this.globalContext.functions.set('table.concat', {
+      params: ['t', 'sep', 'i', 'j'],
+      body: '__builtin_table_concat',
+    });
+
+    this.globalContext.functions.set('table.sort', {
+      params: ['t', 'comp'],
+      body: '__builtin_table_sort',
+    });
+
+    // Iterator functions
+    this.globalContext.functions.set('pairs', {
+      params: ['t'],
+      body: '__builtin_pairs',
+    });
+
+    this.globalContext.functions.set('ipairs', {
+      params: ['t'],
+      body: '__builtin_ipairs',
+    });
+
+    this.globalContext.functions.set('next', {
+      params: ['t', 'k'],
+      body: '__builtin_next',
+    });
+
+    // Utility functions
+    this.globalContext.functions.set('type', {
+      params: ['v'],
+      body: '__builtin_type',
+    });
+
+    this.globalContext.functions.set('tonumber', {
+      params: ['e', 'base'],
+      body: '__builtin_tonumber',
+    });
+
+    this.globalContext.functions.set('tostring', {
+      params: ['v'],
+      body: '__builtin_tostring',
+    });
+
+    this.globalContext.functions.set('assert', {
+      params: ['v', 'message'],
+      body: '__builtin_assert',
+    });
+
+    this.globalContext.functions.set('error', {
+      params: ['message', 'level'],
+      body: '__builtin_error',
+    });
+
+    this.globalContext.functions.set('pcall', {
+      params: ['f', '...'],
+      body: '__builtin_pcall',
+    });
+
+    this.globalContext.functions.set('select', {
+      params: ['index', '...'],
+      body: '__builtin_select',
+    });
+
+    this.globalContext.functions.set('unpack', {
+      params: ['list', 'i', 'j'],
+      body: '__builtin_unpack',
+    });
+
+    this.globalContext.functions.set('rawget', {
+      params: ['t', 'k'],
+      body: '__builtin_rawget',
+    });
+
+    this.globalContext.functions.set('rawset', {
+      params: ['t', 'k', 'v'],
+      body: '__builtin_rawset',
+    });
+
+    this.globalContext.functions.set('setmetatable', {
+      params: ['t', 'mt'],
+      body: '__builtin_setmetatable',
+    });
+
+    this.globalContext.functions.set('getmetatable', {
+      params: ['t'],
+      body: '__builtin_getmetatable',
+    });
+
+    // Extended math functions
+    this.globalContext.functions.set('math.min', {
+      params: ['...'],
+      body: '__builtin_math_min',
+    });
+
+    this.globalContext.functions.set('math.max', {
+      params: ['...'],
+      body: '__builtin_math_max',
+    });
+
+    this.globalContext.functions.set('math.sqrt', {
+      params: ['x'],
+      body: '__builtin_math_sqrt',
+    });
+
+    this.globalContext.functions.set('math.pow', {
+      params: ['x', 'y'],
+      body: '__builtin_math_pow',
+    });
+
+    this.globalContext.functions.set('math.sin', {
+      params: ['x'],
+      body: '__builtin_math_sin',
+    });
+
+    this.globalContext.functions.set('math.cos', {
+      params: ['x'],
+      body: '__builtin_math_cos',
+    });
+
+    this.globalContext.functions.set('math.tan', {
+      params: ['x'],
+      body: '__builtin_math_tan',
+    });
+
+    this.globalContext.functions.set('math.randomseed', {
+      params: ['x'],
+      body: '__builtin_math_randomseed',
+    });
+
+    this.globalContext.functions.set('math.log', {
+      params: ['x', 'base'],
+      body: '__builtin_math_log',
+    });
+
+    this.globalContext.functions.set('math.exp', {
+      params: ['x'],
+      body: '__builtin_math_exp',
+    });
+
+    // Math constants
+    this.globalContext.variables.set('math.pi', { type: 'number', value: Math.PI });
+    this.globalContext.variables.set('math.huge', { type: 'number', value: Infinity });
+
+    // Extended string functions
+    this.globalContext.functions.set('string.sub', {
+      params: ['s', 'i', 'j'],
+      body: '__builtin_string_sub',
+    });
+
+    this.globalContext.functions.set('string.find', {
+      params: ['s', 'pattern', 'init', 'plain'],
+      body: '__builtin_string_find',
+    });
+
+    this.globalContext.functions.set('string.match', {
+      params: ['s', 'pattern', 'init'],
+      body: '__builtin_string_match',
+    });
+
+    this.globalContext.functions.set('string.gsub', {
+      params: ['s', 'pattern', 'repl', 'n'],
+      body: '__builtin_string_gsub',
+    });
+
+    this.globalContext.functions.set('string.format', {
+      params: ['formatstring', '...'],
+      body: '__builtin_string_format',
+    });
+
+    this.globalContext.functions.set('string.rep', {
+      params: ['s', 'n', 'sep'],
+      body: '__builtin_string_rep',
+    });
+
+    this.globalContext.functions.set('string.reverse', {
+      params: ['s'],
+      body: '__builtin_string_reverse',
+    });
+
+    this.globalContext.functions.set('string.byte', {
+      params: ['s', 'i', 'j'],
+      body: '__builtin_string_byte',
+    });
+
+    this.globalContext.functions.set('string.char', {
+      params: ['...'],
+      body: '__builtin_string_char',
+    });
+
+    this.globalContext.functions.set('string.gmatch', {
+      params: ['s', 'pattern'],
+      body: '__builtin_string_gmatch',
     });
   }
 
@@ -510,8 +716,14 @@ export class LuaEngine {
       return this.evaluateTableIndex(trimmed, context);
     }
 
-    // Table dot notation (t.key)
+    // Table dot notation (t.key) - also check for direct variable names like math.pi
     if (/^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      // First check if it's a direct variable (like math.pi, math.huge)
+      const directValue = context.variables.get(trimmed);
+      if (directValue) {
+        return directValue;
+      }
+      // Otherwise treat as table.key access
       const dotIndex = trimmed.indexOf('.');
       const tableName = trimmed.substring(0, dotIndex);
       const key = trimmed.substring(dotIndex + 1);
@@ -732,6 +944,10 @@ export class LuaEngine {
     return true; // Everything else is truthy in Lua
   }
 
+  // Store for metatables (weak reference simulation)
+  private metatables: WeakMap<object, LuaValue> = new WeakMap();
+  private randomSeed: number = Date.now();
+
   /**
    * Evaluate function call
    */
@@ -744,16 +960,28 @@ export class LuaEngine {
 
     // Built-in functions
     if (funcName === 'print') {
-      const output = args.map((arg) => String(arg.value)).join('\t');
+      const output = args.map((arg) => this.luaToString(arg)).join('\t');
       context.output.push(output);
       return { type: 'nil', value: null };
     }
 
+    // ============ MATH FUNCTIONS ============
     if (funcName === 'math.random') {
-      const min = args[0]?.value || 0;
-      const max = args[1]?.value || 1;
-      const value = Math.floor(Math.random() * (max - min + 1)) + min;
-      return { type: 'number', value };
+      if (args.length === 0) {
+        return { type: 'number', value: this.seededRandom() };
+      } else if (args.length === 1) {
+        const max = args[0].value;
+        return { type: 'number', value: Math.floor(this.seededRandom() * max) + 1 };
+      } else {
+        const min = args[0].value;
+        const max = args[1].value;
+        return { type: 'number', value: Math.floor(this.seededRandom() * (max - min + 1)) + min };
+      }
+    }
+
+    if (funcName === 'math.randomseed') {
+      this.randomSeed = args[0]?.value || Date.now();
+      return { type: 'nil', value: null };
     }
 
     if (funcName === 'math.floor') {
@@ -768,6 +996,49 @@ export class LuaEngine {
       return { type: 'number', value: Math.abs(args[0].value) };
     }
 
+    if (funcName === 'math.min') {
+      const values = args.map(a => a.value);
+      return { type: 'number', value: Math.min(...values) };
+    }
+
+    if (funcName === 'math.max') {
+      const values = args.map(a => a.value);
+      return { type: 'number', value: Math.max(...values) };
+    }
+
+    if (funcName === 'math.sqrt') {
+      return { type: 'number', value: Math.sqrt(args[0].value) };
+    }
+
+    if (funcName === 'math.pow') {
+      return { type: 'number', value: Math.pow(args[0].value, args[1].value) };
+    }
+
+    if (funcName === 'math.sin') {
+      return { type: 'number', value: Math.sin(args[0].value) };
+    }
+
+    if (funcName === 'math.cos') {
+      return { type: 'number', value: Math.cos(args[0].value) };
+    }
+
+    if (funcName === 'math.tan') {
+      return { type: 'number', value: Math.tan(args[0].value) };
+    }
+
+    if (funcName === 'math.log') {
+      if (args.length === 1) {
+        return { type: 'number', value: Math.log(args[0].value) };
+      } else {
+        return { type: 'number', value: Math.log(args[0].value) / Math.log(args[1].value) };
+      }
+    }
+
+    if (funcName === 'math.exp') {
+      return { type: 'number', value: Math.exp(args[0].value) };
+    }
+
+    // ============ STRING FUNCTIONS ============
     if (funcName === 'string.upper') {
       return { type: 'string', value: String(args[0].value).toUpperCase() };
     }
@@ -780,25 +1051,465 @@ export class LuaEngine {
       return { type: 'number', value: String(args[0].value).length };
     }
 
+    if (funcName === 'string.sub') {
+      const s = String(args[0].value);
+      let i = args[1]?.value || 1;
+      let j = args[2]?.value || s.length;
+      // Lua uses 1-based indexing, negative indices count from end
+      if (i < 0) i = s.length + i + 1;
+      if (j < 0) j = s.length + j + 1;
+      // Convert to 0-based for JS
+      return { type: 'string', value: s.substring(i - 1, j) };
+    }
+
+    if (funcName === 'string.find') {
+      const s = String(args[0].value);
+      const pattern = String(args[1].value);
+      const init = (args[2]?.value || 1) - 1; // Convert to 0-based
+      const plain = args[3]?.value === true;
+
+      if (plain) {
+        const idx = s.indexOf(pattern, init);
+        if (idx === -1) return { type: 'nil', value: null };
+        return { type: 'number', value: idx + 1 }; // Return 1-based index
+      } else {
+        try {
+          const regex = new RegExp(this.luaPatternToRegex(pattern));
+          const match = s.substring(init).match(regex);
+          if (!match) return { type: 'nil', value: null };
+          const idx = s.indexOf(match[0], init);
+          return { type: 'number', value: idx + 1 };
+        } catch {
+          // Fallback to plain search
+          const idx = s.indexOf(pattern, init);
+          if (idx === -1) return { type: 'nil', value: null };
+          return { type: 'number', value: idx + 1 };
+        }
+      }
+    }
+
+    if (funcName === 'string.match') {
+      const s = String(args[0].value);
+      const pattern = String(args[1].value);
+      const init = (args[2]?.value || 1) - 1;
+
+      try {
+        const regex = new RegExp(this.luaPatternToRegex(pattern));
+        const match = s.substring(init).match(regex);
+        if (!match) return { type: 'nil', value: null };
+        return { type: 'string', value: match[0] };
+      } catch {
+        return { type: 'nil', value: null };
+      }
+    }
+
+    if (funcName === 'string.gsub') {
+      const s = String(args[0].value);
+      const pattern = String(args[1].value);
+      const repl = args[2]?.value ?? '';
+      const n = args[3]?.value;
+
+      try {
+        const regex = new RegExp(this.luaPatternToRegex(pattern), n ? undefined : 'g');
+        let result = s;
+        let count = 0;
+
+        if (n) {
+          for (let i = 0; i < n; i++) {
+            const newResult = result.replace(regex, String(repl));
+            if (newResult === result) break;
+            result = newResult;
+            count++;
+          }
+        } else {
+          const matches = s.match(regex);
+          count = matches ? matches.length : 0;
+          result = s.replace(regex, String(repl));
+        }
+
+        return { type: 'string', value: result };
+      } catch {
+        return { type: 'string', value: s.replace(pattern, String(repl)) };
+      }
+    }
+
+    if (funcName === 'string.format') {
+      const formatStr = String(args[0].value);
+      const formatArgs = args.slice(1).map(a => a.value);
+      return { type: 'string', value: this.luaFormat(formatStr, formatArgs) };
+    }
+
+    if (funcName === 'string.rep') {
+      const s = String(args[0].value);
+      const n = args[1]?.value || 0;
+      const sep = args[2]?.value || '';
+      if (n <= 0) return { type: 'string', value: '' };
+      return { type: 'string', value: Array(n).fill(s).join(sep) };
+    }
+
+    if (funcName === 'string.reverse') {
+      return { type: 'string', value: String(args[0].value).split('').reverse().join('') };
+    }
+
+    if (funcName === 'string.byte') {
+      const s = String(args[0].value);
+      const i = (args[1]?.value || 1) - 1;
+      const j = args[2]?.value ? args[2].value - 1 : i;
+
+      if (i === j) {
+        return { type: 'number', value: s.charCodeAt(i) };
+      }
+      // For multiple bytes, return only the first (simplified)
+      return { type: 'number', value: s.charCodeAt(i) };
+    }
+
+    if (funcName === 'string.char') {
+      const chars = args.map(a => String.fromCharCode(a.value));
+      return { type: 'string', value: chars.join('') };
+    }
+
+    // ============ TABLE FUNCTIONS ============
+    if (funcName === 'table.insert') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('table.insert expects a table');
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      if (args.length === 2) {
+        // table.insert(t, value) - insert at end
+        const keys = Object.keys(table).filter(k => !isNaN(Number(k))).map(Number);
+        const nextIndex = keys.length > 0 ? Math.max(...keys) + 1 : 1;
+        table[String(nextIndex)] = args[1];
+      } else if (args.length === 3) {
+        // table.insert(t, pos, value) - insert at position
+        const pos = args[1].value;
+        const value = args[2];
+        // Shift existing elements
+        const keys = Object.keys(table).filter(k => !isNaN(Number(k))).map(Number).sort((a, b) => b - a);
+        for (const k of keys) {
+          if (k >= pos) {
+            table[String(k + 1)] = table[String(k)];
+          }
+        }
+        table[String(pos)] = value;
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'table.remove') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('table.remove expects a table');
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      const keys = Object.keys(table).filter(k => !isNaN(Number(k))).map(Number).sort((a, b) => a - b);
+
+      if (keys.length === 0) return { type: 'nil', value: null };
+
+      const pos = args[1]?.value || keys[keys.length - 1];
+      const removed = table[String(pos)] || { type: 'nil', value: null };
+
+      // Shift elements down
+      for (let i = pos; i < keys[keys.length - 1]; i++) {
+        if (table[String(i + 1)] !== undefined) {
+          table[String(i)] = table[String(i + 1)];
+        }
+      }
+      delete table[String(keys[keys.length - 1])];
+
+      return removed;
+    }
+
+    if (funcName === 'table.concat') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('table.concat expects a table');
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      const sep = args[1]?.value ?? '';
+      const i = args[2]?.value || 1;
+      const j = args[3]?.value || Object.keys(table).filter(k => !isNaN(Number(k))).length;
+
+      const result: string[] = [];
+      for (let idx = i; idx <= j; idx++) {
+        const val = table[String(idx)];
+        if (val) result.push(String(val.value));
+      }
+
+      return { type: 'string', value: result.join(sep) };
+    }
+
+    if (funcName === 'table.sort') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('table.sort expects a table');
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      const keys = Object.keys(table).filter(k => !isNaN(Number(k))).map(Number).sort((a, b) => a - b);
+      const values = keys.map(k => table[String(k)]);
+
+      // Simple sort by value
+      values.sort((a, b) => {
+        if (a.type === 'number' && b.type === 'number') {
+          return a.value - b.value;
+        }
+        return String(a.value).localeCompare(String(b.value));
+      });
+
+      // Reassign
+      keys.forEach((k, i) => {
+        table[String(k)] = values[i];
+      });
+
+      return { type: 'nil', value: null };
+    }
+
+    // ============ ITERATOR FUNCTIONS ============
+    if (funcName === 'pairs') {
+      // Return iterator function placeholder
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('pairs expects a table');
+      return {
+        type: 'function',
+        value: {
+          __iterator: 'pairs',
+          __table: tableVal.value,
+          __keys: Object.keys(tableVal.value as Record<string, LuaValue>),
+          __index: 0
+        }
+      };
+    }
+
+    if (funcName === 'ipairs') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') throw new Error('ipairs expects a table');
+      return {
+        type: 'function',
+        value: {
+          __iterator: 'ipairs',
+          __table: tableVal.value,
+          __index: 0
+        }
+      };
+    }
+
+    if (funcName === 'next') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') return { type: 'nil', value: null };
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      const keys = Object.keys(table);
+
+      if (args.length === 1 || args[1].type === 'nil') {
+        // Return first key-value pair
+        if (keys.length === 0) return { type: 'nil', value: null };
+        const firstKey = keys[0];
+        // Return as table with key and value
+        return { type: 'table', value: { '1': { type: 'string', value: firstKey }, '2': table[firstKey] } };
+      }
+
+      const currentKey = String(args[1].value);
+      const currentIndex = keys.indexOf(currentKey);
+      if (currentIndex === -1 || currentIndex === keys.length - 1) {
+        return { type: 'nil', value: null };
+      }
+
+      const nextKey = keys[currentIndex + 1];
+      return { type: 'table', value: { '1': { type: 'string', value: nextKey }, '2': table[nextKey] } };
+    }
+
+    // ============ UTILITY FUNCTIONS ============
+    if (funcName === 'type') {
+      const val = args[0] || { type: 'nil', value: null };
+      return { type: 'string', value: val.type };
+    }
+
+    if (funcName === 'tonumber') {
+      const val = args[0];
+      const base = args[1]?.value || 10;
+
+      if (val.type === 'number') return val;
+      if (val.type === 'string') {
+        const num = parseInt(val.value, base);
+        if (isNaN(num)) return { type: 'nil', value: null };
+        return { type: 'number', value: num };
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'tostring') {
+      return { type: 'string', value: this.luaToString(args[0]) };
+    }
+
+    if (funcName === 'assert') {
+      const val = args[0];
+      const message = args[1]?.value || 'assertion failed!';
+
+      if (!this.isTruthy(val)) {
+        throw new Error(String(message));
+      }
+      return val;
+    }
+
+    if (funcName === 'error') {
+      const message = args[0]?.value || '';
+      throw new Error(String(message));
+    }
+
+    if (funcName === 'pcall') {
+      const funcVal = args[0];
+      const funcArgs = args.slice(1);
+
+      try {
+        // Try to find and execute the function
+        if (funcVal.type === 'string') {
+          const func = context.functions.get(funcVal.value);
+          if (func) {
+            for (let i = 0; i < func.params.length; i++) {
+              context.variables.set(func.params[i], funcArgs[i] || { type: 'nil', value: null });
+            }
+            try {
+              this.executeBlock(func.body, context);
+              return { type: 'table', value: { '1': { type: 'boolean', value: true } } };
+            } catch (e) {
+              if (typeof e === 'object' && e !== null && 'type' in e && (e as any).type === 'return') {
+                return { type: 'table', value: { '1': { type: 'boolean', value: true }, '2': (e as any).value } };
+              }
+              throw e;
+            }
+          }
+        }
+        return { type: 'table', value: { '1': { type: 'boolean', value: true } } };
+      } catch (e) {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        return { type: 'table', value: { '1': { type: 'boolean', value: false }, '2': { type: 'string', value: errMsg } } };
+      }
+    }
+
+    if (funcName === 'select') {
+      const index = args[0];
+      const restArgs = args.slice(1);
+
+      if (index.value === '#') {
+        return { type: 'number', value: restArgs.length };
+      }
+
+      const idx = Number(index.value);
+      if (idx > 0) {
+        return restArgs[idx - 1] || { type: 'nil', value: null };
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'unpack') {
+      const tableVal = args[0];
+      if (tableVal.type !== 'table') return { type: 'nil', value: null };
+
+      const table = tableVal.value as Record<string, LuaValue>;
+      const i = args[1]?.value || 1;
+      const keys = Object.keys(table).filter(k => !isNaN(Number(k))).map(Number).sort((a, b) => a - b);
+      const j = args[2]?.value || (keys.length > 0 ? keys[keys.length - 1] : 0);
+
+      // Return first value (simplified - real Lua returns multiple values)
+      if (i <= j && table[String(i)]) {
+        return table[String(i)];
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'rawget') {
+      const tableVal = args[0];
+      const key = args[1];
+
+      if (tableVal.type !== 'table') return { type: 'nil', value: null };
+      const table = tableVal.value as Record<string, LuaValue>;
+      const k = String(key.value);
+      return table[k] || { type: 'nil', value: null };
+    }
+
+    if (funcName === 'rawset') {
+      const tableVal = args[0];
+      const key = args[1];
+      const value = args[2];
+
+      if (tableVal.type !== 'table') throw new Error('rawset expects a table');
+      const table = tableVal.value as Record<string, LuaValue>;
+      table[String(key.value)] = value;
+      return tableVal;
+    }
+
+    if (funcName === 'setmetatable') {
+      const tableVal = args[0];
+      const mt = args[1];
+
+      if (tableVal.type !== 'table') throw new Error('setmetatable expects a table');
+
+      if (mt.type === 'nil') {
+        // Remove metatable
+        if (tableVal.value && typeof tableVal.value === 'object') {
+          this.metatables.delete(tableVal.value);
+        }
+      } else if (mt.type === 'table') {
+        // Set metatable
+        if (tableVal.value && typeof tableVal.value === 'object') {
+          this.metatables.set(tableVal.value, mt);
+        }
+      }
+
+      return tableVal;
+    }
+
+    if (funcName === 'getmetatable') {
+      const tableVal = args[0];
+
+      if (tableVal.type !== 'table') return { type: 'nil', value: null };
+
+      if (tableVal.value && typeof tableVal.value === 'object') {
+        const mt = this.metatables.get(tableVal.value);
+        return mt || { type: 'nil', value: null };
+      }
+
+      return { type: 'nil', value: null };
+    }
+
     // Check for user-defined functions
     const userFunc = context.functions.get(funcName);
     if (userFunc) {
-      // Lua has global scope by default (no 'local' keyword implementation)
-      // So we share the same variables map
+      // Create new context for function scope (preserves upvalues/closures)
+      const funcContext: LuaExecutionContext = {
+        variables: new Map(context.variables),
+        functions: context.functions,
+        output: context.output,
+        errors: context.errors,
+      };
+
       // Bind parameters to arguments
       for (let i = 0; i < userFunc.params.length; i++) {
         const paramName = userFunc.params[i];
         const argValue = args[i] || { type: 'nil', value: null };
-        context.variables.set(paramName, argValue);
+        funcContext.variables.set(paramName, argValue);
+      }
+
+      // Add upvalues if present (for closures)
+      if (userFunc.upvalues) {
+        userFunc.upvalues.forEach((value, key) => {
+          if (!funcContext.variables.has(key)) {
+            funcContext.variables.set(key, value);
+          }
+        });
       }
 
       // Execute function body
       try {
-        this.executeBlock(userFunc.body, context);
+        this.executeBlock(userFunc.body, funcContext);
+        // Copy back modified variables to parent context
+        funcContext.variables.forEach((value, key) => {
+          context.variables.set(key, value);
+        });
         return { type: 'nil', value: null }; // Default return
       } catch (error) {
         // Check if it's a return statement
         if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+          // Copy back modified variables to parent context
+          funcContext.variables.forEach((value, key) => {
+            context.variables.set(key, value);
+          });
           return (error as { type: string; value: LuaValue }).value;
         }
         throw error;
@@ -809,14 +1520,133 @@ export class LuaEngine {
   }
 
   /**
-   * Parse function arguments
+   * Simple seeded random number generator
+   */
+  private seededRandom(): number {
+    this.randomSeed = (this.randomSeed * 1103515245 + 12345) & 0x7fffffff;
+    return (this.randomSeed / 0x7fffffff);
+  }
+
+  /**
+   * Convert Lua value to string representation
+   */
+  private luaToString(val: LuaValue): string {
+    if (val.type === 'nil') return 'nil';
+    if (val.type === 'boolean') return val.value ? 'true' : 'false';
+    if (val.type === 'number') return String(val.value);
+    if (val.type === 'string') return val.value;
+    if (val.type === 'table') return 'table: ' + Object.keys(val.value).length + ' entries';
+    if (val.type === 'function') return 'function';
+    return String(val.value);
+  }
+
+  /**
+   * Convert Lua pattern to JavaScript regex (simplified)
+   */
+  private luaPatternToRegex(pattern: string): string {
+    // Basic Lua pattern to regex conversion
+    return pattern
+      .replace(/%a/g, '[a-zA-Z]')
+      .replace(/%d/g, '\\d')
+      .replace(/%l/g, '[a-z]')
+      .replace(/%u/g, '[A-Z]')
+      .replace(/%w/g, '\\w')
+      .replace(/%s/g, '\\s')
+      .replace(/%p/g, '[\\p{P}]')
+      .replace(/%c/g, '[\\x00-\\x1f]')
+      .replace(/%x/g, '[0-9a-fA-F]')
+      .replace(/%./g, '.')  // %z and others become .
+      .replace(/%%/g, '%');
+  }
+
+  /**
+   * Lua-style string formatting
+   */
+  private luaFormat(format: string, args: any[]): string {
+    let argIndex = 0;
+    return format.replace(/%(-?\d*)\.?(\d*)([diouxXeEfgGcs%])/g, (match, width, precision, specifier) => {
+      if (specifier === '%') return '%';
+
+      const arg = args[argIndex++];
+      if (arg === undefined) return match;
+
+      switch (specifier) {
+        case 'd':
+        case 'i':
+          return String(Math.floor(Number(arg)));
+        case 'o':
+          return Math.floor(Number(arg)).toString(8);
+        case 'u':
+          return String(Math.abs(Math.floor(Number(arg))));
+        case 'x':
+          return Math.floor(Number(arg)).toString(16);
+        case 'X':
+          return Math.floor(Number(arg)).toString(16).toUpperCase();
+        case 'e':
+          return Number(arg).toExponential(precision ? Number(precision) : undefined);
+        case 'E':
+          return Number(arg).toExponential(precision ? Number(precision) : undefined).toUpperCase();
+        case 'f':
+          return Number(arg).toFixed(precision ? Number(precision) : 6);
+        case 'g':
+        case 'G':
+          return String(Number(arg));
+        case 'c':
+          return String.fromCharCode(Number(arg));
+        case 's':
+          return String(arg);
+        default:
+          return match;
+      }
+    });
+  }
+
+  /**
+   * Parse function arguments - respects string literals and nested parens
    */
   private parseArguments(argsStr: string, context: LuaExecutionContext): LuaValue[] {
     const args: LuaValue[] = [];
-    const parts = argsStr.split(',');
+    let currentArg = '';
+    let inString = false;
+    let stringChar = '';
+    let parenDepth = 0;
+    let braceDepth = 0;
 
-    for (const part of parts) {
-      args.push(this.evaluateExpression(part.trim(), context));
+    for (let i = 0; i < argsStr.length; i++) {
+      const char = argsStr[i];
+
+      // Toggle string state
+      if ((char === '"' || char === "'") && (i === 0 || argsStr[i - 1] !== '\\')) {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      // Track parentheses and braces
+      if (!inString) {
+        if (char === '(') parenDepth++;
+        if (char === ')') parenDepth--;
+        if (char === '{') braceDepth++;
+        if (char === '}') braceDepth--;
+      }
+
+      // Split on comma only at top level
+      if (char === ',' && !inString && parenDepth === 0 && braceDepth === 0) {
+        if (currentArg.trim()) {
+          args.push(this.evaluateExpression(currentArg.trim(), context));
+        }
+        currentArg = '';
+      } else {
+        currentArg += char;
+      }
+    }
+
+    // Add last argument
+    if (currentArg.trim()) {
+      args.push(this.evaluateExpression(currentArg.trim(), context));
     }
 
     return args;
@@ -1047,11 +1877,17 @@ export class LuaEngine {
   }
 
   /**
-   * Execute for loop
+   * Execute for loop (both numeric and generic)
    */
   private executeFor(fullCode: string, context: LuaExecutionContext): void {
+    // Check for generic for loop: for var1, var2 in iterator(table) do ... end
+    const genericMatch = fullCode.match(/^for\s+(\w+)(?:\s*,\s*(\w+))?\s+in\s+/);
+    if (genericMatch) {
+      this.executeGenericFor(fullCode, context, genericMatch);
+      return;
+    }
+
     // Parse numeric for loop: for var = start, end [, step] do <body> end
-    // Extract parts more carefully
     const forStart = fullCode.match(/^for\s+(\w+)\s*=\s*/);
     if (!forStart) {
       throw new Error('Invalid for loop syntax. Expected: for var = start, end [, step] do <body> end');
@@ -1144,6 +1980,130 @@ export class LuaEngine {
           throw error;
         }
       }
+    }
+  }
+
+  /**
+   * Execute generic for loop (for k, v in pairs/ipairs)
+   */
+  private executeGenericFor(fullCode: string, context: LuaExecutionContext, match: RegExpMatchArray): void {
+    const keyVar = match[1];
+    const valueVar = match[2]; // May be undefined for single-variable loops
+
+    // Find the iterator expression
+    const afterIn = fullCode.substring(match[0].length);
+    const doMatch = afterIn.match(/\s+do(?:\s|$)/);
+    if (!doMatch) {
+      throw new Error('Invalid generic for loop syntax. Missing do keyword');
+    }
+
+    const iteratorExpr = afterIn.substring(0, doMatch.index).trim();
+    const rest = afterIn.substring(doMatch.index! + doMatch[0].length);
+
+    // Extract body
+    const endIndex = rest.lastIndexOf('end');
+    if (endIndex === -1) {
+      throw new Error('Invalid generic for loop syntax. Missing end keyword');
+    }
+
+    const body = rest.substring(0, endIndex).trim();
+
+    // Evaluate the iterator expression
+    const iteratorResult = this.evaluateExpression(iteratorExpr, context);
+
+    // Handle pairs() and ipairs()
+    if (iteratorResult.type === 'function' && iteratorResult.value && typeof iteratorResult.value === 'object') {
+      const iterInfo = iteratorResult.value as { __iterator?: string; __table?: Record<string, LuaValue>; __keys?: string[]; __index?: number };
+
+      if (iterInfo.__iterator === 'pairs' && iterInfo.__table) {
+        this.executePairsLoop(keyVar, valueVar, iterInfo.__table, iterInfo.__keys || [], body, context);
+        return;
+      }
+
+      if (iterInfo.__iterator === 'ipairs' && iterInfo.__table) {
+        this.executeIpairsLoop(keyVar, valueVar, iterInfo.__table, body, context);
+        return;
+      }
+    }
+
+    throw new Error(`Unsupported iterator: ${iteratorExpr}`);
+  }
+
+  /**
+   * Execute pairs() loop
+   */
+  private executePairsLoop(
+    keyVar: string,
+    valueVar: string | undefined,
+    table: Record<string, LuaValue>,
+    keys: string[],
+    body: string,
+    context: LuaExecutionContext
+  ): void {
+    const MAX_ITERATIONS = 10000;
+    let iterations = 0;
+
+    for (const key of keys) {
+      if (iterations++ >= MAX_ITERATIONS) {
+        throw new Error(`For loop exceeded maximum iterations (${MAX_ITERATIONS})`);
+      }
+
+      // Set key variable (convert numeric strings to numbers for Lua compatibility)
+      const keyValue = !isNaN(Number(key)) ? { type: 'number' as const, value: Number(key) } : { type: 'string' as const, value: key };
+      context.variables.set(keyVar, keyValue);
+
+      // Set value variable if provided
+      if (valueVar) {
+        context.variables.set(valueVar, table[key] || { type: 'nil', value: null });
+      }
+
+      try {
+        this.executeBlock(body, context);
+      } catch (error) {
+        if (error instanceof Error && error.message === 'break') {
+          break;
+        }
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Execute ipairs() loop
+   */
+  private executeIpairsLoop(
+    keyVar: string,
+    valueVar: string | undefined,
+    table: Record<string, LuaValue>,
+    body: string,
+    context: LuaExecutionContext
+  ): void {
+    const MAX_ITERATIONS = 10000;
+    let iterations = 0;
+
+    // ipairs iterates over consecutive integer keys starting at 1
+    let index = 1;
+    while (table[String(index)] !== undefined) {
+      if (iterations++ >= MAX_ITERATIONS) {
+        throw new Error(`For loop exceeded maximum iterations (${MAX_ITERATIONS})`);
+      }
+
+      context.variables.set(keyVar, { type: 'number', value: index });
+
+      if (valueVar) {
+        context.variables.set(valueVar, table[String(index)]);
+      }
+
+      try {
+        this.executeBlock(body, context);
+      } catch (error) {
+        if (error instanceof Error && error.message === 'break') {
+          break;
+        }
+        throw error;
+      }
+
+      index++;
     }
   }
 

@@ -1,10 +1,186 @@
 /**
- * Analytics Module
- * Provides story analytics and playthrough recording
+ * @writewhisker/analytics
+ * Analytics infrastructure - event collection, consent management, privacy filtering
  */
 
+// Core types
+export type {
+  EventBus,
+  Logger,
+  AnalyticsDependencies,
+  StorageAdapter,
+  ConsentLevelInfo,
+  ConsentState,
+  ConsentConfig,
+  EventCategory,
+  EventMetadata,
+  AnalyticsEvent,
+  EventActions,
+  EventCategories,
+  MetadataFieldType,
+  MetadataSchema,
+  EventDefinition,
+  CollectorConfig,
+  CollectorStats,
+  TimerFunctions,
+  AnalyticsBackend,
+  BackendConfig,
+} from './types';
+
+export { ConsentLevel } from './types';
+
+// Privacy module
+export {
+  CONSENT_LEVEL_NAMES,
+  CONSENT_LEVEL_DESCRIPTIONS,
+  getConsentLevelName,
+  getConsentLevelDescription,
+  isValidConsentLevel,
+  getAllConsentLevels,
+  compareConsentLevels,
+  meetsConsentLevel,
+} from './Privacy';
+
+// Consent Manager
+export { ConsentManager } from './ConsentManager';
+
+// Event Taxonomy
+export {
+  EventTaxonomy,
+  getEventTypes,
+  getCategories,
+  eventTypeExists,
+} from './EventTaxonomy';
+
+// Privacy Filter
+export { PrivacyFilter } from './PrivacyFilter';
+
+// Collector
+export { Collector } from './Collector';
+
+// Backends
+export {
+  ConsoleBackend,
+  MemoryBackend,
+  HttpBackend,
+  CallbackBackend,
+  BackendRegistry,
+} from './backends';
+export type { HttpBackendConfig } from './backends';
+
+// Existing analytics modules
 export * from './PlaythroughAnalytics';
 export * from './PlaythroughRecorder';
 export * from './StoryAnalytics';
 export * from './StorySimulator';
-export * from './types';
+
+// Import classes for factory function
+import { ConsentManager } from './ConsentManager';
+import { EventTaxonomy } from './EventTaxonomy';
+import { PrivacyFilter } from './PrivacyFilter';
+import { Collector } from './Collector';
+import { BackendRegistry, ConsoleBackend, MemoryBackend } from './backends';
+import type {
+  ConsentConfig,
+  CollectorConfig,
+  StorageAdapter,
+  Logger,
+} from './types';
+
+/**
+ * Analytics system configuration
+ */
+export interface AnalyticsSystemConfig {
+  consent?: ConsentConfig;
+  collector?: CollectorConfig;
+  enableConsoleBackend?: boolean;
+  enableMemoryBackend?: boolean;
+}
+
+/**
+ * Factory function to create a complete analytics system
+ */
+export function createAnalyticsSystem(
+  config?: AnalyticsSystemConfig,
+  deps?: { storage?: StorageAdapter; logger?: Logger }
+): {
+  consentManager: ConsentManager;
+  eventTaxonomy: EventTaxonomy;
+  privacyFilter: PrivacyFilter;
+  collector: Collector;
+  backendRegistry: BackendRegistry;
+} {
+  const logger = deps?.logger;
+  const storage = deps?.storage;
+
+  // Create components
+  const consentManager = ConsentManager.create(config?.consent, storage, logger);
+  const eventTaxonomy = EventTaxonomy.create();
+  const privacyFilter = PrivacyFilter.create(consentManager);
+  const collector = Collector.create(config?.collector, logger);
+  const backendRegistry = BackendRegistry.create(logger);
+
+  // Wire up dependencies
+  collector.setDependencies({
+    eventTaxonomy,
+    privacyFilter,
+  });
+
+  // Register default backends
+  if (config?.enableConsoleBackend) {
+    const consoleBackend = new ConsoleBackend(logger);
+    backendRegistry.register(consoleBackend);
+    collector.registerBackend(consoleBackend);
+  }
+
+  if (config?.enableMemoryBackend) {
+    const memoryBackend = new MemoryBackend();
+    backendRegistry.register(memoryBackend);
+    collector.registerBackend(memoryBackend);
+  }
+
+  // Initialize
+  consentManager.initialize();
+
+  return {
+    consentManager,
+    eventTaxonomy,
+    privacyFilter,
+    collector,
+    backendRegistry,
+  };
+}
+
+/**
+ * Create a standalone consent manager
+ */
+export function createConsentManager(
+  config?: ConsentConfig,
+  storage?: StorageAdapter,
+  logger?: Logger
+): ConsentManager {
+  const manager = ConsentManager.create(config, storage, logger);
+  manager.initialize();
+  return manager;
+}
+
+/**
+ * Create a standalone collector
+ */
+export function createCollector(config?: CollectorConfig, logger?: Logger): Collector {
+  return Collector.create(config, logger);
+}
+
+/**
+ * Create a standalone event taxonomy
+ */
+export function createEventTaxonomy(): EventTaxonomy {
+  return EventTaxonomy.create();
+}
+
+/**
+ * Create a standalone privacy filter
+ */
+export function createPrivacyFilter(consentManager?: ConsentManager): PrivacyFilter {
+  return PrivacyFilter.create(consentManager);
+}

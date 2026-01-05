@@ -10,9 +10,12 @@ Story analytics and playthrough recording for Whisker interactive fiction.
 - **Player Metrics**: Calculate engagement metrics like completion rate, average session duration
 - **Choice Analytics**: Analyze which choices players make most frequently
 - **Passage Popularity**: Track which passages are visited most often
+- **Consent Management**: GDPR-compliant consent levels (none, essential, analytics, full)
+- **Privacy Filtering**: Automatic PII redaction based on user consent
+- **Event Taxonomy**: Standardized event definitions with validation
+- **Multiple Backends**: Console, memory, HTTP, and custom callback backends
 - **Framework Agnostic**: Works with any UI framework
 - **Type-Safe**: Full TypeScript support
-- **Zero Dependencies**: Minimal package with only @writewhisker/core-ts
 
 ## Installation
 
@@ -177,6 +180,42 @@ interface StoryAnalytics {
   }>;
 }
 ```
+
+## Consent Management
+
+GDPR-compliant consent management for privacy-aware analytics:
+
+```typescript
+import { createAnalyticsSystem, ConsentLevel } from '@writewhisker/analytics';
+
+const { consentManager, collector, privacyFilter } = createAnalyticsSystem({
+  consent: { defaultLevel: ConsentLevel.ESSENTIAL },
+  enableConsoleBackend: true,
+});
+
+// Set user consent level
+consentManager.setConsent(ConsentLevel.ANALYTICS);
+
+// Check consent
+if (consentManager.hasConsent(ConsentLevel.ANALYTICS)) {
+  collector.track('story.start', { storyId: 'adventure-1' });
+}
+
+// For full data collection including PII
+consentManager.setConsent(ConsentLevel.FULL);
+consentManager.identifyUser('user-123');
+```
+
+### Consent Levels
+
+| Level | Value | Description |
+|-------|-------|-------------|
+| `NONE` | 0 | No data collection |
+| `ESSENTIAL` | 1 | Essential functionality only |
+| `ANALYTICS` | 2 | Anonymous analytics |
+| `FULL` | 3 | Full data including PII |
+
+See the [full API reference](../../docs/api/typescript/analytics.md) for detailed consent management documentation.
 
 ## Advanced Usage
 

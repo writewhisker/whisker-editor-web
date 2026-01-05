@@ -79,6 +79,52 @@ export type {
 export { SessionManager, SESSION_EVENTS } from './SessionManager';
 export type { SessionState, SessionConfig } from './SessionManager';
 
+// Playthrough Recorder
+export {
+  PlaythroughRecorder,
+  getPlaythroughRecorder,
+  setPlaythroughRecorder,
+} from './PlaythroughRecorder';
+export type {
+  PlaythroughStepData,
+  PlaythroughData as PlaythroughRecordData,
+  PlaythroughRecorderConfig,
+  Playthrough,
+} from './PlaythroughRecorder';
+
+// Playthrough Analytics
+export { PlaythroughAnalytics } from './PlaythroughAnalytics';
+export type {
+  PassageAnalytics,
+  ChoiceAnalytics,
+  PathAnalytics,
+  PlaythroughAnalyticsData,
+} from './PlaythroughAnalytics';
+
+// Story Simulator
+export { StorySimulator } from './StorySimulator';
+export type {
+  SimulatableStory,
+  SimulatablePassage,
+  SimulatableChoice,
+  SimulationOptions,
+  SimulationRun,
+  SimulationResult,
+} from './StorySimulator';
+
+// Story Analytics
+export { StoryAnalytics } from './StoryAnalytics';
+export type { StoryAnalyticsOptions } from './StoryAnalytics';
+
+// Story analytics types (from types.ts)
+export type {
+  StoryMetrics,
+  AnalyticsIssue,
+  PassageVisitData,
+  PlaythroughData,
+  AnalyticsReport,
+} from './types';
+
 // Import classes for factory function
 import { ConsentManager } from './ConsentManager';
 import { EventTaxonomy } from './EventTaxonomy';

@@ -107,3 +107,15 @@ export {
   type ParameterBindingError,
   type ParameterManagerOptions,
 } from './ParameterizedPassages';
+
+// WLS 2.0 LIST State Machine
+export {
+  ListStateMachine,
+  ListStateMachineRegistry,
+  createExclusiveStateMachine,
+  createFlagStateMachine,
+  type StateTransitionCallback,
+  type StateTransitionEvent,
+  type ListStateMachineConfig,
+  type ListStateMachineState,
+} from './ListStateMachine';

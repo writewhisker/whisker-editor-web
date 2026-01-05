@@ -9,7 +9,7 @@ import type { Story, ValidationResult, QualityMetrics } from '@writewhisker/core
 /**
  * Supported export formats
  */
-export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'html-standalone' | 'markdown' | 'package' | 'epub' | 'twine' | 'pdf' | 'wls' | 'pwa';
+export type ExportFormat = 'json' | 'whisker-core' | 'html' | 'html-standalone' | 'markdown' | 'package' | 'epub' | 'twine' | 'pdf' | 'wls' | 'pwa' | 'ink' | 'text';
 
 /**
  * Export options configuration

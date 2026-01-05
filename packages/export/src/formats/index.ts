@@ -12,4 +12,6 @@ export { WhiskerCoreExporter } from './WhiskerCoreExporter';
 export { PDFExporter } from './PDFExporter';
 export { WLSExporter } from './WLSExporter';
 export { PWAExporter } from './PWAExporter';
+export { InkExporter } from './InkExporter';
+export { TextExporter } from './TextExporter';
 export { generateHTMLPlayer } from './HTMLPlayerTemplate';

@@ -74,10 +74,45 @@ export { PluginContext } from './PluginContext';
 // Plugin Registry
 export { PluginRegistry } from './PluginRegistry';
 
+// Dependency Resolver
+export { DependencyResolver } from './DependencyResolver';
+export type {
+  DependencyInfo,
+  ResolutionResult,
+} from './DependencyResolver';
+
+// Plugin Sandbox
+export { PluginSandbox } from './PluginSandbox';
+export type {
+  Permission,
+  PermissionResult,
+  SandboxConfig,
+  ExecutionResult,
+  LogEntry,
+  SandboxedApis,
+} from './PluginSandbox';
+
+// Plugin Loader
+export { PluginLoader } from './PluginLoader';
+export type {
+  PluginSource,
+  PluginManifest,
+  LoadedPlugin,
+  LoadOptions,
+  DiscoveryOptions,
+  LoadResult,
+  DiscoveryResult,
+  ValidationResult,
+} from './PluginLoader';
+
 // Factory functions
 import { HookManager } from './HookManager';
 import { PluginContext } from './PluginContext';
 import { PluginRegistry } from './PluginRegistry';
+import { DependencyResolver } from './DependencyResolver';
+import { PluginSandbox } from './PluginSandbox';
+import type { SandboxConfig } from './PluginSandbox';
+import { PluginLoader } from './PluginLoader';
 import type { PluginMetadata, PluginRegistryConfig, Logger } from './types';
 
 /**
@@ -130,4 +165,31 @@ export async function shutdownPluginSystem(): Promise<void> {
   const registry = PluginRegistry.getInstance();
   await registry.destroyAll();
   PluginRegistry.resetInstance();
+}
+
+/**
+ * Create a dependency resolver
+ */
+export function createDependencyResolver(logger?: Logger): DependencyResolver {
+  return DependencyResolver.create(logger);
+}
+
+/**
+ * Create a plugin sandbox
+ */
+export function createPluginSandbox(
+  metadata: PluginMetadata,
+  config?: SandboxConfig
+): PluginSandbox {
+  return PluginSandbox.create(metadata, config);
+}
+
+/**
+ * Create a plugin loader
+ */
+export function createPluginLoader(options?: {
+  logger?: Logger;
+  timeout?: number;
+}): PluginLoader {
+  return PluginLoader.create(options);
 }

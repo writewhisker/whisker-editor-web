@@ -47,7 +47,33 @@ export {
   BrowserPlatformAdapter,
   LocalStorageAdapter,
   MemoryStorageAdapter,
+  URLParameterAdapter,
+  CompositeLocaleDetector,
 } from './Locale';
+
+// Date/Time Formatting
+export { DateTimeFormatter } from './DateTimeFormatter';
+export type {
+  DateStyle,
+  TimeStyle,
+  RelativeTimeUnit,
+  RelativeTimeStyle,
+  DateTimeFormatOptions,
+  RelativeTimeFormatOptions,
+} from './DateTimeFormatter';
+
+// Number Formatting
+export { NumberFormatter } from './NumberFormatter';
+export type {
+  NumberStyle,
+  CompactDisplay,
+  CurrencyDisplay,
+  UnitDisplay,
+  SignDisplay,
+  Notation,
+  Unit,
+  NumberFormatOptions,
+} from './NumberFormatter';
 
 // Pluralization
 export {

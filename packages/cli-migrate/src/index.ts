@@ -428,3 +428,17 @@ export const migrateCommand: Command = {
     console.log(`✓ Migration complete: ${outputPath}`);
   },
 };
+
+// WLS Content Migration (WLS 1.0 to 2.0)
+export {
+  migrateWLSContent,
+  migratePassage,
+  migrateStoryContent,
+  generateDeclarations,
+  formatMigrationReport,
+  type WLSMigrationOptions,
+  type WLSMigrationResult,
+  type WLSMigrationChange,
+  type WLSMigrationSuggestion,
+  type WLSMigrationSummary,
+} from './wlsMigration.js';

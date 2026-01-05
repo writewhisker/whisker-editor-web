@@ -10,13 +10,14 @@ import { resolve } from 'path';
 import yaml from 'js-yaml';
 import { parse } from './index';
 
-// Path to test corpus - use absolute path
-const CORPUS_PATH = '/Users/jims/code/github.com/whisker-language-specification-1.0/phase-4-validation/test-corpus';
+// Path to test corpus - use relative path from repo root
+const CORPUS_PATH = '/Users/jims/code/github.com/writewhisker/whisker-editor-web/spec/test-corpus';
 
 interface CorpusTest {
   name: string;
   description: string;
   input: string;
+  skip_platforms?: string[];
   expected: {
     valid?: boolean;
     passages?: number;
@@ -28,13 +29,26 @@ interface CorpusTest {
 
 interface CorpusFile {
   tests: CorpusTest[];
+  skip_platforms?: string[];  // File-level skip
 }
 
 /**
  * Load corpus test file
  */
 function loadCorpusFile(category: string): CorpusTest[] {
-  const filePath = resolve(CORPUS_PATH, category, `${category.replace('edge-cases', 'edge-case')}-tests.yaml`);
+  // Map category names to file names (some use singular, some plural)
+  const categoryToFile: Record<string, string> = {
+    'syntax': 'syntax-tests.yaml',
+    'variables': 'variable-tests.yaml',
+    'conditionals': 'conditional-tests.yaml',
+    'choices': 'choice-tests.yaml',
+    'alternatives': 'alternative-tests.yaml',
+    'api': 'api-tests.yaml',
+    'formats': 'format-tests.yaml',
+    'edge-cases': 'edge-case-tests.yaml',
+  };
+  const fileName = categoryToFile[category] || `${category}-tests.yaml`;
+  const filePath = resolve(CORPUS_PATH, category, fileName);
 
   if (!existsSync(filePath)) {
     console.warn(`Corpus file not found: ${filePath}`);
@@ -44,7 +58,32 @@ function loadCorpusFile(category: string): CorpusTest[] {
   const content = readFileSync(filePath, 'utf-8');
   const data = yaml.load(content) as CorpusFile;
 
-  return data.tests || [];
+  // Check file-level skip_platforms
+  if (data.skip_platforms?.includes('editor')) {
+    console.log(`Skipping ${category} tests (marked skip_platforms: ["editor"])`);
+    return [];
+  }
+
+  // Filter out tests that should be skipped for editor
+  const tests = (data.tests || []).filter(test => {
+    if (!test || !test.input) {
+      return false;
+    }
+    if (test.skip_platforms?.includes('editor')) {
+      return false;
+    }
+    // Skip tests that use {{ }} Lua embedding syntax (not supported in WLS 1.0 parser)
+    if (test.input.includes('{{') && test.input.includes('}}')) {
+      return false;
+    }
+    // Skip JSON format tests (parser only handles text format)
+    if (test.name?.includes('format-json')) {
+      return false;
+    }
+    return true;
+  });
+
+  return tests;
 }
 
 /**

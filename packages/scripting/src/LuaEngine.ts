@@ -690,9 +690,46 @@ export class LuaEngine {
 
   /**
    * Check if a statement contains a comparison (not assignment)
+   * Only considers operators outside of string literals
    */
   private isComparison(statement: string): boolean {
-    return /[<>!]=|==|<|>/.test(statement);
+    // Check for comparison operators outside of strings
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = 0; i < statement.length; i++) {
+      const char = statement[i];
+
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char === stringChar) {
+        inString = false;
+        stringChar = '';
+      } else if (!inString) {
+        // Check for comparison operators outside strings
+        // == and ~= (equality checks)
+        if (statement.substring(i, i + 2) === '==' || statement.substring(i, i + 2) === '~=') {
+          return true;
+        }
+        // <= and >= (with equals)
+        if (statement.substring(i, i + 2) === '<=' || statement.substring(i, i + 2) === '>=') {
+          return true;
+        }
+        // < and > (simple comparison) - but not inside assignments like a = b < c
+        // To distinguish: if there's already been an = sign, this might be a comparison in an expression
+        // For simplicity, we check if it's a standalone < or > not part of an assignment
+        if ((char === '<' || char === '>') && i > 0) {
+          // Check if this is after an = sign (meaning it's a comparison in expression, not assignment marker)
+          const beforeEquals = statement.substring(0, i);
+          if (beforeEquals.includes('=') && !beforeEquals.includes('==') && !beforeEquals.includes('~=')) {
+            // This is like "x = a < b" - has comparison after assignment
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -1069,7 +1106,13 @@ export class LuaEngine {
       return this.evaluateTableLiteral(trimmed, context);
     }
 
-    // Table indexing (before function call to handle t[key] correctly)
+    // Function call - check BEFORE table indexing since function arguments may contain [...]
+    // The check ensures we have balanced parentheses that could be a function call
+    if (trimmed.includes('(') && trimmed.includes(')')) {
+      return this.evaluateFunctionCall(trimmed, context);
+    }
+
+    // Table indexing (after function call to avoid matching patterns like "[aeiou]" in args)
     // Only match if it's a simple table index like t[1], t[key], or t.field[1]
     // NOT expressions like "total + t[1]" which should go to binary operators
     if (trimmed.includes('[') && trimmed.includes(']') &&
@@ -1099,11 +1142,6 @@ export class LuaEngine {
     }
     if (/^0x[0-9a-fA-F]+$/.test(trimmed)) {
       return { type: 'number', value: parseInt(trimmed, 16) };
-    }
-
-    // Function call
-    if (trimmed.includes('(') && trimmed.includes(')')) {
-      return this.evaluateFunctionCall(trimmed, context);
     }
 
     // Logical operators (lowest precedence - check first)
@@ -2171,18 +2209,43 @@ export class LuaEngine {
       } else if (replArg?.type === 'function' || context.functions.has(String(replArg?.value))) {
         // Function replacement
         const funcName = String(replArg?.value);
+        const userFunc = context.functions.get(funcName);
+
         repl = (match: string, ...captures: (string | number)[]) => {
+          if (!userFunc) {
+            return match; // Keep original if function not found
+          }
+
           // Call the Lua function with match or captures
           const funcArgs: LuaValue[] = captures.length > 0
             ? captures.map((c) => typeof c === 'number'
               ? { type: 'number', value: c }
               : { type: 'string', value: c })
             : [{ type: 'string', value: match }];
-          const result = this.evaluateFunctionCall(funcName, funcArgs, context);
-          if (result?.type === 'nil' || result?.type === 'boolean' && !result.value) {
-            return match; // Keep original if function returns nil or false
+
+          // Create function scope and bind parameters
+          const funcScope = new Map<string, LuaValue>();
+          context.localScopes.push(funcScope);
+
+          for (let i = 0; i < userFunc.params.length; i++) {
+            funcScope.set(userFunc.params[i], funcArgs[i] || { type: 'nil', value: null });
           }
-          return String(result?.value ?? '');
+
+          try {
+            this.executeBlock(userFunc.body, context);
+            context.localScopes.pop();
+            return match; // No return value, keep original
+          } catch (innerError) {
+            context.localScopes.pop();
+            if (typeof innerError === 'object' && innerError !== null && 'type' in innerError && (innerError as any).type === 'return') {
+              const returnVal = (innerError as any).value;
+              if (returnVal?.type === 'nil' || (returnVal?.type === 'boolean' && !returnVal.value)) {
+                return match; // Keep original if function returns nil or false
+              }
+              return String(returnVal?.value ?? '');
+            }
+            throw innerError;
+          }
         };
       } else {
         repl = String(replArg?.value ?? '');

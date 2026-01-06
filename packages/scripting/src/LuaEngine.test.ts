@@ -1252,6 +1252,194 @@ describe('LuaEngine', () => {
       });
     });
 
+    describe('Pattern Matching (Lua Patterns)', () => {
+      it('should match literal strings', () => {
+        const code = 'result = string.match("hello world", "world")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('world');
+      });
+
+      it('should match . for any character', () => {
+        const code = 'result = string.match("hello", "h.llo")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('hello');
+      });
+
+      it('should match %a for letters', () => {
+        const code = 'result = string.match("abc123", "%a+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('abc');
+      });
+
+      it('should match %d for digits', () => {
+        const code = 'result = string.match("abc123def", "%d+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('123');
+      });
+
+      it('should match %s for whitespace', () => {
+        const code = 'result = string.match("hello  world", "%s+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('  ');
+      });
+
+      it('should match %w for alphanumeric', () => {
+        const code = 'result = string.match("abc_123!def", "%w+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('abc');
+      });
+
+      it('should match * quantifier (greedy, 0 or more)', () => {
+        const code = 'result = string.match("aaa", "a*")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('aaa');
+      });
+
+      it('should match + quantifier (1 or more)', () => {
+        const code = 'result = string.match("baaa", "a+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('aaa');
+      });
+
+      it('should match ? quantifier (0 or 1)', () => {
+        const code = `
+          r1 = string.match("color", "colou?r")
+          r2 = string.match("colour", "colou?r")
+        `;
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('r1')).toBe('color');
+        expect(engine.getVariable('r2')).toBe('colour');
+      });
+
+      it('should match - quantifier (lazy, 0 or more)', () => {
+        const code = 'result = string.match("<tag>content</tag>", "<.->")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('<tag>');
+      });
+
+      it('should match ^ anchor at start', () => {
+        const code = `
+          r1 = string.match("hello world", "^hello")
+          r2 = string.match("hello world", "^world")
+        `;
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('r1')).toBe('hello');
+        expect(engine.getVariable('r2')).toBeNull();
+      });
+
+      it('should match $ anchor at end', () => {
+        const code = `
+          r1 = string.match("hello world", "world$")
+          r2 = string.match("hello world", "hello$")
+        `;
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('r1')).toBe('world');
+        expect(engine.getVariable('r2')).toBeNull();
+      });
+
+      it('should handle escape sequences %.', () => {
+        const code = 'result = string.match("file.txt", "%.txt")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('.txt');
+      });
+
+      it('should return nil for no match', () => {
+        const code = 'result = string.match("hello", "xyz")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBeNull();
+      });
+
+      it('should respect init position', () => {
+        const code = 'result = string.match("hello hello", "hello", 3)';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('hello');
+      });
+
+      it('should return start and end with string.find', () => {
+        const code = `
+          s, e = string.find("hello world", "world")
+        `;
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('s')).toBe(7);
+        expect(engine.getVariable('e')).toBe(11);
+      });
+
+      it('should gsub with string replacement', () => {
+        const code = 'result = string.gsub("hello world", "world", "lua")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('hello lua');
+      });
+
+      it('should gsub with pattern', () => {
+        const code = 'result = string.gsub("hello 123 world", "%d+", "NUM")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('hello NUM world');
+      });
+
+      it('should gsub with limit', () => {
+        const code = 'result = string.gsub("aaa", "a", "b", 2)';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('bba');
+      });
+
+      it('should match character set [abc]', () => {
+        const code = 'result = string.match("hello", "[aeiou]+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('e');
+      });
+
+      it('should match character range [a-z]', () => {
+        const code = 'result = string.match("Hello123", "[a-z]+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('ello');
+      });
+
+      it('should match negated set [^abc]', () => {
+        const code = 'result = string.match("abcXdef", "[^abc]+")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('Xdef');
+      });
+
+      it('should capture with parentheses', () => {
+        const code = `
+          full, word = string.match("hello world", "((%w+) world)")
+        `;
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('full')).toBe('hello world');
+        expect(engine.getVariable('word')).toBe('hello');
+      });
+
+      it('should match balanced patterns %b()', () => {
+        const code = 'result = string.match("(a(b)c)d", "%b()")';
+        const result = engine.execute(code);
+        expect(result.success).toBe(true);
+        expect(engine.getVariable('result')).toBe('(a(b)c)');
+      });
+    });
+
     describe('Extended Table Library', () => {
       it('should insert at end with table.insert', () => {
         const code = `

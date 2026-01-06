@@ -1,8 +1,10 @@
+import { LuaPatternMatcher } from './LuaPatternMatcher';
+
 /**
  * LuaEngine - Enhanced Lua scripting engine for interactive fiction preview
  *
- * This engine provides ~90% Lua 5.1 compatibility for in-browser preview.
- * For production use, deploy to whisker-core which has FULL Lua 5.1+ support.
+ * This engine provides ~95% Lua 5.4 compatibility for in-browser preview.
+ * For production use, deploy to whisker-core which has FULL Lua 5.4 support.
  *
  * SUPPORTED Features:
  * - ✅ Variables (numbers, strings, booleans, nil, tables)
@@ -17,12 +19,15 @@
  * - ✅ Generic for loops (for k,v in pairs/ipairs(t) do...end)
  * - ✅ Repeat-until loops
  * - ✅ Function definitions with return values
+ * - ✅ Multiple return values
+ * - ✅ Variadic functions (...)
  * - ✅ Local variable scoping
  * - ✅ Tables with dot/bracket notation
  * - ✅ Break statement
  * - ✅ Metatables (__index, __newindex, __call, __tostring)
  * - ✅ Coroutines (create, resume, yield, status, wrap, running)
  * - ✅ Error handling (pcall, xpcall)
+ * - ✅ String pattern matching (full Lua patterns)
  *
  * Standard Library:
  * - ✅ print, type, tostring, tonumber, assert, error
@@ -30,7 +35,7 @@
  * - ✅ pcall, xpcall (protected calls)
  * - ✅ setmetatable, getmetatable
  * - ✅ math: random, floor, ceil, abs, min, max, sqrt, pow, sin, cos, tan, log, exp, pi
- * - ✅ string: upper, lower, len, sub, find, rep, reverse, char, byte, format
+ * - ✅ string: upper, lower, len, sub, find, match, gsub, gmatch, rep, reverse, char, byte, format
  * - ✅ table: insert, remove, concat, sort, maxn
  * - ✅ coroutine: create, resume, yield, status, wrap, running
  *
@@ -38,7 +43,6 @@
  * - ❌ Modules (require/module)
  * - ❌ File I/O
  * - ❌ Debug library
- * - ❌ String pattern matching (partial)
  */
 
 export interface LuaValue {
@@ -942,7 +946,15 @@ export class LuaEngine {
     }
 
     // Regular assignment
-    const value = this.evaluateExpression(expression, context);
+    let value = this.evaluateExpression(expression, context);
+
+    // For single-variable assignment, if the expression returns multiple values,
+    // only use the first value (Lua semantics)
+    if (isMultiValue(value as unknown as LuaMultiValue)) {
+      const mv = value as unknown as LuaMultiValue;
+      value = mv.values[0] || { type: 'nil', value: null };
+    }
+
     this.assignToVariable(varName, value, context);
   }
 
@@ -2058,56 +2070,133 @@ export class LuaEngine {
       const pattern = String(args[1]?.value || '');
       const init = (args[2]?.value || 1) as number;
       const plain = args[3]?.value || false;
-      const startIdx = Math.max(0, init - 1);
+
       if (plain) {
+        // Plain search - no pattern matching
+        const startIdx = Math.max(0, init - 1);
         const idx = s.indexOf(pattern, startIdx);
         if (idx === -1) return { type: 'nil', value: null };
-        return { type: 'number', value: idx + 1 }; // Lua 1-based
+        // Return start and end positions (both 1-based)
+        const endIdx = idx + pattern.length;
+        return {
+          values: [
+            { type: 'number', value: idx + 1 },
+            { type: 'number', value: endIdx },
+          ],
+        } as unknown as LuaValue;
       }
-      // Simple pattern matching (not full Lua patterns)
-      try {
-        const regex = new RegExp(pattern);
-        const match = s.substring(startIdx).match(regex);
-        if (!match) return { type: 'nil', value: null };
-        return { type: 'number', value: s.indexOf(match[0], startIdx) + 1 };
-      } catch {
-        const idx = s.indexOf(pattern, startIdx);
-        if (idx === -1) return { type: 'nil', value: null };
-        return { type: 'number', value: idx + 1 };
+
+      // Pattern matching using LuaPatternMatcher
+      const matcher = new LuaPatternMatcher(pattern);
+      const result = matcher.find(s, init);
+
+      if (!result) return { type: 'nil', value: null };
+
+      // Return start, end, and any captures
+      const returnValues: LuaValue[] = [
+        { type: 'number', value: result.start },
+        { type: 'number', value: result.end },
+      ];
+
+      // Add captures if any
+      for (const capture of result.captures) {
+        if (typeof capture === 'number') {
+          returnValues.push({ type: 'number', value: capture });
+        } else {
+          returnValues.push({ type: 'string', value: capture });
+        }
       }
+
+      if (returnValues.length === 2) {
+        // No captures - return just start and end
+        return { values: returnValues } as unknown as LuaValue;
+      }
+
+      return { values: returnValues } as unknown as LuaValue;
     }
 
     if (funcName === 'string.match') {
       const s = String(args[0]?.value || '');
       const pattern = String(args[1]?.value || '');
-      try {
-        const regex = new RegExp(pattern);
-        const match = s.match(regex);
-        if (!match) return { type: 'nil', value: null };
-        return { type: 'string', value: match[0] };
-      } catch {
-        if (s.includes(pattern)) return { type: 'string', value: pattern };
-        return { type: 'nil', value: null };
+      const init = (args[2]?.value || 1) as number;
+
+      const matcher = new LuaPatternMatcher(pattern);
+      const result = matcher.match(s, init);
+
+      if (!result) return { type: 'nil', value: null };
+
+      // If there are captures, return them
+      if (result.captures.length > 0) {
+        if (result.captures.length === 1) {
+          const cap = result.captures[0];
+          if (typeof cap === 'number') {
+            return { type: 'number', value: cap };
+          }
+          return { type: 'string', value: cap };
+        }
+        // Multiple captures - return as multiple values
+        return {
+          values: result.captures.map((cap) =>
+            typeof cap === 'number'
+              ? { type: 'number', value: cap }
+              : { type: 'string', value: cap }
+          ),
+        } as unknown as LuaValue;
       }
+
+      // No captures - return the whole match
+      return { type: 'string', value: result.match };
     }
 
     if (funcName === 'string.gsub') {
       const s = String(args[0]?.value || '');
       const pattern = String(args[1]?.value || '');
-      const repl = String(args[2]?.value || '');
+      const replArg = args[2];
       const n = args[3]?.value as number | undefined;
-      try {
-        const regex = new RegExp(pattern, 'g');
-        let count = 0;
-        const result = s.replace(regex, (match) => {
-          if (n !== undefined && count >= n) return match;
-          count++;
-          return repl;
-        });
-        return { type: 'string', value: result };
-      } catch {
-        return { type: 'string', value: s.split(pattern).join(repl) };
+
+      const matcher = new LuaPatternMatcher(pattern);
+
+      let repl: string | ((match: string, ...captures: (string | number)[]) => string) | Record<string, string>;
+
+      if (replArg?.type === 'string') {
+        repl = String(replArg.value);
+      } else if (replArg?.type === 'table') {
+        // Table replacement
+        const table: Record<string, string> = {};
+        const tableVal = replArg.value as Record<string, LuaValue>;
+        for (const [k, v] of Object.entries(tableVal)) {
+          table[k] = String(v?.value ?? '');
+        }
+        repl = table;
+      } else if (replArg?.type === 'function' || context.functions.has(String(replArg?.value))) {
+        // Function replacement
+        const funcName = String(replArg?.value);
+        repl = (match: string, ...captures: (string | number)[]) => {
+          // Call the Lua function with match or captures
+          const funcArgs: LuaValue[] = captures.length > 0
+            ? captures.map((c) => typeof c === 'number'
+              ? { type: 'number', value: c }
+              : { type: 'string', value: c })
+            : [{ type: 'string', value: match }];
+          const result = this.evaluateFunctionCall(funcName, funcArgs, context);
+          if (result?.type === 'nil' || result?.type === 'boolean' && !result.value) {
+            return match; // Keep original if function returns nil or false
+          }
+          return String(result?.value ?? '');
+        };
+      } else {
+        repl = String(replArg?.value ?? '');
       }
+
+      const [result, count] = matcher.gsub(s, repl, n);
+
+      // Return string and count
+      return {
+        values: [
+          { type: 'string', value: result },
+          { type: 'number', value: count },
+        ],
+      } as unknown as LuaValue;
     }
 
     if (funcName === 'string.rep') {
@@ -2166,7 +2255,64 @@ export class LuaEngine {
     }
 
     if (funcName === 'string.gmatch') {
-      // Returns iterator - simplified: just return nil
+      const s = String(args[0]?.value || '');
+      const pattern = String(args[1]?.value || '');
+
+      const matcher = new LuaPatternMatcher(pattern);
+      const iterator = matcher.gmatch(s);
+
+      // Create an iterator function that can be called repeatedly
+      // Store iterator state in a closure-like manner
+      const iteratorId = `__gmatch_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+
+      // Store the iterator in context for later retrieval
+      if (!context.variables.has('__iterators')) {
+        context.variables.set('__iterators', { type: 'table', value: {} });
+      }
+      const iterators = context.variables.get('__iterators')?.value as Record<string, IterableIterator<import('./LuaPatternMatcher').PatternMatch>>;
+      iterators[iteratorId] = iterator;
+
+      // Register the iterator function
+      context.functions.set(iteratorId, {
+        params: [],
+        body: '__builtin_gmatch_iterator',
+        iteratorId,
+      } as LuaFunction & { iteratorId: string });
+
+      return { type: 'function', value: iteratorId };
+    }
+
+    // Handle gmatch iterator calls
+    if (funcName.startsWith('__gmatch_')) {
+      const func = context.functions.get(funcName) as LuaFunction & { iteratorId?: string };
+      if (func?.iteratorId) {
+        const iterators = context.variables.get('__iterators')?.value as Record<string, IterableIterator<import('./LuaPatternMatcher').PatternMatch>>;
+        const iterator = iterators[func.iteratorId];
+        if (iterator) {
+          const result = iterator.next();
+          if (result.done) {
+            return { type: 'nil', value: null };
+          }
+          const match = result.value;
+          // Return captures if any, otherwise return the match
+          if (match.captures.length > 0) {
+            if (match.captures.length === 1) {
+              const cap = match.captures[0];
+              return typeof cap === 'number'
+                ? { type: 'number', value: cap }
+                : { type: 'string', value: cap };
+            }
+            return {
+              values: match.captures.map((c) =>
+                typeof c === 'number'
+                  ? { type: 'number', value: c }
+                  : { type: 'string', value: c }
+              ),
+            } as unknown as LuaValue;
+          }
+          return { type: 'string', value: match.match };
+        }
+      }
       return { type: 'nil', value: null };
     }
 

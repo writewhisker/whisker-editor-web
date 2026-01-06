@@ -47,6 +47,21 @@ export interface LuaValue {
   metatable?: LuaTable;
 }
 
+/**
+ * Represents multiple return values from a function call
+ * Used for: return a, b, c and local x, y, z = func()
+ */
+export interface LuaMultiValue {
+  values: LuaValue[];
+}
+
+/**
+ * Type guard to check if a value is a multi-value return
+ */
+export function isMultiValue(val: LuaValue | LuaMultiValue): val is LuaMultiValue {
+  return 'values' in val && Array.isArray((val as LuaMultiValue).values);
+}
+
 export interface LuaTable {
   [key: string]: LuaValue | LuaTable | undefined;
 }
@@ -61,6 +76,7 @@ export interface LuaCoroutine {
 export interface LuaFunction {
   params: string[];
   body: string;
+  isVariadic?: boolean;  // True if function accepts ... (varargs)
 }
 
 export interface LuaExecutionContext {
@@ -70,6 +86,7 @@ export interface LuaExecutionContext {
   output: string[];
   errors: string[];
   currentCoroutine?: LuaCoroutine;
+  varargs?: LuaValue[]; // Current variadic arguments (...)
 }
 
 /**
@@ -602,11 +619,14 @@ export class LuaEngine {
       return;
     }
 
-    // Return statement
+    // Return statement (supports multiple values: return a, b, c)
     if (statement.startsWith('return ')) {
       const expr = statement.substring(7).trim();
-      const value = this.evaluateExpression(expr, context);
-      throw { type: 'return', value }; // Use exception for control flow
+      const values = this.parseMultipleExpressions(expr, context);
+      if (values.length === 1) {
+        throw { type: 'return', value: values[0] };
+      }
+      throw { type: 'return', value: { values } as LuaMultiValue };
     }
 
     // Return with no value
@@ -701,6 +721,46 @@ export class LuaEngine {
   }
 
   /**
+   * Check if operator appears outside of string literals and brackets
+   * Used to detect binary operators in expressions like "total + t[1]"
+   */
+  private hasOperatorOutsideStringsAndBrackets(expr: string, op: string): boolean {
+    let inString = false;
+    let stringChar = '';
+    let bracketDepth = 0;
+    let parenDepth = 0;
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      // Toggle string state
+      if ((char === '"' || char === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      if (!inString) {
+        // Track bracket depth
+        if (char === '[') bracketDepth++;
+        else if (char === ']') bracketDepth--;
+        else if (char === '(') parenDepth++;
+        else if (char === ')') parenDepth--;
+
+        // Check for operator outside strings and brackets
+        if (bracketDepth === 0 && parenDepth === 0 && expr.substring(i, i + op.length) === op) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Check if expression is a single string literal (not concatenation)
    */
   private isStringLiteral(expr: string): boolean {
@@ -766,11 +826,43 @@ export class LuaEngine {
 
   /**
    * Execute variable assignment
+   * Supports: x = expr, a, b, c = expr1, expr2, expr3, t[key] = value, t.key = value
    */
   private executeAssignment(statement: string, context: LuaExecutionContext): void {
-    const equalIndex = statement.indexOf('=');
-    const varName = statement.substring(0, equalIndex).trim();
-    const expression = statement.substring(equalIndex + 1).trim();
+    const equalIndex = this.findAssignmentOperator(statement);
+    const varsStr = statement.substring(0, equalIndex).trim();
+    const exprsStr = statement.substring(equalIndex + 1).trim();
+
+    // Check if it's a multi-variable assignment (contains comma outside brackets)
+    const varNames = this.parseAssignmentTargets(varsStr);
+
+    if (varNames.length > 1) {
+      // Multiple assignment: a, b, c = expr1, expr2, expr3
+      const values = this.parseMultipleExpressions(exprsStr, context);
+
+      // Handle multi-value returns
+      let expandedValues: LuaValue[] = [];
+      for (let i = 0; i < values.length; i++) {
+        const val = values[i];
+        if (i === values.length - 1 && isMultiValue(val)) {
+          expandedValues = expandedValues.concat(val.values);
+        } else if (isMultiValue(val)) {
+          expandedValues.push(val.values[0] || { type: 'nil', value: null });
+        } else {
+          expandedValues.push(val);
+        }
+      }
+
+      // Assign to each variable
+      for (let i = 0; i < varNames.length; i++) {
+        this.assignToVariable(varNames[i], expandedValues[i] || { type: 'nil', value: null }, context);
+      }
+      return;
+    }
+
+    // Single assignment
+    const varName = varsStr;
+    const expression = exprsStr;
 
     // Handle table assignments: t[key] = value
     if (varName.includes('[') && varName.includes(']')) {
@@ -851,6 +943,53 @@ export class LuaEngine {
 
     // Regular assignment
     const value = this.evaluateExpression(expression, context);
+    this.assignToVariable(varName, value, context);
+  }
+
+  /**
+   * Parse assignment targets (variable names), handling table access
+   */
+  private parseAssignmentTargets(varsStr: string): string[] {
+    const vars: string[] = [];
+    let current = '';
+    let depth = 0;
+
+    for (let i = 0; i < varsStr.length; i++) {
+      const char = varsStr[i];
+
+      if (char === '[') depth++;
+      if (char === ']') depth--;
+
+      if (depth === 0 && char === ',') {
+        if (current.trim()) {
+          vars.push(current.trim());
+        }
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    if (current.trim()) {
+      vars.push(current.trim());
+    }
+
+    return vars;
+  }
+
+  /**
+   * Assign a value to a variable (handles both global and local scope)
+   */
+  private assignToVariable(varName: string, value: LuaValue, context: LuaExecutionContext): void {
+    // Check if variable exists in local scopes first
+    for (let i = context.localScopes.length - 1; i >= 0; i--) {
+      if (context.localScopes[i].has(varName)) {
+        context.localScopes[i].set(varName, value);
+        return;
+      }
+    }
+
+    // Otherwise assign to global
     context.variables.set(varName, value);
   }
 
@@ -863,6 +1002,18 @@ export class LuaEngine {
     // Nil
     if (trimmed === 'nil') {
       return { type: 'nil', value: null };
+    }
+
+    // Varargs (...)
+    if (trimmed === '...') {
+      if (!context.varargs || context.varargs.length === 0) {
+        return { type: 'nil', value: null };
+      }
+      if (context.varargs.length === 1) {
+        return context.varargs[0];
+      }
+      // Return multiple values
+      return { values: context.varargs } as LuaMultiValue as unknown as LuaValue;
     }
 
     // Boolean literals
@@ -907,7 +1058,14 @@ export class LuaEngine {
     }
 
     // Table indexing (before function call to handle t[key] correctly)
-    if (trimmed.includes('[') && trimmed.includes(']')) {
+    // Only match if it's a simple table index like t[1], t[key], or t.field[1]
+    // NOT expressions like "total + t[1]" which should go to binary operators
+    if (trimmed.includes('[') && trimmed.includes(']') &&
+        !this.hasOperatorOutsideStringsAndBrackets(trimmed, '+') &&
+        !this.hasOperatorOutsideStringsAndBrackets(trimmed, '-') &&
+        !this.hasOperatorOutsideStringsAndBrackets(trimmed, '*') &&
+        !this.hasOperatorOutsideStringsAndBrackets(trimmed, '/') &&
+        !this.hasOperatorOutsideStringsAndBrackets(trimmed, '..')) {
       return this.evaluateTableIndex(trimmed, context);
     }
 
@@ -1344,13 +1502,20 @@ export class LuaEngine {
       if (args.length === 0 || args[0].type !== 'table') return { type: 'nil', value: null };
       const t = args[0].value as Record<string, LuaValue>;
       const i = args[1]?.value || 1;
-      const j = args[2]?.value || Object.keys(t).length;
+      // For j, find the max numeric index if not specified
+      let j = args[2]?.value;
+      if (j === undefined) {
+        const keys = Object.keys(t).map(Number).filter(n => !isNaN(n));
+        j = keys.length > 0 ? Math.max(...keys) : 0;
+      }
       const result: LuaValue[] = [];
       for (let k = i; k <= j; k++) {
         result.push(t[String(k)] || { type: 'nil', value: null });
       }
-      // Return first element for now (full multiple return not supported)
-      return result[0] || { type: 'nil', value: null };
+      // Return multiple values
+      if (result.length === 0) return { type: 'nil', value: null };
+      if (result.length === 1) return result[0];
+      return { values: result } as LuaMultiValue as unknown as LuaValue;
     }
 
     // pcall - Protected call (catches errors and returns status + result)
@@ -2122,12 +2287,30 @@ export class LuaEngine {
         funcScope.set(paramName, argValue);
       }
 
+      // Handle variadic functions - save previous varargs and set new ones
+      const prevVarargs = context.varargs;
+      if (userFunc.isVariadic) {
+        // Extra args after named parameters become varargs
+        context.varargs = args.slice(userFunc.params.length);
+        // Also create 'arg' table for Lua 5.1 compatibility
+        const argTable: Record<string, LuaValue> = {};
+        context.varargs.forEach((v, i) => {
+          argTable[String(i + 1)] = v;
+        });
+        argTable['n'] = { type: 'number', value: context.varargs.length };
+        funcScope.set('arg', { type: 'table', value: argTable });
+      } else {
+        context.varargs = undefined;
+      }
+
       // Execute function body
       try {
         this.executeBlock(userFunc.body, context);
+        context.varargs = prevVarargs; // Restore previous varargs
         context.localScopes.pop();
         return { type: 'nil', value: null }; // Default return
       } catch (error) {
+        context.varargs = prevVarargs; // Restore previous varargs
         context.localScopes.pop();
         // Check if it's a return statement
         if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
@@ -2192,14 +2375,17 @@ export class LuaEngine {
 
   /**
    * Parse function arguments, respecting string literals
+   * Expands LuaMultiValue from the last argument (e.g., select('#', ...))
    */
   private parseArguments(argsStr: string, context: LuaExecutionContext): LuaValue[] {
     const args: LuaValue[] = [];
+    const expressions: string[] = [];
     let current = '';
     let inString = false;
     let stringChar = '';
     let depth = 0;
 
+    // First, collect all expression strings
     for (let i = 0; i < argsStr.length; i++) {
       const char = argsStr[i];
 
@@ -2219,7 +2405,7 @@ export class LuaEngine {
         current += char;
       } else if (!inString && depth === 0 && char === ',') {
         if (current.trim()) {
-          args.push(this.evaluateExpression(current.trim(), context));
+          expressions.push(current.trim());
         }
         current = '';
       } else {
@@ -2228,14 +2414,68 @@ export class LuaEngine {
     }
 
     if (current.trim()) {
-      args.push(this.evaluateExpression(current.trim(), context));
+      expressions.push(current.trim());
+    }
+
+    // Now evaluate expressions, expanding multi-values from the last one
+    for (let i = 0; i < expressions.length; i++) {
+      const value = this.evaluateExpression(expressions[i], context);
+
+      // Only expand multi-values from the last expression
+      if (i === expressions.length - 1 && isMultiValue(value as unknown as LuaMultiValue)) {
+        args.push(...(value as unknown as LuaMultiValue).values);
+      } else {
+        // For non-last positions, take first value of multi-value
+        if (isMultiValue(value as unknown as LuaMultiValue)) {
+          const mv = value as unknown as LuaMultiValue;
+          args.push(mv.values[0] || { type: 'nil', value: null });
+        } else {
+          args.push(value);
+        }
+      }
     }
 
     return args;
   }
 
   /**
+   * Parse multiple comma-separated expressions (for return a, b, c and local x, y = a, b)
+   * Handles nested parentheses, braces, brackets, and string literals
+   */
+  private parseMultipleExpressions(exprStr: string, context: LuaExecutionContext): LuaValue[] {
+    // Reuse parseArguments logic - it does exactly what we need
+    return this.parseArguments(exprStr, context);
+  }
+
+  /**
+   * Parse multiple variable names (for local a, b, c = ...)
+   */
+  private parseVariableNames(varsStr: string): string[] {
+    const vars: string[] = [];
+    let current = '';
+
+    for (let i = 0; i < varsStr.length; i++) {
+      const char = varsStr[i];
+      if (char === ',') {
+        if (current.trim()) {
+          vars.push(current.trim());
+        }
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+
+    if (current.trim()) {
+      vars.push(current.trim());
+    }
+
+    return vars;
+  }
+
+  /**
    * Evaluate table literal
+   * Handles: {1, 2, 3}, {a=1, b=2}, {[key]=val}, and {...} for varargs
    */
   private evaluateTableLiteral(expr: string, context: LuaExecutionContext): LuaValue {
     const content = expr.slice(1, -1).trim(); // Remove { }
@@ -2244,21 +2484,89 @@ export class LuaEngine {
     }
 
     const table: Record<string, LuaValue> = {};
-    const parts = content.split(',').map(p => p.trim());
     let numericIndex = 1;
 
-    for (const part of parts) {
-      if (part.includes('=')) {
-        // Key-value pair: key = value
-        const eqIndex = part.indexOf('=');
-        const key = part.substring(0, eqIndex).trim();
-        const valueExpr = part.substring(eqIndex + 1).trim();
+    // Parse table entries properly (respecting nested brackets, parens, strings)
+    const entries: string[] = [];
+    let current = '';
+    let depth = 0;
+    let inString = false;
+    let stringChar = '';
+
+    for (let i = 0; i < content.length; i++) {
+      const char = content[i];
+
+      if (!inString && (char === '"' || char === "'")) {
+        inString = true;
+        stringChar = char;
+        current += char;
+      } else if (inString && char === stringChar && content[i - 1] !== '\\') {
+        inString = false;
+        stringChar = '';
+        current += char;
+      } else if (!inString && (char === '(' || char === '{' || char === '[')) {
+        depth++;
+        current += char;
+      } else if (!inString && (char === ')' || char === '}' || char === ']')) {
+        depth--;
+        current += char;
+      } else if (!inString && depth === 0 && (char === ',' || char === ';')) {
+        if (current.trim()) {
+          entries.push(current.trim());
+        }
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    if (current.trim()) {
+      entries.push(current.trim());
+    }
+
+    for (let i = 0; i < entries.length; i++) {
+      const part = entries[i];
+      const isLast = i === entries.length - 1;
+
+      // Check for [key] = value pattern
+      if (part.startsWith('[')) {
+        const closeBracket = part.indexOf(']');
+        if (closeBracket !== -1) {
+          const keyExpr = part.substring(1, closeBracket);
+          const rest = part.substring(closeBracket + 1).trim();
+          if (rest.startsWith('=')) {
+            const valueExpr = rest.substring(1).trim();
+            const keyValue = this.evaluateExpression(keyExpr, context);
+            const value = this.evaluateExpression(valueExpr, context);
+            table[String(keyValue.value)] = value;
+            continue;
+          }
+        }
+      }
+
+      // Check for key = value pattern (not ==)
+      const eqMatch = part.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=(?!=)/);
+      if (eqMatch) {
+        const key = eqMatch[1];
+        const valueExpr = part.substring(eqMatch[0].length).trim();
         const value = this.evaluateExpression(valueExpr, context);
         table[key] = value;
       } else {
-        // Array-style: {1, 2, 3} -> {[1] = 1, [2] = 2, [3] = 3}
+        // Array-style: value only
         const value = this.evaluateExpression(part, context);
-        table[String(numericIndex++)] = value;
+
+        // Expand multi-values only if this is the last entry
+        if (isLast && isMultiValue(value as unknown as LuaMultiValue)) {
+          const mv = value as unknown as LuaMultiValue;
+          for (const v of mv.values) {
+            table[String(numericIndex++)] = v;
+          }
+        } else if (isMultiValue(value as unknown as LuaMultiValue)) {
+          // For non-last, take first value only
+          const mv = value as unknown as LuaMultiValue;
+          table[String(numericIndex++)] = mv.values[0] || { type: 'nil', value: null };
+        } else {
+          table[String(numericIndex++)] = value;
+        }
       }
     }
 
@@ -2655,7 +2963,14 @@ export class LuaEngine {
 
     const funcName = funcMatch[1];
     const paramsStr = funcMatch[2].trim();
-    const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+    let params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+    // Check for variadic function (... parameter)
+    let isVariadic = false;
+    if (params.length > 0 && params[params.length - 1] === '...') {
+      isVariadic = true;
+      params = params.slice(0, -1); // Remove ... from params
+    }
 
     // Extract body using depth tracking (similar to while/for loops)
     const afterParams = fullCode.substring(funcMatch[0].length).trim();
@@ -2682,7 +2997,7 @@ export class LuaEngine {
     const body = bodyLines.join('\n').trim();
 
     // Store function definition
-    context.functions.set(funcName, { params, body });
+    context.functions.set(funcName, { params, body, isVariadic });
   }
 
   /**
@@ -2697,7 +3012,14 @@ export class LuaEngine {
 
     const funcName = funcMatch[1];
     const paramsStr = funcMatch[2].trim();
-    const params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+    let params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+    // Check for variadic function (... parameter)
+    let isVariadic = false;
+    if (params.length > 0 && params[params.length - 1] === '...') {
+      isVariadic = true;
+      params = params.slice(0, -1); // Remove ... from params
+    }
 
     // Extract body using depth tracking
     const afterParams = fullCode.substring(funcMatch[0].length).trim();
@@ -2723,39 +3045,98 @@ export class LuaEngine {
     const body = bodyLines.join('\n').trim();
 
     // Store function in current local scope if exists, otherwise global
-    context.functions.set(funcName, { params, body });
+    context.functions.set(funcName, { params, body, isVariadic });
   }
 
   /**
    * Execute local variable assignment
+   * Supports: local x, local x = expr, local a, b, c = expr1, expr2, expr3
    */
   private executeLocalAssignment(statement: string, context: LuaExecutionContext): void {
-    // Parse: local var = expr  OR  local var
+    // Parse: local var = expr  OR  local var  OR  local a, b = expr1, expr2
     const withoutLocal = statement.substring(6).trim(); // Remove 'local '
-
-    // Check if there's an assignment
-    const equalIndex = withoutLocal.indexOf('=');
-    if (equalIndex === -1) {
-      // Just declaration: local x
-      const varName = withoutLocal.trim();
-      // Add to current local scope or create one
-      if (context.localScopes.length === 0) {
-        context.localScopes.push(new Map());
-      }
-      context.localScopes[context.localScopes.length - 1].set(varName, { type: 'nil', value: null });
-      return;
-    }
-
-    // Declaration with assignment: local x = expr
-    const varName = withoutLocal.substring(0, equalIndex).trim();
-    const expression = withoutLocal.substring(equalIndex + 1).trim();
-    const value = this.evaluateExpression(expression, context);
 
     // Add to current local scope or create one
     if (context.localScopes.length === 0) {
       context.localScopes.push(new Map());
     }
-    context.localScopes[context.localScopes.length - 1].set(varName, value);
+    const currentScope = context.localScopes[context.localScopes.length - 1];
+
+    // Check if there's an assignment
+    const equalIndex = this.findAssignmentOperator(withoutLocal);
+    if (equalIndex === -1) {
+      // Just declaration: local x or local a, b, c
+      const varNames = this.parseVariableNames(withoutLocal);
+      for (const varName of varNames) {
+        currentScope.set(varName, { type: 'nil', value: null });
+      }
+      return;
+    }
+
+    // Declaration with assignment: local x = expr or local a, b, c = expr1, expr2, expr3
+    const varsStr = withoutLocal.substring(0, equalIndex).trim();
+    const exprsStr = withoutLocal.substring(equalIndex + 1).trim();
+
+    const varNames = this.parseVariableNames(varsStr);
+    const values = this.parseMultipleExpressions(exprsStr, context);
+
+    // Handle multi-value returns: if last value is a multi-value, expand it
+    let expandedValues: LuaValue[] = [];
+    for (let i = 0; i < values.length; i++) {
+      const val = values[i];
+      if (i === values.length - 1 && isMultiValue(val)) {
+        // Last expression is a multi-value, expand it
+        expandedValues = expandedValues.concat(val.values);
+      } else if (isMultiValue(val)) {
+        // Non-last multi-value, only take first value
+        expandedValues.push(val.values[0] || { type: 'nil', value: null });
+      } else {
+        expandedValues.push(val);
+      }
+    }
+
+    // Assign values to variables (extra variables get nil, extra values are discarded)
+    for (let i = 0; i < varNames.length; i++) {
+      currentScope.set(varNames[i], expandedValues[i] || { type: 'nil', value: null });
+    }
+  }
+
+  /**
+   * Find the assignment operator (=) that's not part of ==, ~=, <=, >=
+   */
+  private findAssignmentOperator(str: string): number {
+    let inString = false;
+    let stringChar = '';
+    let depth = 0;
+
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const prev = i > 0 ? str[i - 1] : '';
+      const next = i < str.length - 1 ? str[i + 1] : '';
+
+      // Handle string state
+      if ((char === '"' || char === "'") && prev !== '\\') {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      if (inString) continue;
+
+      // Track parentheses/brackets depth
+      if (char === '(' || char === '{' || char === '[') depth++;
+      if (char === ')' || char === '}' || char === ']') depth--;
+
+      // Find = that's not part of ==, ~=, <=, >=
+      if (depth === 0 && char === '=' && prev !== '=' && prev !== '~' && prev !== '<' && prev !== '>' && next !== '=') {
+        return i;
+      }
+    }
+
+    return -1;
   }
 
   /**
@@ -3181,7 +3562,7 @@ export class LuaEngine {
       if (!line) continue;
 
       // Check for block start keywords (only when NOT already in a block)
-      if (/^(while|for|if|function)\s/.test(line) && !inBlock) {
+      if (/^(while|for|if|function|local function)\s/.test(line) && !inBlock) {
         inBlock = true;
         blockDepth = 1;
         currentStatement = line;
@@ -3201,7 +3582,7 @@ export class LuaEngine {
         currentStatement += '\n' + line;
 
         // Track nested blocks
-        if (/\b(while|for|if|function)\s/.test(line)) {
+        if (/\b(while|for|if|function|local function)\s/.test(line)) {
           blockDepth++;
         }
         if (line === 'repeat' || line.startsWith('repeat ')) {

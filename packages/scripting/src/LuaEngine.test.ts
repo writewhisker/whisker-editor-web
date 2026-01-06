@@ -1375,4 +1375,201 @@ describe('LuaEngine', () => {
       });
     });
   });
+
+  describe('Multiple Return Values (Lua 5.1+)', () => {
+    it('should handle multiple return values from function', () => {
+      const code = `
+        function multiReturn()
+          return 1, 2, 3
+        end
+        a, b, c = multiReturn()
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('a')).toBe(1);
+      expect(engine.getVariable('b')).toBe(2);
+      expect(engine.getVariable('c')).toBe(3);
+    });
+
+    it('should handle local multiple assignment', () => {
+      const code = `
+        local a, b, c = 1, 2, 3
+        result = a + b + c
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(6);
+    });
+
+    it('should assign nil to extra variables', () => {
+      const code = `
+        local a, b, c = 1, 2
+        result_a = a
+        result_b = b
+        result_c = c
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result_a')).toBe(1);
+      expect(engine.getVariable('result_b')).toBe(2);
+      expect(engine.getVariable('result_c')).toBeNull();
+    });
+
+    it('should discard extra values', () => {
+      const code = `
+        local a, b = 1, 2, 3, 4
+        result_a = a
+        result_b = b
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result_a')).toBe(1);
+      expect(engine.getVariable('result_b')).toBe(2);
+    });
+
+    it('should handle unpack with multiple return values', () => {
+      const code = `
+        t = {10, 20, 30}
+        a, b, c = unpack(t)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('a')).toBe(10);
+      expect(engine.getVariable('b')).toBe(20);
+      expect(engine.getVariable('c')).toBe(30);
+    });
+
+    it('should handle function returning multiple values to local', () => {
+      const code = `
+        function getCoords()
+          return 100, 200
+        end
+        local x, y = getCoords()
+        result_x = x
+        result_y = y
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result_x')).toBe(100);
+      expect(engine.getVariable('result_y')).toBe(200);
+    });
+
+    it('should handle multiple local declarations without assignment', () => {
+      const code = `
+        local a, b, c
+        a = 1
+        b = 2
+        c = 3
+        result = a + b + c
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(6);
+    });
+  });
+
+  describe('Variadic Functions (Lua 5.1+)', () => {
+    it('should define and call a variadic function', () => {
+      const code = `
+        function sum(...)
+          local total = 0
+          local args = {...}
+          for i = 1, #args do
+            total = total + args[i]
+          end
+          return total
+        end
+        result = sum(1, 2, 3, 4, 5)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(15);
+    });
+
+    it('should support select("#", ...) to get vararg count', () => {
+      const code = `
+        function count(...)
+          return select("#", ...)
+        end
+        result = count(10, 20, 30)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(3);
+    });
+
+    it('should support select(n, ...) to get nth vararg', () => {
+      const code = `
+        function getSecond(...)
+          return select(2, ...)
+        end
+        result = getSecond("a", "b", "c")
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('b');
+    });
+
+    it('should support arg table (Lua 5.1 style)', () => {
+      const code = `
+        function first(...)
+          return arg[1]
+        end
+        result = first("hello", "world")
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('hello');
+    });
+
+    it('should handle mixed named params and varargs', () => {
+      const code = `
+        function greet(name, ...)
+          local titles = {...}
+          return name
+        end
+        result = greet("Alice", "Dr.", "PhD")
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Alice');
+    });
+
+    it('should handle varargs in local function', () => {
+      const code = `
+        local function varfunc(...)
+          local a = {...}
+          return #a
+        end
+        result = varfunc(1, 2, 3)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(3);
+    });
+
+    it('should return nil for ... when no varargs', () => {
+      const code = `
+        function noVarargs()
+          return ...
+        end
+        result = noVarargs()
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeNull();
+    });
+
+    it('should support arg.n for vararg count', () => {
+      const code = `
+        function getCount(...)
+          return arg.n
+        end
+        result = getCount(1, 2, 3, 4)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(4);
+    });
+  });
 });

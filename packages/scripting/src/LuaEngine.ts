@@ -49,6 +49,10 @@ export interface LuaValue {
   type: 'nil' | 'boolean' | 'number' | 'string' | 'table' | 'function' | 'coroutine';
   value: any;
   metatable?: LuaTable;
+  /** Lua 5.4 variable attribute: 'const' prevents reassignment, 'close' calls __close on scope exit */
+  attribute?: 'const' | 'close';
+  /** Internal marker for _G global environment table */
+  __isGlobalEnv?: boolean;
 }
 
 /**
@@ -213,12 +217,14 @@ export class LuaEngine {
    * Initialize standard library functions
    */
   private initializeStandardLibrary(): void {
-    // Set math.pi constant
+    // Set math constants
     this.globalContext.variables.set('math', {
       type: 'table',
       value: {
         pi: { type: 'number', value: Math.PI },
         huge: { type: 'number', value: Infinity },
+        maxinteger: { type: 'number', value: Number.MAX_SAFE_INTEGER },
+        mininteger: { type: 'number', value: Number.MIN_SAFE_INTEGER },
       },
     });
 
@@ -292,6 +298,11 @@ export class LuaEngine {
       body: '__builtin_rawequal',
     });
 
+    this.globalContext.functions.set('rawlen', {
+      params: ['v'],
+      body: '__builtin_rawlen',
+    });
+
     // select function
     this.globalContext.functions.set('select', {
       params: ['index', '...'],
@@ -328,6 +339,36 @@ export class LuaEngine {
       body: '__builtin_getmetatable',
     });
 
+    // warn function (Lua 5.4)
+    this.globalContext.functions.set('warn', {
+      params: ['...'],
+      body: '__builtin_warn',
+    });
+
+    // _VERSION global
+    this.globalContext.variables.set('_VERSION', {
+      type: 'string',
+      value: 'Lua 5.4',
+    });
+
+    // _G - reference to the global environment table
+    // We create a proxy table that reflects globalContext.variables
+    this.globalContext.variables.set('_G', {
+      type: 'table',
+      value: {}, // This will be populated dynamically
+      __isGlobalEnv: true, // Marker for special handling
+    });
+
+    // package.loaded - table of loaded modules for require()
+    this.globalContext.variables.set('package', {
+      type: 'table',
+      value: {
+        loaded: { type: 'table', value: {} },
+        path: { type: 'string', value: './?.lua;./?/init.lua' },
+        preload: { type: 'table', value: {} },
+      },
+    });
+
     // Coroutine functions
     this.globalContext.functions.set('coroutine.create', {
       params: ['f'],
@@ -357,6 +398,16 @@ export class LuaEngine {
     this.globalContext.functions.set('coroutine.running', {
       params: [],
       body: '__builtin_coroutine_running',
+    });
+
+    this.globalContext.functions.set('coroutine.close', {
+      params: ['co'],
+      body: '__builtin_coroutine_close',
+    });
+
+    this.globalContext.functions.set('coroutine.isyieldable', {
+      params: ['co'],
+      body: '__builtin_coroutine_isyieldable',
     });
 
     // Math functions
@@ -475,6 +526,38 @@ export class LuaEngine {
       body: '__builtin_math_modf',
     });
 
+    // Hyperbolic functions
+    this.globalContext.functions.set('math.sinh', {
+      params: ['x'],
+      body: '__builtin_math_sinh',
+    });
+
+    this.globalContext.functions.set('math.cosh', {
+      params: ['x'],
+      body: '__builtin_math_cosh',
+    });
+
+    this.globalContext.functions.set('math.tanh', {
+      params: ['x'],
+      body: '__builtin_math_tanh',
+    });
+
+    // Lua 5.3+ math functions
+    this.globalContext.functions.set('math.tointeger', {
+      params: ['x'],
+      body: '__builtin_math_tointeger',
+    });
+
+    this.globalContext.functions.set('math.type', {
+      params: ['x'],
+      body: '__builtin_math_type',
+    });
+
+    this.globalContext.functions.set('math.ult', {
+      params: ['m', 'n'],
+      body: '__builtin_math_ult',
+    });
+
     // String functions
     this.globalContext.functions.set('string.upper', {
       params: ['s'],
@@ -566,6 +649,82 @@ export class LuaEngine {
       params: ['t'],
       body: '__builtin_table_maxn',
     });
+
+    this.globalContext.functions.set('table.pack', {
+      params: ['...'],
+      body: '__builtin_table_pack',
+    });
+
+    this.globalContext.functions.set('table.unpack', {
+      params: ['t', 'i', 'j'],
+      body: '__builtin_table_unpack',
+    });
+
+    this.globalContext.functions.set('table.move', {
+      params: ['a1', 'f', 'e', 't', 'a2'],
+      body: '__builtin_table_move',
+    });
+
+    // Global unpack (Lua 5.1 compatibility)
+    this.globalContext.functions.set('unpack', {
+      params: ['t', 'i', 'j'],
+      body: '__builtin_unpack',
+    });
+
+    // os library (safe subset for browser)
+    this.globalContext.functions.set('os.time', {
+      params: ['t'],
+      body: '__builtin_os_time',
+    });
+
+    this.globalContext.functions.set('os.date', {
+      params: ['format', 'time'],
+      body: '__builtin_os_date',
+    });
+
+    this.globalContext.functions.set('os.clock', {
+      params: [],
+      body: '__builtin_os_clock',
+    });
+
+    this.globalContext.functions.set('os.difftime', {
+      params: ['t2', 't1'],
+      body: '__builtin_os_difftime',
+    });
+
+    // utf8 library
+    this.globalContext.functions.set('utf8.char', {
+      params: ['...'],
+      body: '__builtin_utf8_char',
+    });
+
+    this.globalContext.functions.set('utf8.codepoint', {
+      params: ['s', 'i', 'j'],
+      body: '__builtin_utf8_codepoint',
+    });
+
+    this.globalContext.functions.set('utf8.len', {
+      params: ['s', 'i', 'j'],
+      body: '__builtin_utf8_len',
+    });
+
+    this.globalContext.functions.set('utf8.offset', {
+      params: ['s', 'n', 'i'],
+      body: '__builtin_utf8_offset',
+    });
+
+    this.globalContext.functions.set('utf8.codes', {
+      params: ['s'],
+      body: '__builtin_utf8_codes',
+    });
+
+    // utf8.charpattern is a constant, not a function
+    this.globalContext.variables.set('utf8', {
+      type: 'table',
+      value: {
+        charpattern: { type: 'string', value: '[\\0-\\x7F\\xC2-\\xFD][\\x80-\\xBF]*' },
+      },
+    });
   }
 
   /**
@@ -578,16 +737,43 @@ export class LuaEngine {
     // Split into statements
     const statements = this.splitStatements(cleanCode);
 
-    for (const statement of statements) {
-      const trimmed = statement.trim();
-      if (!trimmed) continue;
+    // Build label index map for goto support
+    const labelIndices = new Map<string, number>();
+    for (let i = 0; i < statements.length; i++) {
+      const trimmed = statements[i].trim();
+      if (trimmed.startsWith('::') && trimmed.endsWith('::')) {
+        const label = trimmed.slice(2, -2).trim();
+        labelIndices.set(label, i);
+      }
+    }
+
+    let i = 0;
+    while (i < statements.length) {
+      const trimmed = statements[i].trim();
+      if (!trimmed) {
+        i++;
+        continue;
+      }
 
       try {
         this.executeStatement(trimmed, context);
+        i++;
       } catch (error) {
         // Re-throw return statements (they're not errors)
         if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
           throw error;
+        }
+        // Handle goto statements
+        if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'goto') {
+          const gotoError = error as { type: string; label: string };
+          const targetIndex = labelIndices.get(gotoError.label);
+          if (targetIndex === undefined) {
+            // Label not found in this block - re-throw for outer block to handle
+            throw error;
+          }
+          // Jump to label (the label statement itself will be skipped by executeStatement)
+          i = targetIndex;
+          continue;
         }
         // Re-throw break statements (they need to propagate to loops)
         if (error instanceof Error && error.message === 'break') {
@@ -596,6 +782,7 @@ export class LuaEngine {
         context.errors.push(
           `Error in statement "${trimmed}": ${error instanceof Error ? error.message : String(error)}`
         );
+        i++;
       }
     }
   }
@@ -605,6 +792,18 @@ export class LuaEngine {
    */
   private executeStatement(statement: string, context: LuaExecutionContext): void {
     // Check for control structures first (before assignment check)
+
+    // Label definition (::label::) - just a marker, no action needed
+    if (statement.startsWith('::') && statement.endsWith('::')) {
+      // Labels are handled in executeBlock for goto jumps
+      return;
+    }
+
+    // Goto statement
+    if (statement.startsWith('goto ')) {
+      const label = statement.substring(5).trim();
+      throw { type: 'goto', label };
+    }
 
     // Break statement
     if (statement === 'break') {
@@ -805,6 +1004,21 @@ export class LuaEngine {
    * Check if expression is a single string literal (not concatenation)
    */
   private isStringLiteral(expr: string): boolean {
+    // Check for long string literals [[...]] or [=[...]=] etc.
+    if (expr.startsWith('[')) {
+      const longStringMatch = expr.match(/^\[(=*)\[/);
+      if (longStringMatch) {
+        const equals = longStringMatch[1];
+        const closePattern = `]${equals}]`;
+        const closeIndex = expr.indexOf(closePattern, 2 + equals.length);
+        if (closeIndex !== -1) {
+          const remaining = expr.substring(closeIndex + closePattern.length).trim();
+          return remaining.length === 0;
+        }
+      }
+      return false;
+    }
+
     if (!expr.startsWith('"') && !expr.startsWith("'")) {
       return false;
     }
@@ -823,6 +1037,35 @@ export class LuaEngine {
     }
 
     return false; // No closing quote found
+  }
+
+  /**
+   * Check if expression is a long string literal [[...]] or [=[...]=]
+   */
+  private isLongStringLiteral(expr: string): boolean {
+    if (!expr.startsWith('[')) return false;
+    const match = expr.match(/^\[(=*)\[/);
+    if (!match) return false;
+    const equals = match[1];
+    const closePattern = `]${equals}]`;
+    return expr.endsWith(closePattern);
+  }
+
+  /**
+   * Extract content from long string literal
+   */
+  private extractLongString(expr: string): string {
+    const match = expr.match(/^\[(=*)\[/);
+    if (!match) return '';
+    const equals = match[1];
+    const openLen = 2 + equals.length;
+    const closeLen = 2 + equals.length;
+    let content = expr.substring(openLen, expr.length - closeLen);
+    // Remove leading newline if present (Lua spec)
+    if (content.startsWith('\n')) {
+      content = content.substring(1);
+    }
+    return content;
   }
 
   /**
@@ -905,17 +1148,22 @@ export class LuaEngine {
     const varName = varsStr;
     const expression = exprsStr;
 
-    // Handle table assignments: t[key] = value
+    // Handle table assignments: t[key] = value, t.field[key] = value, t[a][b] = value
     if (varName.includes('[') && varName.includes(']')) {
       const bracketIndex = varName.indexOf('[');
-      const tableName = varName.substring(0, bracketIndex).trim();
+      const tableExpr = varName.substring(0, bracketIndex).trim();
       const keyExpr = varName.substring(bracketIndex + 1, varName.lastIndexOf(']')).trim();
 
-      let tableValue = this.lookupVariable(tableName, context);
+      // Evaluate the table expression (could be "t", "t.field", "t[a]", etc.)
+      let tableValue = this.evaluateExpression(tableExpr, context);
       if (!tableValue || tableValue.type !== 'table') {
-        // Create new table if it doesn't exist
-        tableValue = { type: 'table', value: {} };
-        context.variables.set(tableName, tableValue);
+        // If the table doesn't exist and it's a simple variable name, create it
+        if (!tableExpr.includes('.') && !tableExpr.includes('[')) {
+          tableValue = { type: 'table', value: {} };
+          context.variables.set(tableExpr, tableValue);
+        } else {
+          throw new Error(`attempt to index a ${tableValue?.type || 'nil'} value`);
+        }
       }
 
       const keyValue = this.evaluateExpression(keyExpr, context);
@@ -1033,6 +1281,15 @@ export class LuaEngine {
     // Check if variable exists in local scopes first
     for (let i = context.localScopes.length - 1; i >= 0; i--) {
       if (context.localScopes[i].has(varName)) {
+        const existing = context.localScopes[i].get(varName);
+        // Lua 5.4: prevent reassignment of <const> variables
+        if (existing?.attribute === 'const') {
+          throw new Error(`attempt to assign to const variable '${varName}'`);
+        }
+        // Preserve attribute on reassignment (for <close> variables)
+        if (existing?.attribute) {
+          value.attribute = existing.attribute;
+        }
         context.localScopes[i].set(varName, value);
         return;
       }
@@ -1040,6 +1297,77 @@ export class LuaEngine {
 
     // Otherwise assign to global
     context.variables.set(varName, value);
+  }
+
+  /**
+   * Exit a local scope, calling __close metamethods on <close> variables (Lua 5.4)
+   * Variables are closed in reverse order of declaration
+   */
+  private exitScope(context: LuaExecutionContext, errorValue?: LuaValue): void {
+    if (context.localScopes.length === 0) return;
+
+    const scope = context.localScopes[context.localScopes.length - 1];
+
+    // Collect <close> variables in reverse order (iterate backwards through scope entries)
+    const closeVars: Array<{ name: string; value: LuaValue }> = [];
+    scope.forEach((value, name) => {
+      if (value.attribute === 'close') {
+        closeVars.unshift({ name, value }); // Add to front for reverse order
+      }
+    });
+
+    // Call __close on each <close> variable
+    for (const { name, value } of closeVars) {
+      if (value.type === 'nil') {
+        // nil values are allowed, just skip
+        continue;
+      }
+
+      if (value.type === 'table' && value.metatable?.__close) {
+        const closeFunc = value.metatable.__close;
+        if (closeFunc.type === 'string') {
+          // It's a function name
+          const userFunc = context.functions.get(closeFunc.value as string);
+          if (userFunc) {
+            const funcScope = new Map<string, LuaValue>();
+            context.localScopes.push(funcScope);
+            // __close receives: the value, and error value (or nil)
+            funcScope.set(userFunc.params[0] || 'self', value);
+            funcScope.set(userFunc.params[1] || 'err', errorValue || { type: 'nil', value: null });
+            try {
+              this.executeBlock(userFunc.body, context);
+            } catch {
+              // Errors in __close are suppressed (as per Lua 5.4 spec)
+            }
+            context.localScopes.pop();
+          }
+        } else if (closeFunc.type === 'function') {
+          // It's a function value
+          const funcValue = closeFunc.value as { name?: string };
+          if (funcValue.name) {
+            const userFunc = context.functions.get(funcValue.name);
+            if (userFunc) {
+              const funcScope = new Map<string, LuaValue>();
+              context.localScopes.push(funcScope);
+              funcScope.set(userFunc.params[0] || 'self', value);
+              funcScope.set(userFunc.params[1] || 'err', errorValue || { type: 'nil', value: null });
+              try {
+                this.executeBlock(userFunc.body, context);
+              } catch {
+                // Errors in __close are suppressed
+              }
+              context.localScopes.pop();
+            }
+          }
+        }
+      } else {
+        // Lua 5.4: non-nil value without __close metamethod is an error
+        throw new Error(`variable '${name}' got a non-closable value`);
+      }
+    }
+
+    // Pop the scope
+    context.localScopes.pop();
   }
 
   /**
@@ -1096,14 +1424,57 @@ export class LuaEngine {
       throw new Error(`attempt to get length of a ${operand.type} value`);
     }
 
+    // Unary minus (-) with __unm metamethod support
+    if (trimmed.startsWith('-')) {
+      const rest = trimmed.substring(1).trim();
+      // Make sure it's not a negative number literal
+      if (!/^\d/.test(rest)) {
+        const operand = this.evaluateExpression(rest, context);
+
+        // Check for __unm metamethod
+        const unmResult = this.tryMetamethod(operand, '__unm', [operand], context);
+        if (unmResult) return unmResult;
+
+        if (operand.type === 'number') {
+          return { type: 'number', value: -(operand.value as number) };
+        }
+        throw new Error(`attempt to perform arithmetic on a ${operand.type} value`);
+      }
+    }
+
+    // Unary bitwise NOT (~) with __bnot metamethod support
+    if (trimmed.startsWith('~') && !trimmed.startsWith('~=')) {
+      const rest = trimmed.substring(1).trim();
+      const operand = this.evaluateExpression(rest, context);
+
+      // Check for __bnot metamethod
+      const bnotResult = this.tryMetamethod(operand, '__bnot', [operand], context);
+      if (bnotResult) return bnotResult;
+
+      if (operand.type === 'number') {
+        return { type: 'number', value: ~(operand.value as number | 0) };
+      }
+      throw new Error(`attempt to perform bitwise operation on a ${operand.type} value`);
+    }
+
     // String literals (only if it's a SINGLE complete string, not concatenation)
     if (this.isStringLiteral(trimmed)) {
+      // Check for long string literals [[...]] or [=[...]=]
+      if (this.isLongStringLiteral(trimmed)) {
+        return { type: 'string', value: this.extractLongString(trimmed) };
+      }
+      // Regular quoted string
       return { type: 'string', value: trimmed.slice(1, -1) };
     }
 
     // Table literals
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       return this.evaluateTableLiteral(trimmed, context);
+    }
+
+    // Anonymous function expression: function(params) ... end
+    if (trimmed.startsWith('function(') || trimmed.startsWith('function (')) {
+      return this.parseAnonymousFunction(trimmed, context);
     }
 
     // Function call - check BEFORE table indexing since function arguments may contain [...]
@@ -1131,17 +1502,56 @@ export class LuaEngine {
       const key = trimmed.substring(dotIndex + 1);
       const tableValue = this.lookupVariable(tableName, context);
       if (tableValue?.type === 'table') {
-        return tableValue.value[key] || { type: 'nil', value: null };
+        const directValue = tableValue.value[key];
+        if (directValue !== undefined) {
+          return directValue;
+        }
+        // Check for __index metamethod
+        if (tableValue.metatable) {
+          const indexMeta = tableValue.metatable.__index;
+          if (indexMeta) {
+            if (indexMeta.type === 'table') {
+              return indexMeta.value[key] || { type: 'nil', value: null };
+            }
+            // If __index is a function - call it
+            if (indexMeta.type === 'string') {
+              const userFunc = context.functions.get(indexMeta.value as string);
+              if (userFunc) {
+                const funcScope = new Map<string, LuaValue>();
+                context.localScopes.push(funcScope);
+                funcScope.set(userFunc.params[0] || 'table', tableValue);
+                funcScope.set(userFunc.params[1] || 'key', { type: 'string', value: key });
+                try {
+                  this.executeBlock(userFunc.body, context);
+                  context.localScopes.pop();
+                  return { type: 'nil', value: null };
+                } catch (error) {
+                  context.localScopes.pop();
+                  if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+                    return (error as { type: string; value: LuaValue }).value;
+                  }
+                  throw error;
+                }
+              }
+            }
+          }
+        }
+        return { type: 'nil', value: null };
       }
       return { type: 'nil', value: null };
     }
 
-    // Number literals (including hex)
-    if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+    // Number literals (including hex and scientific notation)
+    if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(trimmed)) {
       return { type: 'number', value: parseFloat(trimmed) };
     }
-    if (/^0x[0-9a-fA-F]+$/.test(trimmed)) {
+    // Hex literals: 0xFF, 0x1A, -0xFF, 0x1.5p10 (Lua 5.2+ hex float)
+    if (/^-?0x[0-9a-fA-F]+$/i.test(trimmed)) {
       return { type: 'number', value: parseInt(trimmed, 16) };
+    }
+    // Hex float with exponent: 0x1.5p10 (p = power of 2)
+    if (/^-?0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?([pP][+-]?\d+)?$/i.test(trimmed)) {
+      return { type: 'number', value: this.parseHexFloat(trimmed) };
     }
 
     // Logical operators (lowest precedence - check first)
@@ -1199,6 +1609,10 @@ export class LuaEngine {
     if (trimmed.includes('*')) {
       return this.evaluateBinaryOp(trimmed, '*', context);
     }
+    // Integer division (check BEFORE regular division)
+    if (trimmed.includes('//')) {
+      return this.evaluateBinaryOp(trimmed, '//', context);
+    }
     if (trimmed.includes('/')) {
       return this.evaluateBinaryOp(trimmed, '/', context);
     }
@@ -1210,10 +1624,46 @@ export class LuaEngine {
       return this.evaluateBinaryOp(trimmed, '^', context);
     }
 
-    // Variable reference (check local scopes first, then global)
+    // Bitwise operators (Lua 5.3+)
+    if (trimmed.includes('<<')) {
+      return this.evaluateBinaryOp(trimmed, '<<', context);
+    }
+    if (trimmed.includes('>>')) {
+      return this.evaluateBinaryOp(trimmed, '>>', context);
+    }
+    if (trimmed.includes('&')) {
+      return this.evaluateBinaryOp(trimmed, '&', context);
+    }
+    if (trimmed.includes('|')) {
+      return this.evaluateBinaryOp(trimmed, '|', context);
+    }
+    // Bitwise XOR (~) - note: unary ~ is bitwise NOT
+    if (trimmed.includes('~') && !trimmed.includes('~=')) {
+      // Check if it's binary (XOR) or unary (NOT)
+      const tildeIndex = trimmed.indexOf('~');
+      if (tildeIndex > 0 && tildeIndex < trimmed.length - 1) {
+        return this.evaluateBinaryOp(trimmed, '~', context);
+      }
+    }
+
+    // Variable reference (check local scopes first, then global, then functions)
     if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
       const value = this.lookupVariable(trimmed, context);
-      return value || { type: 'nil', value: null };
+      if (value) return value;
+
+      // Check if it's a function name - return a function value
+      const userFunc = context.functions.get(trimmed);
+      if (userFunc) {
+        return {
+          type: 'function',
+          value: {
+            name: trimmed,
+            params: userFunc.params,
+          },
+        };
+      }
+
+      return { type: 'nil', value: null };
     }
 
     // Unknown expression
@@ -1291,6 +1741,24 @@ export class LuaEngine {
           break;
         case '^':
           result = this.power(result, right, context);
+          break;
+        case '//':
+          result = this.integerDivide(result, right, context);
+          break;
+        case '<<':
+          result = this.leftShift(result, right, context);
+          break;
+        case '>>':
+          result = this.rightShift(result, right, context);
+          break;
+        case '&':
+          result = this.bitwiseAnd(result, right, context);
+          break;
+        case '|':
+          result = this.bitwiseOr(result, right, context);
+          break;
+        case '~':
+          result = this.bitwiseXor(result, right, context);
           break;
       }
     }
@@ -1436,14 +1904,78 @@ export class LuaEngine {
   }
 
   /**
+   * Get day of year (1-366)
+   */
+  private getDayOfYear(date: Date, useUTC: boolean): number {
+    const start = useUTC
+      ? new Date(Date.UTC(date.getUTCFullYear(), 0, 0))
+      : new Date(date.getFullYear(), 0, 0);
+    const diff = date.getTime() - start.getTime();
+    const oneDay = 1000 * 60 * 60 * 24;
+    return Math.floor(diff / oneDay);
+  }
+
+  /**
+   * Parse Lua hex float notation (e.g., 0x1.5p10)
+   */
+  private parseHexFloat(str: string): number {
+    const negative = str.startsWith('-');
+    if (negative) str = str.substring(1);
+
+    // Remove 0x prefix
+    str = str.substring(2).toLowerCase();
+
+    // Split by 'p' for exponent
+    const [mantissaPart, expPart] = str.split('p');
+    const [intPart, fracPart] = mantissaPart.split('.');
+
+    // Parse integer part
+    let value = parseInt(intPart || '0', 16);
+
+    // Parse fractional part
+    if (fracPart) {
+      for (let i = 0; i < fracPart.length; i++) {
+        const digit = parseInt(fracPart[i], 16);
+        value += digit / Math.pow(16, i + 1);
+      }
+    }
+
+    // Apply exponent (power of 2)
+    if (expPart) {
+      const exp = parseInt(expPart, 10);
+      value *= Math.pow(2, exp);
+    }
+
+    return negative ? -value : value;
+  }
+
+  /**
    * Evaluate function call
    */
   private evaluateFunctionCall(expr: string, context: LuaExecutionContext): LuaValue {
     const parenIndex = expr.indexOf('(');
-    const funcName = expr.substring(0, parenIndex).trim();
+    let funcName = expr.substring(0, parenIndex).trim();
     const argsStr = expr.substring(parenIndex + 1, expr.lastIndexOf(')')).trim();
 
-    const args = argsStr ? this.parseArguments(argsStr, context) : [];
+    let args = argsStr ? this.parseArguments(argsStr, context) : [];
+
+    // Handle method calls with colon syntax: obj:method(args)
+    // Transform to obj.method(obj, args)
+    if (funcName.includes(':')) {
+      const colonIndex = funcName.indexOf(':');
+      const objName = funcName.substring(0, colonIndex).trim();
+      const methodName = funcName.substring(colonIndex + 1).trim();
+
+      // Get the object
+      const objValue = this.evaluateExpression(objName, context);
+      if (objValue.type !== 'table') {
+        throw new Error(`attempt to index a ${objValue.type} value`);
+      }
+
+      // Transform to dot notation and prepend self
+      funcName = `${objName}.${methodName}`;
+      args = [objValue, ...args];
+    }
 
     // Built-in functions
     // === Global functions ===
@@ -1489,19 +2021,105 @@ export class LuaEngine {
       throw new Error(String(message));
     }
 
+    // collectgarbage - Garbage collection control (stub for browser environment)
+    // In JavaScript, GC is handled automatically by the engine
+    if (funcName === 'collectgarbage') {
+      const opt = (args[0]?.value as string) || 'collect';
+
+      switch (opt) {
+        case 'collect':
+          // Trigger a full GC cycle - no-op in JS, return 0
+          return { type: 'number', value: 0 };
+        case 'stop':
+          // Stop GC - not possible in JS, no-op
+          return { type: 'nil', value: null };
+        case 'restart':
+          // Restart GC - not possible in JS, no-op
+          return { type: 'nil', value: null };
+        case 'count':
+          // Return memory in use (KB) - try to get from performance API
+          if (typeof performance !== 'undefined' && (performance as any).memory) {
+            const memoryMB = (performance as any).memory.usedJSHeapSize / 1024;
+            return { type: 'number', value: memoryMB };
+          }
+          return { type: 'number', value: 0 };
+        case 'step':
+          // Perform a GC step - no-op in JS, return false (not finished)
+          return { type: 'boolean', value: false };
+        case 'isrunning':
+          // Check if GC is running - always true in JS
+          return { type: 'boolean', value: true };
+        case 'setpause':
+          // Set GC pause parameter - no-op, return previous value (200 is Lua default)
+          return { type: 'number', value: 200 };
+        case 'setstepmul':
+          // Set GC step multiplier - no-op, return previous value (200 is Lua default)
+          return { type: 'number', value: 200 };
+        case 'generational':
+          // Lua 5.4: Switch to generational mode - no-op
+          return { type: 'nil', value: null };
+        case 'incremental':
+          // Lua 5.4: Switch to incremental mode - no-op
+          return { type: 'nil', value: null };
+        default:
+          throw new Error(`bad argument #1 to 'collectgarbage' (invalid option '${opt}')`);
+      }
+    }
+
     if (funcName === 'pairs') {
       // Return a special marker for generic for to handle
       if (args.length === 0 || args[0].type !== 'table') {
         throw new Error('bad argument #1 to pairs (table expected)');
       }
-      return { type: 'table', value: { __pairs: true, table: args[0].value } };
+      const table = args[0];
+
+      // Check for __pairs metamethod
+      if (table.metatable && table.metatable.__pairs) {
+        const pairsMethod = table.metatable.__pairs;
+        if (pairsMethod.type === 'string') {
+          // Call the __pairs function with the table
+          return this.evaluateFunctionCall(`${pairsMethod.value}(${this.valueToLuaLiteral(table)})`, context);
+        }
+        if (pairsMethod.type === 'function') {
+          // Anonymous function - call it
+          const funcValue = pairsMethod.value as { __anonymous?: boolean; name?: string };
+          if (funcValue.__anonymous && funcValue.name) {
+            const storedFunc = context.functions.get(funcValue.name);
+            if (storedFunc) {
+              return { type: 'table', value: { __customPairs: true, iteratorFunc: funcValue.name, table: table.value } };
+            }
+          }
+        }
+      }
+
+      return { type: 'table', value: { __pairs: true, table: table.value } };
     }
 
     if (funcName === 'ipairs') {
       if (args.length === 0 || args[0].type !== 'table') {
         throw new Error('bad argument #1 to ipairs (table expected)');
       }
-      return { type: 'table', value: { __ipairs: true, table: args[0].value } };
+      const table = args[0];
+
+      // Check for __ipairs metamethod
+      if (table.metatable && table.metatable.__ipairs) {
+        const ipairsMethod = table.metatable.__ipairs;
+        if (ipairsMethod.type === 'string') {
+          // Call the __ipairs function with the table
+          return this.evaluateFunctionCall(`${ipairsMethod.value}(${this.valueToLuaLiteral(table)})`, context);
+        }
+        if (ipairsMethod.type === 'function') {
+          const funcValue = ipairsMethod.value as { __anonymous?: boolean; name?: string };
+          if (funcValue.__anonymous && funcValue.name) {
+            const storedFunc = context.functions.get(funcValue.name);
+            if (storedFunc) {
+              return { type: 'table', value: { __customIpairs: true, iteratorFunc: funcValue.name, table: table.value } };
+            }
+          }
+        }
+      }
+
+      return { type: 'table', value: { __ipairs: true, table: table.value } };
     }
 
     if (funcName === 'next') {
@@ -1539,6 +2157,35 @@ export class LuaEngine {
       return { type: 'boolean', value: args[0].value === args[1].value };
     }
 
+    if (funcName === 'rawlen') {
+      // Get length without invoking __len metamethod
+      if (args.length === 0) {
+        throw new Error("bad argument #1 to 'rawlen' (table or string expected)");
+      }
+      const v = args[0];
+      if (v.type === 'string') {
+        return { type: 'number', value: (v.value as string).length };
+      }
+      if (v.type === 'table') {
+        const table = v.value as Record<string, LuaValue>;
+        let length = 0;
+        while (table[String(length + 1)] !== undefined) {
+          length++;
+        }
+        return { type: 'number', value: length };
+      }
+      throw new Error("bad argument #1 to 'rawlen' (table or string expected)");
+    }
+
+    if (funcName === 'warn') {
+      // Lua 5.4 warn function - outputs warning messages
+      const message = args.map((arg) => this.luaToString(arg, context)).join('');
+      // In browser context, we output to console.warn
+      console.warn('[Lua warn]', message);
+      context.output.push(`[warn] ${message}`);
+      return { type: 'nil', value: null };
+    }
+
     if (funcName === 'select') {
       if (args.length === 0) return { type: 'nil', value: null };
       const idx = args[0].value;
@@ -1566,6 +2213,190 @@ export class LuaEngine {
       if (result.length === 0) return { type: 'nil', value: null };
       if (result.length === 1) return result[0];
       return { values: result } as LuaMultiValue as unknown as LuaValue;
+    }
+
+    // load - Load a chunk of Lua code and return it as a function
+    if (funcName === 'load') {
+      if (args.length === 0) {
+        return { type: 'nil', value: null };
+      }
+
+      let chunk: string;
+      if (args[0].type === 'string') {
+        chunk = args[0].value as string;
+      } else if (args[0].type === 'function') {
+        // If first arg is a function, call it repeatedly to get chunks
+        // For simplicity, we don't fully support this - just return nil
+        return { type: 'table', value: {
+          '1': { type: 'nil', value: null },
+          '2': { type: 'string', value: 'load with function reader not fully supported' }
+        }};
+      } else {
+        return { type: 'table', value: {
+          '1': { type: 'nil', value: null },
+          '2': { type: 'string', value: 'bad argument #1 to load (string expected)' }
+        }};
+      }
+
+      // chunkname (optional, for error messages)
+      // mode (optional, 'b', 't', or 'bt' - we only support text)
+      // env (optional, environment table - we don't support this)
+
+      // Generate a unique function name for this loaded chunk
+      const loadedFuncName = `__loaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Store the chunk as a function with no parameters
+      context.functions.set(loadedFuncName, {
+        params: [],
+        body: chunk,
+        isVariadic: true, // Allow ... access
+      });
+
+      // Return a function value that can be called
+      return {
+        type: 'function',
+        value: {
+          __anonymous: true,
+          name: loadedFuncName,
+          params: [],
+        },
+      };
+    }
+
+    // loadstring - Lua 5.1 compatibility (deprecated in 5.2+, alias for load)
+    if (funcName === 'loadstring') {
+      if (args.length === 0 || args[0].type !== 'string') {
+        return { type: 'table', value: {
+          '1': { type: 'nil', value: null },
+          '2': { type: 'string', value: 'bad argument #1 to loadstring (string expected)' }
+        }};
+      }
+
+      const chunk = args[0].value as string;
+      const loadedFuncName = `__loaded_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      context.functions.set(loadedFuncName, {
+        params: [],
+        body: chunk,
+        isVariadic: true,
+      });
+
+      return {
+        type: 'function',
+        value: {
+          __anonymous: true,
+          name: loadedFuncName,
+          params: [],
+        },
+      };
+    }
+
+    // dofile - Load and execute a file (not supported in browser environment)
+    if (funcName === 'dofile') {
+      throw new Error('dofile is not supported in browser environment');
+    }
+
+    // loadfile - Load a file as a function (not supported in browser environment)
+    if (funcName === 'loadfile') {
+      return { type: 'table', value: {
+        '1': { type: 'nil', value: null },
+        '2': { type: 'string', value: 'loadfile is not supported in browser environment' }
+      }};
+    }
+
+    // require - Load a module (basic implementation)
+    if (funcName === 'require') {
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error("bad argument #1 to 'require' (string expected)");
+      }
+
+      const modname = args[0].value as string;
+
+      // Check if module is already loaded in package.loaded
+      const pkg = this.lookupVariable('package', context);
+      if (pkg?.type === 'table') {
+        const loaded = (pkg.value as Record<string, LuaValue>).loaded;
+        if (loaded?.type === 'table') {
+          const cached = (loaded.value as Record<string, LuaValue>)[modname];
+          if (cached && cached.type !== 'nil') {
+            return cached;
+          }
+        }
+
+        // Check package.preload for a loader function
+        const preload = (pkg.value as Record<string, LuaValue>).preload;
+        if (preload?.type === 'table') {
+          const loader = (preload.value as Record<string, LuaValue>)[modname];
+          if (loader) {
+            // If it's a function name, call it
+            if (loader.type === 'string') {
+              const userFunc = context.functions.get(loader.value as string);
+              if (userFunc) {
+                const funcScope = new Map<string, LuaValue>();
+                context.localScopes.push(funcScope);
+                funcScope.set(userFunc.params[0] || 'modname', args[0]);
+
+                try {
+                  this.executeBlock(userFunc.body, context);
+                  context.localScopes.pop();
+                  // Cache and return true if no explicit return
+                  const result: LuaValue = { type: 'boolean', value: true };
+                  if (loaded?.type === 'table') {
+                    (loaded.value as Record<string, LuaValue>)[modname] = result;
+                  }
+                  return result;
+                } catch (error) {
+                  context.localScopes.pop();
+                  if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+                    const result = (error as { type: string; value: LuaValue }).value;
+                    // Cache the result
+                    if (loaded?.type === 'table') {
+                      (loaded.value as Record<string, LuaValue>)[modname] = result.type === 'nil' ? { type: 'boolean', value: true } : result;
+                    }
+                    return result.type === 'nil' ? { type: 'boolean', value: true } : result;
+                  }
+                  throw error;
+                }
+              }
+            }
+            // If it's a function value
+            if (loader.type === 'function') {
+              const funcValue = loader.value as { __anonymous?: boolean; name?: string };
+              if (funcValue.name) {
+                const userFunc = context.functions.get(funcValue.name);
+                if (userFunc) {
+                  const funcScope = new Map<string, LuaValue>();
+                  context.localScopes.push(funcScope);
+                  funcScope.set(userFunc.params[0] || 'modname', args[0]);
+
+                  try {
+                    this.executeBlock(userFunc.body, context);
+                    context.localScopes.pop();
+                    const result: LuaValue = { type: 'boolean', value: true };
+                    if (loaded?.type === 'table') {
+                      (loaded.value as Record<string, LuaValue>)[modname] = result;
+                    }
+                    return result;
+                  } catch (error) {
+                    context.localScopes.pop();
+                    if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+                      const result = (error as { type: string; value: LuaValue }).value;
+                      if (loaded?.type === 'table') {
+                        (loaded.value as Record<string, LuaValue>)[modname] = result.type === 'nil' ? { type: 'boolean', value: true } : result;
+                      }
+                      return result.type === 'nil' ? { type: 'boolean', value: true } : result;
+                    }
+                    throw error;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Module not found in preload - file loading not supported
+      throw new Error(`module '${modname}' not found (file loading not supported in browser)`);
     }
 
     // pcall - Protected call (catches errors and returns status + result)
@@ -1967,6 +2798,39 @@ export class LuaEngine {
       return { type: 'nil', value: null };
     }
 
+    // coroutine.close - Close a coroutine (Lua 5.4)
+    if (funcName === 'coroutine.close') {
+      if (args.length === 0 || args[0].type !== 'coroutine') {
+        throw new Error("bad argument #1 to 'close' (coroutine expected)");
+      }
+      const coId = (args[0].value as { id: number }).id;
+      const co = this.coroutines.get(coId);
+      if (!co) {
+        return { type: 'boolean', value: false };
+      }
+      // Mark as dead by removing from coroutines map
+      this.coroutines.delete(coId);
+      return { type: 'boolean', value: true };
+    }
+
+    // coroutine.isyieldable - Check if coroutine can yield (Lua 5.4)
+    if (funcName === 'coroutine.isyieldable') {
+      // If no argument, check the running coroutine
+      if (args.length === 0) {
+        return { type: 'boolean', value: this.currentRunningCoroutine !== null };
+      }
+      if (args[0].type !== 'coroutine') {
+        throw new Error("bad argument #1 to 'isyieldable' (coroutine expected)");
+      }
+      const coId = (args[0].value as { id: number }).id;
+      const co = this.coroutines.get(coId);
+      if (!co) {
+        return { type: 'boolean', value: false };
+      }
+      // A coroutine is yieldable if it's suspended (not dead, not running)
+      return { type: 'boolean', value: co.status === 'suspended' };
+    }
+
     // === Math functions ===
     if (funcName === 'math.random') {
       if (args.length === 0) {
@@ -2075,8 +2939,87 @@ export class LuaEngine {
     if (funcName === 'math.modf') {
       const x = args[0]?.value || 0;
       const intPart = Math.trunc(x);
-      // Return just the integer part (multiple returns not fully supported)
-      return { type: 'number', value: intPart };
+      const fracPart = x - intPart;
+      // Return both integer and fractional parts
+      return {
+        values: [
+          { type: 'number', value: intPart },
+          { type: 'number', value: fracPart },
+        ],
+      } as unknown as LuaValue;
+    }
+
+    // math.frexp - Extract mantissa and exponent (x = m * 2^e)
+    if (funcName === 'math.frexp') {
+      const x = args[0]?.value || 0;
+      if (x === 0) {
+        return {
+          values: [
+            { type: 'number', value: 0 },
+            { type: 'number', value: 0 },
+          ],
+        } as unknown as LuaValue;
+      }
+      // Get the exponent
+      const exp = Math.floor(Math.log2(Math.abs(x))) + 1;
+      // Get the mantissa (normalized to [0.5, 1))
+      const mantissa = x / Math.pow(2, exp);
+      return {
+        values: [
+          { type: 'number', value: mantissa },
+          { type: 'number', value: exp },
+        ],
+      } as unknown as LuaValue;
+    }
+
+    // math.ldexp - Load exponent (m * 2^e)
+    if (funcName === 'math.ldexp') {
+      const m = args[0]?.value || 0;
+      const e = args[1]?.value || 0;
+      return { type: 'number', value: m * Math.pow(2, e) };
+    }
+
+    // Hyperbolic functions
+    if (funcName === 'math.sinh') {
+      return { type: 'number', value: Math.sinh(args[0]?.value || 0) };
+    }
+
+    if (funcName === 'math.cosh') {
+      return { type: 'number', value: Math.cosh(args[0]?.value || 0) };
+    }
+
+    if (funcName === 'math.tanh') {
+      return { type: 'number', value: Math.tanh(args[0]?.value || 0) };
+    }
+
+    // Lua 5.3+ math functions
+    if (funcName === 'math.tointeger') {
+      const x = args[0]?.value;
+      if (typeof x === 'number' && Number.isInteger(x)) {
+        return { type: 'number', value: x };
+      }
+      if (typeof x === 'string') {
+        const parsed = parseInt(x, 10);
+        if (!isNaN(parsed) && parsed.toString() === x.trim()) {
+          return { type: 'number', value: parsed };
+        }
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'math.type') {
+      const x = args[0]?.value;
+      if (typeof x !== 'number') {
+        return { type: 'nil', value: null };
+      }
+      return { type: 'string', value: Number.isInteger(x) ? 'integer' : 'float' };
+    }
+
+    if (funcName === 'math.ult') {
+      // Unsigned less than comparison
+      const m = (args[0]?.value || 0) >>> 0; // Convert to unsigned 32-bit
+      const n = (args[1]?.value || 0) >>> 0;
+      return { type: 'boolean', value: m < n };
     }
 
     // === String functions ===
@@ -2379,6 +3322,371 @@ export class LuaEngine {
       return { type: 'nil', value: null };
     }
 
+    // string.dump - Serialize a function to binary (returns source in this implementation)
+    if (funcName === 'string.dump') {
+      if (args.length === 0) {
+        throw new Error("bad argument #1 to 'dump' (function expected)");
+      }
+
+      const funcArg = args[0];
+      // strip parameter (optional) - if true, strip debug info
+      // const strip = args[1]?.value === true;
+
+      // If it's a function name string, look up the function
+      if (funcArg.type === 'string') {
+        const funcName = funcArg.value as string;
+        const userFunc = context.functions.get(funcName);
+        if (userFunc) {
+          // Return the function body as a "serialized" form
+          // Prefix with a header to indicate this is a dumped function
+          const header = '\x1bLuaS'; // Signature similar to Lua bytecode
+          const serialized = JSON.stringify({
+            params: userFunc.params,
+            body: userFunc.body,
+            isVariadic: userFunc.isVariadic || false,
+          });
+          return { type: 'string', value: header + serialized };
+        }
+        throw new Error("unable to dump given function");
+      }
+
+      // If it's a function value (anonymous function)
+      if (funcArg.type === 'function') {
+        const funcValue = funcArg.value as { __anonymous?: boolean; name?: string; params?: string[] };
+        if (funcValue.name) {
+          const userFunc = context.functions.get(funcValue.name);
+          if (userFunc) {
+            const header = '\x1bLuaS';
+            const serialized = JSON.stringify({
+              params: userFunc.params,
+              body: userFunc.body,
+              isVariadic: userFunc.isVariadic || false,
+            });
+            return { type: 'string', value: header + serialized };
+          }
+        }
+        throw new Error("unable to dump given function");
+      }
+
+      throw new Error("bad argument #1 to 'dump' (function expected)");
+    }
+
+    // string.pack - Pack values into a binary string
+    if (funcName === 'string.pack') {
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error("bad argument #1 to 'pack' (string expected)");
+      }
+      const fmt = args[0].value as string;
+      const values = args.slice(1);
+      let result = '';
+      let valueIdx = 0;
+      let littleEndian = true; // Default
+
+      for (let i = 0; i < fmt.length; i++) {
+        const c = fmt[i];
+        switch (c) {
+          case '<': littleEndian = true; break;
+          case '>': littleEndian = false; break;
+          case '=': littleEndian = true; break; // Native (assume little)
+          case ' ': break; // Ignored
+          case 'b': { // Signed byte
+            const v = (values[valueIdx++]?.value as number) || 0;
+            result += String.fromCharCode(v & 0xFF);
+            break;
+          }
+          case 'B': { // Unsigned byte
+            const v = (values[valueIdx++]?.value as number) || 0;
+            result += String.fromCharCode(v & 0xFF);
+            break;
+          }
+          case 'h': { // Signed short (2 bytes)
+            const v = (values[valueIdx++]?.value as number) || 0;
+            if (littleEndian) {
+              result += String.fromCharCode(v & 0xFF, (v >> 8) & 0xFF);
+            } else {
+              result += String.fromCharCode((v >> 8) & 0xFF, v & 0xFF);
+            }
+            break;
+          }
+          case 'H': { // Unsigned short (2 bytes)
+            const v = (values[valueIdx++]?.value as number) || 0;
+            if (littleEndian) {
+              result += String.fromCharCode(v & 0xFF, (v >> 8) & 0xFF);
+            } else {
+              result += String.fromCharCode((v >> 8) & 0xFF, v & 0xFF);
+            }
+            break;
+          }
+          case 'i': case 'I': { // Int (4 bytes by default)
+            let size = 4;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              size = parseInt(fmt[++i]);
+            }
+            const v = (values[valueIdx++]?.value as number) || 0;
+            for (let j = 0; j < size; j++) {
+              const byteIdx = littleEndian ? j : (size - 1 - j);
+              result += String.fromCharCode((v >> (byteIdx * 8)) & 0xFF);
+            }
+            break;
+          }
+          case 'l': case 'L': { // Long (8 bytes)
+            const v = (values[valueIdx++]?.value as number) || 0;
+            // JavaScript numbers lose precision beyond 53 bits, but handle common cases
+            for (let j = 0; j < 8; j++) {
+              const byteIdx = littleEndian ? j : (7 - j);
+              result += String.fromCharCode((Math.floor(v / Math.pow(256, byteIdx)) % 256) & 0xFF);
+            }
+            break;
+          }
+          case 'f': { // Float (4 bytes)
+            const v = (values[valueIdx++]?.value as number) || 0;
+            const buf = new ArrayBuffer(4);
+            new DataView(buf).setFloat32(0, v, littleEndian);
+            const bytes = new Uint8Array(buf);
+            for (let j = 0; j < 4; j++) {
+              result += String.fromCharCode(bytes[j]);
+            }
+            break;
+          }
+          case 'd': case 'n': { // Double (8 bytes)
+            const v = (values[valueIdx++]?.value as number) || 0;
+            const buf = new ArrayBuffer(8);
+            new DataView(buf).setFloat64(0, v, littleEndian);
+            const bytes = new Uint8Array(buf);
+            for (let j = 0; j < 8; j++) {
+              result += String.fromCharCode(bytes[j]);
+            }
+            break;
+          }
+          case 'c': { // Fixed-size string
+            let size = 1;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              let numStr = '';
+              while (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+                numStr += fmt[++i];
+              }
+              size = parseInt(numStr);
+            }
+            const s = String(values[valueIdx++]?.value || '');
+            result += s.substring(0, size).padEnd(size, '\0');
+            break;
+          }
+          case 'z': { // Zero-terminated string
+            const s = String(values[valueIdx++]?.value || '');
+            result += s + '\0';
+            break;
+          }
+          case 's': { // String with length prefix
+            let size = 4; // Default size_t
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              size = parseInt(fmt[++i]);
+            }
+            const s = String(values[valueIdx++]?.value || '');
+            const len = s.length;
+            for (let j = 0; j < size; j++) {
+              const byteIdx = littleEndian ? j : (size - 1 - j);
+              result += String.fromCharCode((len >> (byteIdx * 8)) & 0xFF);
+            }
+            result += s;
+            break;
+          }
+          case 'x': { // Padding byte
+            result += '\0';
+            break;
+          }
+        }
+      }
+      return { type: 'string', value: result };
+    }
+
+    // string.unpack - Unpack values from a binary string
+    if (funcName === 'string.unpack') {
+      if (args.length < 2 || args[0].type !== 'string' || args[1].type !== 'string') {
+        throw new Error("bad argument to 'unpack' (string expected)");
+      }
+      const fmt = args[0].value as string;
+      const data = args[1].value as string;
+      const pos = ((args[2]?.value as number) || 1) - 1; // Convert to 0-indexed
+      const results: LuaValue[] = [];
+      let offset = pos;
+      let littleEndian = true;
+
+      for (let i = 0; i < fmt.length && offset < data.length; i++) {
+        const c = fmt[i];
+        switch (c) {
+          case '<': littleEndian = true; break;
+          case '>': littleEndian = false; break;
+          case '=': littleEndian = true; break;
+          case ' ': break;
+          case 'b': { // Signed byte
+            let v = data.charCodeAt(offset++);
+            if (v > 127) v -= 256;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'B': { // Unsigned byte
+            results.push({ type: 'number', value: data.charCodeAt(offset++) });
+            break;
+          }
+          case 'h': { // Signed short
+            let v = littleEndian
+              ? data.charCodeAt(offset) | (data.charCodeAt(offset + 1) << 8)
+              : (data.charCodeAt(offset) << 8) | data.charCodeAt(offset + 1);
+            if (v > 32767) v -= 65536;
+            offset += 2;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'H': { // Unsigned short
+            const v = littleEndian
+              ? data.charCodeAt(offset) | (data.charCodeAt(offset + 1) << 8)
+              : (data.charCodeAt(offset) << 8) | data.charCodeAt(offset + 1);
+            offset += 2;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'i': case 'I': { // Int
+            let size = 4;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              size = parseInt(fmt[++i]);
+            }
+            let v = 0;
+            for (let j = 0; j < size; j++) {
+              const byteIdx = littleEndian ? j : (size - 1 - j);
+              v |= data.charCodeAt(offset + j) << (byteIdx * 8);
+            }
+            if (c === 'i' && size === 4 && v > 0x7FFFFFFF) v -= 0x100000000;
+            offset += size;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'l': case 'L': { // Long (8 bytes)
+            let v = 0;
+            for (let j = 0; j < 8; j++) {
+              const byteIdx = littleEndian ? j : (7 - j);
+              v += data.charCodeAt(offset + j) * Math.pow(256, byteIdx);
+            }
+            offset += 8;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'f': { // Float
+            const buf = new ArrayBuffer(4);
+            const bytes = new Uint8Array(buf);
+            for (let j = 0; j < 4; j++) {
+              bytes[j] = data.charCodeAt(offset + j);
+            }
+            const v = new DataView(buf).getFloat32(0, littleEndian);
+            offset += 4;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'd': case 'n': { // Double
+            const buf = new ArrayBuffer(8);
+            const bytes = new Uint8Array(buf);
+            for (let j = 0; j < 8; j++) {
+              bytes[j] = data.charCodeAt(offset + j);
+            }
+            const v = new DataView(buf).getFloat64(0, littleEndian);
+            offset += 8;
+            results.push({ type: 'number', value: v });
+            break;
+          }
+          case 'c': { // Fixed-size string
+            let size = 1;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              let numStr = '';
+              while (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+                numStr += fmt[++i];
+              }
+              size = parseInt(numStr);
+            }
+            results.push({ type: 'string', value: data.substring(offset, offset + size) });
+            offset += size;
+            break;
+          }
+          case 'z': { // Zero-terminated string
+            let end = offset;
+            while (end < data.length && data.charCodeAt(end) !== 0) end++;
+            results.push({ type: 'string', value: data.substring(offset, end) });
+            offset = end + 1;
+            break;
+          }
+          case 's': { // String with length prefix
+            let size = 4;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              size = parseInt(fmt[++i]);
+            }
+            let len = 0;
+            for (let j = 0; j < size; j++) {
+              const byteIdx = littleEndian ? j : (size - 1 - j);
+              len |= data.charCodeAt(offset + j) << (byteIdx * 8);
+            }
+            offset += size;
+            results.push({ type: 'string', value: data.substring(offset, offset + len) });
+            offset += len;
+            break;
+          }
+          case 'x': { // Padding byte
+            offset++;
+            break;
+          }
+        }
+      }
+      // Return position after last read item (1-indexed)
+      results.push({ type: 'number', value: offset + 1 });
+
+      if (results.length === 1) {
+        return results[0];
+      }
+      return { values: results } as unknown as LuaValue;
+    }
+
+    // string.packsize - Get the size of a packed string
+    if (funcName === 'string.packsize') {
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error("bad argument #1 to 'packsize' (string expected)");
+      }
+      const fmt = args[0].value as string;
+      let size = 0;
+
+      for (let i = 0; i < fmt.length; i++) {
+        const c = fmt[i];
+        switch (c) {
+          case '<': case '>': case '=': case ' ': break;
+          case 'b': case 'B': size += 1; break;
+          case 'h': case 'H': size += 2; break;
+          case 'i': case 'I': {
+            let n = 4;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              n = parseInt(fmt[++i]);
+            }
+            size += n;
+            break;
+          }
+          case 'l': case 'L': size += 8; break;
+          case 'f': size += 4; break;
+          case 'd': case 'n': size += 8; break;
+          case 'c': {
+            let n = 1;
+            if (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+              let numStr = '';
+              while (i + 1 < fmt.length && /\d/.test(fmt[i + 1])) {
+                numStr += fmt[++i];
+              }
+              n = parseInt(numStr);
+            }
+            size += n;
+            break;
+          }
+          case 'x': size += 1; break;
+          case 'z': case 's':
+            throw new Error("variable-length format in packsize");
+        }
+      }
+      return { type: 'number', value: size };
+    }
+
     // === Table functions ===
     if (funcName === 'table.insert') {
       if (args.length === 0 || args[0].type !== 'table') {
@@ -2482,6 +3790,295 @@ export class LuaEngine {
       return { type: 'number', value: max };
     }
 
+    if (funcName === 'table.pack') {
+      // table.pack(...) - returns a table with all arguments stored at integer keys 1, 2, ... n
+      // Also includes 'n' field with total number of arguments
+      const result: Record<string, LuaValue> = {};
+      for (let i = 0; i < args.length; i++) {
+        result[String(i + 1)] = args[i];
+      }
+      result['n'] = { type: 'number', value: args.length };
+      return { type: 'table', value: result };
+    }
+
+    if (funcName === 'table.unpack') {
+      // table.unpack(t [, i [, j]]) - returns elements from table t from index i to j
+      if (args.length === 0 || args[0].type !== 'table') {
+        throw new Error('bad argument #1 to unpack (table expected)');
+      }
+      const t = args[0].value as Record<string, LuaValue>;
+      const i = (args[1]?.value || 1) as number;
+      const keys = Object.keys(t).filter(k => !isNaN(parseInt(k))).map(k => parseInt(k)).sort((a, b) => a - b);
+      const j = (args[2]?.value || (t['n']?.value as number) || keys[keys.length - 1] || 0) as number;
+
+      // For single value, return directly
+      if (i === j) {
+        return t[String(i)] || { type: 'nil', value: null };
+      }
+
+      // For multiple values, we can only return the first one in this simple implementation
+      // Lua's unpack returns multiple values, but our engine doesn't support multiple return values fully
+      // Return the first element for basic compatibility
+      return t[String(i)] || { type: 'nil', value: null };
+    }
+
+    if (funcName === 'table.move') {
+      // table.move(a1, f, e, t [, a2]) - moves elements from a1[f..e] to a2[t..t+(e-f)]
+      // If a2 is not given, a1 is used as destination
+      if (args.length < 4 || args[0].type !== 'table') {
+        throw new Error('bad argument #1 to move (table expected)');
+      }
+      const a1 = args[0].value as Record<string, LuaValue>;
+      const f = args[1].value as number;
+      const e = args[2].value as number;
+      const t = args[3].value as number;
+      const a2 = args[4]?.type === 'table' ? args[4].value as Record<string, LuaValue> : a1;
+
+      // Copy elements
+      const count = e - f + 1;
+      if (count > 0) {
+        // If moving within same table and ranges overlap, need to handle direction
+        if (a1 === a2 && t > f && t <= e) {
+          // Move backwards to avoid overwriting
+          for (let i = count - 1; i >= 0; i--) {
+            const val = a1[String(f + i)];
+            if (val !== undefined) {
+              a2[String(t + i)] = val;
+            } else {
+              delete a2[String(t + i)];
+            }
+          }
+        } else {
+          // Move forwards
+          for (let i = 0; i < count; i++) {
+            const val = a1[String(f + i)];
+            if (val !== undefined) {
+              a2[String(t + i)] = val;
+            } else {
+              delete a2[String(t + i)];
+            }
+          }
+        }
+      }
+      return args[4]?.type === 'table' ? args[4] : args[0];
+    }
+
+    if (funcName === 'unpack') {
+      // Global unpack is an alias for table.unpack (Lua 5.1 compatibility)
+      if (args.length === 0 || args[0].type !== 'table') {
+        throw new Error('bad argument #1 to unpack (table expected)');
+      }
+      const t = args[0].value as Record<string, LuaValue>;
+      const i = (args[1]?.value || 1) as number;
+      const keys = Object.keys(t).filter(k => !isNaN(parseInt(k))).map(k => parseInt(k)).sort((a, b) => a - b);
+      const j = (args[2]?.value || (t['n']?.value as number) || keys[keys.length - 1] || 0) as number;
+
+      if (i === j) {
+        return t[String(i)] || { type: 'nil', value: null };
+      }
+      return t[String(i)] || { type: 'nil', value: null };
+    }
+
+    if (funcName === 'os.time') {
+      // os.time([table]) - returns current time or time from table
+      if (args.length === 0 || args[0].type === 'nil') {
+        return { type: 'number', value: Math.floor(Date.now() / 1000) };
+      }
+      if (args[0].type === 'table') {
+        const t = args[0].value as Record<string, LuaValue>;
+        const year = (t['year']?.value as number) || 1970;
+        const month = ((t['month']?.value as number) || 1) - 1; // JS months are 0-indexed
+        const day = (t['day']?.value as number) || 1;
+        const hour = (t['hour']?.value as number) || 12;
+        const min = (t['min']?.value as number) || 0;
+        const sec = (t['sec']?.value as number) || 0;
+        const date = new Date(year, month, day, hour, min, sec);
+        return { type: 'number', value: Math.floor(date.getTime() / 1000) };
+      }
+      return { type: 'number', value: Math.floor(Date.now() / 1000) };
+    }
+
+    if (funcName === 'os.date') {
+      // os.date([format [, time]]) - formats time
+      const format = (args[0]?.value as string) || '*t';
+      const timestamp = args[1]?.type === 'number' ? (args[1].value as number) * 1000 : Date.now();
+      const date = new Date(timestamp);
+
+      if (format === '*t' || format === '!*t') {
+        // Return table with date components
+        const useUTC = format.startsWith('!');
+        const result: Record<string, LuaValue> = {
+          year: { type: 'number', value: useUTC ? date.getUTCFullYear() : date.getFullYear() },
+          month: { type: 'number', value: (useUTC ? date.getUTCMonth() : date.getMonth()) + 1 },
+          day: { type: 'number', value: useUTC ? date.getUTCDate() : date.getDate() },
+          hour: { type: 'number', value: useUTC ? date.getUTCHours() : date.getHours() },
+          min: { type: 'number', value: useUTC ? date.getUTCMinutes() : date.getMinutes() },
+          sec: { type: 'number', value: useUTC ? date.getUTCSeconds() : date.getSeconds() },
+          wday: { type: 'number', value: (useUTC ? date.getUTCDay() : date.getDay()) + 1 }, // Lua is 1-indexed, Sunday=1
+          yday: { type: 'number', value: this.getDayOfYear(date, useUTC) },
+          isdst: { type: 'boolean', value: false }, // Simplified - always false
+        };
+        return { type: 'table', value: result };
+      }
+
+      // Format string handling
+      let result = format.startsWith('!') ? format.slice(1) : format;
+      const useUTC = format.startsWith('!');
+      const year = useUTC ? date.getUTCFullYear() : date.getFullYear();
+      const month = useUTC ? date.getUTCMonth() : date.getMonth();
+      const day = useUTC ? date.getUTCDate() : date.getDate();
+      const hour = useUTC ? date.getUTCHours() : date.getHours();
+      const min = useUTC ? date.getUTCMinutes() : date.getMinutes();
+      const sec = useUTC ? date.getUTCSeconds() : date.getSeconds();
+      const wday = useUTC ? date.getUTCDay() : date.getDay();
+
+      result = result.replace(/%Y/g, String(year));
+      result = result.replace(/%y/g, String(year % 100).padStart(2, '0'));
+      result = result.replace(/%m/g, String(month + 1).padStart(2, '0'));
+      result = result.replace(/%d/g, String(day).padStart(2, '0'));
+      result = result.replace(/%H/g, String(hour).padStart(2, '0'));
+      result = result.replace(/%M/g, String(min).padStart(2, '0'));
+      result = result.replace(/%S/g, String(sec).padStart(2, '0'));
+      result = result.replace(/%w/g, String(wday));
+      result = result.replace(/%j/g, String(this.getDayOfYear(date, useUTC)).padStart(3, '0'));
+      result = result.replace(/%%/g, '%');
+
+      return { type: 'string', value: result };
+    }
+
+    if (funcName === 'os.clock') {
+      // os.clock() - returns approximate CPU time in seconds
+      // In browser, use performance.now() / 1000 as an approximation
+      if (typeof performance !== 'undefined' && performance.now) {
+        return { type: 'number', value: performance.now() / 1000 };
+      }
+      return { type: 'number', value: Date.now() / 1000 };
+    }
+
+    if (funcName === 'os.difftime') {
+      // os.difftime(t2, t1) - returns difference in seconds
+      const t2 = (args[0]?.value as number) || 0;
+      const t1 = (args[1]?.value as number) || 0;
+      return { type: 'number', value: t2 - t1 };
+    }
+
+    if (funcName === 'utf8.char') {
+      // utf8.char(...) - converts codepoints to UTF-8 string
+      const chars = args.map((arg) => {
+        const codepoint = arg.value as number;
+        return String.fromCodePoint(codepoint);
+      });
+      return { type: 'string', value: chars.join('') };
+    }
+
+    if (funcName === 'utf8.codepoint') {
+      // utf8.codepoint(s [, i [, j]]) - returns codepoints
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error('bad argument #1 to utf8.codepoint (string expected)');
+      }
+      const s = args[0].value as string;
+      const i = (args[1]?.value as number) || 1;
+      const j = (args[2]?.value as number) || i;
+
+      // Convert Lua 1-indexed to JS 0-indexed
+      const chars = [...s]; // Properly splits on codepoints
+      const start = i - 1;
+      const end = j;
+
+      if (start < 0 || start >= chars.length) {
+        throw new Error('bad argument #2 to utf8.codepoint (position out of bounds)');
+      }
+
+      // Return first codepoint (simplified - Lua returns multiple values)
+      if (chars[start]) {
+        return { type: 'number', value: chars[start].codePointAt(0) || 0 };
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'utf8.len') {
+      // utf8.len(s [, i [, j]]) - returns number of UTF-8 characters
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error('bad argument #1 to utf8.len (string expected)');
+      }
+      const s = args[0].value as string;
+      const i = (args[1]?.value as number) || 1;
+      const j = (args[2]?.value as number) || -1;
+
+      // Use spread to count codepoints instead of UTF-16 units
+      const chars = [...s];
+      const start = i > 0 ? i - 1 : chars.length + i;
+      const end = j > 0 ? j : chars.length + j + 1;
+
+      if (start < 0 || start > chars.length || end < start) {
+        return { type: 'nil', value: null };
+      }
+
+      return { type: 'number', value: Math.max(0, end - start) };
+    }
+
+    if (funcName === 'utf8.offset') {
+      // utf8.offset(s, n [, i]) - returns byte position of n-th codepoint
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error('bad argument #1 to utf8.offset (string expected)');
+      }
+      const s = args[0].value as string;
+      const n = (args[1]?.value as number) || 1;
+      const i = (args[2]?.value as number) || (n >= 0 ? 1 : s.length + 1);
+
+      // JavaScript strings are UTF-16, but we need UTF-8 byte offsets
+      // This is a simplified implementation that returns character position
+      const chars = [...s];
+      let pos = i > 0 ? i - 1 : chars.length + i;
+
+      if (n > 0) {
+        pos += n - 1;
+      } else if (n < 0) {
+        pos += n;
+      }
+
+      if (pos < 0 || pos > chars.length) {
+        return { type: 'nil', value: null };
+      }
+
+      // Return 1-indexed position
+      return { type: 'number', value: pos + 1 };
+    }
+
+    if (funcName === 'utf8.codes') {
+      // utf8.codes(s) - returns an iterator function for use in for loops
+      // Returns: iterator function, string, 0 (for generic for)
+      if (args.length === 0 || args[0].type !== 'string') {
+        throw new Error('bad argument #1 to utf8.codes (string expected)');
+      }
+      const s = args[0].value as string;
+      const chars = [...s];
+
+      // Create a unique iterator ID for this utf8.codes call
+      const iteratorId = `__utf8_codes_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Store the iterator state
+      if (!context.variables.has('__utf8_iterators')) {
+        context.variables.set('__utf8_iterators', {
+          type: 'table',
+          value: {},
+        });
+      }
+      const iterators = context.variables.get('__utf8_iterators')?.value as Record<string, { chars: string[]; index: number }>;
+      iterators[iteratorId] = { chars, index: 0 };
+
+      // Return iterator function name, string, and initial position
+      // The iterator function will be handled specially in generic for
+      return {
+        type: 'function',
+        value: {
+          __utf8_codes_iterator: true,
+          iteratorId,
+          string: s,
+        },
+      };
+    }
+
     // Check for user-defined functions
     const userFunc = context.functions.get(funcName);
     if (userFunc) {
@@ -2516,11 +4113,15 @@ export class LuaEngine {
       try {
         this.executeBlock(userFunc.body, context);
         context.varargs = prevVarargs; // Restore previous varargs
-        context.localScopes.pop();
+        this.exitScope(context); // Lua 5.4: handle <close> variables
         return { type: 'nil', value: null }; // Default return
       } catch (error) {
         context.varargs = prevVarargs; // Restore previous varargs
-        context.localScopes.pop();
+        // Lua 5.4: pass error to __close handlers
+        const errorValue = typeof error === 'object' && error !== null && 'message' in error
+          ? { type: 'string' as const, value: (error as Error).message }
+          : { type: 'nil' as const, value: null };
+        this.exitScope(context, errorValue);
         // Check if it's a return statement
         if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
           return (error as { type: string; value: LuaValue }).value;
@@ -2529,10 +4130,79 @@ export class LuaEngine {
       }
     }
 
+    // Check if funcName is a variable holding a function value (anonymous function)
+    // Handle both simple variables and table.field notation
+    let funcVar: LuaValue | undefined;
+    if (funcName.includes('.')) {
+      // Table method access: t.add or obj.method
+      const parts = funcName.split('.');
+      let current: LuaValue | undefined = this.lookupVariable(parts[0], context);
+      for (let i = 1; i < parts.length && current; i++) {
+        if (current.type === 'table') {
+          current = (current.value as Record<string, LuaValue>)[parts[i]];
+        } else {
+          current = undefined;
+          break;
+        }
+      }
+      funcVar = current;
+    } else {
+      funcVar = this.lookupVariable(funcName, context);
+    }
+    if (funcVar && funcVar.type === 'function') {
+      const funcValue = funcVar.value as { __anonymous?: boolean; name?: string };
+      if (funcValue.__anonymous && funcValue.name) {
+        const storedFunc = context.functions.get(funcValue.name);
+        if (storedFunc) {
+          // Call the anonymous function
+          const funcScope = new Map<string, LuaValue>();
+          context.localScopes.push(funcScope);
+
+          // Bind parameters to arguments
+          for (let i = 0; i < storedFunc.params.length; i++) {
+            const paramName = storedFunc.params[i];
+            const argValue = args[i] || { type: 'nil', value: null };
+            funcScope.set(paramName, argValue);
+          }
+
+          // Handle variadic functions
+          const prevVarargs = context.varargs;
+          if (storedFunc.isVariadic) {
+            context.varargs = args.slice(storedFunc.params.length);
+            const argTable: Record<string, LuaValue> = {};
+            context.varargs.forEach((v, i) => {
+              argTable[String(i + 1)] = v;
+            });
+            argTable['n'] = { type: 'number', value: context.varargs.length };
+            funcScope.set('arg', { type: 'table', value: argTable });
+          } else {
+            context.varargs = undefined;
+          }
+
+          // Execute function body
+          try {
+            this.executeBlock(storedFunc.body, context);
+            context.varargs = prevVarargs;
+            this.exitScope(context); // Lua 5.4: handle <close> variables
+            return { type: 'nil', value: null };
+          } catch (error) {
+            context.varargs = prevVarargs;
+            const errorValue = typeof error === 'object' && error !== null && 'message' in error
+              ? { type: 'string' as const, value: (error as Error).message }
+              : { type: 'nil' as const, value: null };
+            this.exitScope(context, errorValue);
+            if (typeof error === 'object' && error !== null && 'type' in error && error.type === 'return') {
+              return (error as { type: string; value: LuaValue }).value;
+            }
+            throw error;
+          }
+        }
+      }
+    }
+
     // Check if funcName is a table with __call metamethod
-    const tableVar = this.lookupVariable(funcName, context);
-    if (tableVar && tableVar.type === 'table') {
-      const callResult = this.tryMetamethod(tableVar, '__call', [tableVar, ...args], context);
+    if (funcVar && funcVar.type === 'table') {
+      const callResult = this.tryMetamethod(funcVar, '__call', [funcVar, ...args], context);
       if (callResult) {
         return callResult;
       }
@@ -3164,25 +4834,103 @@ export class LuaEngine {
    * Execute function definition
    */
   private executeFunction(fullCode: string, context: LuaExecutionContext): void {
-    // Parse: function name(param1, param2, ...) <body> end
-    const funcMatch = fullCode.match(/^function\s+(\w+)\s*\((.*?)\)/);
+    // Parse: function name(params), function obj.method(params), function obj:method(params)
+    // Supports: simple names, dot notation, and colon notation (method with implicit self)
+    const funcMatch = fullCode.match(/^function\s+([\w.]+)([:.])?([\w]+)?\s*\((.*?)\)/);
     if (!funcMatch) {
-      throw new Error('Invalid function syntax. Expected: function name(params) ... end');
+      // Try simple function match
+      const simpleMatch = fullCode.match(/^function\s+(\w+)\s*\((.*?)\)/);
+      if (!simpleMatch) {
+        throw new Error('Invalid function syntax. Expected: function name(params) ... end');
+      }
+      // Handle simple function
+      const funcName = simpleMatch[1];
+      const paramsStr = simpleMatch[2].trim();
+      let params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+      let isVariadic = false;
+      if (params.length > 0 && params[params.length - 1] === '...') {
+        isVariadic = true;
+        params = params.slice(0, -1);
+      }
+
+      const afterParams = fullCode.substring(simpleMatch[0].length).trim();
+      const body = this.extractFunctionBody(afterParams);
+      context.functions.set(funcName, { params, body, isVariadic });
+      return;
     }
 
-    const funcName = funcMatch[1];
-    const paramsStr = funcMatch[2].trim();
+    const baseName = funcMatch[1];
+    const separator = funcMatch[2]; // '.' or ':'
+    const methodName = funcMatch[3];
+    const paramsStr = funcMatch[4].trim();
+
+    let funcName: string;
     let params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+    if (separator === ':' && methodName) {
+      // Colon notation: function obj:method(params) - add implicit 'self' parameter
+      funcName = `${baseName}.${methodName}`;
+      params = ['self', ...params];
+    } else if (separator === '.' && methodName) {
+      // Dot notation: function obj.method(params)
+      funcName = `${baseName}.${methodName}`;
+    } else {
+      // Simple function name (no separator matched properly)
+      funcName = baseName;
+    }
 
     // Check for variadic function (... parameter)
     let isVariadic = false;
     if (params.length > 0 && params[params.length - 1] === '...') {
       isVariadic = true;
-      params = params.slice(0, -1); // Remove ... from params
+      params = params.slice(0, -1);
     }
 
-    // Extract body using depth tracking (similar to while/for loops)
+    // Extract body using depth tracking
     const afterParams = fullCode.substring(funcMatch[0].length).trim();
+    const body = this.extractFunctionBody(afterParams);
+
+    // Store function definition
+    context.functions.set(funcName, { params, body, isVariadic });
+  }
+
+  /**
+   * Extract function body from code after the function signature
+   */
+  private extractFunctionBody(afterParams: string): string {
+    // Handle single-line functions: return n * n end
+    // For single line, find the matching 'end' by scanning with depth tracking
+    if (!afterParams.includes('\n')) {
+      // Single line - need to find matching end
+      let depth = 1;
+      let pos = 0;
+      const words = afterParams.split(/\b/);
+      let bodyEnd = afterParams.length;
+
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i].trim();
+        if (['while', 'for', 'if', 'function', 'do'].includes(word)) {
+          depth++;
+        } else if (word === 'end') {
+          depth--;
+          if (depth === 0) {
+            // Found the matching end - calculate position
+            let charPos = 0;
+            for (let j = 0; j < i; j++) {
+              charPos += words[j].length;
+            }
+            bodyEnd = charPos;
+            break;
+          }
+        }
+      }
+
+      // Return body without the final 'end'
+      return afterParams.substring(0, bodyEnd).trim();
+    }
+
+    // Multi-line function
     const lines = afterParams.split('\n');
     let depth = 1;
     const bodyLines: string[] = [];
@@ -3191,11 +4939,11 @@ export class LuaEngine {
       const trimmed = line.trim();
 
       // Track nested blocks
-      if (/^(while|for|if|function)\s/.test(trimmed)) {
+      if (/^(while|for|if|function)\s/.test(trimmed) || /\bdo\b/.test(trimmed)) {
         depth++;
       }
 
-      if (trimmed === 'end' || trimmed.startsWith('end ')) {
+      if (trimmed === 'end' || trimmed.startsWith('end ') || trimmed.endsWith(' end')) {
         depth--;
         if (depth === 0) break;
       }
@@ -3203,10 +4951,48 @@ export class LuaEngine {
       bodyLines.push(line);
     }
 
-    const body = bodyLines.join('\n').trim();
+    return bodyLines.join('\n').trim();
+  }
 
-    // Store function definition
-    context.functions.set(funcName, { params, body, isVariadic });
+  /**
+   * Parse anonymous function expression: function(params) ... end
+   */
+  private parseAnonymousFunction(code: string, context: LuaExecutionContext): LuaValue {
+    // Parse: function(param1, param2, ...) <body> end
+    const funcMatch = code.match(/^function\s*\((.*?)\)/);
+    if (!funcMatch) {
+      throw new Error('Invalid anonymous function syntax');
+    }
+
+    const paramsStr = funcMatch[1].trim();
+    let params = paramsStr ? paramsStr.split(',').map(p => p.trim()) : [];
+
+    // Check for variadic function (... parameter)
+    let isVariadic = false;
+    if (params.length > 0 && params[params.length - 1] === '...') {
+      isVariadic = true;
+      params = params.slice(0, -1);
+    }
+
+    // Extract body - need to find matching 'end'
+    const afterParams = code.substring(funcMatch[0].length).trim();
+    const body = this.extractFunctionBody(afterParams);
+
+    // Generate a unique anonymous function name
+    const anonName = `__anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Store the function
+    context.functions.set(anonName, { params, body, isVariadic });
+
+    // Return a function value that can be called
+    return {
+      type: 'function',
+      value: {
+        __anonymous: true,
+        name: anonName,
+        params,
+      },
+    };
   }
 
   /**
@@ -3260,6 +5046,7 @@ export class LuaEngine {
   /**
    * Execute local variable assignment
    * Supports: local x, local x = expr, local a, b, c = expr1, expr2, expr3
+   * Lua 5.4: local x <const> = expr, local x <close> = expr
    */
   private executeLocalAssignment(statement: string, context: LuaExecutionContext): void {
     // Parse: local var = expr  OR  local var  OR  local a, b = expr1, expr2
@@ -3275,9 +5062,13 @@ export class LuaEngine {
     const equalIndex = this.findAssignmentOperator(withoutLocal);
     if (equalIndex === -1) {
       // Just declaration: local x or local a, b, c
-      const varNames = this.parseVariableNames(withoutLocal);
-      for (const varName of varNames) {
-        currentScope.set(varName, { type: 'nil', value: null });
+      const varDecls = this.parseVariableDeclarations(withoutLocal);
+      for (const decl of varDecls) {
+        const val: LuaValue = { type: 'nil', value: null };
+        if (decl.attribute) {
+          val.attribute = decl.attribute;
+        }
+        currentScope.set(decl.name, val);
       }
       return;
     }
@@ -3286,7 +5077,7 @@ export class LuaEngine {
     const varsStr = withoutLocal.substring(0, equalIndex).trim();
     const exprsStr = withoutLocal.substring(equalIndex + 1).trim();
 
-    const varNames = this.parseVariableNames(varsStr);
+    const varDecls = this.parseVariableDeclarations(varsStr);
     const values = this.parseMultipleExpressions(exprsStr, context);
 
     // Handle multi-value returns: if last value is a multi-value, expand it
@@ -3305,9 +5096,54 @@ export class LuaEngine {
     }
 
     // Assign values to variables (extra variables get nil, extra values are discarded)
-    for (let i = 0; i < varNames.length; i++) {
-      currentScope.set(varNames[i], expandedValues[i] || { type: 'nil', value: null });
+    for (let i = 0; i < varDecls.length; i++) {
+      const decl = varDecls[i];
+      const val = expandedValues[i] || { type: 'nil', value: null };
+
+      // Lua 5.4: <const> variables must have a value
+      if (decl.attribute === 'const' && val.type === 'nil' && !expandedValues[i]) {
+        throw new Error(`local '${decl.name}' is declared as const but has no initial value`);
+      }
+
+      // Lua 5.4: <close> variables must be nil or have __close metamethod
+      if (decl.attribute === 'close' && val.type !== 'nil') {
+        if (val.type !== 'table' || !val.metatable?.__close) {
+          // Allow for now, will error on scope exit if __close not found
+        }
+      }
+
+      if (decl.attribute) {
+        val.attribute = decl.attribute;
+      }
+      currentScope.set(decl.name, val);
     }
+  }
+
+  /**
+   * Parse variable declarations with optional Lua 5.4 attributes
+   * Supports: x, x <const>, x <close>
+   */
+  private parseVariableDeclarations(varsStr: string): Array<{ name: string; attribute?: 'const' | 'close' }> {
+    const result: Array<{ name: string; attribute?: 'const' | 'close' }> = [];
+    const parts = varsStr.split(',');
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+
+      // Check for attribute: varname <const> or varname <close>
+      const attrMatch = trimmed.match(/^(\w+)\s*<(const|close)>$/);
+      if (attrMatch) {
+        result.push({
+          name: attrMatch[1],
+          attribute: attrMatch[2] as 'const' | 'close',
+        });
+      } else {
+        // Simple variable name
+        result.push({ name: trimmed });
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -3705,6 +5541,101 @@ export class LuaEngine {
     return { type: 'string', value: String(a.value) + String(b.value) };
   }
 
+  private integerDivide(a: LuaValue | undefined, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    if (!a) a = { type: 'number', value: 0 };
+
+    // Check for __idiv metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__idiv', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__idiv', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      if (b.value === 0) return { type: 'number', value: 0 }; // Safely return 0 for division by zero
+      return { type: 'number', value: Math.floor(a.value / b.value) };
+    }
+    throw new Error('Cannot integer-divide non-numbers');
+  }
+
+  private leftShift(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __shl metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__shl', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__shl', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      // JavaScript bitwise ops work on 32-bit integers
+      return { type: 'number', value: (a.value | 0) << (b.value | 0) };
+    }
+    throw new Error('Cannot left-shift non-numbers');
+  }
+
+  private rightShift(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __shr metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__shr', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__shr', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      // Use unsigned right shift for Lua-like behavior
+      return { type: 'number', value: (a.value | 0) >>> (b.value | 0) };
+    }
+    throw new Error('Cannot right-shift non-numbers');
+  }
+
+  private bitwiseAnd(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __band metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__band', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__band', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      return { type: 'number', value: (a.value | 0) & (b.value | 0) };
+    }
+    throw new Error('Cannot bitwise AND non-numbers');
+  }
+
+  private bitwiseOr(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __bor metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__bor', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__bor', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      return { type: 'number', value: (a.value | 0) | (b.value | 0) };
+    }
+    throw new Error('Cannot bitwise OR non-numbers');
+  }
+
+  private bitwiseXor(a: LuaValue, b: LuaValue, context?: LuaExecutionContext): LuaValue {
+    // Check for __bxor metamethod
+    if (context) {
+      const result = this.tryMetamethod(a, '__bxor', [a, b], context);
+      if (result) return result;
+      const result2 = this.tryMetamethod(b, '__bxor', [a, b], context);
+      if (result2) return result2;
+    }
+
+    if (a.type === 'number' && b.type === 'number') {
+      return { type: 'number', value: (a.value | 0) ^ (b.value | 0) };
+    }
+    throw new Error('Cannot bitwise XOR non-numbers');
+  }
+
   /**
    * Convert JavaScript value to Lua value
    */
@@ -3755,7 +5686,7 @@ export class LuaEngine {
   }
 
   /**
-   * Split code into statements, preserving block structures
+   * Split code into statements, preserving block structures and long strings
    */
   private splitStatements(code: string): string[] {
     const statements: string[] = [];
@@ -3764,31 +5695,106 @@ export class LuaEngine {
     let blockDepth = 0;
     let inBlock = false;
     let inRepeat = false;
+    let inLongString = false;
+    let longStringClose = '';
+    let braceDepth = 0; // Track table literal depth
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = lines[i];
+      const trimmedLine = line.trim();
 
-      if (!line) continue;
+      // Check for long string start
+      if (!inLongString && !inBlock) {
+        const longStringMatch = trimmedLine.match(/\[(=*)\[/);
+        if (longStringMatch) {
+          const equals = longStringMatch[1];
+          longStringClose = `]${equals}]`;
+          // Check if the closing is on the same line
+          const afterOpen = trimmedLine.substring(trimmedLine.indexOf(longStringMatch[0]) + longStringMatch[0].length);
+          if (!afterOpen.includes(longStringClose)) {
+            inLongString = true;
+            currentStatement = line;
+            continue;
+          }
+        }
+      }
 
-      // Check for block start keywords (only when NOT already in a block)
-      if (/^(while|for|if|function|local function)\s/.test(line) && !inBlock) {
-        inBlock = true;
-        blockDepth = 1;
-        currentStatement = line;
+      // If in long string, look for closing
+      if (inLongString) {
+        currentStatement += '\n' + line;
+        if (line.includes(longStringClose)) {
+          inLongString = false;
+          // Check if there's more on the line after the long string
+          const closeIdx = line.indexOf(longStringClose);
+          const afterClose = line.substring(closeIdx + longStringClose.length).trim();
+          if (!afterClose) {
+            statements.push(currentStatement);
+            currentStatement = '';
+          }
+          // If there's more, let it continue as a statement
+        }
         continue;
       }
 
+      if (!trimmedLine) continue;
+
+      // Track table literal braces (but skip braces inside strings)
+      const lineWithoutStrings = trimmedLine.replace(/"[^"]*"|'[^']*'/g, '');
+      const openBraces = (lineWithoutStrings.match(/{/g) || []).length;
+      const closeBraces = (lineWithoutStrings.match(/}/g) || []).length;
+
+      // Check if this line starts a multi-line table literal
+      if (openBraces > closeBraces && braceDepth === 0 && !inBlock) {
+        braceDepth = openBraces - closeBraces;
+        currentStatement = trimmedLine;
+        continue;
+      }
+
+      // If we're inside a table literal, accumulate lines
+      if (braceDepth > 0) {
+        currentStatement += '\n' + trimmedLine;
+        braceDepth += openBraces - closeBraces;
+        if (braceDepth <= 0) {
+          braceDepth = 0;
+          statements.push(currentStatement);
+          currentStatement = '';
+        }
+        continue;
+      }
+
+      // Check for block start keywords (only when NOT already in a block)
+      if (/^(while|for|if|function|local function)\s/.test(trimmedLine) && !inBlock) {
+        inBlock = true;
+        blockDepth = 1;
+        currentStatement = trimmedLine;
+        continue;
+      }
+
+      // Check for assignment with anonymous function: var = function(...)
+      if (/=\s*function\s*\(/.test(trimmedLine) && !inBlock) {
+        // Check if the function ends on the same line
+        const funcStart = trimmedLine.indexOf('function');
+        const afterFunc = trimmedLine.substring(funcStart);
+        if (!afterFunc.includes(' end') && !afterFunc.endsWith('end')) {
+          // Multi-line anonymous function
+          inBlock = true;
+          blockDepth = 1;
+          currentStatement = trimmedLine;
+          continue;
+        }
+      }
+
       // Check for repeat-until block start
-      if ((line === 'repeat' || line.startsWith('repeat ')) && !inBlock) {
+      if ((trimmedLine === 'repeat' || trimmedLine.startsWith('repeat ')) && !inBlock) {
         inBlock = true;
         inRepeat = true;
         blockDepth = 1;
-        currentStatement = line;
+        currentStatement = trimmedLine;
         continue;
       }
 
       if (inBlock) {
-        currentStatement += '\n' + line;
+        currentStatement += '\n' + trimmedLine;
 
         // Track nested blocks
         if (/\b(while|for|if|function|local function)\s/.test(line)) {
@@ -3837,6 +5843,41 @@ export class LuaEngine {
     }
 
     return statements;
+  }
+
+  /**
+   * Convert a Lua value to a Lua literal representation
+   * Used for passing values to metamethod calls
+   */
+  private valueToLuaLiteral(value: LuaValue): string {
+    switch (value.type) {
+      case 'nil':
+        return 'nil';
+      case 'boolean':
+        return value.value ? 'true' : 'false';
+      case 'number':
+        return String(value.value);
+      case 'string':
+        // Escape quotes and special characters
+        const escaped = String(value.value)
+          .replace(/\\/g, '\\\\')
+          .replace(/"/g, '\\"')
+          .replace(/\n/g, '\\n')
+          .replace(/\r/g, '\\r')
+          .replace(/\t/g, '\\t');
+        return `"${escaped}"`;
+      case 'table':
+        // For tables, we store them in a temporary variable and return the name
+        const tempName = `__temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        this.globalContext.variables.set(tempName, value);
+        return tempName;
+      case 'function':
+        // For functions, return the function name if available
+        const funcValue = value.value as { name?: string };
+        return funcValue.name || 'nil';
+      default:
+        return 'nil';
+    }
   }
 }
 

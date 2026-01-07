@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { getLuaEngine } from '../../scripting/LuaEngine';
-  import type { LuaExecutionResult } from '../../scripting/LuaEngine';
+  import { getLuaEngine, type LuaExecutionResult } from '@writewhisker/scripting';
 
   // State
   let input = $state('');

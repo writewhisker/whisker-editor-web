@@ -3,7 +3,18 @@
  * Lua execution engine and configuration
  */
 
-export { LuaEngine } from './LuaEngine';
+export {
+  LuaEngine,
+  getLuaEngine,
+  type LuaValue,
+  type LuaTable,
+  type LuaFunction,
+  type LuaExecutionContext,
+  type LuaExecutionResult,
+  type LuaMultiValue,
+  type LuaCoroutine,
+  isMultiValue,
+} from './LuaEngine';
 // LuaExecutor temporarily disabled - uses deprecated @writewhisker/core-ts
 // export { LuaExecutor } from './LuaExecutor';
 

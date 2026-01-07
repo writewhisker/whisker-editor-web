@@ -1,0 +1,81 @@
+{
+  "version": "1.0",
+  "checkpoint": 1,
+  "phase": "WLS 2.0 Runtime - Core",
+  "description": "Thread Scheduler, Timed Content, External Functions",
+  "completedTasks": [
+    "Created wls2 directory structure",
+    "Implemented types.ts with all core interfaces",
+    "Implemented ThreadScheduler.ts with priority-based execution",
+    "Implemented TimedContent.ts with one-shot and repeating timers",
+    "Implemented ExternalFunctions.ts with type validation",
+    "Created index.ts module exports",
+    "Wrote comprehensive tests for all modules"
+  ],
+  "pendingTasks": [
+    "Phase 2: LIST State Machine (ListValue, ListRegistry)",
+    "Phase 3: Text Effects, Audio Effects, Parameterized Passages",
+    "Phase 4: Compact Binary Format",
+    "Phase 5: Security & Validators",
+    "Phase 6: Integration & Polish"
+  ],
+  "filesCreated": [
+    "/packages/scripting/src/wls2/types.ts",
+    "/packages/scripting/src/wls2/ThreadScheduler.ts",
+    "/packages/scripting/src/wls2/TimedContent.ts",
+    "/packages/scripting/src/wls2/ExternalFunctions.ts",
+    "/packages/scripting/src/wls2/index.ts",
+    "/packages/scripting/src/wls2/ThreadScheduler.test.ts",
+    "/packages/scripting/src/wls2/TimedContent.test.ts",
+    "/packages/scripting/src/wls2/ExternalFunctions.test.ts",
+    "/packages/scripting/src/wls2/__checkpoints__/checkpoint-1.json"
+  ],
+  "testCounts": {
+    "ThreadScheduler": 36,
+    "TimedContent": 41,
+    "ExternalFunctions": 42,
+    "total": 119
+  },
+  "linesCounts": {
+    "types.ts": 308,
+    "ThreadScheduler.ts": 424,
+    "TimedContent.ts": 416,
+    "ExternalFunctions.ts": 316,
+    "index.ts": 65,
+    "tests": 750,
+    "totalImplementation": 1529
+  },
+  "features": {
+    "ThreadScheduler": [
+      "Parallel narrative execution",
+      "Priority-based thread scheduling",
+      "Thread spawn/cancel/pause/resume",
+      "Thread-local variables",
+      "Wait/await synchronization",
+      "Serialization/deserialization"
+    ],
+    "TimedContent": [
+      "One-shot timers",
+      "Repeating timers with maxFires",
+      "Time string parsing (ms, s, m, h)",
+      "Global and per-timer pause",
+      "Timer callbacks",
+      "Serialization/deserialization"
+    ],
+    "ExternalFunctions": [
+      "Function registration",
+      "Declaration parsing",
+      "Type validation (string, number, boolean, any)",
+      "Optional parameters",
+      "Strict/lenient type checking",
+      "Batch registration"
+    ]
+  },
+  "timestamp": "2026-01-06T19:19:00Z",
+  "nextPhase": {
+    "number": 2,
+    "name": "WLS 2.0 Runtime - State",
+    "goal": "Implement LIST State Machine (largest module)",
+    "estimatedLines": 900
+  }
+}

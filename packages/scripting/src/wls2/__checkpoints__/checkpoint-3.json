@@ -1,0 +1,92 @@
+{
+  "version": "1.0",
+  "checkpoint": 3,
+  "phase": "WLS 2.0 Runtime - Effects",
+  "description": "Text Effects, Audio Effects, Parameterized Passages",
+  "completedTasks": [
+    "Implemented TextEffects with typewriter, animations, transitions",
+    "Implemented EffectController with pause/resume/skip",
+    "Built-in effects: typewriter, shake, pulse, glitch, fade-in/out, slide-*",
+    "CSS keyframes generation for web animations",
+    "Implemented AudioEffects with fade in/out and crossfade",
+    "Audio group volume control (music, sfx, ambient, voice)",
+    "Mute/unmute functionality",
+    "Pluggable audio backend interface",
+    "Implemented ParameterizedPassages with argument binding",
+    "Passage header and call parsing",
+    "Variable references ($var) and expressions ({expr})",
+    "Default parameter values",
+    "Comprehensive test coverage (101 tests for Phase 3)"
+  ],
+  "pendingTasks": [
+    "Phase 4: Compact Binary Format",
+    "Phase 5: Security & Validators",
+    "Phase 6: Integration & Polish"
+  ],
+  "filesCreated": [
+    "/packages/scripting/src/wls2/TextEffects.ts",
+    "/packages/scripting/src/wls2/AudioEffects.ts",
+    "/packages/scripting/src/wls2/ParameterizedPassages.ts",
+    "/packages/scripting/src/wls2/TextEffects.test.ts",
+    "/packages/scripting/src/wls2/AudioEffects.test.ts",
+    "/packages/scripting/src/wls2/ParameterizedPassages.test.ts"
+  ],
+  "filesModified": [
+    "/packages/scripting/src/wls2/index.ts"
+  ],
+  "testCounts": {
+    "TextEffects": 32,
+    "AudioEffects": 32,
+    "ParameterizedPassages": 37,
+    "phase3Total": 101,
+    "cumulativeTotal": 316
+  },
+  "linesCounts": {
+    "TextEffects.ts": 492,
+    "AudioEffects.ts": 408,
+    "ParameterizedPassages.ts": 328,
+    "TextEffects.test.ts": 248,
+    "AudioEffects.test.ts": 286,
+    "ParameterizedPassages.test.ts": 252,
+    "phase3Total": 2014,
+    "cumulativeTotal": 4969
+  },
+  "features": {
+    "TextEffects": [
+      "Progressive effects (typewriter, teletype)",
+      "Animation effects (shake, pulse, glitch, bounce)",
+      "Transition effects (fade-in/out, slide-left/right/up/down)",
+      "EffectController with pause/resume/skip",
+      "Custom effect registration",
+      "CSS keyframes generation",
+      "Effect declaration parsing"
+    ],
+    "AudioEffects": [
+      "Audio declaration parsing",
+      "Play/stop/pause/resume controls",
+      "Fade in/out effects",
+      "Crossfade between tracks",
+      "Group volume control (music/sfx/ambient/voice)",
+      "Mute/unmute functionality",
+      "Pluggable audio backend",
+      "State serialization"
+    ],
+    "ParameterizedPassages": [
+      "Passage header parsing with parameters",
+      "Default parameter values",
+      "Passage call parsing with arguments",
+      "Variable references ($var)",
+      "Expression references ({expr})",
+      "Argument binding and resolution",
+      "Variable scope creation",
+      "Call validation"
+    ]
+  },
+  "timestamp": "2026-01-06T19:31:00Z",
+  "nextPhase": {
+    "number": 4,
+    "name": "Compact Binary Format",
+    "goal": "Implement compact binary format for 20-40% size reduction",
+    "estimatedLines": 600
+  }
+}

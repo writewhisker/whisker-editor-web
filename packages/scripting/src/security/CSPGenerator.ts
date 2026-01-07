@@ -318,12 +318,13 @@ export class CSPGenerator {
 
       const configKey = directiveMap[name];
       if (configKey) {
+        const configAny = config as unknown as Record<string, unknown>;
         if (configKey === 'upgradeInsecureRequests' || configKey === 'blockAllMixedContent') {
-          (config as Record<string, unknown>)[configKey] = true;
+          configAny[configKey] = true;
         } else if (configKey === 'reportUri' || configKey === 'reportTo') {
-          (config as Record<string, unknown>)[configKey] = values[0] || '';
+          configAny[configKey] = values[0] || '';
         } else {
-          (config as Record<string, unknown>)[configKey] = values;
+          configAny[configKey] = values;
         }
       }
     }
@@ -338,6 +339,7 @@ export class CSPGenerator {
    */
   static merge(...configs: Partial<CSPConfig>[]): CSPConfig {
     const result: CSPConfig = { ...DEFAULT_CSP_CONFIG };
+    const resultAny = result as unknown as Record<string, unknown>;
 
     for (const config of configs) {
       for (const [key, value] of Object.entries(config)) {
@@ -348,10 +350,10 @@ export class CSPGenerator {
 
         if (Array.isArray(value) && Array.isArray(currentValue)) {
           // Merge arrays and deduplicate
-          (result as Record<string, unknown>)[configKey] = [...new Set([...currentValue, ...value])];
+          resultAny[configKey] = [...new Set([...currentValue, ...value])];
         } else if (value !== undefined) {
           // Override single values
-          (result as Record<string, unknown>)[configKey] = value;
+          resultAny[configKey] = value;
         }
       }
     }

@@ -289,7 +289,7 @@ export class ParameterizedPassages {
       return null;
     }
 
-    const bindings = new Map<string, unknown>();
+    const bindings = new Map<string, PassageArgument>();
 
     for (let i = 0; i < header.params.length; i++) {
       const param = header.params[i];
@@ -298,8 +298,8 @@ export class ParameterizedPassages {
         // Use provided argument
         bindings.set(param.name, args[i]);
       } else if (param.default !== undefined) {
-        // Use default value
-        bindings.set(param.name, param.default);
+        // Use default value - wrap primitive in PassageArgument if needed
+        bindings.set(param.name, param.default as PassageArgument);
       } else {
         // Missing required argument
         console.warn(

@@ -56,3 +56,9 @@ export {
   parseListDeclaration,
   evaluateListOperator,
 } from './list-operations';
+
+// WLS 2.0 Runtime
+export * from './wls2';
+
+// Security utilities
+export * from './security';

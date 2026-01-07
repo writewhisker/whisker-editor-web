@@ -276,7 +276,7 @@ export interface PassageCall {
 
 export interface PassageArgBinding {
   passageName: string;
-  bindings: Map<string, unknown>;
+  bindings: Map<string, PassageArgument>;
 }
 
 // =============================================================================

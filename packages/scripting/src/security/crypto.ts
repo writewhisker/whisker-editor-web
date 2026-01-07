@@ -53,10 +53,16 @@ function toArrayBuffer(data: string | ArrayBuffer | Uint8Array): ArrayBuffer {
     return data;
   }
   if (data instanceof Uint8Array) {
-    return data.buffer;
+    // Copy to a new ArrayBuffer to ensure proper type
+    const newBuffer = new ArrayBuffer(data.byteLength);
+    new Uint8Array(newBuffer).set(data);
+    return newBuffer;
   }
   // String - encode as UTF-8
-  return new TextEncoder().encode(data).buffer;
+  const encoded = new TextEncoder().encode(data);
+  const newBuffer = new ArrayBuffer(encoded.byteLength);
+  new Uint8Array(newBuffer).set(encoded);
+  return newBuffer;
 }
 
 /**

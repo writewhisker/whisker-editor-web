@@ -164,13 +164,10 @@ export class CompactImporter {
 
       return {
         success: true,
-        story: storyData,
-        format: 'compact',
-        stats: {
-          passageCount: passages.length,
-          variableCount: variables.length,
-          importTime: duration,
-        },
+        story: storyData as Story,
+        duration,
+        passageCount: passages.length,
+        variableCount: variables.length,
         warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {

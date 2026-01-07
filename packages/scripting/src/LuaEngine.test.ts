@@ -1760,4 +1760,462 @@ describe('LuaEngine', () => {
       expect(engine.getVariable('result')).toBe(4);
     });
   });
+
+  describe('Goto and Labels (Lua 5.2+)', () => {
+    it('should skip code with forward goto', () => {
+      const code = `
+        x = 1
+        goto skip
+        x = 2
+        ::skip::
+        x = x + 10
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(11); // 1 + 10, skipping x = 2
+    });
+
+    it('should support backward goto for loops', () => {
+      const code = `
+        count = 0
+        ::loop::
+        count = count + 1
+        if count < 5 then
+          goto loop
+        end
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('count')).toBe(5);
+    });
+
+    it('should handle multiple labels', () => {
+      const code = `
+        result = ""
+        goto first
+        ::second::
+        result = result .. "2"
+        goto done
+        ::first::
+        result = result .. "1"
+        goto second
+        ::done::
+        result = result .. "3"
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('123');
+    });
+
+    it('should handle labels with no jumps', () => {
+      const code = `
+        x = 1
+        ::unused::
+        x = x + 1
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(2);
+    });
+
+    it('should support goto in conditionals', () => {
+      const code = `
+        x = 10
+        if x > 5 then
+          goto success
+        end
+        result = "fail"
+        goto done
+        ::success::
+        result = "pass"
+        ::done::
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('pass');
+    });
+  });
+
+  describe('Lua 5.4 Features', () => {
+    it('should support _VERSION global', () => {
+      const result = engine.execute('v = _VERSION');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('v')).toBe('Lua 5.4');
+    });
+
+    it('should support rawlen for strings', () => {
+      const result = engine.execute('len = rawlen("hello")');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('len')).toBe(5);
+    });
+
+    it('should support rawlen for tables', () => {
+      const code = `
+        t = {1, 2, 3, 4, 5}
+        len = rawlen(t)
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('len')).toBe(5);
+    });
+
+    it('should support warn function', () => {
+      const result = engine.execute('warn("test warning")');
+      expect(result.success).toBe(true);
+      expect(result.output).toContain('[warn] test warning');
+    });
+
+    it('should support table.move', () => {
+      const code = `
+        a = {1, 2, 3}
+        table.move(a, 1, 3, 2)
+        result = a[4]
+      `;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(3);
+    });
+
+    it('should support hex literals', () => {
+      const result = engine.execute('x = 0xFF');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(255);
+    });
+
+    it('should support negative hex literals', () => {
+      const result = engine.execute('x = -0x10');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(-16);
+    });
+
+    it('should support scientific notation', () => {
+      const result = engine.execute('x = 1.5e3');
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(1500);
+    });
+
+    it('should support long string literals [[...]]', () => {
+      const code = 's = [[hello world]]';
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('s')).toBe('hello world');
+    });
+
+    it('should support long string with equals [=[...]=]', () => {
+      const code = 's = [=[contains [[brackets]]]=]';
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('s')).toBe('contains [[brackets]]');
+    });
+
+    it('should support long string multiline', () => {
+      const code = `s = [[line1
+line2
+line3]]`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('s')).toBe('line1\nline2\nline3');
+    });
+
+    it('should support anonymous functions', () => {
+      const code = `add = function(a, b)
+        return a + b
+      end
+      result = add(3, 4)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(7);
+    });
+
+    it('should support anonymous functions with multiple statements', () => {
+      const code = `double = function(x)
+        local y = x * 2
+        return y
+      end
+      result = double(5)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(10);
+    });
+
+    it('should support anonymous functions as table values', () => {
+      const code = `t = {
+        add = function(a, b) return a + b end
+      }
+      result = t.add(2, 3)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(5);
+    });
+
+    it('should support passing functions as arguments', () => {
+      const code = `function apply(fn, x)
+        return fn(x)
+      end
+      sq = function(n) return n * n end
+      result = apply(sq, 4)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(16);
+    });
+
+    it('should support anonymous variadic functions', () => {
+      const code = `sum = function(...)
+        local args = {...}
+        local total = 0
+        for i = 1, #args do
+          total = total + args[i]
+        end
+        return total
+      end
+      result = sum(1, 2, 3, 4, 5)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(15);
+    });
+
+    it('should support string.pack with bytes', () => {
+      const code = `packed = string.pack("BBB", 65, 66, 67)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('packed')).toBe('ABC');
+    });
+
+    it('should support string.unpack with bytes', () => {
+      const code = `a, b, c = string.unpack("BBB", "ABC")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('a')).toBe(65);
+      expect(engine.getVariable('b')).toBe(66);
+      expect(engine.getVariable('c')).toBe(67);
+    });
+
+    it('should support string.pack with shorts', () => {
+      const code = `packed = string.pack("<HH", 0x0102, 0x0304)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      // Little endian: 02 01 04 03
+      const packed = engine.getVariable('packed') as string;
+      expect(packed.charCodeAt(0)).toBe(0x02);
+      expect(packed.charCodeAt(1)).toBe(0x01);
+      expect(packed.charCodeAt(2)).toBe(0x04);
+      expect(packed.charCodeAt(3)).toBe(0x03);
+    });
+
+    it('should support string.pack with zero-terminated strings', () => {
+      const code = `packed = string.pack("zz", "hello", "world")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('packed')).toBe('hello\0world\0');
+    });
+
+    it('should support string.packsize', () => {
+      const code = `size = string.packsize("BBhI")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('size')).toBe(8); // 1 + 1 + 2 + 4
+    });
+
+    it('should support setmetatable for tables', () => {
+      const code = `t = {a = 1, b = 2}
+      mt = {__index = {c = 3}}
+      setmetatable(t, mt)
+      result = t.c`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(3);
+    });
+
+    it('should support load() for dynamic code execution', () => {
+      const code = `chunk = "x = 10 + 5"
+      f = load(chunk)
+      f()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('x')).toBe(15);
+    });
+
+    it('should support load() with return value', () => {
+      const code = `f = load("return 42")
+      result = f()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(42);
+    });
+
+    it('should support loadstring() for Lua 5.1 compatibility', () => {
+      const code = `f = loadstring("y = 20 * 2")
+      f()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('y')).toBe(40);
+    });
+
+    it('should support load() with multi-statement code', () => {
+      const code = `chunk = [[
+        a = 1
+        b = 2
+        c = a + b
+      ]]
+      f = load(chunk)
+      f()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('c')).toBe(3);
+    });
+
+    it('should support collectgarbage with collect option', () => {
+      const code = `result = collectgarbage("collect")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(0);
+    });
+
+    it('should support collectgarbage with isrunning option', () => {
+      const code = `result = collectgarbage("isrunning")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(true);
+    });
+
+    it('should support collectgarbage with count option', () => {
+      const code = `result = collectgarbage("count")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(typeof engine.getVariable('result')).toBe('number');
+    });
+
+    it('should support string.dump for named functions', () => {
+      const code = `function myFunc(a, b)
+        return a + b
+      end
+      dumped = string.dump("myFunc")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const dumped = engine.getVariable('dumped') as string;
+      expect(dumped.startsWith('\x1bLuaS')).toBe(true);
+      expect(dumped).toContain('return a + b');
+    });
+
+    it('should support string.dump for anonymous functions', () => {
+      const code = `f = function(x) return x * 2 end
+      dumped = string.dump(f)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const dumped = engine.getVariable('dumped') as string;
+      expect(dumped.startsWith('\x1bLuaS')).toBe(true);
+      expect(dumped).toContain('return x * 2');
+    });
+
+    it('should support math.frexp', () => {
+      const code = `m, e = math.frexp(8)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('m')).toBe(0.5);
+      expect(engine.getVariable('e')).toBe(4); // 0.5 * 2^4 = 8
+    });
+
+    it('should support math.ldexp', () => {
+      const code = `result = math.ldexp(0.5, 4)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(8); // 0.5 * 2^4 = 8
+    });
+
+    it('should support _VERSION global', () => {
+      const code = `result = _VERSION`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('Lua 5.4');
+    });
+
+    it('should support _G global table', () => {
+      const code = `x = 42
+      result = type(_G)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('table');
+    });
+
+    it('should support package.preload for require', () => {
+      const code = `function mymod_loader()
+        return { value = 123 }
+      end
+      package.preload["mymod"] = mymod_loader
+      mod = require("mymod")
+      result = mod.value`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(123);
+    });
+
+    it('should cache modules in package.loaded', () => {
+      const code = `counter = 0
+      function counter_loader()
+        counter = counter + 1
+        return { count = counter }
+      end
+      package.preload["counter_mod"] = counter_loader
+      mod1 = require("counter_mod")
+      mod2 = require("counter_mod")
+      result = counter`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      // Should only be called once due to caching
+      expect(engine.getVariable('result')).toBe(1);
+    });
+
+    it('should support <const> attribute preventing reassignment', () => {
+      const code = `local x <const> = 10
+      x = 20`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(false);
+      expect(result.errors[0]).toContain('const');
+    });
+
+    it('should allow <const> variables to be read', () => {
+      const code = `local x <const> = 42
+      result = x`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(42);
+    });
+
+    it('should call __close metamethod on scope exit', () => {
+      const code = `closed = false
+      function closer(self, err)
+        closed = true
+      end
+      function test()
+        local t <close> = setmetatable({}, { __close = closer })
+        return 123
+      end
+      result = test()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe(123);
+      expect(engine.getVariable('closed')).toBe(true);
+    });
+
+    it('should allow nil for <close> variables', () => {
+      const code = `function test()
+        local x <close> = nil
+        result = "ok"
+      end
+      test()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('ok');
+    });
+
+    it('should error on non-closable value for <close> variable', () => {
+      const code = `function test()
+        local x <close> = 42
+      end
+      test()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(false);
+      expect(result.errors[0]).toContain('non-closable');
+    });
+  });
 });

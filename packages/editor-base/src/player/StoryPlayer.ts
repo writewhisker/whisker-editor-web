@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { getPlaythroughRecorder, type PlaythroughRecorder } from '@writewhisker/analytics';
 import type { Playthrough } from '@writewhisker/core-ts';
-import { getLuaEngine, type LuaEngine } from '../scripting/LuaEngine';
+import { getLuaEngine, type LuaEngine } from '@writewhisker/scripting';
 
 /**
  * StoryPlayer - Core player engine for preview and testing

@@ -155,7 +155,7 @@ export type {
 // SCRIPTING SYSTEM
 // ============================================================================
 
-export { LuaEngine } from './scripting/LuaEngine';
+export { LuaEngine, getLuaEngine, type LuaExecutionResult } from '@writewhisker/scripting';
 export { LuaExecutor } from './scripting/LuaExecutor';
 
 // ============================================================================

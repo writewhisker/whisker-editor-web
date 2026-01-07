@@ -3,7 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import LuaConsole from './LuaConsole.svelte';
 
 // Mock the LuaEngine
-vi.mock('$lib/scripting/LuaEngine', () => ({
+vi.mock('@writewhisker/scripting', () => ({
   getLuaEngine: () => ({
     execute: vi.fn((code: string) => ({
       success: true,

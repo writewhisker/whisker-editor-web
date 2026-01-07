@@ -130,3 +130,11 @@ export {
   isVariableRef,
   isExpressionRef,
 } from './ParameterizedPassages';
+
+// WLS 2.0 Container (Dependency Injection)
+export {
+  WLS2Container,
+  createWLS2Container,
+  createTestContainer,
+  createLightContainer,
+} from './WLS2Container';

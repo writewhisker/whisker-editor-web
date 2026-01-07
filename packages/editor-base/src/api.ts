@@ -158,6 +158,119 @@ export type {
 export { LuaEngine, getLuaEngine, type LuaExecutionResult } from '@writewhisker/scripting';
 export { LuaExecutor } from './scripting/LuaExecutor';
 
+// WLS 1.0 Expression Evaluator
+export {
+  ExpressionEvaluator,
+  evaluate,
+  createEvaluator,
+} from '@writewhisker/scripting';
+
+// WLS 1.0 Whisker API
+export {
+  WhiskerApi,
+  createWhiskerApi,
+} from '@writewhisker/scripting';
+
+// ============================================================================
+// WLS 2.0 RUNTIME (Advanced Features)
+// ============================================================================
+
+// WLS 2.0 Container
+export {
+  WLS2Container,
+  createWLS2Container,
+  createTestContainer,
+  createLightContainer,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Thread Scheduler
+export {
+  ThreadScheduler,
+  createThreadScheduler,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Timed Content
+export {
+  TimedContent,
+  createTimedContent,
+  parseTimeString,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 External Functions
+export {
+  ExternalFunctions,
+  createExternalFunctions,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 LIST State Machine
+export {
+  ListValue,
+  ListRegistry,
+  createListRegistry,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Text Effects
+export {
+  TextEffects,
+  createTextEffects,
+  BUILTIN_EFFECTS,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Audio Effects
+export {
+  AudioEffects,
+  createAudioEffects,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Parameterized Passages
+export {
+  ParameterizedPassages,
+  createParameterizedPassages,
+  parsePassageHeader,
+  parsePassageCall,
+} from '@writewhisker/scripting';
+
+// WLS 2.0 Types
+export type {
+  Thread,
+  ThreadState,
+  Timer,
+  TimerState,
+  WLS2Options,
+  WLS2State,
+  StepResult,
+  ListValueConfig,
+  PassageHeader,
+  PassageCall,
+  EffectType,
+  EffectDefinition,
+  AudioGroup,
+} from '@writewhisker/scripting';
+
+// ============================================================================
+// SECURITY UTILITIES
+// ============================================================================
+
+export {
+  CSPGenerator,
+  createCSPGenerator,
+  DEFAULT_CSP_CONFIG,
+  PERMISSIVE_CSP_CONFIG,
+} from '@writewhisker/scripting';
+
+export {
+  sha256Hex,
+  sha256Base64,
+  generateSRI,
+  verifySRI,
+  generateKey,
+} from '@writewhisker/scripting';
+
+export type {
+  CSPConfig,
+  HashAlgorithm,
+} from '@writewhisker/scripting';
+
 // ============================================================================
 // STORE ADAPTERS (for SaaS applications and external integrations)
 // ============================================================================

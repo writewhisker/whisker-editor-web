@@ -1,0 +1,16 @@
+name: "Basic variable assignment"
+description: "Test simple variable assignment and retrieval"
+tags: [variables, basic]
+
+wls: |
+  x = 42
+  name = "Alice"
+  flag = true
+
+assertions:
+  - variable: x
+    equals: 42
+  - variable: name
+    equals: "Alice"
+  - variable: flag
+    equals: true

@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Parser
+ * WLS Parser
  * Recursive descent parser for Whisker Language Specification
  */
 
@@ -54,16 +54,16 @@ import {
   parseAudioDeclaration,
   parseEffectDeclaration,
   parseExternalDeclaration,
-} from './wls2-declarations';
+} from './declarations';
 
 /**
- * Parser for WLS 1.0 format
+ * Parser for WLS format
  */
 export class Parser {
   private tokens: Token[] = [];
   private pos: number = 0;
   private errors: ParseError[] = [];
-  private namespaceStack: string[] = [];  // WLS 1.0 Gap 4: Current namespace context
+  private namespaceStack: string[] = [];  // Current namespace context
 
   /**
    * Parse source code into an AST
@@ -223,10 +223,10 @@ export class Parser {
     const functions: FunctionDeclarationNode[] = [];
     const namespaces: NamespaceDeclarationNode[] = [];
     const passages: PassageNode[] = [];
-    const threads: ThreadPassageNode[] = [];  // WLS 2.0: Thread passages
-    const audioDeclarations: AudioDeclarationNode[] = [];      // WLS 2.0: Audio declarations
-    const effectDeclarations: EffectDeclarationNode[] = [];    // WLS 2.0: Effect declarations
-    const externalDeclarations: ExternalDeclarationNode[] = []; // WLS 2.0: External declarations
+    const threads: ThreadPassageNode[] = [];  // Thread passages
+    const audioDeclarations: AudioDeclarationNode[] = [];      // Audio declarations
+    const effectDeclarations: EffectDeclarationNode[] = [];    // Effect declarations
+    const externalDeclarations: ExternalDeclarationNode[] = []; // External declarations
 
     this.namespaceStack = [];  // Reset namespace context
 
@@ -271,31 +271,31 @@ export class Parser {
           externalDeclarations.push(directive);
         }
       } else if (this.check(TokenType.LIST)) {
-        // WLS 1.0 Gap 3: LIST declaration
+        // LIST declaration
         const list = this.parseListDeclaration();
         if (list) lists.push(list);
       } else if (this.check(TokenType.ARRAY)) {
-        // WLS 1.0 Gap 3: ARRAY declaration
+        // ARRAY declaration
         const array = this.parseArrayDeclaration();
         if (array) arrays.push(array);
       } else if (this.check(TokenType.MAP)) {
-        // WLS 1.0 Gap 3: MAP declaration
+        // MAP declaration
         const map = this.parseMapDeclaration();
         if (map) maps.push(map);
       } else if (this.check(TokenType.INCLUDE)) {
-        // WLS 1.0 Gap 4: INCLUDE declaration
+        // INCLUDE declaration
         const include = this.parseIncludeDeclaration();
         if (include) includes.push(include);
       } else if (this.check(TokenType.FUNCTION)) {
-        // WLS 1.0 Gap 4: FUNCTION declaration
+        // FUNCTION declaration
         const func = this.parseFunctionDeclaration();
         if (func) functions.push(func);
       } else if (this.check(TokenType.NAMESPACE)) {
-        // WLS 1.0 Gap 4: NAMESPACE block
+        // NAMESPACE block
         const ns = this.parseNamespaceDeclaration(passages, functions);
         if (ns) namespaces.push(ns);
       } else if (this.check(TokenType.END)) {
-        // WLS 1.0 Gap 4: END NAMESPACE
+        // END NAMESPACE
         this.parseEndNamespace();
       } else if (this.check(TokenType.NEWLINE)) {
         this.advance();
@@ -316,17 +316,17 @@ export class Parser {
       if (this.check(TokenType.PASSAGE_MARKER)) {
         passages.push(this.parsePassage());
       } else if (this.check(TokenType.THREAD_MARKER)) {
-        // WLS 2.0: Thread passage
+        // Thread passage
         threads.push(this.parseThreadPassage());
       } else if (this.check(TokenType.NAMESPACE)) {
-        // WLS 1.0 Gap 4: NAMESPACE block in passage section
+        // NAMESPACE block in passage section
         const ns = this.parseNamespaceDeclaration(passages, functions);
         if (ns) namespaces.push(ns);
       } else if (this.check(TokenType.END)) {
-        // WLS 1.0 Gap 4: END NAMESPACE
+        // END NAMESPACE
         this.parseEndNamespace();
       } else if (this.check(TokenType.FUNCTION)) {
-        // WLS 1.0 Gap 4: FUNCTION in passage section
+        // FUNCTION in passage section
         const func = this.parseFunctionDeclaration();
         if (func) functions.push(func);
       } else if (this.check(TokenType.NEWLINE) || this.check(TokenType.COMMENT)) {
@@ -372,17 +372,17 @@ export class Parser {
       return this.parseVarsBlock(start);
     }
 
-    // WLS 2.0: Audio declaration
+    // Audio declaration
     if (directiveName === 'audio') {
       return this.parseAudioDirective(start);
     }
 
-    // WLS 2.0: Effect declaration
+    // Effect declaration
     if (directiveName === 'effect') {
       return this.parseEffectDirective(start);
     }
 
-    // WLS 2.0: External function declaration
+    // External function declaration
     if (directiveName === 'external') {
       return this.parseExternalDirective(start);
     }
@@ -572,8 +572,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // Collection Declaration Parsing (WLS 1.0 - Gap 3)
-  // ============================================================================
+  // Collection Declaration Parsing   // ============================================================================
 
   /**
    * Parse a LIST declaration: LIST name = value1, (active_value), value2
@@ -848,8 +847,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // Module Declarations (WLS 1.0 - Gap 4)
-  // ============================================================================
+  // Module Declarations   // ============================================================================
 
   /**
    * Parse an INCLUDE declaration: INCLUDE "path/to/file.ws"
@@ -1034,7 +1032,7 @@ export class Parser {
     const tags: string[] = [];
     const metadata: PassageMetadataNode[] = [];
 
-    // WLS 1.0 Gap 4: Check for :: prefix (global namespace reference)
+    // Check for :: prefix (global namespace reference)
     const isGlobalReference = this.check(TokenType.SCOPE_OP);
     if (isGlobalReference) {
       this.advance(); // consume ::
@@ -1060,7 +1058,7 @@ export class Parser {
       name = 'unnamed';
     }
 
-    // WLS 1.0 Gap 4: Apply namespace prefix if not a global reference
+    // Apply namespace prefix if not a global reference
     const originalName = name;
     let qualifiedName = name;
     let currentNamespace: string | undefined;
@@ -1112,7 +1110,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // WLS 2.0 Thread Passage Parsing
+  // Thread Passage Parsing
   // ============================================================================
 
   /**
@@ -1379,7 +1377,7 @@ export class Parser {
 
     // Optional target -> passage
     if (this.match(TokenType.ARROW)) {
-      // WLS 1.0 Gap 4: Also accept END keyword as target (special target)
+      // Also accept END keyword as target (special target)
       // and SCOPE_OP for namespace-qualified targets
       if (this.check(TokenType.IDENTIFIER)) {
         target = this.advance().value;
@@ -1392,7 +1390,7 @@ export class Parser {
           }
         }
       } else if (this.check(TokenType.END)) {
-        // END is a special target (WLS 1.0 Gap 4: END is now a keyword)
+        // END is a special target ( END is now a keyword)
         target = 'END';
         this.advance();
       } else if (this.check(TokenType.SCOPE_OP)) {
@@ -1455,8 +1453,7 @@ export class Parser {
   }
 
   // ============================================================================
-  // Gather and Tunnel Parsing (WLS 1.0)
-  // ============================================================================
+  // Gather and Tunnel Parsing   // ============================================================================
 
   /**
    * Parse a gather point (- at line start)
@@ -1592,7 +1589,7 @@ export class Parser {
       } as DoBlockNode;
     }
 
-    // WLS 2.0: Await expression ({await ThreadName})
+    // Await expression ({await ThreadName})
     if (this.check(TokenType.AWAIT)) {
       this.advance(); // consume 'await'
       let threadName = '';
@@ -1614,7 +1611,7 @@ export class Parser {
       } as AwaitExpressionNode;
     }
 
-    // WLS 2.0: Spawn expression ({spawn -> PassageName} or {spawn PassageName})
+    // Spawn expression ({spawn -> PassageName} or {spawn PassageName})
     if (this.check(TokenType.SPAWN)) {
       this.advance(); // consume 'spawn'
       this.match(TokenType.ARROW); // optional arrow

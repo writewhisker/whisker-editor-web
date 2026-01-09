@@ -1,0 +1,22 @@
+name: "Table library functions"
+description: "Test table.insert, table.remove, table.concat"
+tags: [tables, stdlib]
+
+wls: |
+  items = { "apple", "banana" }
+  table.insert(items, "cherry")
+  count_after_insert = #items
+
+  table.remove(items, 1)
+  first_after_remove = items[1]
+
+  words = { "hello", "world" }
+  sentence = table.concat(words, " ")
+
+assertions:
+  - variable: count_after_insert
+    equals: 3
+  - variable: first_after_remove
+    equals: "banana"
+  - variable: sentence
+    equals: "hello world"

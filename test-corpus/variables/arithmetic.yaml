@@ -1,0 +1,25 @@
+name: "Arithmetic operations"
+description: "Test arithmetic operators"
+tags: [variables, arithmetic]
+
+wls: |
+  a = 10 + 5
+  b = 20 - 8
+  c = 6 * 7
+  d = 15 / 3
+  e = 17 % 5
+  f = 2 ^ 3
+
+assertions:
+  - variable: a
+    equals: 15
+  - variable: b
+    equals: 12
+  - variable: c
+    equals: 42
+  - variable: d
+    equals: 5
+  - variable: e
+    equals: 2
+  - variable: f
+    equals: 8

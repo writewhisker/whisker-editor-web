@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Module Validator
+ * Module Validator
  *
  * Validates INCLUDE, FUNCTION, and NAMESPACE declarations.
  * Error codes: WLS-MOD-001 through WLS-MOD-015
@@ -122,6 +122,9 @@ export class WlsModuleValidator implements Validator {
 
     // Validate namespace scoping
     issues.push(...this.validateNamespaceScoping(story));
+
+    // Validate function calls reference defined functions
+    issues.push(...this.validateFunctionCalls(story));
 
     return issues;
   }
@@ -574,6 +577,94 @@ export class WlsModuleValidator implements Validator {
 
     for (const ns of namespaces) {
       validateNamespaceDepth(ns, 1, []);
+    }
+
+    return issues;
+  }
+
+  /**
+   * Validate function calls reference defined functions (WLS-MOD-005)
+   */
+  private validateFunctionCalls(story: Story): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+
+    const storyWithModules = story as unknown as StoryWithModules;
+
+    // Build set of defined functions
+    const definedFunctions = new Set<string>();
+    if (storyWithModules.functions) {
+      for (const func of storyWithModules.functions) {
+        definedFunctions.add(func.name);
+      }
+    }
+
+    // Built-in functions that don't need to be defined
+    const builtins = new Set([
+      // Lua standard
+      'math', 'string', 'table', 'print', 'tostring', 'tonumber',
+      'type', 'pairs', 'ipairs', 'next', 'select', 'unpack', 'pcall', 'xpcall',
+      'assert', 'error', 'rawget', 'rawset', 'rawequal', 'setmetatable', 'getmetatable',
+      // WLS collection functions
+      'list_contains', 'list_add', 'list_remove', 'list_toggle', 'list_active', 'list_count',
+      'array_get', 'array_set', 'array_push', 'array_pop', 'array_length', 'array_insert', 'array_remove',
+      'map_get', 'map_set', 'map_has', 'map_keys', 'map_values', 'map_delete',
+      // WLS utility functions
+      'random', 'floor', 'ceil', 'abs', 'min', 'max', 'round',
+      'goto_passage', 'set', 'get', 'visited', 'turns',
+      // Common patterns that look like function calls
+      'if', 'for', 'while', 'function', 'return',
+    ]);
+
+    // Check passages for function calls
+    const passages = storyWithModules.passages;
+    if (!passages) {
+      return issues;
+    }
+
+    // Handle both Map and Object passage storage
+    const passageEntries = passages instanceof Map
+      ? Array.from(passages.entries())
+      : Object.entries(passages);
+
+    for (const [passageId, passage] of passageEntries) {
+      if (!passage.content) continue;
+
+      // Look for function call patterns: functionName(
+      // Exclude method calls (preceded by .) and known patterns
+      const funcCallPattern = /(?<![.\w])([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g;
+      let match;
+
+      while ((match = funcCallPattern.exec(passage.content)) !== null) {
+        const funcName = match[1];
+
+        // Skip built-ins and already defined functions
+        if (builtins.has(funcName) || builtins.has(funcName.toLowerCase())) {
+          continue;
+        }
+
+        if (definedFunctions.has(funcName)) {
+          continue;
+        }
+
+        // Skip if it looks like a method call (check context)
+        const beforeMatch = passage.content.substring(Math.max(0, match.index - 20), match.index);
+        if (/[.:]$/.test(beforeMatch.trim())) {
+          continue;
+        }
+
+        // Report undefined function call
+        issues.push({
+          id: `undef_func_${funcName}_${passageId}`,
+          code: 'WLS-MOD-005',
+          severity: 'warning',
+          category: 'modules',
+          message: `Possibly undefined function: "${funcName}"`,
+          description: `Function "${funcName}" is called but not defined. This may be a typo or missing function definition.`,
+          passageId,
+          context: { functionName: funcName, passageName: passage.name },
+          fixable: false,
+        });
+      }
     }
 
     return issues;

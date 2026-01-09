@@ -1,15 +1,15 @@
 /**
- * WLS 1.0 Language Configuration for Monaco Editor
+ * WLS Language Configuration for Monaco Editor
  *
  * Provides syntax highlighting, autocomplete, and language configuration
- * for the Whisker Language Specification 1.0.
+ * for the Whisker Language Specification.
  */
 
 import * as monaco from 'monaco-editor';
 import type { languages } from 'monaco-editor';
 
 /**
- * WLS 1.0 whisker.* API autocomplete suggestions
+ * WLS whisker.* API autocomplete suggestions
  */
 const whiskerApiCompletions: Omit<languages.CompletionItem, 'range'>[] = [
   // whisker.state namespace
@@ -524,7 +524,7 @@ const snippetCompletions: Omit<languages.CompletionItem, 'range'>[] = [
 ];
 
 /**
- * Register WLS 1.0 language support with Monaco
+ * Register WLS language support with Monaco
  */
 export function registerWlsLanguage(): void {
   // Register WLS language
@@ -963,7 +963,7 @@ export function registerWlsTheme(): void {
 }
 
 /**
- * Initialize WLS 1.0 support for Monaco Editor
+ * Initialize WLS support for Monaco Editor
  */
 export function initializeWlsSupport(): void {
   registerWlsLanguage();

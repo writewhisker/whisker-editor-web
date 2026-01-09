@@ -1,0 +1,17 @@
+name: "__index metamethod"
+description: "Test __index for default values"
+tags: [metatables, index]
+
+wls: |
+  defaults = { x = 0, y = 0, z = 0 }
+  point = setmetatable({}, { __index = defaults })
+
+  point.x = 10
+  result_x = point.x
+  result_y = point.y
+
+assertions:
+  - variable: result_x
+    equals: 10
+  - variable: result_y
+    equals: 0

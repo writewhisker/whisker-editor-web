@@ -558,46 +558,6 @@ export const migrateCommand: Command = {
   },
 };
 
-// WLS Content Migration (WLS 1.0 to 2.0)
-export {
-  migrateWLSContent,
-  migratePassage,
-  migrateStoryContent,
-  generateDeclarations,
-  formatMigrationReport,
-  // AST Transformation
-  WLS2_RESERVED_WORDS,
-  DEPRECATED_PATTERNS,
-  detectReservedWords,
-  renameReservedWords,
-  detectDeprecations,
-  transformToWLS2,
-  formatDeprecationWarnings,
-  validateWLS2Compatibility,
-  // Thread Migration
-  THREAD_PATTERNS,
-  transformThreadPatterns,
-  // Timed Content Migration
-  TIMED_CONTENT_PATTERNS,
-  transformTimedContentPatterns,
-  // Full Content Transformation
-  transformFullContent,
-  type WLSMigrationOptions,
-  type WLSMigrationResult,
-  type WLSMigrationChange,
-  type WLSMigrationSuggestion,
-  type WLSMigrationSummary,
-  // AST Types
-  type WLSASTNode,
-  type ASTTransformOptions,
-  type ASTTransformResult,
-  type ASTChange,
-  type DeprecationWarning,
-  // Thread/Timed Types
-  type ThreadMigrationResult,
-  type TimedContentMigrationResult,
-} from './wlsMigration.js';
-
 // Batch Operations
 export {
   processBatch,

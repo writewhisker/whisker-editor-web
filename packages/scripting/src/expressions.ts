@@ -1,8 +1,8 @@
 /**
- * WLS 1.0 Expression Evaluator
+ * Expression Evaluator
  *
  * Evaluates AST expression nodes against a runtime context.
- * Supports all WLS 1.0 operators and the whisker.* API.
+ * Supports all WLS operators and the whisker.* API.
  */
 
 import type {
@@ -60,7 +60,7 @@ export interface EvalOptions {
 // ============================================================================
 
 /**
- * Expression evaluator for WLS 1.0 AST nodes
+ * Expression evaluator for WLS AST nodes
  */
 export class ExpressionEvaluator {
   private callDepth = 0;

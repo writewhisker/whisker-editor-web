@@ -1,0 +1,22 @@
+name: "Table iteration with pairs/ipairs"
+description: "Test generic for loops with iterators"
+tags: [tables, iteration]
+
+wls: |
+  numbers = { 10, 20, 30 }
+  sum = 0
+  for i, v in ipairs(numbers) do
+    sum = sum + v
+  end
+
+  data = { a = 1, b = 2, c = 3 }
+  total = 0
+  for k, v in pairs(data) do
+    total = total + v
+  end
+
+assertions:
+  - variable: sum
+    equals: 60
+  - variable: total
+    equals: 6

@@ -25,6 +25,7 @@ import {
   BottleneckValidator,
   CycleDetectorValidator,
   InfiniteLoopValidator,
+  ConditionAnalysisValidator,
   WlsSyntaxValidator,
   WlsSpecialTargetsValidator,
   WlsVariableValidator,
@@ -50,6 +51,7 @@ export function createDefaultValidator(): StoryValidator {
   validator.registerValidator(new BottleneckValidator());
   validator.registerValidator(new CycleDetectorValidator());
   validator.registerValidator(new InfiniteLoopValidator());
+  validator.registerValidator(new ConditionAnalysisValidator());
 
   // Register link validators
   validator.registerValidator(new DeadLinksValidator());
@@ -77,13 +79,13 @@ export function createDefaultValidator(): StoryValidator {
   validator.registerValidator(new ValidateScriptsValidator());
   validator.registerValidator(new ValidateAssetsValidator());
 
-  // Register collection validators (WLS 1.0 Gap 3)
+  // Register collection validators
   validator.registerValidator(new WlsCollectionValidator());
 
-  // Register module validators (WLS 1.0 Gap 4)
+  // Register module validators
   validator.registerValidator(new WlsModuleValidator());
 
-  // Register presentation validators (WLS 1.0 Gap 5)
+  // Register presentation validators
   validator.registerValidator(new WlsPresentationValidator());
 
   return validator;

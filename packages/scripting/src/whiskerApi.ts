@@ -1,8 +1,8 @@
 /**
- * WLS 1.0 Whisker API
+ * Whisker API
  *
  * Implements the whisker.* namespace for Lua scripting.
- * See WLS 1.0 Specification Chapter 7: Lua API
+ * See WLS Specification Chapter 7: Lua API
  */
 
 // ============================================================================
@@ -42,11 +42,11 @@ export interface WhiskerObject {
 export type WhiskerValue = string | number | boolean | null | WhiskerValue[] | WhiskerObject;
 
 // ============================================================================
-// WLS 1.0 Gap 3: Collection Types
+//  Collection Types
 // ============================================================================
 
 /**
- * WLS 1.0 LIST type - enumerated set with active/inactive states
+ * LIST type - enumerated set with active/inactive states
  */
 export interface WLSList {
   values: string[];           // All possible values
@@ -54,12 +54,12 @@ export interface WLSList {
 }
 
 /**
- * WLS 1.0 ARRAY type - 0-indexed collection
+ * ARRAY type - 0-indexed collection
  */
 export type WLSArray = WhiskerValue[];
 
 /**
- * WLS 1.0 MAP type - key-value object
+ * MAP type - key-value object
  */
 export type WLSMap = Record<string, WhiskerValue>;
 
@@ -77,7 +77,7 @@ export interface WhiskerRuntimeContext {
   resetVariables(): void;
 
   // ============================================
-  // WLS 1.0 Gap 3: LIST Operations
+  //  LIST Operations
   // ============================================
   getList(name: string): WLSList | undefined;
   hasList(name: string): boolean;
@@ -91,7 +91,7 @@ export interface WhiskerRuntimeContext {
   setList(name: string, list: WLSList): void;
 
   // ============================================
-  // WLS 1.0 Gap 3: ARRAY Operations
+  //  ARRAY Operations
   // ============================================
   getArray(name: string): WLSArray | undefined;
   hasArray(name: string): boolean;
@@ -107,7 +107,7 @@ export interface WhiskerRuntimeContext {
   setArray(name: string, array: WLSArray): void;
 
   // ============================================
-  // WLS 1.0 Gap 3: MAP Operations
+  //  MAP Operations
   // ============================================
   getMap(name: string): WLSMap | undefined;
   hasMap(name: string): boolean;
@@ -165,7 +165,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   private choices: WhiskerChoice[] = [];
   private output: string[] = [];
 
-  // WLS 1.0 Gap 3: Collection storage
+  //  Collection storage
   private lists: Map<string, WLSList> = new Map();
   private arrays: Map<string, WLSArray> = new Map();
   private maps: Map<string, WLSMap> = new Map();
@@ -200,7 +200,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: LIST Operations
+  //  LIST Operations
   // ============================================
 
   getList(name: string): WLSList | undefined {
@@ -267,7 +267,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: ARRAY Operations
+  //  ARRAY Operations
   // ============================================
 
   getArray(name: string): WLSArray | undefined {
@@ -340,7 +340,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: MAP Operations
+  //  MAP Operations
   // ============================================
 
   getMap(name: string): WLSMap | undefined {
@@ -603,7 +603,7 @@ export class WhiskerStateApi {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: LIST Operations
+  //  LIST Operations
   // ============================================
 
   /** Get list by name */
@@ -652,7 +652,7 @@ export class WhiskerStateApi {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: ARRAY Operations
+  //  ARRAY Operations
   // ============================================
 
   /** Get array by name */
@@ -711,7 +711,7 @@ export class WhiskerStateApi {
   }
 
   // ============================================
-  // WLS 1.0 Gap 3: MAP Operations
+  //  MAP Operations
   // ============================================
 
   /** Get map by name */
@@ -943,7 +943,7 @@ export class WhiskerChoiceApi {
 
 /**
  * Main whisker API object
- * Provides all WLS 1.0 whisker.* functions
+ * Provides all whisker.* functions
  */
 export class WhiskerApi {
   public readonly state: WhiskerStateApi;

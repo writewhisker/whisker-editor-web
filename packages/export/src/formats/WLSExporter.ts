@@ -1,7 +1,7 @@
 /**
  * WLS Exporter
  *
- * Exports stories to WLS (Whisker Language Specification) 1.0 text format.
+ * Exports stories to WLS (Whisker Language Specification) text format.
  */
 
 import type { Story, Passage, Variable } from '@writewhisker/core-ts';
@@ -15,7 +15,7 @@ import type {
 /**
  * WLS Exporter
  *
- * Exports stories to WLS 1.0 text format (.ws files).
+ * Exports stories to WLS text format (.ws files).
  */
 export class WLSExporter implements IExporter {
   readonly name = 'WLS Exporter';
@@ -79,7 +79,7 @@ export class WLSExporter implements IExporter {
 
   /**
    * Add story header directives
-   * Note: WLS 1.0 uses colon after directive name (e.g., @title: value)
+   * Note: WLS uses colon after directive name (e.g., @title: value)
    */
   private addStoryHeader(lines: string[], story: Story): void {
     const { metadata } = story;
@@ -152,7 +152,7 @@ export class WLSExporter implements IExporter {
       const passage = passages[i];
 
       // Passage header
-      // WLS 1.0 uses square brackets for tags: :: PassageName [tag1, tag2]
+      // WLS uses square brackets for tags: :: PassageName [tag1, tag2]
       let header = `:: ${passage.title}`;
 
       // Add tags

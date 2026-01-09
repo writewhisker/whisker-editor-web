@@ -1,0 +1,16 @@
+name: "OS time functions"
+description: "Test os.time, os.date, os.clock"
+tags: [os, time]
+
+wls: |
+  current_time = os.time()
+  has_time = current_time > 0
+
+  clock_val = os.clock()
+  has_clock = clock_val >= 0
+
+assertions:
+  - variable: has_time
+    equals: true
+  - variable: has_clock
+    equals: true

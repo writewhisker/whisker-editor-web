@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Audio/Media API
+ * Audio/Media API
  *
  * First-class audio controls for stories with support for
  * background music, sound effects, voice, and ambient sounds.
@@ -184,7 +184,7 @@ export interface AudioManagerOptions {
 }
 
 /**
- * Audio manager for WLS 2.0 stories
+ * Audio manager for WLS stories
  *
  * @example
  * ```typescript

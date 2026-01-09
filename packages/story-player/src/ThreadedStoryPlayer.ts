@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Threaded Story Player
+ * Threaded Story Player
  *
  * Extends StoryPlayer with parallel narrative thread execution.
  * Integrates ThreadScheduler for spawn/await functionality.
@@ -70,7 +70,7 @@ export type ThreadedPlayerEvent =
   | 'threadError';
 
 /**
- * ThreadedStoryPlayer - WLS 2.0 story player with parallel execution
+ * ThreadedStoryPlayer - Story player with parallel execution
  */
 export class ThreadedStoryPlayer extends StoryPlayer {
   private scheduler: ThreadScheduler;

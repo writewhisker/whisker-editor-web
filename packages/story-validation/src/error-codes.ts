@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Unified Error Codes
+ * Unified Error Codes
  *
  * All validation error codes following the format: WLS-{CATEGORY}-{NUMBER}
  */
@@ -19,7 +19,7 @@ export interface ErrorCodeDefinition {
 }
 
 /**
- * All WLS 1.0 validation error codes
+ * All WLS validation error codes
  */
 export const WLS_ERROR_CODES = {
   // Structure (STR)
@@ -498,7 +498,7 @@ export const WLS_ERROR_CODES = {
     description: 'Script size exceeds threshold.',
   },
 
-  // Collections (COL) - WLS 1.0 Gap 3
+  // Collections (COL)
   'WLS-COL-001': {
     code: 'WLS-COL-001',
     name: 'duplicate_list_value',
@@ -580,7 +580,7 @@ export const WLS_ERROR_CODES = {
     description: 'Referenced MAP is not defined.',
   },
 
-  // Modules (MOD) - WLS 1.0 Gap 4
+  // Modules (MOD)
   'WLS-MOD-001': {
     code: 'WLS-MOD-001',
     name: 'include_not_found',
@@ -646,7 +646,7 @@ export const WLS_ERROR_CODES = {
     description: 'An END NAMESPACE was found without a matching NAMESPACE declaration.',
   },
 
-  // Presentation (PRS) - WLS 1.0 Gap 5
+  // Presentation (PRS)
   'WLS-PRS-001': {
     code: 'WLS-PRS-001',
     name: 'invalid_markdown',
@@ -712,7 +712,7 @@ export const WLS_ERROR_CODES = {
     description: 'Deeply nested blockquotes may affect readability.',
   },
 
-  // Developer Experience (DEV) - WLS 1.0 Gap 6
+  // Developer Experience (DEV)
   'WLS-DEV-001': {
     code: 'WLS-DEV-001',
     name: 'lsp_connection_failed',

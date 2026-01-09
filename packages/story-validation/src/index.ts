@@ -10,7 +10,7 @@ export { QualityAnalyzer, createQualityAnalyzer } from './QualityAnalyzer';
 export { createDefaultValidator } from './defaultValidator';
 export * from './validators';
 export * from './error-codes';
-export * from './error-formatter';  // WLS 1.0 Gap 6: Error formatting
+export * from './error-formatter';
 export type * from './types';
 
 // Re-export AutoFixer creator for convenience

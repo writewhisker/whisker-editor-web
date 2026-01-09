@@ -1,0 +1,22 @@
+name: "Multiple return values"
+description: "Test functions returning multiple values"
+tags: [functions, returns]
+
+wls: |
+  function minmax(a, b, c)
+    local min = a
+    local max = a
+    if b < min then min = b end
+    if c < min then min = c end
+    if b > max then max = b end
+    if c > max then max = c end
+    return min, max
+  end
+
+  smallest, largest = minmax(5, 2, 8)
+
+assertions:
+  - variable: smallest
+    equals: 2
+  - variable: largest
+    equals: 8

@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 LIST State Machine Module
+ * LIST State Machine Module
  *
  * Provides a dedicated state machine class for managing LIST variables
  * in story playback. Extends the base ListValue with:

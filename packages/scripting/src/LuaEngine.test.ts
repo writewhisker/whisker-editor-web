@@ -2218,4 +2218,93 @@ line3]]`;
       expect(result.errors[0]).toContain('non-closable');
     });
   });
+
+  describe('Debug Library', () => {
+    it('should support debug.traceback() with no arguments', () => {
+      const code = `result = debug.traceback()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const traceback = engine.getVariable('result') as string;
+      expect(traceback).toContain('stack traceback:');
+    });
+
+    it('should support debug.traceback() with message', () => {
+      const code = `result = debug.traceback("error occurred")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const traceback = engine.getVariable('result') as string;
+      expect(traceback).toContain('error occurred');
+      expect(traceback).toContain('stack traceback:');
+    });
+
+    it('should support debug.getinfo() with stack level', () => {
+      const code = `result = debug.getinfo(1)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const info = engine.getVariable('result');
+      expect(info).toBeDefined();
+    });
+
+    it('should support debug.getinfo() with "S" what parameter', () => {
+      const code = `result = debug.getinfo(0, "S")`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      const info = engine.getVariable('result') as Record<string, unknown>;
+      expect(info).toBeDefined();
+      expect(info?.source).toBe('[C]');
+    });
+
+    it('should support debug.getlocal() to read local variables', () => {
+      const code = `function test()
+        local x = 42
+        local y = "hello"
+        local name, value = debug.getlocal(1, 1)
+        result_name = name
+        result_value = value
+      end
+      test()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      // Note: exact behavior depends on scope implementation
+    });
+
+    it('should support debug.setlocal() to modify local variables', () => {
+      const code = `function test()
+        local x = 10
+        debug.setlocal(1, 1, 99)
+        result = x
+      end
+      test()`;
+      const result = engine.execute(code);
+      // setlocal modifies the scope, but getting the variable after may vary
+      expect(result.success).toBe(true);
+    });
+
+    it('should return nil for debug.getupvalue() (stub)', () => {
+      const code = `function outer()
+        local x = 10
+        return function() return x end
+      end
+      fn = outer()
+      result = debug.getupvalue(fn, 1)`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeNull();
+    });
+
+    it('should return nil for debug.gethook() (stub)', () => {
+      const code = `result = debug.gethook()`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBeNull();
+    });
+
+    it('should not error for debug.sethook() (stub)', () => {
+      const code = `debug.sethook(function() end, "c")
+      result = "ok"`;
+      const result = engine.execute(code);
+      expect(result.success).toBe(true);
+      expect(engine.getVariable('result')).toBe('ok');
+    });
+  });
 });

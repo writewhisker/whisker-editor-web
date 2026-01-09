@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Expression Validator
+ * Expression Validator
  *
  * Validates Lua expressions used in WLS constructs:
  * - Expression interpolations ${expr}
@@ -175,6 +175,18 @@ export class WlsExpressionValidator implements Validator {
       });
     }
 
+    // WLS-EXP-004: Check for missing operands (operators at start/end or double operators)
+    const missingOperandIssues = this.findMissingOperands(text, passageId);
+    issues.push(...missingOperandIssues);
+
+    // WLS-EXP-005: Check for invalid operators (&&, ||, ===, etc.)
+    const invalidOpIssues = this.findInvalidOperators(text, passageId);
+    issues.push(...invalidOpIssues);
+
+    // WLS-EXP-006: Check for unmatched parentheses
+    const unmatchedParenIssues = this.findUnmatchedParens(text, passageId);
+    issues.push(...unmatchedParenIssues);
+
     return issues;
   }
 
@@ -213,6 +225,161 @@ export class WlsExpressionValidator implements Validator {
         fixable: true,
         fixDescription: `Change = to ==`,
       });
+    }
+
+    return issues;
+  }
+
+  /**
+   * Find missing operands in expressions (WLS-EXP-004)
+   * Checks for operators at start/end or double operators
+   */
+  private findMissingOperands(
+    text: string,
+    passageId: string
+  ): Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] {
+    const issues: Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] = [];
+
+    // Extract expressions from ${...} and {if ...}
+    const exprPatterns = [
+      /\$\{([^}]+)\}/g,
+      /\{if\s+([^}]+)\}/g,
+    ];
+
+    for (const pattern of exprPatterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const expr = match[1].trim();
+
+        // Check for operator at start (except -)
+        if (/^[+*/%^]/.test(expr)) {
+          issues.push({
+            id: `wls_expr_missing_operand_start_${passageId}_${match.index}`,
+            code: 'WLS-EXP-004',
+            severity: 'error',
+            category: 'expression',
+            message: `Missing operand at start of expression`,
+            description: `Expression starts with an operator but is missing a left operand.`,
+            fixable: false,
+          });
+        }
+
+        // Check for operator at end
+        if (/[+\-*/%^]\s*$/.test(expr)) {
+          issues.push({
+            id: `wls_expr_missing_operand_end_${passageId}_${match.index}`,
+            code: 'WLS-EXP-004',
+            severity: 'error',
+            category: 'expression',
+            message: `Missing operand at end of expression`,
+            description: `Expression ends with an operator but is missing a right operand.`,
+            fixable: false,
+          });
+        }
+
+        // Check for double operators
+        if (/[+\-*/%^]\s*[+\-*/%^]/.test(expr)) {
+          issues.push({
+            id: `wls_expr_double_operator_${passageId}_${match.index}`,
+            code: 'WLS-EXP-004',
+            severity: 'error',
+            category: 'expression',
+            message: `Double operators in expression`,
+            description: `Expression contains consecutive operators without an operand between them.`,
+            fixable: false,
+          });
+        }
+      }
+    }
+
+    return issues;
+  }
+
+  /**
+   * Find invalid operators (WLS-EXP-005)
+   * Checks for JavaScript-style operators that should be Lua-style
+   */
+  private findInvalidOperators(
+    text: string,
+    passageId: string
+  ): Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] {
+    const issues: Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] = [];
+
+    const invalidOps = [
+      { pattern: '&&', expected: 'and', message: 'Use "and" instead of "&&"' },
+      { pattern: '||', expected: 'or', message: 'Use "or" instead of "||"' },
+      { pattern: '===', expected: '==', message: 'Use "==" instead of "==="' },
+      { pattern: '!==', expected: '~=', message: 'Use "~=" instead of "!=="' },
+    ];
+
+    for (const { pattern, expected, message } of invalidOps) {
+      const regex = new RegExp(pattern.replace(/[|]/g, '\\$&'), 'g');
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        issues.push({
+          id: `wls_expr_invalid_op_${passageId}_${match.index}`,
+          code: 'WLS-EXP-005',
+          severity: 'error',
+          category: 'expression',
+          message: `Invalid operator "${pattern}"`,
+          description: `${message}. WLS uses Lua-style operators.`,
+          fixable: true,
+          fixDescription: `Change "${pattern}" to "${expected}"`,
+        });
+      }
+    }
+
+    return issues;
+  }
+
+  /**
+   * Find unmatched parentheses in expressions (WLS-EXP-006)
+   */
+  private findUnmatchedParens(
+    text: string,
+    passageId: string
+  ): Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] {
+    const issues: Omit<ValidationIssue, 'passageId' | 'passageTitle'>[] = [];
+
+    // Extract expressions from ${...} and {if ...}
+    const exprPatterns = [
+      /\$\{([^}]+)\}/g,
+      /\{if\s+([^}]+)\}/g,
+    ];
+
+    for (const pattern of exprPatterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const expr = match[1];
+        let depth = 0;
+        let hasUnmatched = false;
+
+        for (let i = 0; i < expr.length; i++) {
+          if (expr[i] === '(') {
+            depth++;
+          } else if (expr[i] === ')') {
+            depth--;
+            if (depth < 0) {
+              hasUnmatched = true;
+              break;
+            }
+          }
+        }
+
+        if (hasUnmatched || depth !== 0) {
+          issues.push({
+            id: `wls_expr_unmatched_parens_${passageId}_${match.index}`,
+            code: 'WLS-EXP-006',
+            severity: 'error',
+            category: 'expression',
+            message: `Unmatched parentheses in expression`,
+            description: depth > 0
+              ? `Expression has ${depth} unclosed opening parenthesis(es).`
+              : `Expression has extra closing parenthesis(es).`,
+            fixable: false,
+          });
+        }
+      }
     }
 
     return issues;

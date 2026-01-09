@@ -7,7 +7,7 @@ export { TestScenarioRunner } from './TestScenarioRunner';
 export type * from './types';
 export type * from './testScenarioTypes';
 
-// WLS 1.0 Content Renderer
+// Content Renderer
 export {
   ContentRenderer,
   createContentRenderer,
@@ -21,7 +21,7 @@ export {
   type ChoiceState,
 } from './ContentRenderer';
 
-// WLS 2.0 Thread Scheduler
+// Thread Scheduler
 export {
   ThreadScheduler,
   createThreadScheduler,
@@ -32,7 +32,7 @@ export {
   type ThreadEventCallback,
 } from './ThreadScheduler';
 
-// WLS 2.0 Threaded Story Player
+// Threaded Story Player
 export {
   ThreadedStoryPlayer,
   createThreadedStoryPlayer,
@@ -43,7 +43,7 @@ export {
   type ThreadedPlayerEvent,
 } from './ThreadedStoryPlayer';
 
-// WLS 2.0 Timed Content Manager
+// Timed Content Manager
 export {
   TimedContentManager,
   createTimedContentManager,
@@ -54,7 +54,7 @@ export {
   type TimerEventCallback,
 } from './TimedContentManager';
 
-// WLS 2.0 External Function Binding
+// External Function Binding
 export {
   ExternalFunctionRegistry,
   createExternalFunctionRegistry,
@@ -66,7 +66,7 @@ export {
   type RegistryOptions,
 } from './ExternalFunctions';
 
-// WLS 2.0 Audio/Media API
+// Audio/Media API
 export {
   AudioManager,
   MockAudioBackend,
@@ -79,7 +79,7 @@ export {
   type AudioManagerOptions,
 } from './AudioManager';
 
-// WLS 2.0 Text Effects and Transitions
+// Text Effects and Transitions
 export {
   TextEffectManager,
   createTextEffectManager,
@@ -94,7 +94,7 @@ export {
   type CSSKeyframe,
 } from './TextEffects';
 
-// WLS 2.0 Parameterized Passages
+// Parameterized Passages
 export {
   ParameterizedPassageManager,
   createParameterizedPassageManager,
@@ -108,7 +108,7 @@ export {
   type ParameterManagerOptions,
 } from './ParameterizedPassages';
 
-// WLS 2.0 LIST State Machine
+// LIST State Machine
 export {
   ListStateMachine,
   ListStateMachineRegistry,
@@ -120,13 +120,13 @@ export {
   type ListStateMachineState,
 } from './ListStateMachine';
 
-// WLS 2.0 Integration (Unified Facade)
+// Runtime Integration (Unified Facade)
 export {
-  WLS2Integration,
-  createWLS2Player,
-  createTestWLS2Player,
-  type WLS2Config,
-  type WLS2State,
-  type WLS2Event,
-  type WLS2EventCallback,
-} from './WLS2Integration';
+  RuntimeIntegration,
+  createPlayer,
+  createTestPlayer,
+  type RuntimeConfig,
+  type RuntimeState,
+  type RuntimeEvent,
+  type RuntimeEventCallback,
+} from './RuntimeIntegration';

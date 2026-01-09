@@ -963,10 +963,10 @@ Content`);
   });
 
   // ============================================================================
-  // WLS 2.0 Thread Syntax Tests
+  // Thread Syntax Tests
   // ============================================================================
 
-  describe('WLS 2.0 Thread Syntax', () => {
+  describe('Thread Syntax', () => {
     describe('thread passage parsing', () => {
       it('should parse thread passage with ==', () => {
         const result = parse(`:: Start
@@ -1088,7 +1088,7 @@ Equal!
     });
   });
 
-  describe('WLS 2.0 Declarations', () => {
+  describe('Declarations', () => {
     describe('@audio directive', () => {
       it('should parse @audio declaration', () => {
         const result = parse(`@audio bgm = "music/theme.mp3" loop
@@ -1156,7 +1156,7 @@ Hello`);
       });
     });
 
-    describe('combined WLS 2.0 declarations', () => {
+    describe('combined declarations', () => {
       it('should parse all declaration types together', () => {
         const result = parse(`@title My Game
 @audio bgm = "music/theme.mp3" loop

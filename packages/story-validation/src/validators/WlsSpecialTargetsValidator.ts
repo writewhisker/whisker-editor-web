@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Special Targets Validator
+ * Special Targets Validator
  *
  * Validates choice targets that use WLS special targets (END, BACK, RESTART).
  * Ensures proper usage of special navigation commands.

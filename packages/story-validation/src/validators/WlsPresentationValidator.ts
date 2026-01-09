@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Presentation Validator
+ * Presentation Validator
  *
  * Validates THEME, STYLE, and rich text formatting.
  * Error codes: WLS-PRS-001 through WLS-PRS-015
@@ -376,6 +376,22 @@ export class WlsPresentationValidator implements Validator {
           });
         }
 
+        // WLS-PRS-003: Check for missing/broken media (simple validation)
+        if (url && url.startsWith('./') && !url.includes('{{')) {
+          // Local relative path - warn about potential missing asset
+          issues.push({
+            id: `potentially_missing_media_${passageId}_${match.index}`,
+            code: 'WLS-PRS-003',
+            severity: 'info',
+            category: 'presentation',
+            message: `Local media reference: "${url}"`,
+            description: 'Local file reference detected. Ensure the file exists at build time.',
+            passageId,
+            context: { path: url },
+            fixable: false,
+          });
+        }
+
         // Check for missing alt text (accessibility)
         if (altText !== undefined && altText.trim() === '') {
           issues.push({
@@ -426,6 +442,32 @@ export class WlsPresentationValidator implements Validator {
             description: 'Video reference has an empty or placeholder URL.',
             passageId,
             context: { url },
+            fixable: false,
+          });
+        }
+      }
+
+      // WLS-PRS-005: Check for invalid media attributes
+      const mediaAttrPattern = /\{(image|audio|video|sound):\s*[^}]+\s+(\w+)=[^}]*\}/g;
+      const validMediaAttrs = new Set([
+        'alt', 'width', 'height', 'loop', 'autoplay', 'muted', 'controls',
+        'poster', 'preload', 'volume', 'playbackRate', 'src', 'type',
+      ]);
+
+      while ((match = mediaAttrPattern.exec(content)) !== null) {
+        const mediaType = match[1];
+        const attrName = match[2];
+
+        if (!validMediaAttrs.has(attrName.toLowerCase())) {
+          issues.push({
+            id: `invalid_media_attr_${passageId}_${match.index}`,
+            code: 'WLS-PRS-005',
+            severity: 'warning',
+            category: 'presentation',
+            message: `Unknown ${mediaType} attribute: "${attrName}"`,
+            description: `"${attrName}" is not a recognized media attribute.`,
+            passageId,
+            context: { attribute: attrName, mediaType },
             fixable: false,
           });
         }

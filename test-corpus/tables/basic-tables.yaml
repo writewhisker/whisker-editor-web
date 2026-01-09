@@ -1,0 +1,18 @@
+name: "Basic table operations"
+description: "Test table creation and access"
+tags: [tables, basic]
+
+wls: |
+  person = {}
+  person.name = "Alice"
+  person.age = 30
+
+  inventory = { "sword", "shield", "potion" }
+  first_item = inventory[1]
+  item_count = #inventory
+
+assertions:
+  - variable: first_item
+    equals: "sword"
+  - variable: item_count
+    equals: 3

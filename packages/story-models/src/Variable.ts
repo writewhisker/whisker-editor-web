@@ -4,17 +4,17 @@ export class Variable {
   name: string;
   type: 'string' | 'number' | 'boolean';
   initial: string | number | boolean;
-  scope: VariableScope;  // WLS 1.0: 'story' or 'temp'
+  scope: VariableScope;  // 'story' or 'temp'
 
   constructor(data?: Partial<VariableData>) {
     this.name = data?.name || 'newVariable';
     this.type = data?.type || 'string';
     this.initial = data?.initial ?? '';
-    this.scope = data?.scope || 'story';  // Default to story scope (WLS 1.0)
+    this.scope = data?.scope || 'story';  // Default to story scope
   }
 
   /**
-   * Check if this is a story-scoped variable (WLS 1.0)
+   * Check if this is a story-scoped variable
    * Story variables persist for the entire playthrough and are saved
    */
   isStoryScoped(): boolean {
@@ -22,7 +22,7 @@ export class Variable {
   }
 
   /**
-   * Check if this is a temp variable (WLS 1.0)
+   * Check if this is a temp variable
    * Temp variables are passage-scoped and not saved
    */
   isTempScoped(): boolean {
@@ -30,7 +30,7 @@ export class Variable {
   }
 
   /**
-   * Get the variable name with appropriate prefix for WLS 1.0 syntax
+   * Get the variable name with appropriate prefix for WLS syntax
    * Story variables: $name
    * Temp variables: _name
    */

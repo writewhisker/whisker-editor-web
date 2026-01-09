@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Parameterized Passages
+ * Parameterized Passages
  *
  * Support for passages that accept parameters for reusable content.
  */

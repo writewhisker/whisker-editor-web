@@ -23,9 +23,9 @@ export type ValidationCategory =
   | 'quality'
   | 'syntax'
   | 'expression'
-  | 'collections'   // WLS 1.0 Gap 3
-  | 'modules'       // WLS 1.0 Gap 4
-  | 'presentation'; // WLS 1.0 Gap 5
+  | 'collections'
+  | 'modules'
+  | 'presentation';
 
 /**
  * Individual validation issue
@@ -33,7 +33,7 @@ export type ValidationCategory =
 export interface ValidationIssue {
   /** Unique identifier for this issue type */
   id: string;
-  /** WLS 1.0 unified error code (e.g., "WLS-LNK-001") */
+  /** Unified error code (e.g., "WLS-LNK-001") */
   code: string;
   severity: ValidationSeverity;
   category: ValidationCategory;

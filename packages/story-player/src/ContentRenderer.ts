@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Content Renderer
+ * Content Renderer
  *
  * Renders AST content nodes to text, handling:
  * - Variable interpolation ($var, ${expr})
@@ -131,7 +131,7 @@ export interface ChoiceState {
 // ============================================================================
 
 /**
- * Content renderer for WLS 1.0 AST nodes
+ * Content renderer for WLS AST nodes
  */
 export class ContentRenderer {
   private readonly evaluator: ExpressionEvaluator;

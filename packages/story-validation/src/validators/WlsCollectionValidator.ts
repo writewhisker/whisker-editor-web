@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Collection Validator
+ * Collection Validator
  *
  * Validates LIST, ARRAY, and MAP declarations.
  * Error codes: WLS-COL-001 through WLS-COL-010
@@ -31,6 +31,9 @@ export class WlsCollectionValidator implements Validator {
 
     // Validate MAP declarations
     issues.push(...this.validateMaps(story));
+
+    // Validate undefined collection references
+    issues.push(...this.validateUndefinedCollections(story));
 
     return issues;
   }
@@ -207,6 +210,122 @@ export class WlsCollectionValidator implements Validator {
             message: `Invalid key "${key}" in MAP "${mapName}"`,
             description: 'MAP keys must be valid identifiers or strings.',
             context: { mapName, key: String(key) },
+            fixable: false,
+          });
+        }
+      }
+    }
+
+    return issues;
+  }
+
+  /**
+   * Validate undefined collection references in passage content (WLS-COL-008/009/010)
+   */
+  private validateUndefinedCollections(story: Story): ValidationIssue[] {
+    const issues: ValidationIssue[] = [];
+
+    // Build sets of defined collections
+    const definedLists = new Set<string>();
+    const definedArrays = new Set<string>();
+    const definedMaps = new Set<string>();
+
+    const storyWithCollections = story as unknown as {
+      lists?: Array<{ name: string }>;
+      arrays?: Array<{ name: string }>;
+      maps?: Array<{ name: string }>;
+    };
+
+    if (storyWithCollections.lists) {
+      for (const list of storyWithCollections.lists) {
+        definedLists.add(list.name);
+      }
+    }
+
+    if (storyWithCollections.arrays) {
+      for (const arr of storyWithCollections.arrays) {
+        definedArrays.add(arr.name);
+      }
+    }
+
+    if (storyWithCollections.maps) {
+      for (const map of storyWithCollections.maps) {
+        definedMaps.add(map.name);
+      }
+    }
+
+    // Search for collection API calls in passage content
+    // Handle both Map and Object passage storage
+    const passages = story.passages;
+    if (!passages) {
+      return issues;
+    }
+
+    const passageEntries = passages instanceof Map
+      ? Array.from(passages.entries())
+      : Object.entries(passages);
+
+    for (const [passageId, passage] of passageEntries) {
+      if (!passage.content) continue;
+
+      const content = passage.content;
+
+      // Check for list references: list_contains("name", ...) or similar
+      const listPattern = /list_[a-zA-Z_]+\s*\(\s*["']([^"']+)["']/g;
+      let match;
+      while ((match = listPattern.exec(content)) !== null) {
+        const listName = match[1];
+        if (!definedLists.has(listName)) {
+          issues.push({
+            id: `undef_list_${listName}_${passageId}`,
+            code: 'WLS-COL-008',
+            severity: 'error',
+            category: 'collections',
+            message: `Undefined LIST: "${listName}"`,
+            description: `LIST "${listName}" is referenced but not defined.`,
+            passageId,
+            passageTitle: passage.title,
+            context: { listName },
+            fixable: false,
+          });
+        }
+      }
+
+      // Check for array references: array_get("name", ...) or similar
+      const arrayPattern = /array_[a-zA-Z_]+\s*\(\s*["']([^"']+)["']/g;
+      while ((match = arrayPattern.exec(content)) !== null) {
+        const arrayName = match[1];
+        if (!definedArrays.has(arrayName)) {
+          issues.push({
+            id: `undef_array_${arrayName}_${passageId}`,
+            code: 'WLS-COL-009',
+            severity: 'error',
+            category: 'collections',
+            message: `Undefined ARRAY: "${arrayName}"`,
+            description: `ARRAY "${arrayName}" is referenced but not defined.`,
+            passageId,
+            passageTitle: passage.title,
+            context: { arrayName },
+            fixable: false,
+          });
+        }
+      }
+
+      // Check for map references: map_get("name", ...) or similar
+      const mapPattern = /map_[a-zA-Z_]+\s*\(\s*["']([^"']+)["']/g;
+      while ((match = mapPattern.exec(content)) !== null) {
+        const mapName = match[1];
+        if (!definedMaps.has(mapName)) {
+          issues.push({
+            id: `undef_map_${mapName}_${passageId}`,
+            code: 'WLS-COL-010',
+            severity: 'error',
+            category: 'collections',
+            message: `Undefined MAP: "${mapName}"`,
+            description: `MAP "${mapName}" is referenced but not defined.`,
+            passageId,
+            passageTitle: passage.title,
+            context: { mapName },
             fixable: false,
           });
         }

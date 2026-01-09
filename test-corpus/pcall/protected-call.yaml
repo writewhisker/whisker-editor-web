@@ -1,0 +1,15 @@
+name: "Protected calls with pcall"
+description: "Test error handling with pcall"
+tags: [errors, pcall]
+
+wls: |
+  function safe()
+    return 42
+  end
+
+  result = pcall(safe)
+  -- pcall returns success status
+
+assertions:
+  - variable: result
+    type: "object"

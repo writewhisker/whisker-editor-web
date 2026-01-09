@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * WLS 1.0 Lint CLI
- * Command-line tool for validating Whisker story files
- * WLS 1.0 Gap 6: Developer Experience
+ * Lint CLI
+ *
+ * Command-line tool for validating Whisker story files.
  */
 
 import * as fs from 'fs';
@@ -178,7 +178,7 @@ function formatAsSarif(issues: LintIssue[], filePath: string): object {
  */
 function showHelp(): void {
   console.log(`
-whisker-lint - WLS 1.0 Story Linter
+whisker-lint - WLS Story Linter
 
 Usage:
   whisker-lint [options] <files...>

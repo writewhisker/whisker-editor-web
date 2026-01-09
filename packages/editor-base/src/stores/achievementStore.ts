@@ -160,11 +160,47 @@ function unlockAchievement(achievementId: string): void {
 }
 
 /**
- * Show achievement notification (implement based on your UI framework)
+ * Show achievement notification
  */
 function showAchievementNotification(achievement: any): void {
-  console.log(\`Achievement Unlocked: \${achievement.title}\`);
-  // TODO: Show UI notification
+  // Create notification container if it doesn't exist
+  let container = document.getElementById('achievement-notification-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'achievement-notification-container';
+    container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:10px;';
+    document.body.appendChild(container);
+  }
+
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.style.cssText = 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:16px 20px;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);display:flex;align-items:center;gap:12px;animation:slideIn 0.3s ease-out;min-width:280px;';
+
+  // Add animation styles if not present
+  if (!document.getElementById('achievement-notification-styles')) {
+    const style = document.createElement('style');
+    style.id = 'achievement-notification-styles';
+    style.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:0}}';
+    document.head.appendChild(style);
+  }
+
+  // Build notification content
+  notification.innerHTML = \`
+    <div style="font-size:24px;">\${achievement.icon || '🏆'}</div>
+    <div>
+      <div style="font-size:12px;opacity:0.9;text-transform:uppercase;letter-spacing:1px;">Achievement Unlocked!</div>
+      <div style="font-weight:bold;font-size:16px;margin-top:2px;">\${achievement.title}</div>
+      <div style="font-size:13px;opacity:0.85;margin-top:2px;">\${achievement.description || ''}</div>
+    </div>
+  \`;
+
+  container.appendChild(notification);
+
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease-in forwards';
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
 }
 `.trim();
 

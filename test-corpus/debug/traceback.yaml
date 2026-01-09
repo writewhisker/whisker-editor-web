@@ -1,0 +1,11 @@
+name: "Debug traceback"
+description: "Test debug.traceback function"
+tags: [debug, traceback]
+
+wls: |
+  tb = debug.traceback("test error")
+  has_stack = string.find(tb, "stack traceback") ~= nil
+
+assertions:
+  - variable: has_stack
+    equals: true

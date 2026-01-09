@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Thread Scheduler
+ * Thread Scheduler
  *
  * Manages parallel narrative threads for concurrent story execution.
  * Threads allow multiple narrative paths to execute simultaneously,
@@ -73,7 +73,7 @@ export type ThreadEventCallback = (
 ) => void;
 
 /**
- * Thread scheduler for WLS 2.0 parallel narrative execution
+ * Thread scheduler for parallel narrative execution
  */
 export class ThreadScheduler {
   private threads: Map<string, Thread> = new Map();

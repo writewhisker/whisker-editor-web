@@ -1,7 +1,7 @@
 /**
- * WLS 1.0 Error Formatter
- * Provides rich error messages with source context
- * WLS 1.0 Gap 6: Developer Experience
+ * Error Formatter
+ *
+ * Provides rich error messages with source context.
  */
 
 import type { ValidationIssue, ValidationSeverity } from './types';

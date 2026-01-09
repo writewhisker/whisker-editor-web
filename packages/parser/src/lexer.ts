@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Lexer
+ * WLS Lexer
  * Tokenizes Whisker Language Specification source text
  */
 
@@ -14,7 +14,7 @@ import {
 } from './types';
 
 /**
- * Lexer for WLS 1.0 format
+ * Lexer for WLS format
  */
 export class Lexer {
   private source: string;
@@ -345,7 +345,7 @@ export class Lexer {
         }
         break;
       case '?':
-        // Contains operator for lists (WLS 1.0 - Gap 3)
+        // Contains operator for lists
         this.addToken(TokenType.QUESTION, '?', start);
         break;
 

@@ -1,0 +1,19 @@
+name: "Exclusive LIST (state machine)"
+description: "Test LIST with exclusive values (only one active)"
+tags: [lists, exclusive]
+
+wls: |
+  -- Define exclusive list (state machine)
+  -- Only one value can be active at a time
+
+assertions:
+  - list: gameState
+    isEmpty: true
+
+platforms:
+  typescript:
+    skip: true
+    reason: "WLS 2.0 LIST requires runtime integration"
+  lua:
+    skip: true
+    reason: "WLS 2.0 LIST requires runtime integration"

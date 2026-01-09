@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Quality Validator
+ * Quality Validator
  *
  * Validates story quality metrics: branching, complexity, length, nesting.
  * Error codes: WLS-QUA-001 through WLS-QUA-012

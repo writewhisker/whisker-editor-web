@@ -1,0 +1,20 @@
+name: "Arithmetic metamethods"
+description: "Test __add metamethod"
+tags: [metatables, arithmetic]
+
+wls: |
+  mt = {
+    __add = function(a, b)
+      return { value = a.value + b.value }
+    end
+  }
+
+  t1 = setmetatable({ value = 10 }, mt)
+  t2 = setmetatable({ value = 20 }, mt)
+  t3 = t1 + t2
+
+  result = t3.value
+
+assertions:
+  - variable: result
+    equals: 30

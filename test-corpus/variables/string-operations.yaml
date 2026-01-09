@@ -1,0 +1,21 @@
+name: "String operations"
+description: "Test string concatenation and functions"
+tags: [variables, strings]
+
+wls: |
+  greeting = "Hello"
+  name = "World"
+  message = greeting .. " " .. name
+  length = string.len(message)
+  upper = string.upper(greeting)
+  lower = string.lower(greeting)
+
+assertions:
+  - variable: message
+    equals: "Hello World"
+  - variable: length
+    equals: 11
+  - variable: upper
+    equals: "HELLO"
+  - variable: lower
+    equals: "hello"

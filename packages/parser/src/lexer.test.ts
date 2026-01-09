@@ -647,10 +647,10 @@ describe('Lexer', () => {
   });
 
   // ============================================================================
-  // WLS 2.0 Thread Tokens
+  // Thread Tokens
   // ============================================================================
 
-  describe('WLS 2.0 thread tokens', () => {
+  describe('thread tokens', () => {
     it('should tokenize == at line start as THREAD_MARKER', () => {
       const result = tokenize('== ThreadPassage');
       expect(hasToken('== ThreadPassage', TokenType.THREAD_MARKER, '==')).toBe(true);

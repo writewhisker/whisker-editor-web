@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 External Function Binding
+ * External Function Binding
  *
  * Allows stories to call functions provided by the host application.
  * Functions can be registered by the host and declared in stories

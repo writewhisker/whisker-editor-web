@@ -1,0 +1,22 @@
+name: "Elseif chains"
+description: "Test elseif branching"
+tags: [control-flow, conditionals]
+
+wls: |
+  score = 75
+
+  if score >= 90 then
+    grade = "A"
+  elseif score >= 80 then
+    grade = "B"
+  elseif score >= 70 then
+    grade = "C"
+  elseif score >= 60 then
+    grade = "D"
+  else
+    grade = "F"
+  end
+
+assertions:
+  - variable: grade
+    equals: "C"

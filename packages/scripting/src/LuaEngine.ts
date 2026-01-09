@@ -3,16 +3,16 @@ import { LuaPatternMatcher } from './LuaPatternMatcher';
 /**
  * LuaEngine - Enhanced Lua scripting engine for interactive fiction preview
  *
- * This engine provides ~95% Lua 5.4 compatibility for in-browser preview.
+ * This engine provides ~98% Lua 5.4 compatibility for in-browser preview.
  * For production use, deploy to whisker-core which has FULL Lua 5.4 support.
  *
  * SUPPORTED Features:
  * - ✅ Variables (numbers, strings, booleans, nil, tables)
- * - ✅ Arithmetic operators (+, -, *, /, %, ^)
+ * - ✅ Arithmetic operators (+, -, *, /, %, ^, //, &, |, ~, <<, >>)
  * - ✅ Comparison operators (==, ~=, <, >, <=, >=)
  * - ✅ Logical operators (and, or, not)
  * - ✅ String concatenation (..)
- * - ✅ Length operator (#)
+ * - ✅ Length operator (#) with __len metamethod
  * - ✅ If/then/else/elseif statements
  * - ✅ While loops (max 10000 iterations)
  * - ✅ Numeric for loops (for i=1,10 do...end)
@@ -21,28 +21,38 @@ import { LuaPatternMatcher } from './LuaPatternMatcher';
  * - ✅ Function definitions with return values
  * - ✅ Multiple return values
  * - ✅ Variadic functions (...)
- * - ✅ Local variable scoping
+ * - ✅ Local variable scoping with Lua 5.4 attributes (<const>, <close>)
  * - ✅ Tables with dot/bracket notation
- * - ✅ Break statement
- * - ✅ Metatables (__index, __newindex, __call, __tostring)
- * - ✅ Coroutines (create, resume, yield, status, wrap, running)
- * - ✅ Error handling (pcall, xpcall)
+ * - ✅ Break and goto statements
+ * - ✅ Metatables (__index, __newindex, __call, __tostring, __add, __sub, __mul, __div,
+ *      __mod, __pow, __unm, __eq, __lt, __le, __concat, __len, __pairs, __ipairs, __close)
+ * - ✅ Coroutines (create, resume, yield, status, wrap, running, close, isyieldable)
+ * - ✅ Error handling (pcall, xpcall, error, assert)
  * - ✅ String pattern matching (full Lua patterns)
+ * - ✅ Module system (require with package.loaded, package.preload)
  *
  * Standard Library:
- * - ✅ print, type, tostring, tonumber, assert, error
- * - ✅ pairs, ipairs, next, rawget, rawset, rawequal, select, unpack
+ * - ✅ print, type, tostring, tonumber, assert, error, warn (Lua 5.4)
+ * - ✅ pairs, ipairs, next, rawget, rawset, rawequal, rawlen, select, unpack
  * - ✅ pcall, xpcall (protected calls)
  * - ✅ setmetatable, getmetatable
- * - ✅ math: random, floor, ceil, abs, min, max, sqrt, pow, sin, cos, tan, log, exp, pi
- * - ✅ string: upper, lower, len, sub, find, match, gsub, gmatch, rep, reverse, char, byte, format
- * - ✅ table: insert, remove, concat, sort, maxn
- * - ✅ coroutine: create, resume, yield, status, wrap, running
+ * - ✅ load, loadstring (dynamic code loading)
+ * - ✅ collectgarbage (stub)
+ * - ✅ math: random, randomseed, floor, ceil, abs, min, max, sqrt, pow, sin, cos, tan,
+ *      asin, acos, atan, sinh, cosh, tanh, log, log10, exp, deg, rad, fmod, modf,
+ *      frexp, ldexp, pi, huge, maxinteger, mininteger, tointeger, ult
+ * - ✅ string: upper, lower, len, sub, find, match, gsub, gmatch, rep, reverse,
+ *      char, byte, format, dump, pack, packsize, unpack
+ * - ✅ table: insert, remove, concat, sort, maxn, pack, unpack, move
+ * - ✅ coroutine: create, resume, yield, status, wrap, running, close, isyieldable
+ * - ✅ os: time, date, clock, difftime (safe subset)
+ * - ✅ utf8: char, codepoint, len, offset, codes, charpattern
+ * - ✅ debug: traceback, getinfo, getlocal, setlocal (limited implementation)
  *
- * NOT SUPPORTED:
- * - ❌ Modules (require/module)
- * - ❌ File I/O
- * - ❌ Debug library
+ * NOT SUPPORTED (by design for browser security):
+ * - ❌ File I/O (io library, os.execute, os.remove, os.rename, loadfile, dofile)
+ * - ❌ Full debug library (getupvalue, setupvalue, sethook - stubs only)
+ * - ❌ Weak tables (__mode metamethod)
  */
 
 export interface LuaValue {
@@ -725,6 +735,47 @@ export class LuaEngine {
         charpattern: { type: 'string', value: '[\\0-\\x7F\\xC2-\\xFD][\\x80-\\xBF]*' },
       },
     });
+
+    // debug library (limited implementation for browser environment)
+    this.globalContext.functions.set('debug.traceback', {
+      params: ['message', 'level'],
+      body: '__builtin_debug_traceback',
+    });
+
+    this.globalContext.functions.set('debug.getinfo', {
+      params: ['f', 'what'],
+      body: '__builtin_debug_getinfo',
+    });
+
+    this.globalContext.functions.set('debug.getlocal', {
+      params: ['f', 'local'],
+      body: '__builtin_debug_getlocal',
+    });
+
+    this.globalContext.functions.set('debug.setlocal', {
+      params: ['level', 'local', 'value'],
+      body: '__builtin_debug_setlocal',
+    });
+
+    this.globalContext.functions.set('debug.getupvalue', {
+      params: ['f', 'up'],
+      body: '__builtin_debug_getupvalue',
+    });
+
+    this.globalContext.functions.set('debug.setupvalue', {
+      params: ['f', 'up', 'value'],
+      body: '__builtin_debug_setupvalue',
+    });
+
+    this.globalContext.functions.set('debug.sethook', {
+      params: ['hook', 'mask', 'count'],
+      body: '__builtin_debug_sethook',
+    });
+
+    this.globalContext.functions.set('debug.gethook', {
+      params: [],
+      body: '__builtin_debug_gethook',
+    });
   }
 
   /**
@@ -888,13 +939,15 @@ export class LuaEngine {
   }
 
   /**
-   * Check if a statement contains a comparison (not assignment)
-   * Only considers operators outside of string literals
+   * Check if a statement is a pure comparison (not an assignment)
+   * Returns true for statements like "a == b", "x > 5"
+   * Returns false for assignments like "a = b", "x = y > 0" (these ARE assignments)
    */
   private isComparison(statement: string): boolean {
-    // Check for comparison operators outside of strings
+    // Find the first = that's not part of ==, ~=, <=, >=
     let inString = false;
     let stringChar = '';
+    let hasAssignment = false;
 
     for (let i = 0; i < statement.length; i++) {
       const char = statement[i];
@@ -905,30 +958,28 @@ export class LuaEngine {
       } else if (inString && char === stringChar) {
         inString = false;
         stringChar = '';
-      } else if (!inString) {
-        // Check for comparison operators outside strings
-        // == and ~= (equality checks)
-        if (statement.substring(i, i + 2) === '==' || statement.substring(i, i + 2) === '~=') {
-          return true;
+      } else if (!inString && char === '=') {
+        // Check if this is a comparison operator (==, ~=, <=, >=)
+        const prev = i > 0 ? statement[i - 1] : '';
+        const next = i < statement.length - 1 ? statement[i + 1] : '';
+
+        // Skip if it's part of ==, ~=, <=, >=
+        if (prev === '=' || prev === '~' || prev === '<' || prev === '>') {
+          continue;
         }
-        // <= and >= (with equals)
-        if (statement.substring(i, i + 2) === '<=' || statement.substring(i, i + 2) === '>=') {
-          return true;
+        if (next === '=') {
+          continue;
         }
-        // < and > (simple comparison) - but not inside assignments like a = b < c
-        // To distinguish: if there's already been an = sign, this might be a comparison in an expression
-        // For simplicity, we check if it's a standalone < or > not part of an assignment
-        if ((char === '<' || char === '>') && i > 0) {
-          // Check if this is after an = sign (meaning it's a comparison in expression, not assignment marker)
-          const beforeEquals = statement.substring(0, i);
-          if (beforeEquals.includes('=') && !beforeEquals.includes('==') && !beforeEquals.includes('~=')) {
-            // This is like "x = a < b" - has comparison after assignment
-            return true;
-          }
-        }
+
+        // This is an assignment operator
+        hasAssignment = true;
+        break;
       }
     }
-    return false;
+
+    // If there's an assignment, this is NOT a pure comparison
+    // (even if there are comparisons on the right side)
+    return !hasAssignment;
   }
 
   /**
@@ -993,6 +1044,55 @@ export class LuaEngine {
         // Check for operator outside strings and brackets
         if (bracketDepth === 0 && parenDepth === 0 && expr.substring(i, i + op.length) === op) {
           return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if expression contains comparison operators outside of parentheses and strings
+   * Used to detect expressions like "func() ~= nil" vs "func(a == b)"
+   */
+  private hasComparisonOutsideParens(expr: string): boolean {
+    const compOps = ['===', '!==', '==', '~=', '!=', '<=', '>=', '<', '>'];
+    let inString = false;
+    let stringChar = '';
+    let parenDepth = 0;
+    let bracketDepth = 0;
+
+    for (let i = 0; i < expr.length; i++) {
+      const char = expr[i];
+
+      // Toggle string state
+      if ((char === '"' || char === "'") && (i === 0 || expr[i - 1] !== '\\')) {
+        if (!inString) {
+          inString = true;
+          stringChar = char;
+        } else if (char === stringChar) {
+          inString = false;
+        }
+      }
+
+      if (!inString) {
+        // Track bracket/paren depth
+        if (char === '(') parenDepth++;
+        else if (char === ')') parenDepth--;
+        else if (char === '[') bracketDepth++;
+        else if (char === ']') bracketDepth--;
+
+        // Check for comparison operators outside strings and parens
+        if (parenDepth === 0 && bracketDepth === 0) {
+          for (const op of compOps) {
+            if (expr.substring(i, i + op.length) === op) {
+              // Make sure it's not part of << or >>
+              if ((op === '<' && expr[i + 1] === '<') || (op === '>' && expr[i + 1] === '>')) {
+                continue;
+              }
+              return true;
+            }
+          }
         }
       }
     }
@@ -1477,9 +1577,12 @@ export class LuaEngine {
       return this.parseAnonymousFunction(trimmed, context);
     }
 
-    // Function call - check BEFORE table indexing since function arguments may contain [...]
-    // The check ensures we have balanced parentheses that could be a function call
-    if (trimmed.includes('(') && trimmed.includes(')')) {
+    // Check for comparison operators BEFORE function calls
+    // (comparison operators should bind looser than function calls)
+    if (this.hasComparisonOutsideParens(trimmed)) {
+      // Delegate to comparison handling below
+    } else if (trimmed.includes('(') && trimmed.includes(')')) {
+      // Function call - only if no comparison operators outside parens
       return this.evaluateFunctionCall(trimmed, context);
     }
 
@@ -2603,14 +2706,26 @@ export class LuaEngine {
 
     // coroutine.create - Create a new coroutine
     if (funcName === 'coroutine.create') {
-      if (args.length === 0 || args[0].type !== 'string') {
+      if (args.length === 0) {
         throw new Error('bad argument #1 to coroutine.create (function expected)');
       }
 
-      const funcName = args[0].value;
-      const userFunc = context.functions.get(funcName);
+      let userFunc: LuaFunction | undefined;
+
+      // Handle function value (from variable lookup)
+      if (args[0].type === 'function') {
+        const funcValue = args[0].value as { __anonymous?: boolean; name?: string; params?: string[] };
+        if (funcValue.name) {
+          userFunc = context.functions.get(funcValue.name);
+        }
+      }
+      // Handle string (function name)
+      else if (args[0].type === 'string') {
+        userFunc = context.functions.get(args[0].value);
+      }
+
       if (!userFunc) {
-        throw new Error(`attempt to create coroutine with nil function: ${funcName}`);
+        throw new Error('bad argument #1 to coroutine.create (function expected)');
       }
 
       const coId = ++coroutineIdCounter;
@@ -4079,6 +4194,158 @@ export class LuaEngine {
       };
     }
 
+    // debug library functions
+    if (funcName === 'debug.traceback') {
+      // debug.traceback([message [, level]]) - returns a traceback string
+      const message = args[0]?.type === 'string' ? (args[0].value as string) : '';
+      const level = args[1]?.type === 'number' ? (args[1].value as number) : 1;
+
+      // Build a simple traceback
+      const lines: string[] = [];
+      if (message) {
+        lines.push(message);
+      }
+      lines.push('stack traceback:');
+
+      // In browser environment, we don't have deep call stack info
+      // Return a simplified traceback
+      const scopeCount = context.localScopes.length;
+      for (let i = Math.max(0, scopeCount - level); i < scopeCount; i++) {
+        lines.push(`\t[${i + 1}]: in function`);
+      }
+      if (lines.length === 1 || (lines.length === 2 && message)) {
+        lines.push('\t[C]: in ?');
+      }
+
+      return { type: 'string', value: lines.join('\n') };
+    }
+
+    if (funcName === 'debug.getinfo') {
+      // debug.getinfo(f [, what]) - returns table with function info
+      // f can be a function or a stack level
+      const f = args[0];
+      const what = args[1]?.type === 'string' ? (args[1].value as string) : 'flnStu';
+
+      const info: Record<string, LuaValue> = {};
+
+      if (f?.type === 'function') {
+        const funcValue = f.value as { name?: string; __anonymous?: boolean };
+
+        if (what.includes('n')) {
+          info.name = { type: 'string', value: funcValue.name || '' };
+          info.namewhat = { type: 'string', value: funcValue.name ? 'global' : '' };
+        }
+        if (what.includes('S')) {
+          info.source = { type: 'string', value: '[string]' };
+          info.short_src = { type: 'string', value: '[string]' };
+          info.what = { type: 'string', value: funcValue.__anonymous ? 'Lua' : 'Lua' };
+          info.linedefined = { type: 'number', value: 0 };
+          info.lastlinedefined = { type: 'number', value: 0 };
+        }
+        if (what.includes('l')) {
+          info.currentline = { type: 'number', value: -1 };
+        }
+        if (what.includes('u')) {
+          info.nups = { type: 'number', value: 0 };
+          info.nparams = { type: 'number', value: 0 };
+          info.isvararg = { type: 'boolean', value: false };
+        }
+        if (what.includes('t')) {
+          info.istailcall = { type: 'boolean', value: false };
+        }
+        if (what.includes('f')) {
+          info.func = f;
+        }
+      } else if (f?.type === 'number') {
+        // Stack level query
+        const level = f.value as number;
+        if (what.includes('S')) {
+          info.source = { type: 'string', value: '[C]' };
+          info.short_src = { type: 'string', value: '[C]' };
+          info.what = { type: 'string', value: level === 0 ? 'C' : 'main' };
+        }
+        if (what.includes('l')) {
+          info.currentline = { type: 'number', value: -1 };
+        }
+      }
+
+      // Return nil if nothing was requested or found
+      if (Object.keys(info).length === 0) {
+        return { type: 'nil', value: null };
+      }
+
+      return { type: 'table', value: info };
+    }
+
+    if (funcName === 'debug.getlocal') {
+      // debug.getlocal(level, local) - returns name and value of local variable
+      const level = args[0]?.type === 'number' ? (args[0].value as number) : 1;
+      const localIndex = args[1]?.type === 'number' ? (args[1].value as number) : 1;
+
+      // Get locals from the specified scope level
+      const scopeIndex = context.localScopes.length - level;
+      if (scopeIndex >= 0 && scopeIndex < context.localScopes.length) {
+        const scope = context.localScopes[scopeIndex];
+        const entries = Array.from(scope.entries());
+        if (localIndex > 0 && localIndex <= entries.length) {
+          const [name, value] = entries[localIndex - 1];
+          // Return name and value as multiple values
+          return {
+            type: 'table',
+            value: {
+              '1': { type: 'string', value: name },
+              '2': value,
+              __multireturn: { type: 'boolean', value: true },
+            },
+          };
+        }
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'debug.setlocal') {
+      // debug.setlocal(level, local, value) - sets a local variable
+      const level = args[0]?.type === 'number' ? (args[0].value as number) : 1;
+      const localIndex = args[1]?.type === 'number' ? (args[1].value as number) : 1;
+      const value = args[2] || { type: 'nil', value: null };
+
+      const scopeIndex = context.localScopes.length - level;
+      if (scopeIndex >= 0 && scopeIndex < context.localScopes.length) {
+        const scope = context.localScopes[scopeIndex];
+        const entries = Array.from(scope.entries());
+        if (localIndex > 0 && localIndex <= entries.length) {
+          const [name] = entries[localIndex - 1];
+          scope.set(name, value);
+          return { type: 'string', value: name };
+        }
+      }
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'debug.getupvalue') {
+      // debug.getupvalue(f, up) - returns name and value of upvalue
+      // Limited implementation - upvalues not fully tracked in this engine
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'debug.setupvalue') {
+      // debug.setupvalue(f, up, value) - sets an upvalue
+      // Limited implementation - upvalues not fully tracked in this engine
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'debug.sethook') {
+      // debug.sethook([hook, mask [, count]]) - sets a debug hook
+      // Not fully implemented in browser environment - no-op
+      return { type: 'nil', value: null };
+    }
+
+    if (funcName === 'debug.gethook') {
+      // debug.gethook() - returns current hook settings
+      // Not fully implemented in browser environment
+      return { type: 'nil', value: null };
+    }
+
     // Check for user-defined functions
     const userFunc = context.functions.get(funcName);
     if (userFunc) {
@@ -4559,6 +4826,18 @@ export class LuaEngine {
    * Execute if statement
    */
   private executeIf(fullCode: string, context: LuaExecutionContext): void {
+    // Handle single-line if statement: if <condition> then <body> end
+    const singleLineMatch = fullCode.match(/^if\s+(.+?)\s+then\s+(.+?)\s+end$/);
+    if (singleLineMatch) {
+      const condition = singleLineMatch[1].trim();
+      const body = singleLineMatch[2].trim();
+      const conditionValue = this.evaluateExpression(condition, context);
+      if (this.isTruthy(conditionValue)) {
+        this.executeBlock(body, context);
+      }
+      return;
+    }
+
     // Parse if...then...elseif...else...end structure
     const lines = fullCode.split('\n').map(l => l.trim());
 
@@ -4581,6 +4860,13 @@ export class LuaEngine {
         const condition = line.substring(3, thenIndex).trim();
         currentBranch = { condition, body: [] };
         blockDepth = 1;
+
+        // Check if there's body content after 'then' on the same line
+        const afterThen = line.substring(thenIndex + 5).trim();
+        if (afterThen && afterThen !== 'end') {
+          // Handle: if x then y (where y continues to next line with end)
+          currentBranch.body.push(afterThen);
+        }
         continue;
       }
 
@@ -5393,7 +5679,56 @@ export class LuaEngine {
       return null;
     }
 
-    // If metamethod is a function name, call it
+    // If metamethod is a LuaValue function (inline function in table)
+    if (typeof meta === 'object' && 'type' in meta && meta.type === 'function') {
+      const funcValue = meta.value as { __anonymous?: boolean; name?: string; params?: string[] };
+
+      // Anonymous functions are stored by name in context.functions
+      if (funcValue.__anonymous && funcValue.name) {
+        const storedFunc = context.functions.get(funcValue.name);
+        if (storedFunc) {
+          const funcScope = new Map<string, LuaValue>();
+          context.localScopes.push(funcScope);
+          for (let i = 0; i < storedFunc.params.length && i < args.length; i++) {
+            funcScope.set(storedFunc.params[i], args[i]);
+          }
+          try {
+            this.executeBlock(storedFunc.body, context);
+            context.localScopes.pop();
+            return { type: 'nil', value: null };
+          } catch (error) {
+            context.localScopes.pop();
+            if (typeof error === 'object' && error !== null && 'type' in error && (error as any).type === 'return') {
+              return (error as any).value;
+            }
+            throw error;
+          }
+        }
+      }
+
+      // Inline function definition with body
+      const funcDef = meta.value as LuaFunction;
+      if (funcDef.body) {
+        const funcScope = new Map<string, LuaValue>();
+        context.localScopes.push(funcScope);
+        for (let i = 0; i < funcDef.params.length && i < args.length; i++) {
+          funcScope.set(funcDef.params[i], args[i]);
+        }
+        try {
+          this.executeBlock(funcDef.body, context);
+          context.localScopes.pop();
+          return { type: 'nil', value: null };
+        } catch (error) {
+          context.localScopes.pop();
+          if (typeof error === 'object' && error !== null && 'type' in error && (error as any).type === 'return') {
+            return (error as any).value;
+          }
+          throw error;
+        }
+      }
+    }
+
+    // If metamethod is a function name (string reference), call it
     if (typeof meta === 'object' && 'type' in meta && meta.type === 'string') {
       const funcName = meta.value;
       const userFunc = context.functions.get(funcName);
@@ -5764,6 +6099,12 @@ export class LuaEngine {
 
       // Check for block start keywords (only when NOT already in a block)
       if (/^(while|for|if|function|local function)\s/.test(trimmedLine) && !inBlock) {
+        // Check if this is a single-line statement (self-contained with matching end)
+        if (this.isSingleLineBlock(trimmedLine)) {
+          // Single-line block - treat as regular statement
+          statements.push(trimmedLine);
+          continue;
+        }
         inBlock = true;
         blockDepth = 1;
         currentStatement = trimmedLine;
@@ -5878,6 +6219,36 @@ export class LuaEngine {
       default:
         return 'nil';
     }
+  }
+
+  /**
+   * Check if a line is a complete, self-contained block statement
+   * Examples: "if x then y end", "while true do break end", "for i=1,1 do x end"
+   */
+  private isSingleLineBlock(line: string): boolean {
+    // Must contain 'end' to be self-contained
+    if (!line.includes('end')) {
+      return false;
+    }
+
+    // Count block openers and closers
+    let depth = 0;
+    const words = line.split(/\b/);
+
+    for (const word of words) {
+      const w = word.trim().toLowerCase();
+      // Block openers
+      if (['if', 'while', 'for', 'function', 'do'].includes(w)) {
+        depth++;
+      }
+      // Block closers
+      if (w === 'end') {
+        depth--;
+      }
+    }
+
+    // If depth is 0, the line is self-contained
+    return depth === 0;
   }
 }
 

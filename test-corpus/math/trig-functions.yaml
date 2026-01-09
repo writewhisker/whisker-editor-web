@@ -1,0 +1,22 @@
+name: "Trigonometric functions"
+description: "Test sin, cos, tan, asin, acos, atan"
+tags: [math, trigonometry]
+
+wls: |
+  pi = math.pi
+  sin_0 = math.sin(0)
+  cos_0 = math.cos(0)
+  tan_0 = math.tan(0)
+
+  deg_90 = math.deg(math.pi / 2)
+  rad_180 = math.rad(180)
+
+assertions:
+  - variable: sin_0
+    equals: 0
+  - variable: cos_0
+    equals: 1
+  - variable: tan_0
+    equals: 0
+  - variable: deg_90
+    equals: 90

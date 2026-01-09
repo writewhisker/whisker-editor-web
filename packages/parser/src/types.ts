@@ -1,5 +1,5 @@
 /**
- * WLS 1.0 Lexer Types
+ * Lexer Types
  * Token types and interfaces for the Whisker Language Specification
  */
 
@@ -21,12 +21,12 @@ export interface SourceSpan {
 }
 
 /**
- * Token types for WLS 1.0 lexer
+ * Token types for WLS lexer
  */
 export enum TokenType {
   // Structure markers
   PASSAGE_MARKER = 'PASSAGE_MARKER',           // ::
-  THREAD_MARKER = 'THREAD_MARKER',             // == (WLS 2.0 thread passage)
+  THREAD_MARKER = 'THREAD_MARKER',             // == (thread passage)
   ONCE_CHOICE_MARKER = 'ONCE_CHOICE_MARKER',   // + (once-only choice)
   STICKY_CHOICE_MARKER = 'STICKY_CHOICE_MARKER', // * (sticky choice)
   GATHER = 'GATHER',                           // - (gather point at line start)
@@ -94,16 +94,16 @@ export enum TokenType {
   ELIF = 'ELIF',                               // elif
   DO = 'DO',                                   // do (in choice actions)
 
-  // Thread keywords (WLS 2.0)
+  // Thread keywords
   AWAIT = 'AWAIT',                             // await (wait for thread)
   SPAWN = 'SPAWN',                             // spawn (explicit spawn, optional)
 
-  // Collection keywords (WLS 1.0 - Gap 3)
+  // Collection keywords
   LIST = 'LIST',                               // LIST name = ...
   ARRAY = 'ARRAY',                             // ARRAY name = ...
   MAP = 'MAP',                                 // MAP name = ...
 
-  // Module keywords (WLS 1.0 - Gap 4)
+  // Module keywords
   INCLUDE = 'INCLUDE',                         // INCLUDE "path"
   FUNCTION = 'FUNCTION',                       // FUNCTION name(params)
   RETURN = 'RETURN',                           // RETURN value
@@ -111,7 +111,7 @@ export enum TokenType {
   NAMESPACE = 'NAMESPACE',                     // NAMESPACE Name
   SCOPE_OP = 'SCOPE_OP',                       // :: (namespace separator)
 
-  // Presentation keywords (WLS 1.0 - Gap 5)
+  // Presentation keywords
   THEME = 'THEME',                             // THEME "name"
   STYLE = 'STYLE',                             // STYLE { ... }
 
@@ -188,20 +188,20 @@ export const KEYWORDS: Record<string, TokenType> = {
   'else': TokenType.ELSE,
   'elif': TokenType.ELIF,
   'do': TokenType.DO,
-  // Thread keywords (WLS 2.0)
+  // Thread keywords
   'await': TokenType.AWAIT,
   'spawn': TokenType.SPAWN,
-  // Collection keywords (WLS 1.0 - Gap 3)
+  // Collection keywords
   'LIST': TokenType.LIST,
   'ARRAY': TokenType.ARRAY,
   'MAP': TokenType.MAP,
-  // Module keywords (WLS 1.0 - Gap 4)
+  // Module keywords
   'INCLUDE': TokenType.INCLUDE,
   'FUNCTION': TokenType.FUNCTION,
   'RETURN': TokenType.RETURN,
   'END': TokenType.END,
   'NAMESPACE': TokenType.NAMESPACE,
-  // Presentation keywords (WLS 1.0 - Gap 5)
+  // Presentation keywords
   'THEME': TokenType.THEME,
   'STYLE': TokenType.STYLE,
 };
@@ -221,7 +221,7 @@ export function getKeywordType(value: string): TokenType | undefined {
 }
 
 /**
- * Special targets for navigation (WLS 1.0)
+ * Special targets for navigation
  */
 export const SPECIAL_TARGETS = ['END', 'BACK', 'RESTART'] as const;
 export type SpecialTarget = typeof SPECIAL_TARGETS[number];

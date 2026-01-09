@@ -1,7 +1,7 @@
 /**
- * WLS 1.0 Language Server
- * Language Server Protocol implementation for WLS
- * WLS 1.0 Gap 6: Developer Experience
+ * Language Server
+ *
+ * Language Server Protocol implementation for WLS.
  */
 
 import {

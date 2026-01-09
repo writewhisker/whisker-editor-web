@@ -1,0 +1,17 @@
+name: "While loops"
+description: "Test while loop iteration"
+tags: [control-flow, loops]
+
+wls: |
+  count = 0
+  sum = 0
+  while count < 5 do
+    count = count + 1
+    sum = sum + count
+  end
+
+assertions:
+  - variable: count
+    equals: 5
+  - variable: sum
+    equals: 15

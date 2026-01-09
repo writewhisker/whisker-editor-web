@@ -2,7 +2,7 @@
  * Ink Importer
  *
  * Imports stories from Ink narrative scripting language format (.ink files).
- * Converts Ink syntax to WLS 1.0 Story model.
+ * Converts Ink syntax to WLS Story model.
  *
  * Supported Ink features:
  * - Knots (=== knot_name ===) -> Passages
@@ -54,7 +54,7 @@ interface ParsedInkStory {
 /**
  * Ink Importer
  *
- * Imports stories from Ink format with conversion to WLS 1.0.
+ * Imports stories from Ink format with conversion to WLS.
  */
 export class InkImporter implements IImporter {
   readonly name = 'Ink Importer';

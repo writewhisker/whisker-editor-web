@@ -1,7 +1,7 @@
 /**
- * WLS 1.0 Lint Library
- * Programmatic API for linting Whisker story files
- * WLS 1.0 Gap 6: Developer Experience
+ * Lint Library
+ *
+ * Programmatic API for linting Whisker story files.
  */
 
 import * as fs from 'fs';

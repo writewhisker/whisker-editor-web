@@ -1,5 +1,5 @@
 /**
- * WLS 1.0/2.0 Abstract Syntax Tree Types
+ * WLS Abstract Syntax Tree Types
  * Defines the structure of parsed WLS documents
  */
 
@@ -10,16 +10,16 @@ import type {
   ExternalDeclarationNode,
   DelayDirectiveNode,
   EveryDirectiveNode,
-} from './wls2-declarations';
+} from './declarations';
 
-// Re-export WLS 2.0 declaration types
+// Re-export declaration types
 export type {
   AudioDeclarationNode,
   EffectDeclarationNode,
   ExternalDeclarationNode,
   DelayDirectiveNode,
   EveryDirectiveNode,
-} from './wls2-declarations';
+} from './declarations';
 
 // ============================================================================
 // Base Types
@@ -44,19 +44,19 @@ export interface StoryNode extends BaseNode {
   type: 'story';
   metadata: MetadataNode[];
   variables: VariableDeclarationNode[];
-  lists: ListDeclarationNode[];             // WLS 1.0 Gap 3: LIST declarations
-  arrays: ArrayDeclarationNode[];           // WLS 1.0 Gap 3: ARRAY declarations
-  maps: MapDeclarationNode[];               // WLS 1.0 Gap 3: MAP declarations
-  includes: IncludeDeclarationNode[];       // WLS 1.0 Gap 4: INCLUDE declarations
-  functions: FunctionDeclarationNode[];     // WLS 1.0 Gap 4: FUNCTION definitions
-  namespaces: NamespaceDeclarationNode[];   // WLS 1.0 Gap 4: NAMESPACE blocks
-  theme: ThemeDirectiveNode | null;         // WLS 1.0 Gap 5: Theme directive
-  styles: StyleBlockNode | null;            // WLS 1.0 Gap 5: Style block
+  lists: ListDeclarationNode[];             // LIST declarations
+  arrays: ArrayDeclarationNode[];           // ARRAY declarations
+  maps: MapDeclarationNode[];               // MAP declarations
+  includes: IncludeDeclarationNode[];       // INCLUDE declarations
+  functions: FunctionDeclarationNode[];     // FUNCTION definitions
+  namespaces: NamespaceDeclarationNode[];   // NAMESPACE blocks
+  theme: ThemeDirectiveNode | null;         // Theme directive
+  styles: StyleBlockNode | null;            // Style block
   passages: PassageNode[];
-  threads: ThreadPassageNode[];             // WLS 2.0: Thread passages
-  audioDeclarations: AudioDeclarationNode[];      // WLS 2.0: Audio track declarations
-  effectDeclarations: EffectDeclarationNode[];    // WLS 2.0: Text effect declarations
-  externalDeclarations: ExternalDeclarationNode[]; // WLS 2.0: External function declarations
+  threads: ThreadPassageNode[];             // Thread passages
+  audioDeclarations: AudioDeclarationNode[];      // Audio track declarations
+  effectDeclarations: EffectDeclarationNode[];    // Text effect declarations
+  externalDeclarations: ExternalDeclarationNode[]; // External function declarations
 }
 
 /**
@@ -79,7 +79,7 @@ export interface VariableDeclarationNode extends BaseNode {
 }
 
 // ============================================================================
-// Collection Declarations (WLS 1.0 - Gap 3)
+// Collection Declarations
 // ============================================================================
 
 /**
@@ -137,7 +137,7 @@ export interface MapDeclarationNode extends BaseNode {
 }
 
 // ============================================================================
-// Module Declarations (WLS 1.0 - Gap 4)
+// Module Declarations
 // ============================================================================
 
 /**
@@ -189,8 +189,8 @@ export interface NamespaceDeclarationNode extends BaseNode {
 export interface PassageNode extends BaseNode {
   type: 'passage';
   name: string;              // Fully qualified name (with namespace prefix)
-  originalName?: string;     // WLS 1.0 Gap 4: Name as written in source
-  namespace?: string;        // WLS 1.0 Gap 4: Namespace the passage belongs to
+  originalName?: string;     // Name as written in source
+  namespace?: string;        // Namespace the passage belongs to
   tags: string[];
   metadata: PassageMetadataNode[];
   content: ContentNode[];
@@ -223,20 +223,20 @@ export type ContentNode =
   | GatherNode
   | TunnelCallNode
   | TunnelReturnNode
-  | AwaitExpressionNode    // WLS 2.0: Thread await
-  | SpawnExpressionNode    // WLS 2.0: Thread spawn
-  | DelayDirectiveNode     // WLS 2.0: Delayed content
-  | EveryDirectiveNode     // WLS 2.0: Repeating content
-  | FormattedTextNode      // WLS 1.0 Gap 5: Rich text
-  | BlockquoteNode         // WLS 1.0 Gap 5: Blockquotes
-  | ListNode               // WLS 1.0 Gap 5: Lists
-  | HorizontalRuleNode     // WLS 1.0 Gap 5: Horizontal rules
-  | ClassedBlockNode       // WLS 1.0 Gap 5: CSS classes
-  | ClassedInlineNode      // WLS 1.0 Gap 5: Inline CSS classes
-  | ImageNode              // WLS 1.0 Gap 5: Images
-  | AudioNode              // WLS 1.0 Gap 5: Audio
-  | VideoNode              // WLS 1.0 Gap 5: Video
-  | EmbedNode;             // WLS 1.0 Gap 5: Embedded content
+  | AwaitExpressionNode    // Thread await
+  | SpawnExpressionNode    // Thread spawn
+  | DelayDirectiveNode     // Delayed content
+  | EveryDirectiveNode     // Repeating content
+  | FormattedTextNode      // Rich text
+  | BlockquoteNode         // Blockquotes
+  | ListNode               // Lists
+  | HorizontalRuleNode     // Horizontal rules
+  | ClassedBlockNode       // CSS classes
+  | ClassedInlineNode      // Inline CSS classes
+  | ImageNode              // Images
+  | AudioNode              // Audio
+  | VideoNode              // Video
+  | EmbedNode;             // Embedded content
 
 /**
  * Plain text content
@@ -314,7 +314,7 @@ export interface AlternativesNode extends BaseNode {
 
 /**
  * Gather point for flow reconvergence (-)
- * WLS 1.0: Allows nested choices/gathers to converge
+ * Allows nested choices/gathers to converge
  */
 export interface GatherNode extends BaseNode {
   type: 'gather';
@@ -324,7 +324,7 @@ export interface GatherNode extends BaseNode {
 
 /**
  * Tunnel call (-> Target ->)
- * WLS 1.0: Call a passage as a reusable tunnel, returns to caller
+ * Call a passage as a reusable tunnel, returns to caller
  */
 export interface TunnelCallNode extends BaseNode {
   type: 'tunnel_call';
@@ -333,19 +333,19 @@ export interface TunnelCallNode extends BaseNode {
 
 /**
  * Tunnel return (<-)
- * WLS 1.0: Return from a tunnel to the calling passage
+ * Return from a tunnel to the calling passage
  */
 export interface TunnelReturnNode extends BaseNode {
   type: 'tunnel_return';
 }
 
 // ============================================================================
-// Thread Nodes (WLS 2.0)
+// Thread Nodes
 // ============================================================================
 
 /**
  * Thread passage declaration (== PassageName)
- * WLS 2.0: Thread passages run in parallel with the main narrative
+ * Thread passages run in parallel with the main narrative
  */
 export interface ThreadPassageNode extends BaseNode {
   type: 'thread_passage';
@@ -357,7 +357,7 @@ export interface ThreadPassageNode extends BaseNode {
 
 /**
  * Await expression ({await ThreadName})
- * WLS 2.0: Wait for a thread to complete before continuing
+ * Wait for a thread to complete before continuing
  */
 export interface AwaitExpressionNode extends BaseNode {
   type: 'await_expression';
@@ -366,7 +366,7 @@ export interface AwaitExpressionNode extends BaseNode {
 
 /**
  * Spawn expression ({spawn -> PassageName})
- * WLS 2.0: Explicitly spawn a thread (alternative to implicit -> ThreadPassage)
+ * Explicitly spawn a thread (alternative to implicit -> ThreadPassage)
  */
 export interface SpawnExpressionNode extends BaseNode {
   type: 'spawn_expression';
@@ -375,7 +375,7 @@ export interface SpawnExpressionNode extends BaseNode {
 }
 
 // ============================================================================
-// Presentation Nodes (WLS 1.0 - Gap 5)
+// Presentation Nodes
 // ============================================================================
 
 /**
@@ -656,7 +656,7 @@ export const WLS_ERROR_CODES = {
   UNDEFINED_PASSAGE: 'WLS-REF-001',
   // Structure errors (STR)
   DUPLICATE_PASSAGE: 'WLS-STR-001',
-  // Flow control errors (FLW) - WLS 1.0
+  // Flow control errors (FLW)
   ORPHAN_GATHER: 'WLS-FLW-007',           // Gather without preceding choice
   TUNNEL_DEPTH_EXCEEDED: 'WLS-FLW-008',   // Too many nested tunnel calls
   ORPHAN_TUNNEL_RETURN: 'WLS-FLW-009',    // <- outside tunnel context
@@ -756,13 +756,13 @@ export function isContent(node: BaseNode): node is ContentNode {
     'gather',
     'tunnel_call',
     'tunnel_return',
-    // WLS 2.0: Thread nodes
+    // Thread nodes
     'await_expression',
     'spawn_expression',
-    // WLS 2.0: Timed content nodes
+    // Timed content nodes
     'delay_directive',
     'every_directive',
-    // WLS 1.0 Gap 5: Presentation nodes
+    // Presentation nodes
     'formatted_text',
     'blockquote',
     'list',

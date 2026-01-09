@@ -1,5 +1,5 @@
 /**
- * WLS 1.0/2.0 Parser Package
+ * WLS Parser Package
  * Lexer and Parser for Whisker Language Specification
  */
 
@@ -42,11 +42,11 @@ export type {
   ConditionalBranchNode,
   ChoiceNode,
   AlternativesNode,
-  // WLS 1.0 Flow Control types
+  // Flow Control types
   GatherNode,
   TunnelCallNode,
   TunnelReturnNode,
-  // WLS 1.0 Rich Text types
+  // Rich Text types
   FormattedTextNode,
   BlockquoteNode,
   ListNode,
@@ -54,7 +54,7 @@ export type {
   HorizontalRuleNode,
   ClassedBlockNode,
   ClassedInlineNode,
-  // WLS 1.0 Media types
+  // Media types
   MediaAttributes,
   AudioAttributes,
   VideoAttributes,
@@ -63,7 +63,7 @@ export type {
   AudioNode,
   VideoNode,
   EmbedNode,
-  // WLS 2.0 Thread types
+  // Thread types
   ThreadPassageNode,
   AwaitExpressionNode,
   SpawnExpressionNode,
@@ -96,7 +96,7 @@ export {
 // Parser
 export { Parser, parse } from './parser';
 
-// WLS 2.0 Declarations - Types
+// Declarations - Types
 export type {
   AudioDeclarationNode,
   EffectDeclarationNode,
@@ -105,7 +105,7 @@ export type {
   EveryDirectiveNode,
 } from './ast';
 
-// WLS 2.0 Declarations - Parsing functions
+// Declarations - Parsing functions
 export {
   parseAudioDeclaration,
   parseEffectDeclaration,
@@ -121,4 +121,4 @@ export {
   type AudioChannel,
   type ParameterType,
   type ExternalParameterNode,
-} from './wls2-declarations';
+} from './declarations';

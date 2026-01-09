@@ -1,7 +1,7 @@
 /**
  * WLS Importer
  *
- * Imports stories from WLS (Whisker Language Specification) 1.0 text format.
+ * Imports stories from WLS (Whisker Language Specification) text format.
  */
 
 import { Story, Passage, Choice, Variable } from '@writewhisker/story-models';
@@ -28,7 +28,7 @@ import type {
 /**
  * WLS Importer
  *
- * Imports stories from WLS 1.0 text format (.ws files).
+ * Imports stories from WLS text format (.ws files).
  */
 export class WLSImporter implements IImporter {
   readonly name = 'WLS Importer';
@@ -182,7 +182,7 @@ export class WLSImporter implements IImporter {
       return 'unknown';
     }
 
-    // Look for @version: directive (WLS 1.0 format uses colon)
+    // Look for @version: directive
     const versionMatch = data.match(/^@version\s*:\s*(.+)$/m);
     return versionMatch ? versionMatch[1].trim() : '1.0';
   }

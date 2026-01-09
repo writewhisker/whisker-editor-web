@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Text Effects and Transitions
+ * Text Effects and Transitions
  *
  * Dynamic text presentation effects for narratives.
  * Platform-agnostic implementation with callbacks for rendering.

@@ -35,7 +35,7 @@ export class StoryPlayer {
   private recorder: any | null = null;  // PlaythroughRecorder - optional dependency
   private currentPlaythrough: Playthrough | null = null;
   private luaEngine: any | null = null;  // LuaEngine - optional dependency
-  private tunnelStack: TunnelFrame[] = [];  // WLS 1.0: Tunnel call stack
+  private tunnelStack: TunnelFrame[] = [];  // Tunnel call stack
 
   constructor() {
     // Initialize event listener maps
@@ -109,7 +109,7 @@ export class StoryPlayer {
     this.variables.clear();
     this.visitedPassages.clear();
     this.history = [];
-    this.tunnelStack = [];  // WLS 1.0: Clear tunnel call stack
+    this.tunnelStack = [];  // Clear tunnel call stack
     this.startTime = 0;
     this.paused = false;
     this.emit('stateChanged', this.getState());
@@ -310,7 +310,7 @@ export class StoryPlayer {
       visitedPassages: Object.fromEntries(this.visitedPassages),
       history: [...this.history],
       timestamp: Date.now(),
-      tunnelStack: [...this.tunnelStack],  // WLS 1.0: Include tunnel call stack
+      tunnelStack: [...this.tunnelStack],  // Include tunnel call stack
     };
   }
 
@@ -322,12 +322,12 @@ export class StoryPlayer {
     this.variables = new Map(Object.entries(state.variables));
     this.visitedPassages = new Map(Object.entries(state.visitedPassages));
     this.history = [...state.history];
-    this.tunnelStack = state.tunnelStack ? [...state.tunnelStack] : [];  // WLS 1.0: Restore tunnel stack
+    this.tunnelStack = state.tunnelStack ? [...state.tunnelStack] : [];  // Restore tunnel stack
     this.emit('stateChanged', this.getState());
   }
 
   // =========================================================================
-  // WLS 1.0: Tunnel Support
+  // Tunnel Support
   // =========================================================================
 
   /**

@@ -23,14 +23,15 @@ export { NoTerminalValidator } from './NoTerminalValidator';
 export { BottleneckValidator } from './BottleneckValidator';
 export { CycleDetectorValidator } from './CycleDetectorValidator';
 export { InfiniteLoopValidator } from './InfiniteLoopValidator';
+export { ConditionAnalysisValidator } from './ConditionAnalysisValidator';
 
-// WLS 1.0 validators
+// WLS validators
 export { WlsSyntaxValidator } from './WlsSyntaxValidator';
 export { WlsSpecialTargetsValidator } from './WlsSpecialTargetsValidator';
 export { WlsVariableValidator } from './WlsVariableValidator';
 export { WlsExpressionValidator } from './WlsExpressionValidator';
-export { WlsCollectionValidator } from './WlsCollectionValidator';  // WLS 1.0 Gap 3
-export { WlsModuleValidator } from './WlsModuleValidator';          // WLS 1.0 Gap 4
-export { WlsPresentationValidator } from './WlsPresentationValidator';  // WLS 1.0 Gap 5
+export { WlsCollectionValidator } from './WlsCollectionValidator';
+export { WlsModuleValidator } from './WlsModuleValidator';
+export { WlsPresentationValidator } from './WlsPresentationValidator';
 export { WlsQualityValidator, DEFAULT_THRESHOLDS as QUALITY_THRESHOLDS } from './WlsQualityValidator';
 export type { QualityThresholds } from './WlsQualityValidator';

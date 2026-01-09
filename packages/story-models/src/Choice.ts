@@ -7,7 +7,7 @@ export class Choice {
   target: string;
   condition?: string;
   action?: string;
-  choiceType: ChoiceType;  // WLS 1.0: 'once' or 'sticky'
+  choiceType: ChoiceType;  // 'once' or 'sticky'
   metadata: Record<string, any>;
 
   constructor(data?: Partial<ChoiceData>) {
@@ -16,12 +16,12 @@ export class Choice {
     this.target = data?.target || '';
     this.condition = data?.condition;
     this.action = data?.action;
-    this.choiceType = data?.choiceType || 'once';  // Default to once-only (WLS 1.0)
+    this.choiceType = data?.choiceType || 'once';  // Default to once-only
     this.metadata = data?.metadata || {};
   }
 
   /**
-   * Check if this is a once-only choice (WLS 1.0)
+   * Check if this is a once-only choice
    * Once-only choices disappear after being selected
    */
   isOnce(): boolean {
@@ -29,7 +29,7 @@ export class Choice {
   }
 
   /**
-   * Check if this is a sticky choice (WLS 1.0)
+   * Check if this is a sticky choice
    * Sticky choices remain visible after selection
    */
   isSticky(): boolean {

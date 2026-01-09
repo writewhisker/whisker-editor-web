@@ -1,5 +1,5 @@
 /**
- * WLS 2.0 Timed Content Manager
+ * Timed Content Manager
  *
  * Manages delayed and scheduled content delivery for narrative timing.
  * Supports @delay, @every, and programmatic timer control.
@@ -64,7 +64,7 @@ export type TimerEventCallback = (
 ) => void;
 
 /**
- * Manages timed content for WLS 2.0 narratives
+ * Manages timed content for WLS narratives
  */
 export class TimedContentManager {
   private blocks: Map<string, TimedBlock> = new Map();

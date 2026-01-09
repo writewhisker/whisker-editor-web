@@ -158,71 +158,71 @@ export type {
 export { LuaEngine, getLuaEngine, type LuaExecutionResult } from '@writewhisker/scripting';
 export { LuaExecutor } from './scripting/LuaExecutor';
 
-// WLS 1.0 Expression Evaluator
+// Expression Evaluator
 export {
   ExpressionEvaluator,
   evaluate,
   createEvaluator,
 } from '@writewhisker/scripting';
 
-// WLS 1.0 Whisker API
+// Whisker API
 export {
   WhiskerApi,
   createWhiskerApi,
 } from '@writewhisker/scripting';
 
 // ============================================================================
-// WLS 2.0 RUNTIME (Advanced Features)
+// RUNTIME (Advanced Features)
 // ============================================================================
 
-// WLS 2.0 Container
+// Runtime Container
 export {
-  WLS2Container,
-  createWLS2Container,
+  Container,
+  createContainer,
   createTestContainer,
   createLightContainer,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Thread Scheduler
+// Thread Scheduler
 export {
   ThreadScheduler,
   createThreadScheduler,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Timed Content
+// Timed Content
 export {
   TimedContent,
   createTimedContent,
   parseTimeString,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 External Functions
+// External Functions
 export {
   ExternalFunctions,
   createExternalFunctions,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 LIST State Machine
+// LIST State Machine
 export {
   ListValue,
   ListRegistry,
   createListRegistry,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Text Effects
+// Text Effects
 export {
   TextEffects,
   createTextEffects,
   BUILTIN_EFFECTS,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Audio Effects
+// Audio Effects
 export {
   AudioEffects,
   createAudioEffects,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Parameterized Passages
+// Parameterized Passages
 export {
   ParameterizedPassages,
   createParameterizedPassages,
@@ -230,14 +230,14 @@ export {
   parsePassageCall,
 } from '@writewhisker/scripting';
 
-// WLS 2.0 Types
+// Runtime Types
 export type {
   Thread,
   ThreadState,
   Timer,
   TimerState,
-  WLS2Options,
-  WLS2State,
+  ContainerOptions,
+  ContainerState,
   StepResult,
   ListValueConfig,
   PassageHeader,

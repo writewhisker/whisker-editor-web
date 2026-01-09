@@ -1,0 +1,20 @@
+name: "Local variable scoping"
+description: "Test local variable scope in functions"
+tags: [functions, scope]
+
+wls: |
+  x = "global"
+
+  function test()
+    local x = "local"
+    inner = x
+  end
+
+  test()
+  outer = x
+
+assertions:
+  - variable: inner
+    equals: "local"
+  - variable: outer
+    equals: "global"

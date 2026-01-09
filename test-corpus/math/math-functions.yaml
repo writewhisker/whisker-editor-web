@@ -1,0 +1,28 @@
+name: "Math library functions"
+description: "Test math standard library"
+tags: [math, stdlib]
+
+wls: |
+  abs_val = math.abs(-42)
+  floor_val = math.floor(3.7)
+  ceil_val = math.ceil(3.2)
+  min_val = math.min(5, 3, 8, 1)
+  max_val = math.max(5, 3, 8, 1)
+  sqrt_val = math.sqrt(16)
+  pow_val = math.pow(2, 8)
+
+assertions:
+  - variable: abs_val
+    equals: 42
+  - variable: floor_val
+    equals: 3
+  - variable: ceil_val
+    equals: 4
+  - variable: min_val
+    equals: 1
+  - variable: max_val
+    equals: 8
+  - variable: sqrt_val
+    equals: 4
+  - variable: pow_val
+    equals: 256

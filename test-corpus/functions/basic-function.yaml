@@ -1,0 +1,21 @@
+name: "Basic function definition"
+description: "Test function definition and calling"
+tags: [functions, basic]
+
+wls: |
+  function add(a, b)
+    return a + b
+  end
+
+  function greet(name)
+    return "Hello, " .. name
+  end
+
+  sum = add(3, 4)
+  message = greet("World")
+
+assertions:
+  - variable: sum
+    equals: 7
+  - variable: message
+    equals: "Hello, World"

@@ -1,0 +1,24 @@
+name: "If-else statements"
+description: "Test conditional branching"
+tags: [control-flow, conditionals]
+
+wls: |
+  x = 10
+  if x > 5 then
+    result1 = "greater"
+  else
+    result1 = "not greater"
+  end
+
+  y = 3
+  if y > 5 then
+    result2 = "greater"
+  else
+    result2 = "not greater"
+  end
+
+assertions:
+  - variable: result1
+    equals: "greater"
+  - variable: result2
+    equals: "not greater"

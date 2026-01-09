@@ -1,7 +1,7 @@
 /**
  * Migration Store
  *
- * State management for story format migration (legacy to WLS 1.0).
+ * State management for story format migration (legacy to WLS).
  */
 
 import { writable, derived, get } from 'svelte/store';
@@ -77,7 +77,7 @@ export const recentMigrations = derived(migrationHistory, ($history) => {
  * Detect story version from content/structure
  */
 export function detectStoryVersion(story: Story): StoryVersion {
-  // Check for WLS 1.0 markers
+  // Check for WLS markers
   const passages = Array.from(story.passages.values() as Iterable<Passage>);
 
   let hasLegacySyntax = false;
@@ -94,12 +94,12 @@ export function detectStoryVersion(story: Story): StoryVersion {
       hasLegacySyntax = true;
     }
 
-    // WLS 1.0 patterns
+    // WLS patterns
     if (content.includes('{if ') || content.includes('{$')) {
       hasWLS1Syntax = true;
     }
 
-    // Check choice structure - WLS 1.0 uses separate Choice objects
+    // Check choice structure - WLS uses separate Choice objects
     if (passage.choices && passage.choices.length > 0) {
       hasWLS1Syntax = true;
     }
@@ -189,7 +189,7 @@ export function generateMigrationPreview(story: Story): MigrationPreview {
       version,
       targetVersion: '1.0',
       changes: [],
-      warnings: ['Story is already in WLS 1.0 format'],
+      warnings: ['Story is already in WLS format'],
       errors: [],
       canMigrate: false,
     };
@@ -253,7 +253,7 @@ export function generateMigrationPreview(story: Story): MigrationPreview {
         }
 
         case 'variable': {
-          // $var stays mostly the same in WLS 1.0
+          // $var stays mostly the same in WLS
           migrated = pattern.match;
           category = 'Variable Reference';
           break;

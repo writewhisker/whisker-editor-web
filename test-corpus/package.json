@@ -1,0 +1,15 @@
+{
+  "name": "@writewhisker/test-corpus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cross-platform test corpus for whisker-core and whisker-editor-web",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:lua": "lua runner-lua.lua ."
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "yaml": "^2.8.2"
+  }
+}

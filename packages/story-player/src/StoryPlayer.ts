@@ -857,19 +857,31 @@ export class StoryPlayer {
 
   /**
    * Safe condition evaluator - evaluates conditions without Function()
-   * Handles: comparisons (==, !=, <, >, <=, >=), boolean logic (and, or, not), variables
+   * Handles: comparisons (==, ===, !=, !==, <, >, <=, >=), boolean logic (and, or, not, &&, ||), variables
    */
   private evaluateSimpleCondition(condition: string): boolean {
     try {
       const trimmed = condition.trim();
 
-      // Handle 'and' operator
+      // Handle '&&' operator (JavaScript-style and)
+      if (trimmed.includes('&&')) {
+        const parts = trimmed.split('&&');
+        return parts.every(p => this.evaluateSimpleCondition(p.trim()));
+      }
+
+      // Handle '||' operator (JavaScript-style or)
+      if (trimmed.includes('||')) {
+        const parts = trimmed.split('||');
+        return parts.some(p => this.evaluateSimpleCondition(p.trim()));
+      }
+
+      // Handle 'and' operator (Lua-style)
       if (trimmed.includes(' and ')) {
         const parts = trimmed.split(' and ');
         return parts.every(p => this.evaluateSimpleCondition(p.trim()));
       }
 
-      // Handle 'or' operator
+      // Handle 'or' operator (Lua-style)
       if (trimmed.includes(' or ')) {
         const parts = trimmed.split(' or ');
         return parts.some(p => this.evaluateSimpleCondition(p.trim()));
@@ -880,9 +892,16 @@ export class StoryPlayer {
         return !this.evaluateSimpleCondition(trimmed.substring(4).trim());
       }
 
-      // Handle comparison operators
+      // Handle '!' operator (JavaScript-style not)
+      if (trimmed.startsWith('!') && !trimmed.startsWith('!=') && !trimmed.startsWith('!==')) {
+        return !this.evaluateSimpleCondition(trimmed.substring(1).trim());
+      }
+
+      // Handle comparison operators (order matters - longer operators first)
       const comparisonPatterns = [
-        { op: '==', fn: (a: any, b: any) => a === b },
+        { op: '===', fn: (a: any, b: any) => a === b },
+        { op: '!==', fn: (a: any, b: any) => a !== b },
+        { op: '==', fn: (a: any, b: any) => a == b },
         { op: '~=', fn: (a: any, b: any) => a !== b },
         { op: '!=', fn: (a: any, b: any) => a !== b },
         { op: '<=', fn: (a: any, b: any) => Number(a) <= Number(b) },

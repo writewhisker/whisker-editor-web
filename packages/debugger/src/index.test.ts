@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story } from '@writewhisker/story-models';
 import {
   StoryDebugger,
   createDebugger,
@@ -16,64 +16,97 @@ import {
   type Breakpoint,
 } from './index';
 
-const mockStory: Story = {
-  id: 'test-story',
-  name: 'Test Story',
-  ifid: 'test-ifid',
-  startPassage: 'Start',
-  tagColors: {},
-  zoom: 1,
-  passages: [
-    {
-      id: 'passage-1',
-      title: 'Start',
+// Helper to create a test story
+function createMockStory(): Story {
+  const story = new Story({
+    metadata: {
+      title: 'Test Story',
+      author: 'Test',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+    },
+    startPassage: 'passage-1', // Use ID, not title
+    passages: {
+      'passage-1': {
+        id: 'passage-1',
+        title: 'Start',
+        tags: [],
+        content: 'Start of the story.\n\n[[Go to Middle|Middle]]\n[[Go to End|End]]',
+        position: { x: 0, y: 0 },
+        size: { width: 100, height: 100 },
+      },
+      'passage-2': {
+        id: 'passage-2',
+        title: 'Middle',
+        tags: [],
+        content: 'Middle of the story.\n\n[[Continue|End]]',
+        position: { x: 200, y: 0 },
+        size: { width: 100, height: 100 },
+      },
+      'passage-3': {
+        id: 'passage-3',
+        title: 'End',
+        tags: [],
+        content: 'The end.',
+        position: { x: 400, y: 0 },
+        size: { width: 100, height: 100 },
+      },
+      'passage-4': {
+        id: 'passage-4',
+        title: 'Orphan',
+        tags: [],
+        content: 'This passage has no links to it.',
+        position: { x: 0, y: 200 },
+        size: { width: 100, height: 100 },
+      },
+    },
+    variables: {},
+  });
+  return story;
+}
+
+const mockStory = createMockStory();
+
+// Helper to create a story with custom passages
+function createStoryWithPassages(
+  passages: Array<{ id: string; title: string; content: string }>,
+  startPassage = 'Start'
+): Story {
+  const passagesRecord: Record<string, any> = {};
+  passages.forEach(p => {
+    passagesRecord[p.id] = {
+      id: p.id,
+      title: p.title,
       tags: [],
-      content: 'Start of the story.\n\n[[Go to Middle|Middle]]\n[[Go to End|End]]',
+      content: p.content,
       position: { x: 0, y: 0 },
       size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-2',
-      title: 'Middle',
-      tags: [],
-      content: 'Middle of the story.\n\n[[Continue|End]]',
-      position: { x: 200, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-3',
-      title: 'End',
-      tags: [],
-      content: 'The end.',
-      position: { x: 400, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-4',
-      title: 'Orphan',
-      tags: [],
-      content: 'This passage has no links to it.',
-      position: { x: 0, y: 200 },
-      size: { width: 100, height: 100 },
-    },
-  ],
-};
+    };
+  });
+  return new Story({
+    metadata: { title: 'Test', author: '', version: '1.0.0', created: '', modified: '' },
+    startPassage,
+    passages: passagesRecord,
+    variables: {},
+  });
+}
 
 describe('StoryDebugger', () => {
-  let debugger: StoryDebugger;
+  let dbg: StoryDebugger;
 
   beforeEach(() => {
-    debugger = new StoryDebugger(mockStory);
+    dbg = new StoryDebugger(mockStory);
     vi.clearAllMocks();
   });
 
   describe('constructor', () => {
     it('should initialize with story', () => {
-      expect(debugger).toBeInstanceOf(StoryDebugger);
+      expect(dbg).toBeInstanceOf(StoryDebugger);
     });
 
     it('should set initial state', () => {
-      const state = debugger.getState();
+      const state = dbg.getState();
 
       expect(state.currentPassage).toBe('Start');
       expect(state.visitedPassages).toEqual([]);
@@ -82,22 +115,29 @@ describe('StoryDebugger', () => {
       expect(state.breakpoints).toEqual([]);
     });
 
-    it('should handle story without start passage', () => {
-      const storyNoStart = { ...mockStory, startPassage: '' };
-      const debuggerNoStart = new StoryDebugger(storyNoStart);
+    it('should handle story with default passage', () => {
+      // Story always creates a default "Start" passage when none provided
+      const storyDefault = new Story({
+        metadata: { title: 'Default Story', author: '', version: '1.0.0', created: '', modified: '' },
+        startPassage: '',
+        passages: {},
+        variables: {},
+      });
+      const debuggerDefault = new StoryDebugger(storyDefault);
 
-      expect(debuggerNoStart.getState().currentPassage).toBeNull();
+      // Story creates a default start passage, so currentPassage is set to its ID
+      expect(debuggerDefault.getState().currentPassage).not.toBeNull();
     });
   });
 
   describe('navigateTo', () => {
     it('should navigate to passage', () => {
       const listener = vi.fn();
-      debugger.on('navigate', listener);
+      dbg.on('navigate', listener);
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.currentPassage).toBe('Middle');
       expect(state.visitedPassages).toContain('Middle');
       expect(state.callStack).toContain('Middle');
@@ -105,69 +145,69 @@ describe('StoryDebugger', () => {
     });
 
     it('should log error for non-existent passage', () => {
-      const logSpy = vi.spyOn(debugger, 'log');
+      const logSpy = vi.spyOn(dbg, 'log');
 
-      debugger.navigateTo('NonExistent');
+      dbg.navigateTo('NonExistent');
 
       expect(logSpy).toHaveBeenCalledWith('error', 'Passage not found: NonExistent');
     });
 
     it('should hit breakpoint when navigating to passage', () => {
-      debugger.addBreakpoint('passage-2');
+      dbg.addBreakpoint('passage-2');
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      expect(debugger.isPaused()).toBe(true);
+      expect(dbg.isPaused()).toBe(true);
     });
 
     it('should not hit disabled breakpoint', () => {
-      const breakpoint = debugger.addBreakpoint('passage-2');
-      debugger.toggleBreakpoint(breakpoint.id);
+      const breakpoint = dbg.addBreakpoint('passage-2');
+      dbg.toggleBreakpoint(breakpoint.id);
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      expect(debugger.isPaused()).toBe(false);
+      expect(dbg.isPaused()).toBe(false);
     });
 
     it('should evaluate breakpoint condition', () => {
-      debugger.setVariable('test', 42);
-      debugger.addBreakpoint('passage-2', 'test === 42');
+      dbg.setVariable('test', 42);
+      dbg.addBreakpoint('passage-2', 'test === 42');
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      expect(debugger.isPaused()).toBe(true);
+      expect(dbg.isPaused()).toBe(true);
     });
 
     it('should not hit breakpoint when condition is false', () => {
-      debugger.setVariable('test', 10);
-      debugger.addBreakpoint('passage-2', 'test === 42');
+      dbg.setVariable('test', 10);
+      dbg.addBreakpoint('passage-2', 'test === 42');
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      expect(debugger.isPaused()).toBe(false);
+      expect(dbg.isPaused()).toBe(false);
     });
 
     it('should pause in step mode', () => {
-      debugger.step();
+      dbg.step();
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
-      expect(debugger.isPaused()).toBe(true);
+      expect(dbg.isPaused()).toBe(true);
     });
 
     it('should track visited passages', () => {
-      debugger.navigateTo('Middle');
-      debugger.navigateTo('End');
+      dbg.navigateTo('Middle');
+      dbg.navigateTo('End');
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.visitedPassages).toEqual(['Middle', 'End']);
     });
 
     it('should update call stack', () => {
-      debugger.navigateTo('Middle');
-      debugger.navigateTo('End');
+      dbg.navigateTo('Middle');
+      dbg.navigateTo('End');
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.callStack).toEqual(['Middle', 'End']);
     });
   });
@@ -175,36 +215,36 @@ describe('StoryDebugger', () => {
   describe('variables', () => {
     it('should set variable', () => {
       const listener = vi.fn();
-      debugger.on('variable', listener);
+      dbg.on('variable', listener);
 
-      debugger.setVariable('health', 100);
+      dbg.setVariable('health', 100);
 
-      expect(debugger.getVariable('health')).toBe(100);
+      expect(dbg.getVariable('health')).toBe(100);
       expect(listener).toHaveBeenCalledWith({ name: 'health', value: 100 });
     });
 
     it('should get variable', () => {
-      debugger.setVariable('score', 42);
+      dbg.setVariable('score', 42);
 
-      expect(debugger.getVariable('score')).toBe(42);
+      expect(dbg.getVariable('score')).toBe(42);
     });
 
     it('should return undefined for non-existent variable', () => {
-      expect(debugger.getVariable('nonExistent')).toBeUndefined();
+      expect(dbg.getVariable('nonExistent')).toBeUndefined();
     });
 
     it('should support complex variable values', () => {
       const complexValue = { nested: { array: [1, 2, 3] } };
 
-      debugger.setVariable('complex', complexValue);
+      dbg.setVariable('complex', complexValue);
 
-      expect(debugger.getVariable('complex')).toEqual(complexValue);
+      expect(dbg.getVariable('complex')).toEqual(complexValue);
     });
 
     it('should log variable changes', () => {
-      const logSpy = vi.spyOn(debugger, 'log');
+      const logSpy = vi.spyOn(dbg, 'log');
 
-      debugger.setVariable('test', 'value');
+      dbg.setVariable('test', 'value');
 
       expect(logSpy).toHaveBeenCalledWith(
         'debug',
@@ -216,9 +256,9 @@ describe('StoryDebugger', () => {
   describe('breakpoints', () => {
     it('should add breakpoint', () => {
       const listener = vi.fn();
-      debugger.on('breakpoint-add', listener);
+      dbg.on('breakpoint-add', listener);
 
-      const breakpoint = debugger.addBreakpoint('passage-2');
+      const breakpoint = dbg.addBreakpoint('passage-2');
 
       expect(breakpoint).toHaveProperty('id');
       expect(breakpoint.passageId).toBe('passage-2');
@@ -227,31 +267,31 @@ describe('StoryDebugger', () => {
     });
 
     it('should add breakpoint with condition', () => {
-      const breakpoint = debugger.addBreakpoint('passage-2', 'x > 10');
+      const breakpoint = dbg.addBreakpoint('passage-2', 'x > 10');
 
       expect(breakpoint.condition).toBe('x > 10');
     });
 
     it('should remove breakpoint', () => {
       const listener = vi.fn();
-      debugger.on('breakpoint-remove', listener);
+      dbg.on('breakpoint-remove', listener);
 
-      const breakpoint = debugger.addBreakpoint('passage-2');
-      debugger.removeBreakpoint(breakpoint.id);
+      const breakpoint = dbg.addBreakpoint('passage-2');
+      dbg.removeBreakpoint(breakpoint.id);
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.breakpoints).not.toContain(breakpoint);
       expect(listener).toHaveBeenCalledWith({ id: breakpoint.id });
     });
 
     it('should toggle breakpoint', () => {
       const listener = vi.fn();
-      debugger.on('breakpoint-toggle', listener);
+      dbg.on('breakpoint-toggle', listener);
 
-      const breakpoint = debugger.addBreakpoint('passage-2');
-      debugger.toggleBreakpoint(breakpoint.id);
+      const breakpoint = dbg.addBreakpoint('passage-2');
+      dbg.toggleBreakpoint(breakpoint.id);
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       const updated = state.breakpoints.find(bp => bp.id === breakpoint.id);
 
       expect(updated?.enabled).toBe(false);
@@ -259,24 +299,24 @@ describe('StoryDebugger', () => {
     });
 
     it('should toggle breakpoint back on', () => {
-      const breakpoint = debugger.addBreakpoint('passage-2');
+      const breakpoint = dbg.addBreakpoint('passage-2');
 
-      debugger.toggleBreakpoint(breakpoint.id);
-      debugger.toggleBreakpoint(breakpoint.id);
+      dbg.toggleBreakpoint(breakpoint.id);
+      dbg.toggleBreakpoint(breakpoint.id);
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       const updated = state.breakpoints.find(bp => bp.id === breakpoint.id);
 
       expect(updated?.enabled).toBe(true);
     });
 
     it('should handle toggling non-existent breakpoint', () => {
-      expect(() => debugger.toggleBreakpoint('non-existent')).not.toThrow();
+      expect(() => dbg.toggleBreakpoint('non-existent')).not.toThrow();
     });
 
     it('should generate unique breakpoint IDs', () => {
-      const bp1 = debugger.addBreakpoint('passage-1');
-      const bp2 = debugger.addBreakpoint('passage-2');
+      const bp1 = dbg.addBreakpoint('passage-1');
+      const bp2 = dbg.addBreakpoint('passage-2');
 
       expect(bp1.id).not.toBe(bp2.id);
     });
@@ -285,54 +325,54 @@ describe('StoryDebugger', () => {
   describe('execution control', () => {
     it('should pause execution', () => {
       const listener = vi.fn();
-      debugger.on('pause', listener);
+      dbg.on('pause', listener);
 
-      debugger.pause();
+      dbg.pause();
 
-      expect(debugger.isPaused()).toBe(true);
-      expect(listener).toHaveBeenCalledWith(debugger.getState());
+      expect(dbg.isPaused()).toBe(true);
+      expect(listener).toHaveBeenCalledWith(dbg.getState());
     });
 
     it('should resume execution', () => {
       const listener = vi.fn();
-      debugger.on('resume', listener);
+      dbg.on('resume', listener);
 
-      debugger.pause();
-      debugger.resume();
+      dbg.pause();
+      dbg.resume();
 
-      expect(debugger.isPaused()).toBe(false);
-      expect(listener).toHaveBeenCalledWith(debugger.getState());
+      expect(dbg.isPaused()).toBe(false);
+      expect(listener).toHaveBeenCalledWith(dbg.getState());
     });
 
     it('should step to next passage', () => {
-      debugger.step();
+      dbg.step();
 
-      expect(debugger.isPaused()).toBe(false);
+      expect(dbg.isPaused()).toBe(false);
       // Step mode is internal state
     });
 
     it('should resume disables step mode', () => {
-      debugger.step();
-      debugger.resume();
+      dbg.step();
+      dbg.resume();
 
       // Subsequent navigation should not pause
-      debugger.navigateTo('Middle');
-      expect(debugger.isPaused()).toBe(false);
+      dbg.navigateTo('Middle');
+      expect(dbg.isPaused()).toBe(false);
     });
   });
 
   describe('reset', () => {
     it('should reset debug session', () => {
       const listener = vi.fn();
-      debugger.on('reset', listener);
+      dbg.on('reset', listener);
 
-      debugger.navigateTo('Middle');
-      debugger.setVariable('test', 42);
-      debugger.addBreakpoint('passage-2');
+      dbg.navigateTo('Middle');
+      dbg.setVariable('test', 42);
+      dbg.addBreakpoint('passage-2');
 
-      debugger.reset();
+      dbg.reset();
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.currentPassage).toBe('Start');
       expect(state.visitedPassages).toEqual([]);
       expect(state.variables).toEqual({});
@@ -341,35 +381,35 @@ describe('StoryDebugger', () => {
     });
 
     it('should preserve breakpoints on reset', () => {
-      const breakpoint = debugger.addBreakpoint('passage-2');
+      const breakpoint = dbg.addBreakpoint('passage-2');
 
-      debugger.reset();
+      dbg.reset();
 
-      const state = debugger.getState();
+      const state = dbg.getState();
       expect(state.breakpoints).toContainEqual(breakpoint);
     });
 
     it('should clear paused state', () => {
-      debugger.pause();
-      debugger.reset();
+      dbg.pause();
+      dbg.reset();
 
-      expect(debugger.isPaused()).toBe(false);
+      expect(dbg.isPaused()).toBe(false);
     });
 
     it('should clear step mode', () => {
-      debugger.step();
-      debugger.reset();
+      dbg.step();
+      dbg.reset();
 
       // Should not be in step mode after reset
-      expect(debugger.isPaused()).toBe(false);
+      expect(dbg.isPaused()).toBe(false);
     });
 
     it('should clear logs on reset', () => {
-      debugger.log('info', 'Test message');
-      debugger.reset();
+      dbg.log('info', 'Test message');
+      dbg.reset();
 
       // Logs cleared, but reset itself adds a log
-      const logs = debugger.getLogs();
+      const logs = dbg.getLogs();
       expect(logs.length).toBe(1);
       expect(logs[0].message).toBe('Debug session reset');
     });
@@ -378,11 +418,11 @@ describe('StoryDebugger', () => {
   describe('logging', () => {
     it('should log messages', () => {
       const listener = vi.fn();
-      debugger.on('log', listener);
+      dbg.on('log', listener);
 
-      debugger.log('info', 'Test message');
+      dbg.log('info', 'Test message');
 
-      const logs = debugger.getLogs();
+      const logs = dbg.getLogs();
       expect(logs.length).toBeGreaterThan(0);
       expect(logs[logs.length - 1]).toMatchObject({
         level: 'info',
@@ -393,18 +433,18 @@ describe('StoryDebugger', () => {
     });
 
     it('should log with data', () => {
-      debugger.log('debug', 'Debug info', { foo: 'bar' });
+      dbg.log('debug', 'Debug info', { foo: 'bar' });
 
-      const logs = debugger.getLogs();
+      const logs = dbg.getLogs();
       const lastLog = logs[logs.length - 1];
 
       expect(lastLog.data).toEqual({ foo: 'bar' });
     });
 
     it('should add stack trace for errors', () => {
-      debugger.log('error', 'Error message');
+      dbg.log('error', 'Error message');
 
-      const logs = debugger.getLogs();
+      const logs = dbg.getLogs();
       const lastLog = logs[logs.length - 1];
 
       expect(lastLog.stackTrace).toBeDefined();
@@ -413,7 +453,7 @@ describe('StoryDebugger', () => {
     it('should log to console', () => {
       const consoleSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
 
-      debugger.log('info', 'Console message');
+      dbg.log('info', 'Console message');
 
       expect(consoleSpy).toHaveBeenCalledWith('Console message', undefined);
 
@@ -424,21 +464,21 @@ describe('StoryDebugger', () => {
       const levels: LogLevel[] = ['debug', 'info', 'warn', 'error'];
 
       for (const level of levels) {
-        debugger.log(level, `${level} message`);
+        dbg.log(level, `${level} message`);
       }
 
-      const logs = debugger.getLogs();
+      const logs = dbg.getLogs();
       expect(logs.length).toBeGreaterThanOrEqual(4);
     });
 
     it('should clear logs', () => {
       const listener = vi.fn();
-      debugger.on('logs-clear', listener);
+      dbg.on('logs-clear', listener);
 
-      debugger.log('info', 'Test');
-      debugger.clearLogs();
+      dbg.log('info', 'Test');
+      dbg.clearLogs();
 
-      expect(debugger.getLogs()).toEqual([]);
+      expect(dbg.getLogs()).toEqual([]);
       expect(listener).toHaveBeenCalled();
     });
   });
@@ -447,8 +487,8 @@ describe('StoryDebugger', () => {
     it('should register event listener', () => {
       const listener = vi.fn();
 
-      debugger.on('navigate', listener);
-      debugger.navigateTo('Middle');
+      dbg.on('navigate', listener);
+      dbg.navigateTo('Middle');
 
       expect(listener).toHaveBeenCalled();
     });
@@ -456,10 +496,10 @@ describe('StoryDebugger', () => {
     it('should remove event listener', () => {
       const listener = vi.fn();
 
-      debugger.on('navigate', listener);
-      debugger.off('navigate', listener);
+      dbg.on('navigate', listener);
+      dbg.off('navigate', listener);
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
       expect(listener).not.toHaveBeenCalled();
     });
@@ -468,10 +508,10 @@ describe('StoryDebugger', () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
 
-      debugger.on('navigate', listener1);
-      debugger.on('navigate', listener2);
+      dbg.on('navigate', listener1);
+      dbg.on('navigate', listener2);
 
-      debugger.navigateTo('Middle');
+      dbg.navigateTo('Middle');
 
       expect(listener1).toHaveBeenCalled();
       expect(listener2).toHaveBeenCalled();
@@ -480,7 +520,7 @@ describe('StoryDebugger', () => {
     it('should handle removing non-existent listener', () => {
       const listener = vi.fn();
 
-      expect(() => debugger.off('navigate', listener)).not.toThrow();
+      expect(() => dbg.off('navigate', listener)).not.toThrow();
     });
 
     it('should emit all event types', () => {
@@ -498,18 +538,18 @@ describe('StoryDebugger', () => {
       };
 
       Object.entries(listeners).forEach(([event, listener]) => {
-        debugger.on(event, listener);
+        dbg.on(event, listener);
       });
 
-      debugger.navigateTo('Middle');
-      debugger.setVariable('test', 1);
-      const bp = debugger.addBreakpoint('passage-1');
-      debugger.toggleBreakpoint(bp.id);
-      debugger.removeBreakpoint(bp.id);
-      debugger.pause();
-      debugger.resume();
-      debugger.clearLogs();
-      debugger.reset();
+      dbg.navigateTo('Middle');
+      dbg.setVariable('test', 1);
+      const bp = dbg.addBreakpoint('passage-1');
+      dbg.toggleBreakpoint(bp.id);
+      dbg.removeBreakpoint(bp.id);
+      dbg.pause();
+      dbg.resume();
+      dbg.clearLogs();
+      dbg.reset();
 
       Object.values(listeners).forEach(listener => {
         expect(listener).toHaveBeenCalled();
@@ -519,20 +559,20 @@ describe('StoryDebugger', () => {
 
   describe('getState', () => {
     it('should return current state', () => {
-      debugger.navigateTo('Middle');
-      debugger.setVariable('health', 100);
+      dbg.navigateTo('Middle');
+      dbg.setVariable('health', 100);
 
-      const state = debugger.getState();
+      const state = dbg.getState();
 
       expect(state.currentPassage).toBe('Middle');
       expect(state.variables).toEqual({ health: 100 });
     });
 
     it('should return copy of state', () => {
-      const state1 = debugger.getState();
+      const state1 = dbg.getState();
       state1.variables.test = 'modified';
 
-      const state2 = debugger.getState();
+      const state2 = dbg.getState();
 
       expect(state2.variables.test).toBeUndefined();
     });
@@ -586,79 +626,37 @@ describe('inspectStory', () => {
   });
 
   it('should find cycles', () => {
-    const storyWithCycle: Story = {
-      ...mockStory,
-      passages: [
-        {
-          id: 'p1',
-          title: 'A',
-          tags: [],
-          content: '[[B]]',
-          position: { x: 0, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-        {
-          id: 'p2',
-          title: 'B',
-          tags: [],
-          content: '[[C]]',
-          position: { x: 200, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-        {
-          id: 'p3',
-          title: 'C',
-          tags: [],
-          content: '[[A]]',
-          position: { x: 400, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-      ],
-    };
+    const storyWithCycle = createStoryWithPassages([
+      { id: 'p1', title: 'A', content: '[[B]]' },
+      { id: 'p2', title: 'B', content: '[[C]]' },
+      { id: 'p3', title: 'C', content: '[[A]]' },
+    ], 'A');
 
     const inspection = inspectStory(storyWithCycle);
 
     expect(inspection.cycles.length).toBeGreaterThan(0);
   });
 
-  it('should handle empty story', () => {
-    const emptyStory: Story = {
-      ...mockStory,
-      passages: [],
-      startPassage: '',
-    };
+  it('should handle minimal story', () => {
+    // Story always creates a default "Start" passage if none provided
+    const minimalStory = createStoryWithPassages([], '');
 
-    const inspection = inspectStory(emptyStory);
+    const inspection = inspectStory(minimalStory);
 
-    expect(inspection.passages).toBe(0);
+    // Story creates a default "Start" passage
+    expect(inspection.passages).toBe(1);
     expect(inspection.links).toBe(0);
     expect(inspection.orphans).toEqual([]);
-    expect(inspection.deadEnds).toEqual([]);
+    // Start passage is a dead end (no outgoing links)
+    expect(inspection.deadEnds).toContain('Start');
     expect(inspection.unreachable).toEqual([]);
   });
 
   it('should handle links with display text', () => {
-    const story: Story = {
-      ...mockStory,
-      passages: [
-        {
-          id: 'p1',
-          title: 'Start',
-          tags: [],
-          content: '[[Click here|Next]]',
-          position: { x: 0, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-        {
-          id: 'p2',
-          title: 'Next',
-          tags: [],
-          content: 'Next passage',
-          position: { x: 200, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-      ],
-    };
+    const story = createStoryWithPassages([
+      { id: 'p1', title: 'Start', content: '[[Click here|Next]]' },
+      { id: 'p2', title: 'Next', content: 'Next passage' },
+    ]);
 
     const inspection = inspectStory(story);
 
@@ -819,73 +817,67 @@ describe('formatDebugOutput', () => {
 
 describe('Edge Cases', () => {
   it('should handle complex breakpoint conditions', () => {
-    const debugger = new StoryDebugger(mockStory);
+    const storyDbg = new StoryDebugger(mockStory);
 
-    debugger.setVariable('score', 50);
-    debugger.addBreakpoint('passage-2', 'score === 50');
+    storyDbg.setVariable('score', 50);
+    storyDbg.addBreakpoint('passage-2', 'score === 50');
 
-    debugger.navigateTo('Middle');
+    storyDbg.navigateTo('Middle');
 
-    expect(debugger.isPaused()).toBe(true);
+    expect(storyDbg.isPaused()).toBe(true);
   });
 
   it('should handle invalid breakpoint conditions', () => {
-    const debugger = new StoryDebugger(mockStory);
+    const storyDbg = new StoryDebugger(mockStory);
 
-    debugger.addBreakpoint('passage-2', 'invalid condition syntax');
+    storyDbg.addBreakpoint('passage-2', 'invalid condition syntax');
 
-    debugger.navigateTo('Middle');
+    storyDbg.navigateTo('Middle');
 
     // Should not crash, condition evaluates to false
-    expect(debugger.isPaused()).toBe(false);
+    expect(storyDbg.isPaused()).toBe(false);
   });
 
   it('should handle rapid navigation', () => {
-    const debugger = new StoryDebugger(mockStory);
+    const storyDbg = new StoryDebugger(mockStory);
 
     for (let i = 0; i < 100; i++) {
-      debugger.navigateTo('Middle');
-      debugger.navigateTo('End');
+      storyDbg.navigateTo('Middle');
+      storyDbg.navigateTo('End');
     }
 
-    const state = debugger.getState();
+    const state = storyDbg.getState();
     expect(state.visitedPassages.length).toBe(200);
   });
 
   it('should handle many breakpoints', () => {
-    const debugger = new StoryDebugger(mockStory);
+    const storyDbg = new StoryDebugger(mockStory);
 
     for (let i = 0; i < 100; i++) {
-      debugger.addBreakpoint('passage-1');
+      storyDbg.addBreakpoint('passage-1');
     }
 
-    const state = debugger.getState();
+    const state = storyDbg.getState();
     expect(state.breakpoints.length).toBe(100);
   });
 
   it('should handle large variable values', () => {
-    const debugger = new StoryDebugger(mockStory);
+    const storyDbg = new StoryDebugger(mockStory);
 
     const largeArray = new Array(10000).fill(0);
-    debugger.setVariable('large', largeArray);
+    storyDbg.setVariable('large', largeArray);
 
-    expect(debugger.getVariable('large')).toBe(largeArray);
+    expect(storyDbg.getVariable('large')).toBe(largeArray);
   });
 
   it('should handle story with complex link patterns', () => {
-    const story: Story = {
-      ...mockStory,
-      passages: [
-        {
-          id: 'p1',
-          title: 'Test',
-          tags: [],
-          content: '[[Link 1|Target]] text [[Link 2|Target]] more [[Link 3|Other]]',
-          position: { x: 0, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-      ],
-    };
+    const story = createStoryWithPassages([
+      {
+        id: 'p1',
+        title: 'Test',
+        content: '[[Link 1|Target]] text [[Link 2|Target]] more [[Link 3|Other]]',
+      },
+    ], 'Test');
 
     const inspection = inspectStory(story);
 
@@ -893,19 +885,13 @@ describe('Edge Cases', () => {
   });
 
   it('should handle self-referencing passages', () => {
-    const story: Story = {
-      ...mockStory,
-      passages: [
-        {
-          id: 'p1',
-          title: 'Self',
-          tags: [],
-          content: '[[Self]]',
-          position: { x: 0, y: 0 },
-          size: { width: 100, height: 100 },
-        },
-      ],
-    };
+    const story = createStoryWithPassages([
+      {
+        id: 'p1',
+        title: 'Self',
+        content: '[[Self]]',
+      },
+    ], 'Self');
 
     const inspection = inspectStory(story);
 

@@ -56,8 +56,10 @@ export class StoryDebugger {
 
   constructor(story: Story) {
     this.story = story;
+    // Get start passage title from ID
+    const startPassage = story.findPassage(p => p.id === story.startPassage);
     this.state = {
-      currentPassage: story.startPassage || null,
+      currentPassage: startPassage?.title || null,
       visitedPassages: [],
       variables: {},
       callStack: [],
@@ -181,15 +183,19 @@ export class StoryDebugger {
    */
   public step(): void {
     this.stepMode = true;
-    this.resume();
+    this.paused = false;
+    this.log('info', 'Execution resumed');
+    this.emit('resume', this.state);
   }
 
   /**
    * Reset debug session
    */
   public reset(): void {
+    // Get start passage title from ID
+    const startPassage = this.story.findPassage(p => p.id === this.story.startPassage);
     this.state = {
-      currentPassage: this.story.startPassage || null,
+      currentPassage: startPassage?.title || null,
       visitedPassages: [],
       variables: {},
       callStack: [],
@@ -208,7 +214,13 @@ export class StoryDebugger {
    * Get current state
    */
   public getState(): DebugState {
-    return { ...this.state };
+    return {
+      ...this.state,
+      visitedPassages: [...this.state.visitedPassages],
+      variables: { ...this.state.variables },
+      callStack: [...this.state.callStack],
+      breakpoints: this.state.breakpoints.map(bp => ({ ...bp })),
+    };
   }
 
   /**
@@ -342,7 +354,8 @@ export function inspectStory(story: Story): {
   }
 
   // Find orphans (no incoming links, except start passage)
-  const orphans = story.filterPassages(p => p.title !== story.startPassage && !linkTargets.has(p.title))
+  // startPassage is an ID, so we need to compare by ID
+  const orphans = story.filterPassages(p => p.id !== story.startPassage && !linkTargets.has(p.title))
     .map(p => p.title);
 
   // Find dead ends (no outgoing links)
@@ -354,7 +367,10 @@ export function inspectStory(story: Story): {
 
   // Find unreachable passages
   const reachable = new Set<string>();
-  const queue = [story.startPassage || ''];
+  // Get start passage title from ID
+  const startPassage = story.findPassage(p => p.id === story.startPassage);
+  const startTitle = startPassage?.title || '';
+  const queue = [startTitle];
 
   while (queue.length > 0) {
     const current = queue.shift()!;
@@ -457,6 +473,13 @@ export function traceExecution(
   const errors: string[] = [];
 
   let currentPassage = startPassage;
+
+  // Check if start passage exists
+  const startPass = story.findPassage(p => p.title === currentPassage);
+  if (!startPass) {
+    errors.push(`Passage not found: ${currentPassage}`);
+    return { path, variables, errors };
+  }
 
   for (const choice of choices) {
     const passage = story.findPassage(p => p.title === currentPassage);

@@ -75,3 +75,4 @@ playwright-report
 
 # pnpm
 .pnpm-debug.log
+packages/*/vite.config.ts.timestamp-*

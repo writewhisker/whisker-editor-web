@@ -5,9 +5,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react';
-import { StoryPlayer } from './StoryPlayer.js';
-import { PassageEditor } from './PassageEditor.js';
-import { useStory } from './hooks.js';
+import { StoryPlayer } from './StoryPlayer';
+import { PassageEditor } from './PassageEditor';
+import { useStory } from './hooks';
 import type { Story, Passage } from '@writewhisker/story-models';
 
 describe('StoryPlayer', () => {

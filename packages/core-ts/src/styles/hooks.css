@@ -1,0 +1,85 @@
+/* packages/core-ts/src/styles/hooks.css */
+/* CSS animations for hook operations */
+
+.whisker-hook {
+  transition: opacity 0.3s ease-in-out;
+  display: inline;
+}
+
+/* Replace animation */
+@keyframes hook-replace {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.whisker-hook--replacing {
+  animation: hook-replace 0.4s ease-in-out;
+}
+
+/* Append/Prepend animation */
+@keyframes hook-append {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.whisker-hook--appending {
+  animation: hook-append 0.3s ease-out;
+}
+
+/* Show animation */
+@keyframes hook-show {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.whisker-hook--showing {
+  animation: hook-show 0.3s ease-in;
+}
+
+/* Hide animation */
+@keyframes hook-hide {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.whisker-hook--hiding {
+  animation: hook-hide 0.3s ease-out;
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .whisker-hook {
+    transition: none;
+  }
+  
+  .whisker-hook--replacing,
+  .whisker-hook--appending,
+  .whisker-hook--showing,
+  .whisker-hook--hiding {
+    animation: none;
+  }
+}

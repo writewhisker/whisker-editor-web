@@ -127,6 +127,37 @@ export {
   isExpressionRef,
 } from './ParameterizedPassages';
 
+// Module System (WLS Chapter 12)
+export {
+  ModuleResolver,
+  ModuleError,
+  MODULE_ERROR_CODES,
+  createModuleResolver,
+  type IncludeDeclaration,
+  type ResolvedInclude,
+  type ModuleResolverOptions,
+  type ModuleResolverState,
+} from './ModuleResolver';
+
+export {
+  UserFunctionRegistry,
+  createUserFunctionRegistry,
+  type UserFunction,
+  type FunctionParameter,
+  type FunctionCallContext,
+  type UserFunctionRegistryOptions,
+  type UserFunctionRegistryState,
+} from './UserFunctionRegistry';
+
+export {
+  NamespaceResolver,
+  createNamespaceResolver,
+  type NamespaceContext,
+  type ResolvedReference,
+  type NamespaceResolverOptions,
+  type NamespaceResolverState,
+} from './NamespaceResolver';
+
 // Runtime Container
 export {
   Container,

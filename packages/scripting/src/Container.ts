@@ -14,6 +14,8 @@ import type {
   Thread,
   Timer,
   ListRegistryState,
+  ArrayRegistryState,
+  MapRegistryState,
   AudioState,
   ThreadStepResult,
   FiredTimer,
@@ -22,6 +24,8 @@ import { ThreadScheduler, createThreadScheduler, type ThreadExecutor } from './T
 import { TimedContent, createTimedContent } from './TimedContent';
 import { ExternalFunctions, createExternalFunctions } from './ExternalFunctions';
 import { ListRegistry, createListRegistry } from './ListRegistry';
+import { ArrayValue, ArrayRegistry } from './ArrayValue';
+import { MapValue, MapRegistry } from './MapValue';
 import { TextEffects, createTextEffects, type EffectCallbacks } from './TextEffects';
 import { AudioEffects, createAudioEffects, type AudioBackend } from './AudioEffects';
 import {
@@ -55,6 +59,8 @@ export class Container {
   private _timers: TimedContent | null = null;
   private _externals: ExternalFunctions | null = null;
   private _lists: ListRegistry | null = null;
+  private _arrays: ArrayRegistry | null = null;
+  private _maps: MapRegistry | null = null;
   private _textEffects: TextEffects | null = null;
   private _audioEffects: AudioEffects | null = null;
   private _passages: ParameterizedPassages | null = null;
@@ -68,6 +74,8 @@ export class Container {
       enableTimers: options.enableTimers ?? true,
       enableExternalFunctions: options.enableExternalFunctions ?? true,
       enableLists: options.enableLists ?? true,
+      enableArrays: options.enableArrays ?? true,
+      enableMaps: options.enableMaps ?? true,
       enableTextEffects: options.enableTextEffects ?? true,
       enableAudioEffects: options.enableAudioEffects ?? true,
       enableParameterizedPassages: options.enableParameterizedPassages ?? true,
@@ -94,6 +102,14 @@ export class Container {
 
     if (this.options.enableLists) {
       this._lists = createListRegistry();
+    }
+
+    if (this.options.enableArrays) {
+      this._arrays = new ArrayRegistry();
+    }
+
+    if (this.options.enableMaps) {
+      this._maps = new MapRegistry();
     }
 
     if (this.options.enableTextEffects) {
@@ -160,6 +176,28 @@ export class Container {
   }
 
   /**
+   * Get the array registry
+   * @throws Error if arrays are disabled
+   */
+  get arrays(): ArrayRegistry {
+    if (!this._arrays) {
+      throw new Error('Container: Arrays are disabled');
+    }
+    return this._arrays;
+  }
+
+  /**
+   * Get the map registry
+   * @throws Error if maps are disabled
+   */
+  get maps(): MapRegistry {
+    if (!this._maps) {
+      throw new Error('Container: Maps are disabled');
+    }
+    return this._maps;
+  }
+
+  /**
    * Get the text effects manager
    * @throws Error if text effects are disabled
    */
@@ -212,6 +250,14 @@ export class Container {
     return this._lists;
   }
 
+  get arraysOrNull(): ArrayRegistry | null {
+    return this._arrays;
+  }
+
+  get mapsOrNull(): MapRegistry | null {
+    return this._maps;
+  }
+
   get textEffectsOrNull(): TextEffects | null {
     return this._textEffects;
   }
@@ -242,6 +288,14 @@ export class Container {
 
   hasLists(): boolean {
     return this._lists !== null;
+  }
+
+  hasArrays(): boolean {
+    return this._arrays !== null;
+  }
+
+  hasMaps(): boolean {
+    return this._maps !== null;
   }
 
   hasTextEffects(): boolean {
@@ -332,6 +386,14 @@ export class Container {
       this._lists.resetAll();
     }
 
+    if (this._arrays) {
+      this._arrays.clear();
+    }
+
+    if (this._maps) {
+      this._maps.clear();
+    }
+
     if (this._textEffects) {
       this._textEffects.cancelAll();
     }
@@ -385,6 +447,14 @@ export class Container {
       state.lists = this._lists.getState();
     }
 
+    if (this._arrays) {
+      state.arrays = this._arrays.getState();
+    }
+
+    if (this._maps) {
+      state.maps = this._maps.getState();
+    }
+
     // Audio and text effects are typically not serialized
     // as they represent transient visual/audio state
 
@@ -405,6 +475,14 @@ export class Container {
 
     if (state.lists && this._lists) {
       this._lists.restoreState(state.lists);
+    }
+
+    if (state.arrays && this._arrays) {
+      this._arrays.restoreState(state.arrays);
+    }
+
+    if (state.maps && this._maps) {
+      this._maps.restoreState(state.maps);
     }
   }
 
@@ -488,6 +566,32 @@ export class Container {
   }
 
   /**
+   * Define an array
+   */
+  defineArray(
+    name: string,
+    initialElements: unknown[] = []
+  ): ArrayValue | undefined {
+    if (this._arrays) {
+      return this._arrays.define(name, initialElements);
+    }
+    return undefined;
+  }
+
+  /**
+   * Define a map
+   */
+  defineMap(
+    name: string,
+    initialEntries: Record<string, unknown> = {}
+  ): MapValue | undefined {
+    if (this._maps) {
+      return this._maps.define(name, initialEntries);
+    }
+    return undefined;
+  }
+
+  /**
    * Apply a text effect
    */
   applyTextEffect(
@@ -533,6 +637,8 @@ export function createTestContainer(): Container {
     enableTimers: true,
     enableExternalFunctions: true,
     enableLists: true,
+    enableArrays: true,
+    enableMaps: true,
     enableTextEffects: true,
     enableAudioEffects: true,
     enableParameterizedPassages: true,
@@ -548,6 +654,8 @@ export function createLightContainer(): Container {
     enableTimers: true,
     enableExternalFunctions: true,
     enableLists: true,
+    enableArrays: true,
+    enableMaps: true,
     enableTextEffects: false,
     enableAudioEffects: false,
     enableParameterizedPassages: false,

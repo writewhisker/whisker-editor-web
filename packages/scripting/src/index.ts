@@ -64,6 +64,18 @@ export {
   evaluateListOperator,
 } from './list-operations';
 
+// ARRAY - Dynamic Array
+export {
+  ArrayValue,
+  ArrayRegistry,
+} from './ArrayValue';
+
+// MAP - Key-Value Store
+export {
+  MapValue,
+  MapRegistry,
+} from './MapValue';
+
 // Thread Scheduler
 export {
   ThreadScheduler,
@@ -151,6 +163,16 @@ export type {
   StateCallback,
   ListValueState,
   ListRegistryState,
+  // ARRAY
+  ArrayValueConfig,
+  ArrayHistoryEntry,
+  ArrayValueState,
+  ArrayRegistryState,
+  // MAP
+  MapValueConfig,
+  MapHistoryEntry,
+  MapValueState,
+  MapRegistryState,
   // Text Effects
   EffectType,
   EffectDefinition,

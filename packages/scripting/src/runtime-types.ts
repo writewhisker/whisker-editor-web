@@ -159,6 +159,61 @@ export interface ListRegistryState {
 }
 
 // =============================================================================
+// ARRAY Types
+// =============================================================================
+
+export interface ArrayValueConfig {
+  trackHistory?: boolean;
+  maxHistoryLength?: number;
+}
+
+export interface ArrayHistoryEntry {
+  action: 'push' | 'pop' | 'set' | 'insert' | 'remove' | 'clear';
+  index?: number;
+  value?: unknown;
+  timestamp: number;
+  previousLength: number;
+}
+
+export interface ArrayValueState {
+  name: string;
+  elements: unknown[];
+  history?: ArrayHistoryEntry[];
+}
+
+export interface ArrayRegistryState {
+  arrays: Record<string, ArrayValueState>;
+}
+
+// =============================================================================
+// MAP Types
+// =============================================================================
+
+export interface MapValueConfig {
+  trackHistory?: boolean;
+  maxHistoryLength?: number;
+}
+
+export interface MapHistoryEntry {
+  action: 'set' | 'delete' | 'clear';
+  key?: string;
+  value?: unknown;
+  previousValue?: unknown;
+  timestamp: number;
+  previousSize: number;
+}
+
+export interface MapValueState {
+  name: string;
+  entries: Record<string, unknown>;
+  history?: MapHistoryEntry[];
+}
+
+export interface MapRegistryState {
+  maps: Record<string, MapValueState>;
+}
+
+// =============================================================================
 // Text Effects Types
 // =============================================================================
 
@@ -288,6 +343,8 @@ export interface ContainerOptions {
   enableTimers?: boolean;
   enableExternalFunctions?: boolean;
   enableLists?: boolean;
+  enableArrays?: boolean;
+  enableMaps?: boolean;
   enableTextEffects?: boolean;
   enableAudioEffects?: boolean;
   enableParameterizedPassages?: boolean;
@@ -297,6 +354,8 @@ export interface ContainerState {
   threads?: Thread[];
   timers?: Timer[];
   lists?: ListRegistryState;
+  arrays?: ArrayRegistryState;
+  maps?: MapRegistryState;
   audio?: AudioState;
 }
 

@@ -1,0 +1,13 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "target": "Unlocked" },
+        { "target": "Kicked" }
+      ]
+    },
+    { "name": "Unlocked" },
+    { "name": "Kicked" }
+  ]
+}

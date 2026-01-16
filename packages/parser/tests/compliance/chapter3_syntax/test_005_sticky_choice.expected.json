@@ -1,0 +1,11 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "target": "Option" }
+      ]
+    },
+    { "name": "Option" }
+  ]
+}

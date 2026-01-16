@@ -1,0 +1,13 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "target": "Once" },
+        { "target": "Always" }
+      ]
+    },
+    { "name": "Once" },
+    { "name": "Always" }
+  ]
+}

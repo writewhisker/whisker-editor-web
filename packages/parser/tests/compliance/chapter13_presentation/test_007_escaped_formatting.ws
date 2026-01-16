@@ -1,0 +1,2 @@
+:: Start
+Use \*asterisks\* literally.

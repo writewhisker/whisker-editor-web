@@ -62,6 +62,10 @@ import type {
   AudioAttributes,
   VideoAttributes,
   EmbedAttributes,
+  ThemeDirectiveNode,
+  StyleBlockNode,
+  ClassedBlockNode,
+  ClassedInlineNode,
 } from './ast';
 import { WLS_ERROR_CODES } from './ast';
 import {
@@ -241,6 +245,8 @@ export class Parser {
     const audioDeclarations: AudioDeclarationNode[] = [];      // Audio declarations
     const effectDeclarations: EffectDeclarationNode[] = [];    // Effect declarations
     const externalDeclarations: ExternalDeclarationNode[] = []; // External declarations
+    let theme: ThemeDirectiveNode | null = null;               // Theme directive
+    let styles: StyleBlockNode | null = null;                  // Style block
 
     this.namespaceStack = [];  // Reset namespace context
 
@@ -258,8 +264,8 @@ export class Parser {
         includes,
         functions,
         namespaces,
-        theme: null,
-        styles: null,
+        theme,
+        styles,
         passages,
         threads,
         audioDeclarations,
@@ -311,6 +317,14 @@ export class Parser {
       } else if (this.check(TokenType.END)) {
         // END NAMESPACE
         this.parseEndNamespace();
+      } else if (this.check(TokenType.THEME)) {
+        // THEME directive
+        const themeNode = this.parseThemeDirective();
+        if (themeNode) theme = themeNode;
+      } else if (this.check(TokenType.STYLE)) {
+        // STYLE block
+        const styleNode = this.parseStyleBlock();
+        if (styleNode) styles = styleNode;
       } else if (this.check(TokenType.NEWLINE)) {
         this.advance();
       } else if (this.check(TokenType.COMMENT)) {
@@ -363,13 +377,356 @@ export class Parser {
       includes,
       functions,
       namespaces,
-      theme: null,
-      styles: null,
+      theme,
+      styles,
       passages,
       threads,
       audioDeclarations,
       effectDeclarations,
       externalDeclarations,
+      location: this.getLocation(start),
+    };
+  }
+
+  // ============================================================================
+  // THEME and STYLE Parsing
+  // ============================================================================
+
+  /**
+   * Parse THEME directive: THEME "name"
+   * Built-in themes: default, dark, classic, minimal, sepia
+   */
+  private parseThemeDirective(): ThemeDirectiveNode | null {
+    const start = this.advance(); // consume THEME
+
+    this.skipWhitespaceOnLine();
+
+    // Expect string for theme name
+    if (!this.check(TokenType.STRING)) {
+      this.addError('Expected theme name string after THEME');
+      this.skipToNextLine();
+      return null;
+    }
+
+    const themeToken = this.advance();
+    const themeName = themeToken.value;
+
+    return {
+      type: 'theme_directive',
+      themeName,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse STYLE block: STYLE { --prop: value; }
+   * CSS custom properties for theming
+   *
+   * Note: CSS custom properties start with -- which the lexer treats as comments.
+   * So we need to handle COMMENT tokens that are actually CSS properties.
+   */
+  private parseStyleBlock(): StyleBlockNode | null {
+    const start = this.advance(); // consume STYLE
+
+    this.skipWhitespaceOnLine();
+    this.skipNewlines();
+
+    // Expect opening brace
+    if (!this.match(TokenType.LBRACE)) {
+      this.addError('Expected "{" after STYLE');
+      this.skipToNextLine();
+      return null;
+    }
+
+    const properties = new Map<string, string>();
+
+    // Parse CSS custom properties
+    // The lexer treats -- as comment start, so CSS properties like --bg-color: value
+    // become COMMENT tokens with value "bg-color: value"
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACE)) {
+      this.skipNewlines();
+
+      if (this.check(TokenType.RBRACE)) break;
+
+      // Check for COMMENT token which is actually a CSS property
+      if (this.check(TokenType.COMMENT)) {
+        const commentToken = this.advance();
+        // The comment value is "--bg-color: #value" or "bg-color: #value"
+        // depending on how the lexer handles it
+        let propLine = commentToken.value;
+
+        // Remove leading -- if the lexer kept it
+        if (propLine.startsWith('--')) {
+          propLine = propLine.slice(2);
+        }
+
+        // Parse "name: value" from the comment
+        const colonIndex = propLine.indexOf(':');
+        if (colonIndex > 0) {
+          const propName = '--' + propLine.slice(0, colonIndex).trim();
+          let propValue = propLine.slice(colonIndex + 1).trim();
+
+          // Remove trailing semicolon if present
+          if (propValue.endsWith(';')) {
+            propValue = propValue.slice(0, -1).trim();
+          }
+
+          properties.set(propName, propValue);
+        }
+        continue;
+      }
+
+      // Handle non-CSS-property lines (regular identifier-based properties)
+      let propName = '';
+
+      while (!this.isAtEnd() &&
+             !this.check(TokenType.COLON) &&
+             !this.check(TokenType.NEWLINE) &&
+             !this.check(TokenType.RBRACE) &&
+             !this.check(TokenType.COMMENT)) {
+        propName += this.peek().value;
+        this.advance();
+      }
+
+      propName = propName.trim();
+
+      if (!propName) {
+        if (!this.check(TokenType.RBRACE) && !this.check(TokenType.COMMENT)) {
+          this.skipToNextLine();
+        }
+        continue;
+      }
+
+      // Expect colon
+      if (!this.match(TokenType.COLON)) {
+        this.addError(`Expected ":" after property name "${propName}"`);
+        this.skipToNextLine();
+        continue;
+      }
+
+      this.skipWhitespaceOnLine();
+
+      // Collect property value until ; or newline or }
+      let propValue = '';
+      while (!this.isAtEnd() &&
+             !this.check(TokenType.SEMICOLON) &&
+             !this.check(TokenType.NEWLINE) &&
+             !this.check(TokenType.RBRACE)) {
+        propValue += this.peek().value;
+        this.advance();
+      }
+
+      properties.set(propName, propValue.trim());
+
+      // Consume semicolon if present
+      this.match(TokenType.SEMICOLON);
+      this.skipNewlines();
+    }
+
+    // Expect closing brace
+    if (!this.match(TokenType.RBRACE)) {
+      this.addError('Expected "}" to close STYLE block');
+    }
+
+    return {
+      type: 'style_block',
+      properties,
+      location: this.getLocation(start),
+    };
+  }
+
+  // ============================================================================
+  // CSS Class Parsing
+  // ============================================================================
+
+  /**
+   * Check if this is a classed block (.class { content })
+   * Lookahead: DOT IDENTIFIER ... LBRACE
+   */
+  private isClassedBlock(): boolean {
+    if (!this.check(TokenType.DOT)) return false;
+
+    // Lookahead to see if we have .identifier followed eventually by {
+    let pos = this.pos;
+    const tokens = this.tokens;
+
+    // Skip DOT
+    pos++;
+    if (pos >= tokens.length) return false;
+
+    // Need IDENTIFIER after DOT
+    if (tokens[pos].type !== TokenType.IDENTIFIER) return false;
+    pos++;
+
+    // Skip any additional .class specifiers and whitespace
+    while (pos < tokens.length) {
+      const token = tokens[pos];
+      if (token.type === TokenType.DOT) {
+        pos++;
+        if (pos < tokens.length && tokens[pos].type === TokenType.IDENTIFIER) {
+          pos++;
+        }
+      } else if (token.type === TokenType.NEWLINE || token.type === TokenType.EOF) {
+        return false; // No brace found on this line
+      } else if (token.type === TokenType.LBRACE) {
+        return true;
+      } else {
+        // Skip other tokens (whitespace, etc.)
+        pos++;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if this is a classed inline ([.class content])
+   * Lookahead: LBRACKET DOT
+   */
+  private isClassedInline(): boolean {
+    if (!this.check(TokenType.LBRACKET)) return false;
+
+    // Lookahead to see if next token is DOT
+    const nextPos = this.pos + 1;
+    if (nextPos >= this.tokens.length) return false;
+
+    return this.tokens[nextPos].type === TokenType.DOT;
+  }
+
+  /**
+   * Parse classed block: .class { content }
+   * Can have multiple classes: .dialog.merchant { content }
+   */
+  private parseClassedBlock(): ClassedBlockNode {
+    const start = this.peek();
+    const classes: string[] = [];
+
+    // Parse class names
+    while (this.check(TokenType.DOT)) {
+      this.advance(); // consume DOT
+      if (this.check(TokenType.IDENTIFIER)) {
+        classes.push(this.advance().value);
+      }
+    }
+
+    this.skipWhitespaceOnLine();
+    this.skipNewlines();
+
+    // Expect opening brace
+    if (!this.match(TokenType.LBRACE)) {
+      this.addError('Expected "{" after CSS class names');
+      return {
+        type: 'classed_block',
+        classes,
+        content: [],
+        location: this.getLocation(start),
+      };
+    }
+
+    // Parse content until closing brace
+    const content: ContentNode[] = [];
+    let braceDepth = 1;
+
+    while (!this.isAtEnd() && braceDepth > 0) {
+      if (this.check(TokenType.LBRACE)) {
+        braceDepth++;
+        // Add brace as text since it's nested
+        content.push({
+          type: 'text',
+          value: '{',
+          location: this.peek().location,
+        });
+        this.advance();
+      } else if (this.check(TokenType.RBRACE)) {
+        braceDepth--;
+        if (braceDepth > 0) {
+          // Nested closing brace
+          content.push({
+            type: 'text',
+            value: '}',
+            location: this.peek().location,
+          });
+          this.advance();
+        }
+      } else if (this.check(TokenType.NEWLINE)) {
+        content.push({
+          type: 'text',
+          value: '\n',
+          location: this.peek().location,
+        });
+        this.advance();
+      } else {
+        const node = this.parseContentNode();
+        if (node) {
+          content.push(node);
+        } else {
+          // Unknown token, add as text
+          const token = this.advance();
+          content.push({
+            type: 'text',
+            value: token.value,
+            location: token.location,
+          });
+        }
+      }
+    }
+
+    // Consume closing brace
+    this.match(TokenType.RBRACE);
+
+    return {
+      type: 'classed_block',
+      classes,
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse classed inline: [.class content]
+   * Can have multiple classes: [.damage.critical 15 damage]
+   */
+  private parseClassedInline(): ClassedInlineNode {
+    const start = this.advance(); // consume LBRACKET
+    const classes: string[] = [];
+
+    // Parse class names
+    while (this.check(TokenType.DOT)) {
+      this.advance(); // consume DOT
+      if (this.check(TokenType.IDENTIFIER)) {
+        classes.push(this.advance().value);
+      }
+    }
+
+    this.skipWhitespaceOnLine();
+
+    // Parse content until closing bracket
+    const content: ContentNode[] = [];
+
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
+      const node = this.parseContentNode();
+      if (node) {
+        content.push(node);
+      } else if (this.check(TokenType.NEWLINE)) {
+        this.advance(); // Skip newlines inside classed inline
+      } else {
+        // Unknown token, add as text
+        const token = this.advance();
+        content.push({
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        });
+      }
+    }
+
+    // Consume closing bracket
+    this.expect(TokenType.RBRACKET, 'Expected "]" after classed inline content');
+
+    return {
+      type: 'classed_inline',
+      classes,
+      content,
       location: this.getLocation(start),
     };
   }
@@ -1347,6 +1704,16 @@ export class Parser {
     // Rich text: Code fence
     if (this.check(TokenType.CODE_FENCE)) {
       return this.parseCodeBlock();
+    }
+
+    // CSS: Block-level classed content (.class { content })
+    if (this.isClassedBlock()) {
+      return this.parseClassedBlock();
+    }
+
+    // CSS: Inline classed content ([.class text])
+    if (this.isClassedInline()) {
+      return this.parseClassedInline();
     }
 
     // Media: Markdown image ![alt](src)

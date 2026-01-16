@@ -223,6 +223,8 @@ export type ContentNode =
   | GatherNode
   | TunnelCallNode
   | TunnelReturnNode
+  | HookDefinitionNode     // Hook definition
+  | HookOperationNode      // Hook operation
   | AwaitExpressionNode    // Thread await
   | SpawnExpressionNode    // Thread spawn
   | DelayDirectiveNode     // Delayed content
@@ -337,6 +339,31 @@ export interface TunnelCallNode extends BaseNode {
  */
 export interface TunnelReturnNode extends BaseNode {
   type: 'tunnel_return';
+}
+
+// ============================================================================
+// Hook Nodes
+// ============================================================================
+
+/**
+ * Hook definition (|hookName>[content])
+ * Defines a named content region that can be modified
+ */
+export interface HookDefinitionNode extends BaseNode {
+  type: 'hook_definition';
+  name: string;
+  content: string;
+}
+
+/**
+ * Hook operation (@operation: target { content })
+ * Modifies a previously defined hook
+ */
+export interface HookOperationNode extends BaseNode {
+  type: 'hook_operation';
+  operation: 'replace' | 'append' | 'prepend' | 'show' | 'hide';
+  target: string;
+  content: string;
 }
 
 // ============================================================================
@@ -655,8 +682,34 @@ export const WLS_ERROR_CODES = {
   // Reference errors (REF)
   UNDEFINED_PASSAGE: 'WLS-REF-001',
   // Structure errors (STR)
-  DUPLICATE_PASSAGE: 'WLS-STR-001',
+  MISSING_START_PASSAGE: 'WLS-STR-001',
+  UNREACHABLE_PASSAGE: 'WLS-STR-002',
+  DUPLICATE_PASSAGE: 'WLS-STR-003',
+  EMPTY_PASSAGE: 'WLS-STR-004',
+  ORPHAN_PASSAGE: 'WLS-STR-005',
+  NO_TERMINAL: 'WLS-STR-006',
+  // Link errors (LNK)
+  DEAD_LINK: 'WLS-LNK-001',               // Link to non-existent passage
+  SELF_LINK_NO_CHANGE: 'WLS-LNK-002',     // Self-link without state change
+  SPECIAL_TARGET_CASE: 'WLS-LNK-003',     // Wrong case for END/BACK/RESTART
+  BACK_ON_START: 'WLS-LNK-004',           // BACK used on start passage
+  EMPTY_CHOICE_TARGET: 'WLS-LNK-005',     // Choice with empty target
+  // Variable errors (VAR)
+  UNDEFINED_VARIABLE: 'WLS-VAR-001',      // Variable used but never defined
+  UNUSED_VARIABLE: 'WLS-VAR-002',         // Variable defined but never used
+  INVALID_VARIABLE_NAME: 'WLS-VAR-003',   // Invalid variable name format
+  RESERVED_PREFIX: 'WLS-VAR-004',         // Variable uses reserved prefix
+  VARIABLE_SHADOWING: 'WLS-VAR-005',      // Variable shadows outer scope
+  LONE_DOLLAR: 'WLS-VAR-006',             // Lone $ without variable name
+  UNCLOSED_INTERPOLATION: 'WLS-VAR-007',  // Unclosed variable interpolation
+  TEMP_CROSS_PASSAGE: 'WLS-VAR-008',      // Temp variable used across passages
   // Flow control errors (FLW)
+  DEAD_END: 'WLS-FLW-001',                // Passage with no outgoing links
+  BOTTLENECK: 'WLS-FLW-002',              // Single entry point for many passages
+  CYCLE_DETECTED: 'WLS-FLW-003',          // Cycle in story graph
+  INFINITE_LOOP: 'WLS-FLW-004',           // Potential infinite loop
+  UNREACHABLE_CHOICE: 'WLS-FLW-005',      // Choice that can never be selected
+  ALWAYS_TRUE_CONDITION: 'WLS-FLW-006',   // Condition that's always true
   ORPHAN_GATHER: 'WLS-FLW-007',           // Gather without preceding choice
   TUNNEL_DEPTH_EXCEEDED: 'WLS-FLW-008',   // Too many nested tunnel calls
   ORPHAN_TUNNEL_RETURN: 'WLS-FLW-009',    // <- outside tunnel context
@@ -756,6 +809,9 @@ export function isContent(node: BaseNode): node is ContentNode {
     'gather',
     'tunnel_call',
     'tunnel_return',
+    // Hook nodes
+    'hook_definition',
+    'hook_operation',
     // Thread nodes
     'await_expression',
     'spawn_expression',

@@ -122,3 +122,27 @@ export {
   type ParameterType,
   type ExternalParameterNode,
 } from './declarations';
+
+// Validators
+export {
+  validateLinks,
+  validateLinksAsErrors,
+  type LinkValidationResult,
+  type ValidationDiagnostic,
+  // Flow analysis
+  detectDeadEnds,
+  detectBottlenecks,
+  detectCycles,
+  analyzeFlow,
+  checkAccessibility,
+  type FlowMetrics,
+  type FlowAnalysisResult,
+  type AccessibilityResult,
+  // Variable tracking
+  trackVariables,
+  validateVariables,
+  type VariableValidationResult,
+} from './validators';
+
+// Error codes
+export { WLS_ERROR_CODES, type WLSErrorCode } from './ast';

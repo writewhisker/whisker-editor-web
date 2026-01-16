@@ -115,6 +115,20 @@ export enum TokenType {
   THEME = 'THEME',                             // THEME "name"
   STYLE = 'STYLE',                             // STYLE { ... }
 
+  // Rich text tokens
+  BOLD_MARKER = 'BOLD_MARKER',                 // ** (bold)
+  ITALIC_MARKER = 'ITALIC_MARKER',             // * (when not at line start)
+  STRIKETHROUGH_MARKER = 'STRIKETHROUGH_MARKER', // ~~
+  BLOCKQUOTE_MARKER = 'BLOCKQUOTE_MARKER',     // > (at line start)
+  LIST_MARKER_UNORDERED = 'LIST_MARKER_UNORDERED', // - * + (at line start for lists)
+  LIST_MARKER_ORDERED = 'LIST_MARKER_ORDERED', // 1. 2. etc (at line start)
+  INLINE_CODE = 'INLINE_CODE',                 // `code`
+  CODE_FENCE = 'CODE_FENCE',                   // ```
+  HORIZONTAL_RULE = 'HORIZONTAL_RULE',         // --- *** ___ (3+ chars at line start)
+
+  // Media tokens
+  IMAGE_START = 'IMAGE_START',                 // ![ (markdown image start)
+
   // Text content
   TEXT = 'TEXT',                               // Plain text content
 

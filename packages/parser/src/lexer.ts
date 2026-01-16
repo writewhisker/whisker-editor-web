@@ -249,7 +249,30 @@ export class Lexer {
         } else if (this.match('>')) {
           this.addToken(TokenType.ARROW, '->', start);
         } else if (this.match('-')) {
-          this.scanLineComment(start);
+          // Could be comment (--), horizontal rule (---+), or just --
+          if (this.peek() === '-') {
+            // Check for horizontal rule (3+ dashes at line start)
+            if (this.isAtLineStart(start)) {
+              let count = 2; // already have --
+              while (this.peek() === '-') {
+                this.advance();
+                count++;
+              }
+              this.addToken(TokenType.HORIZONTAL_RULE, '-'.repeat(count), start);
+            } else {
+              this.scanLineComment(start);
+            }
+          } else {
+            this.scanLineComment(start);
+          }
+        } else if (this.isAtLineStart(start) && !this.isInExpressionContext()) {
+          // - at line start in content = unordered list marker
+          if (this.peek() === ' ' || this.peek() === '\t') {
+            this.addToken(TokenType.LIST_MARKER_UNORDERED, '-', start);
+          } else {
+            // Gather point
+            this.addToken(TokenType.GATHER, '-', start);
+          }
         } else if (this.isGatherContext(start)) {
           // - at line start (similar to choice markers) is a gather point
           this.addToken(TokenType.GATHER, '-', start);
@@ -261,7 +284,28 @@ export class Lexer {
         if (this.match('=')) {
           this.addToken(TokenType.STAR_ASSIGN, '*=', start);
         } else if (this.isAtLineStart(start)) {
-          this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
+          // At line start: could be choice marker, list marker, or horizontal rule
+          if (this.peek() === '*' && this.source[this.pos + 1] === '*') {
+            // *** = horizontal rule
+            this.advance(); // second *
+            this.advance(); // third *
+            while (this.peek() === '*') {
+              this.advance();
+            }
+            this.addToken(TokenType.HORIZONTAL_RULE, '***', start);
+          } else if (this.peek() === ' ' || this.peek() === '\t') {
+            // * followed by space = unordered list marker
+            this.addToken(TokenType.LIST_MARKER_UNORDERED, '*', start);
+          } else {
+            this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
+          }
+        } else if (this.peek() === '*') {
+          // ** = bold marker (not at line start)
+          this.advance();
+          this.addToken(TokenType.BOLD_MARKER, '**', start);
+        } else if (!this.isInExpressionContext()) {
+          // * = italic marker (in content, not expression)
+          this.addToken(TokenType.ITALIC_MARKER, '*', start);
         } else {
           this.addToken(TokenType.STAR, '*', start);
         }
@@ -298,6 +342,9 @@ export class Lexer {
       case '~':
         if (this.match('=')) {
           this.addToken(TokenType.NEQ, '~=', start);
+        } else if (this.match('~')) {
+          // ~~ = strikethrough marker
+          this.addToken(TokenType.STRIKETHROUGH_MARKER, '~~', start);
         } else {
           this.addToken(TokenType.TILDE, '~', start);
         }
@@ -315,6 +362,9 @@ export class Lexer {
       case '>':
         if (this.match('=')) {
           this.addToken(TokenType.GTE, '>=', start);
+        } else if (this.isAtLineStart(start) && !this.isInExpressionContext()) {
+          // > at line start in content = blockquote marker
+          this.addToken(TokenType.BLOCKQUOTE_MARKER, '>', start);
         } else {
           this.addToken(TokenType.GT, '>', start);
         }
@@ -322,7 +372,10 @@ export class Lexer {
 
       // C-style operators that should be Lua-style (emit error tokens)
       case '!':
-        if (this.match('=')) {
+        if (this.match('[')) {
+          // ![ is markdown image start
+          this.addToken(TokenType.IMAGE_START, '![', start);
+        } else if (this.match('=')) {
           this.addError('Use ~= instead of != for not-equal', 'Replace != with ~=');
           this.addToken(TokenType.ERROR, '!=', start);
         } else if (this.previousTokenType() === TokenType.LBRACE && this.peek() === '|') {
@@ -411,6 +464,24 @@ export class Lexer {
           this.addToken(TokenType.ERROR, '||', start);
         } else {
           this.addToken(TokenType.PIPE, '|', start);
+        }
+        break;
+
+      // Backticks for inline code and code fences
+      case '`':
+        if (this.peek() === '`' && this.peekNext() === '`') {
+          // ``` = code fence
+          this.advance(); // second `
+          this.advance(); // third `
+          // Capture optional language specifier
+          let lang = '';
+          while (!this.isAtEnd() && this.peek() !== '\n') {
+            lang += this.advance();
+          }
+          this.addToken(TokenType.CODE_FENCE, '```' + lang, start);
+        } else {
+          // ` = inline code start/end
+          this.scanInlineCode(start);
         }
         break;
 
@@ -602,6 +673,26 @@ export class Lexer {
   }
 
   /**
+   * Scan inline code (`code`)
+   */
+  private scanInlineCode(start: SourceLocation): void {
+    let value = '';
+
+    while (!this.isAtEnd() && this.peek() !== '`' && this.peek() !== '\n') {
+      value += this.advance();
+    }
+
+    if (this.peek() === '`') {
+      this.advance(); // consume closing `
+      this.addToken(TokenType.INLINE_CODE, value, start);
+    } else {
+      // Unterminated inline code - treat as text
+      this.addError('Unterminated inline code - expected closing backtick');
+      this.addToken(TokenType.TEXT, '`' + value, start);
+    }
+  }
+
+  /**
    * Scan a number literal
    */
   private scanNumber(start: SourceLocation, firstChar: string): void {
@@ -610,6 +701,14 @@ export class Lexer {
     // Integer part
     while (!this.isAtEnd() && this.isDigit(this.peek())) {
       value += this.advance();
+    }
+
+    // Check for ordered list marker at line start (e.g., "1. ")
+    if (this.isAtLineStart(start) && !this.isInExpressionContext() &&
+        this.peek() === '.' && (this.peekNext() === ' ' || this.peekNext() === '\t')) {
+      this.advance(); // consume the dot
+      this.addToken(TokenType.LIST_MARKER_ORDERED, value + '.', start);
+      return;
     }
 
     // Decimal part

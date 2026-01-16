@@ -542,7 +542,7 @@ export class Lexer {
 
   /**
    * Scan an escape sequence in content (not in string literals)
-   * Handles: \$ \{ \} \\ \n \t
+   * Handles: \$ \{ \} \\ \n \t \* \~ \`
    */
   private scanEscapeSequence(start: SourceLocation): void {
     if (this.isAtEnd()) {
@@ -576,6 +576,21 @@ export class Lexer {
       case 't':
         this.advance();
         this.addToken(TokenType.TEXT, '\t', start);
+        break;
+      case '*':
+        // Escape asterisk (prevent italic/bold markers)
+        this.advance();
+        this.addToken(TokenType.TEXT, '*', start);
+        break;
+      case '~':
+        // Escape tilde (prevent strikethrough markers)
+        this.advance();
+        this.addToken(TokenType.TEXT, '~', start);
+        break;
+      case '`':
+        // Escape backtick (prevent inline code)
+        this.advance();
+        this.addToken(TokenType.TEXT, '`', start);
         break;
       default:
         // Unknown escape - emit backslash and let next char be processed normally

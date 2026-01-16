@@ -1,0 +1,13 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "target": "Left" },
+        { "target": "Right" }
+      ]
+    },
+    { "name": "Left" },
+    { "name": "Right" }
+  ]
+}

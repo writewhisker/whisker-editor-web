@@ -7,7 +7,14 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { lintFile, type LintResult, type LintOptions, type LintIssue } from './index.js';
+import {
+  lintFile,
+  formatLintResult,
+  type LintResult,
+  type LintOptions,
+  type LintIssue,
+  type OutputFormat,
+} from './index.js';
 
 /**
  * CLI argument parsing
@@ -178,7 +185,7 @@ function formatAsSarif(issues: LintIssue[], filePath: string): object {
  */
 function showHelp(): void {
   console.log(`
-whisker-lint - WLS Story Linter
+whisker-lint - WLS Story Linter (WLS Chapter 14.4)
 
 Usage:
   whisker-lint [options] <files...>
@@ -192,6 +199,7 @@ Options:
   --color             Force color output
   --no-color          Disable color output
   -q, --quiet         Only output errors
+  --wls-format        Use WLS Chapter 14.1 standardized error format (default)
 
 Examples:
   whisker-lint story.ws
@@ -280,22 +288,24 @@ async function main(): Promise<void> {
     }
   }
 
-  // Output results
+  // Output results using WLS Chapter 14.1 format
   if (args.format === 'json') {
-    console.log(JSON.stringify(allResults, null, 2));
+    // JSON format using WLS formatter
+    const allFormatted = allResults.map(r => formatLintResult(r, 'json'));
+    console.log('[' + allFormatted.join(',') + ']');
   } else if (args.format === 'sarif') {
-    // Combine all issues for SARIF output
-    const allIssues = allResults.flatMap(r => r.issues);
-    const firstFile = files[0] || 'story.ws';
-    const sarif = formatAsSarif(allIssues, firstFile);
-    console.log(JSON.stringify(sarif, null, 2));
+    // SARIF format using WLS formatter
+    for (const result of allResults) {
+      console.log(formatLintResult(result, 'sarif'));
+    }
   } else {
-    // Text output
+    // Text output using WLS Chapter 14.1 standardized format
     for (const result of allResults) {
       if (!args.quiet || result.errorCount > 0) {
         console.log(`\n${result.file}:`);
         if (result.issues.length > 0) {
-          console.log(formatIssues(result.issues, result.content, args.colors));
+          // Use WLS-compliant error format
+          console.log(formatLintResult(result, 'text'));
         } else {
           console.log('  No issues found.');
         }

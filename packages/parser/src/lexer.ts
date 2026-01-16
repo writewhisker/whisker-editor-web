@@ -237,6 +237,8 @@ export class Lexer {
       case '+':
         if (this.match('=')) {
           this.addToken(TokenType.PLUS_ASSIGN, '+=', start);
+        } else if (this.match('+')) {
+          this.addToken(TokenType.PLUS_PLUS, '++', start);
         } else if (this.isAtLineStart(start)) {
           this.addToken(TokenType.ONCE_CHOICE_MARKER, '+', start);
         } else {
@@ -248,29 +250,38 @@ export class Lexer {
           this.addToken(TokenType.MINUS_ASSIGN, '-=', start);
         } else if (this.match('>')) {
           this.addToken(TokenType.ARROW, '->', start);
-        } else if (this.match('-')) {
-          // Could be comment (--), horizontal rule (---+), or just --
-          if (this.peek() === '-') {
+        } else if (this.peek() === '-') {
+          // Could be decrement (--), comment (--), or horizontal rule (---+)
+          if (this.isInExpressionContext()) {
+            // In expression context, -- is decrement operator
+            this.advance(); // consume second -
+            this.addToken(TokenType.MINUS_MINUS, '--', start);
+          } else if (this.isAtLineStart(start) && this.source[this.pos + 1] === '-') {
             // Check for horizontal rule (3+ dashes at line start)
-            if (this.isAtLineStart(start)) {
-              let count = 2; // already have --
-              while (this.peek() === '-') {
-                this.advance();
-                count++;
-              }
-              this.addToken(TokenType.HORIZONTAL_RULE, '-'.repeat(count), start);
-            } else {
-              this.scanLineComment(start);
+            this.advance(); // consume second -
+            let count = 2;
+            while (this.peek() === '-') {
+              this.advance();
+              count++;
             }
+            this.addToken(TokenType.HORIZONTAL_RULE, '-'.repeat(count), start);
           } else {
+            // -- outside expression is a comment
+            this.advance(); // consume second -
             this.scanLineComment(start);
           }
         } else if (this.isAtLineStart(start) && !this.isInExpressionContext()) {
-          // - at line start in content = unordered list marker
+          // - at line start in content
           if (this.peek() === ' ' || this.peek() === '\t') {
-            this.addToken(TokenType.LIST_MARKER_UNORDERED, '-', start);
+            // - followed by space: could be list marker OR gather point
+            // If there was a choice marker since the last passage, this is a gather
+            if (this.hasRecentChoice()) {
+              this.addToken(TokenType.GATHER, '-', start);
+            } else {
+              this.addToken(TokenType.LIST_MARKER_UNORDERED, '-', start);
+            }
           } else {
-            // Gather point
+            // - without space = Gather point
             this.addToken(TokenType.GATHER, '-', start);
           }
         } else if (this.isGatherContext(start)) {
@@ -569,6 +580,24 @@ export class Lexer {
     return prevType === TokenType.ONCE_CHOICE_MARKER ||
            prevType === TokenType.STICKY_CHOICE_MARKER ||
            prevType === TokenType.GATHER;
+  }
+
+  /**
+   * Check if there's been a choice marker since the last passage marker
+   * Used to distinguish gather points from list markers
+   */
+  private hasRecentChoice(): boolean {
+    for (let i = this.tokens.length - 1; i >= 0; i--) {
+      const token = this.tokens[i];
+      if (token.type === TokenType.PASSAGE_MARKER || token.type === TokenType.THREAD_MARKER) {
+        return false; // Hit passage boundary, no choices found
+      }
+      if (token.type === TokenType.ONCE_CHOICE_MARKER ||
+          token.type === TokenType.STICKY_CHOICE_MARKER) {
+        return true; // Found a choice marker
+      }
+    }
+    return false;
   }
 
   /**

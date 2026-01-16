@@ -1970,11 +1970,34 @@ export class Parser {
   }
 
   /**
-   * Parse tunnel call (-> Target ->) or simple navigation (-> Target)
-   * Tunnel calls include a trailing -> to indicate return
+   * Parse tunnel call (->-> Target or -> Target ->) or simple navigation (-> Target)
+   * Tunnel calls can use either:
+   *   - Prefix syntax: ->-> Target (Ink-style)
+   *   - Suffix syntax: -> Target -> (with trailing arrow)
    */
   private parseTunnelCallOrNavigation(): TunnelCallNode | TextNode {
     const start = this.advance(); // consume first ->
+
+    // Check for ->-> prefix syntax (double arrow before target)
+    if (this.check(TokenType.ARROW)) {
+      this.advance(); // consume second ->
+
+      // Get target passage name
+      if (!this.check(TokenType.IDENTIFIER)) {
+        return {
+          type: 'text',
+          value: '->->',
+          location: this.getLocation(start),
+        };
+      }
+
+      const target = this.advance().value;
+      return {
+        type: 'tunnel_call',
+        target,
+        location: this.getLocation(start),
+      };
+    }
 
     // Get target passage name
     if (!this.check(TokenType.IDENTIFIER)) {
@@ -1988,7 +2011,7 @@ export class Parser {
 
     const target = this.advance().value;
 
-    // Check for trailing -> (makes it a tunnel call)
+    // Check for trailing -> (suffix syntax makes it a tunnel call)
     if (this.check(TokenType.ARROW)) {
       this.advance(); // consume trailing ->
       return {
@@ -3434,6 +3457,56 @@ export class Parser {
           };
         } else {
           this.addError('Expected property name after "."', {
+            code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+          });
+        }
+      } else if (this.match(TokenType.PLUS_PLUS)) {
+        // Postfix increment: x++ becomes x += 1
+        // Accept variables, identifiers (bare variables), and member expressions
+        if (expr.type === 'variable' || expr.type === 'identifier' || expr.type === 'member_expression') {
+          // Convert identifier to variable for the target
+          const target = expr.type === 'identifier'
+            ? { type: 'variable' as const, name: (expr as any).name, scope: 'story' as const, location: expr.location }
+            : expr as VariableNode | MemberExpressionNode;
+          expr = {
+            type: 'assignment_expression',
+            operator: '+=',
+            target,
+            value: {
+              type: 'literal',
+              valueType: 'number',
+              value: 1,
+              location: this.getLocation(this.tokens[this.pos - 1]),
+            },
+            location: this.getLocation(this.tokens[this.pos - 1]),
+          };
+        } else {
+          this.addError('Increment operator requires a variable', {
+            code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+          });
+        }
+      } else if (this.match(TokenType.MINUS_MINUS)) {
+        // Postfix decrement: x-- becomes x -= 1
+        // Accept variables, identifiers (bare variables), and member expressions
+        if (expr.type === 'variable' || expr.type === 'identifier' || expr.type === 'member_expression') {
+          // Convert identifier to variable for the target
+          const target = expr.type === 'identifier'
+            ? { type: 'variable' as const, name: (expr as any).name, scope: 'story' as const, location: expr.location }
+            : expr as VariableNode | MemberExpressionNode;
+          expr = {
+            type: 'assignment_expression',
+            operator: '-=',
+            target,
+            value: {
+              type: 'literal',
+              valueType: 'number',
+              value: 1,
+              location: this.getLocation(this.tokens[this.pos - 1]),
+            },
+            location: this.getLocation(this.tokens[this.pos - 1]),
+          };
+        } else {
+          this.addError('Decrement operator requires a variable', {
             code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
           });
         }

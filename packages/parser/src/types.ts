@@ -68,6 +68,8 @@ export enum TokenType {
   // Arithmetic operators
   PLUS = 'PLUS',                               // +
   MINUS = 'MINUS',                             // -
+  PLUS_PLUS = 'PLUS_PLUS',                     // ++ (increment)
+  MINUS_MINUS = 'MINUS_MINUS',                 // -- (decrement)
   STAR = 'STAR',                               // *
   SLASH = 'SLASH',                             // /
   PERCENT = 'PERCENT',                         // %

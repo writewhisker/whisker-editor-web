@@ -33,6 +33,8 @@ import type {
   GatherNode,
   TunnelCallNode,
   TunnelReturnNode,
+  HookDefinitionNode,
+  HookOperationNode,
   ThreadPassageNode,
   AwaitExpressionNode,
   SpawnExpressionNode,
@@ -48,6 +50,18 @@ import type {
   AudioDeclarationNode,
   EffectDeclarationNode,
   ExternalDeclarationNode,
+  FormattedTextNode,
+  BlockquoteNode,
+  ListNode,
+  ListItemNode,
+  HorizontalRuleNode,
+  ImageNode,
+  VideoNode,
+  EmbedNode,
+  MediaAttributes,
+  AudioAttributes,
+  VideoAttributes,
+  EmbedAttributes,
 } from './ast';
 import { WLS_ERROR_CODES } from './ast';
 import {
@@ -1086,7 +1100,9 @@ export class Parser {
     this.skipNewlines();
 
     // Parse passage-level metadata directives (@fallback, @onEnter, @onExit)
-    while (this.check(TokenType.DIRECTIVE)) {
+    // But NOT hook operations (@replace, @append, @prepend, @show, @hide)
+    // And NOT inline media directives (@image, @video, @embed)
+    while (this.check(TokenType.DIRECTIVE) && !this.isHookOperation() && !this.isInlineMediaDirective()) {
       const meta = this.parsePassageMetadata();
       if (meta) {
         metadata.push(meta);
@@ -1248,6 +1264,16 @@ export class Parser {
   }
 
   private parseContentNode(): ContentNode | null {
+    // Hook definition (|hookName>[content])
+    if (this.isHookDefinition()) {
+      return this.parseHookDefinition();
+    }
+
+    // Hook operation (@replace: target { content })
+    if (this.isHookOperation()) {
+      return this.parseHookOperation();
+    }
+
     // Choice markers at start of line
     if (this.check(TokenType.ONCE_CHOICE_MARKER) || this.check(TokenType.STICKY_CHOICE_MARKER)) {
       return this.parseChoice();
@@ -1281,6 +1307,59 @@ export class Parser {
     // Variable interpolation
     if (this.check(TokenType.DOLLAR)) {
       return this.parseVariableInterpolation();
+    }
+
+    // Rich text: Horizontal rule
+    if (this.check(TokenType.HORIZONTAL_RULE)) {
+      return this.parseHorizontalRule();
+    }
+
+    // Rich text: Blockquote
+    if (this.check(TokenType.BLOCKQUOTE_MARKER)) {
+      return this.parseBlockquote();
+    }
+
+    // Rich text: Lists
+    if (this.check(TokenType.LIST_MARKER_UNORDERED) || this.check(TokenType.LIST_MARKER_ORDERED)) {
+      return this.parseList();
+    }
+
+    // Rich text: Bold
+    if (this.check(TokenType.BOLD_MARKER)) {
+      return this.parseBold();
+    }
+
+    // Rich text: Italic
+    if (this.check(TokenType.ITALIC_MARKER)) {
+      return this.parseItalic();
+    }
+
+    // Rich text: Strikethrough
+    if (this.check(TokenType.STRIKETHROUGH_MARKER)) {
+      return this.parseStrikethrough();
+    }
+
+    // Rich text: Inline code
+    if (this.check(TokenType.INLINE_CODE)) {
+      return this.parseInlineCode();
+    }
+
+    // Rich text: Code fence
+    if (this.check(TokenType.CODE_FENCE)) {
+      return this.parseCodeBlock();
+    }
+
+    // Media: Markdown image ![alt](src)
+    if (this.check(TokenType.IMAGE_START)) {
+      return this.parseMarkdownImage();
+    }
+
+    // Media: Directive-based media (@image, @video, @embed in content)
+    if (this.check(TokenType.DIRECTIVE)) {
+      const directive = this.peek().value;
+      if (directive === '@image' || directive === '@video' || directive === '@embed') {
+        return this.parseInlineMediaDirective();
+      }
     }
 
     // Plain text and other tokens
@@ -1543,6 +1622,183 @@ export class Parser {
       value: '-> ' + target,
       location: this.getLocation(start),
     };
+  }
+
+  // ============================================================================
+  // Hook Parsing
+  // ============================================================================
+
+  /**
+   * Check if current position is a hook definition (|hookName>[...)
+   * Look ahead: PIPE IDENTIFIER GT LBRACKET
+   */
+  private isHookDefinition(): boolean {
+    if (!this.check(TokenType.PIPE)) return false;
+
+    // Look ahead for pattern: | identifier > [
+    const savedPos = this.pos;
+    this.advance(); // consume |
+
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.pos = savedPos;
+      return false;
+    }
+    this.advance(); // consume identifier
+
+    if (!this.check(TokenType.GT)) {
+      this.pos = savedPos;
+      return false;
+    }
+    this.advance(); // consume >
+
+    const isHook = this.check(TokenType.LBRACKET);
+    this.pos = savedPos;
+    return isHook;
+  }
+
+  /**
+   * Check if current position is a hook operation (@replace:, @append:, etc.)
+   */
+  private isHookOperation(): boolean {
+    if (!this.check(TokenType.DIRECTIVE)) return false;
+
+    const directiveValue = this.peek().value;
+    const operations = ['@replace', '@append', '@prepend', '@show', '@hide'];
+    return operations.includes(directiveValue);
+  }
+
+  /**
+   * Check if current position is an inline media directive (@image, @video, @embed)
+   */
+  private isInlineMediaDirective(): boolean {
+    if (!this.check(TokenType.DIRECTIVE)) return false;
+
+    const directiveValue = this.peek().value;
+    const mediaDirectives = ['@image', '@video', '@embed'];
+    return mediaDirectives.includes(directiveValue);
+  }
+
+  /**
+   * Parse a hook definition: |hookName>[content]
+   */
+  private parseHookDefinition(): HookDefinitionNode {
+    const start = this.peek();
+
+    // Consume |
+    this.expect(TokenType.PIPE, 'Expected "|" for hook definition');
+
+    // Parse hook name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected hook name after "|"');
+    }
+    const name = this.check(TokenType.IDENTIFIER) ? this.advance().value : 'unnamed';
+
+    // Consume >
+    this.expect(TokenType.GT, 'Expected ">" after hook name');
+
+    // Consume [
+    this.expect(TokenType.LBRACKET, 'Expected "[" after ">"');
+
+    // Parse content until matching ] (handle nesting)
+    const content = this.parseHookContentString(TokenType.LBRACKET, TokenType.RBRACKET);
+
+    // Consume ]
+    this.expect(TokenType.RBRACKET, 'Expected "]" to close hook definition');
+
+    return {
+      type: 'hook_definition',
+      name,
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a hook operation: @operation: target { content }
+   */
+  private parseHookOperation(): HookOperationNode {
+    const start = this.peek();
+
+    // Consume @operation directive
+    const directiveToken = this.advance();
+    const operationName = directiveToken.value.slice(1); // Remove @
+
+    // Validate operation type
+    const validOperations = ['replace', 'append', 'prepend', 'show', 'hide'] as const;
+    if (!validOperations.includes(operationName as typeof validOperations[number])) {
+      this.addError(`Invalid hook operation: ${operationName}`);
+    }
+    const operation = operationName as 'replace' | 'append' | 'prepend' | 'show' | 'hide';
+
+    // Consume :
+    this.expect(TokenType.COLON, 'Expected ":" after hook operation');
+
+    // Parse target hook name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected target hook name after ":"');
+    }
+    const target = this.check(TokenType.IDENTIFIER) ? this.advance().value : 'unnamed';
+
+    // For show/hide operations, content is optional (empty string)
+    let content = '';
+
+    // Check for { content }
+    if (this.match(TokenType.LBRACE)) {
+      content = this.parseHookContentString(TokenType.LBRACE, TokenType.RBRACE);
+      this.expect(TokenType.RBRACE, 'Expected "}" to close hook operation');
+    }
+
+    return {
+      type: 'hook_operation',
+      operation,
+      target,
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse content inside a hook as a string until the closing delimiter
+   * Handles nested brackets/braces and preserves whitespace between tokens
+   */
+  private parseHookContentString(openToken: TokenType, closeToken: TokenType): string {
+    let content = '';
+    let depth = 1;
+    let lastToken: Token | null = null;
+
+    while (!this.isAtEnd() && depth > 0) {
+      const currentToken = this.peek();
+
+      // Check for nesting
+      if (this.check(openToken)) {
+        depth++;
+        content += this.advance().value;
+        lastToken = currentToken;
+      } else if (this.check(closeToken)) {
+        depth--;
+        if (depth === 0) break;
+        content += this.advance().value;
+        lastToken = currentToken;
+      } else if (this.check(TokenType.NEWLINE)) {
+        content += '\n';
+        this.advance();
+        lastToken = null; // Reset after newline
+      } else {
+        // Add space between tokens if there was whitespace in original source
+        if (lastToken && content.length > 0) {
+          const lastEnd = lastToken.location.end.offset;
+          const currentStart = currentToken.location.start.offset;
+          if (currentStart > lastEnd) {
+            // There was whitespace between tokens in original source
+            content += ' ';
+          }
+        }
+        content += this.advance().value;
+        lastToken = currentToken;
+      }
+    }
+
+    return content.trim();
   }
 
   // ============================================================================
@@ -1883,7 +2139,14 @@ export class Parser {
            !this.check(TokenType.RBRACKET) &&
            !this.check(TokenType.EXPR_START) &&
            !this.check(TokenType.DOLLAR) &&
-           !this.check(TokenType.ARROW)) {
+           !this.check(TokenType.ARROW) &&
+           !this.check(TokenType.PIPE) &&         // Stop for hook definitions
+           !this.check(TokenType.BOLD_MARKER) &&  // Stop for rich text
+           !this.check(TokenType.ITALIC_MARKER) &&
+           !this.check(TokenType.STRIKETHROUGH_MARKER) &&
+           !this.check(TokenType.INLINE_CODE) &&
+           !this.check(TokenType.IMAGE_START) &&  // Stop for media
+           !this.isHookOperation()) {              // Stop for hook operations
       value += this.advance().value;
     }
 
@@ -1892,6 +2155,551 @@ export class Parser {
       value,
       location: this.getLocation(start),
     };
+  }
+
+  // ============================================================================
+  // Rich Text Parsing
+  // ============================================================================
+
+  /**
+   * Parse bold text (**text**)
+   */
+  private parseBold(): FormattedTextNode {
+    const start = this.advance(); // consume **
+    const content: ContentNode[] = [];
+
+    // Parse content until closing **
+    while (!this.isAtEnd() && !this.check(TokenType.BOLD_MARKER) && !this.check(TokenType.NEWLINE)) {
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        break;
+      }
+    }
+
+    // Expect closing **
+    if (this.check(TokenType.BOLD_MARKER)) {
+      this.advance();
+    } else {
+      this.addError('Unclosed bold text - expected **', {
+        code: 'WLS-PRS-006' as WLSErrorCode,
+        suggestion: 'Add closing ** to complete bold text',
+      });
+    }
+
+    return {
+      type: 'formatted_text',
+      format: 'bold',
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse italic text (*text*)
+   */
+  private parseItalic(): FormattedTextNode {
+    const start = this.advance(); // consume *
+    const content: ContentNode[] = [];
+
+    // Parse content until closing *
+    while (!this.isAtEnd() && !this.check(TokenType.ITALIC_MARKER) && !this.check(TokenType.NEWLINE)) {
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        break;
+      }
+    }
+
+    // Expect closing *
+    if (this.check(TokenType.ITALIC_MARKER)) {
+      this.advance();
+    } else {
+      this.addError('Unclosed italic text - expected *', {
+        code: 'WLS-PRS-006' as WLSErrorCode,
+        suggestion: 'Add closing * to complete italic text',
+      });
+    }
+
+    return {
+      type: 'formatted_text',
+      format: 'italic',
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse strikethrough text (~~text~~)
+   */
+  private parseStrikethrough(): FormattedTextNode {
+    const start = this.advance(); // consume ~~
+    const content: ContentNode[] = [];
+
+    // Parse content until closing ~~
+    while (!this.isAtEnd() && !this.check(TokenType.STRIKETHROUGH_MARKER) && !this.check(TokenType.NEWLINE)) {
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        break;
+      }
+    }
+
+    // Expect closing ~~
+    if (this.check(TokenType.STRIKETHROUGH_MARKER)) {
+      this.advance();
+    } else {
+      this.addError('Unclosed strikethrough text - expected ~~', {
+        code: 'WLS-PRS-006' as WLSErrorCode,
+        suggestion: 'Add closing ~~ to complete strikethrough text',
+      });
+    }
+
+    return {
+      type: 'formatted_text',
+      format: 'strikethrough',
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse inline code (`code`)
+   */
+  private parseInlineCode(): FormattedTextNode {
+    const token = this.advance(); // consume INLINE_CODE token (already contains the code)
+
+    return {
+      type: 'formatted_text',
+      format: 'code',
+      content: [{
+        type: 'text',
+        value: token.value,
+        location: token.location,
+      }],
+      location: token.location,
+    };
+  }
+
+  /**
+   * Parse code block (```code```)
+   */
+  private parseCodeBlock(): ContentNode {
+    const start = this.advance(); // consume opening ```
+
+    // Skip newline after opening fence
+    this.match(TokenType.NEWLINE);
+
+    // Collect code until closing ```
+    let code = '';
+    while (!this.isAtEnd() && !this.check(TokenType.CODE_FENCE)) {
+      if (this.check(TokenType.NEWLINE)) {
+        code += '\n';
+        this.advance();
+      } else {
+        code += this.advance().value;
+      }
+    }
+
+    // Consume closing ```
+    if (this.check(TokenType.CODE_FENCE)) {
+      this.advance();
+    } else {
+      this.addError('Unclosed code block - expected closing ```', {
+        code: 'WLS-PRS-006' as WLSErrorCode,
+        suggestion: 'Add closing ``` to complete code block',
+      });
+    }
+
+    // Return as formatted_text with code format
+    return {
+      type: 'formatted_text',
+      format: 'code',
+      content: [{
+        type: 'text',
+        value: code.trim(),
+        location: this.getLocation(start),
+      } as TextNode],
+      location: this.getLocation(start),
+    } as FormattedTextNode;
+  }
+
+  /**
+   * Parse blockquote (> text)
+   */
+  private parseBlockquote(): BlockquoteNode {
+    const start = this.peek();
+    let depth = 0;
+
+    // Count consecutive > markers for nested blockquotes
+    while (this.check(TokenType.BLOCKQUOTE_MARKER)) {
+      this.advance();
+      depth++;
+      // Skip space after >
+      this.skipWhitespaceOnLine();
+    }
+
+    // Parse content until end of line
+    const content: ContentNode[] = [];
+    while (!this.isAtEnd() && !this.check(TokenType.NEWLINE) && !this.check(TokenType.PASSAGE_MARKER)) {
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        const token = this.advance();
+        content.push({
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        });
+      }
+    }
+
+    return {
+      type: 'blockquote',
+      content,
+      depth,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse list (- item or 1. item)
+   */
+  private parseList(): ListNode {
+    const start = this.peek();
+    const ordered = this.check(TokenType.LIST_MARKER_ORDERED);
+    const items: ListItemNode[] = [];
+
+    // Parse list items
+    while ((this.check(TokenType.LIST_MARKER_UNORDERED) || this.check(TokenType.LIST_MARKER_ORDERED)) &&
+           (ordered ? this.check(TokenType.LIST_MARKER_ORDERED) : this.check(TokenType.LIST_MARKER_UNORDERED))) {
+      const item = this.parseListItem(ordered);
+      items.push(item);
+
+      // Skip newlines between items
+      this.skipNewlines();
+    }
+
+    return {
+      type: 'list',
+      ordered,
+      items,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a single list item
+   */
+  private parseListItem(_ordered: boolean): ListItemNode {
+    const start = this.advance(); // consume list marker (- or 1.)
+    // Skip space after marker
+    this.skipWhitespaceOnLine();
+
+    // Parse content until end of line
+    const content: ContentNode[] = [];
+    while (!this.isAtEnd() && !this.check(TokenType.NEWLINE) && !this.check(TokenType.PASSAGE_MARKER)) {
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        const token = this.advance();
+        content.push({
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        });
+      }
+    }
+
+    return {
+      type: 'list_item',
+      content,
+      children: null, // TODO: Support nested lists
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse horizontal rule (--- or *** or ___)
+   */
+  private parseHorizontalRule(): HorizontalRuleNode {
+    const token = this.advance(); // consume HORIZONTAL_RULE token
+
+    return {
+      type: 'horizontal_rule',
+      location: token.location,
+    };
+  }
+
+  /**
+   * Parse content that can appear inside rich text formatting
+   * (handles nested formatting and variable interpolation)
+   */
+  private parseRichTextContent(): ContentNode | null {
+    // Bold (can be nested in italic)
+    if (this.check(TokenType.BOLD_MARKER)) {
+      return this.parseBold();
+    }
+
+    // Italic (can be nested in bold)
+    if (this.check(TokenType.ITALIC_MARKER)) {
+      return this.parseItalic();
+    }
+
+    // Strikethrough
+    if (this.check(TokenType.STRIKETHROUGH_MARKER)) {
+      return this.parseStrikethrough();
+    }
+
+    // Inline code
+    if (this.check(TokenType.INLINE_CODE)) {
+      return this.parseInlineCode();
+    }
+
+    // Variable interpolation
+    if (this.check(TokenType.DOLLAR)) {
+      return this.parseVariableInterpolation();
+    }
+
+    // Expression interpolation
+    if (this.check(TokenType.EXPR_START)) {
+      return this.parseInterpolation();
+    }
+
+    // Plain text (single token at a time for rich text)
+    if (!this.isAtEnd() &&
+        !this.check(TokenType.NEWLINE) &&
+        !this.check(TokenType.BOLD_MARKER) &&
+        !this.check(TokenType.ITALIC_MARKER) &&
+        !this.check(TokenType.STRIKETHROUGH_MARKER) &&
+        !this.check(TokenType.INLINE_CODE)) {
+      const token = this.peek();
+      // Don't consume closing markers
+      if (token.type !== TokenType.PASSAGE_MARKER) {
+        this.advance();
+        return {
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  // ============================================================================
+  // Media Parsing
+  // ============================================================================
+
+  /**
+   * Parse markdown-style image: ![alt](src "title")
+   */
+  private parseMarkdownImage(): ImageNode {
+    const start = this.advance(); // consume ![
+
+    // Parse alt text until ]
+    const altParts: string[] = [];
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
+      altParts.push(this.advance().value);
+    }
+    const alt = altParts.join(' ').trim();
+
+    // Expect ]
+    if (!this.match(TokenType.RBRACKET)) {
+      this.addError('Expected ] after image alt text', {
+        code: 'WLS-PRS-003' as WLSErrorCode,
+        suggestion: 'Add ] to close the alt text',
+      });
+    }
+
+    // Expect (
+    if (!this.match(TokenType.LPAREN)) {
+      this.addError('Expected ( after image alt text', {
+        code: 'WLS-PRS-003' as WLSErrorCode,
+        suggestion: 'Add (src) after the alt text',
+      });
+      return {
+        type: 'image',
+        alt,
+        src: '',
+        attributes: {},
+        location: this.getLocation(start),
+      };
+    }
+
+    // Parse src until ) or "
+    let src = '';
+    let title: string | undefined;
+
+    while (!this.isAtEnd() && !this.check(TokenType.RPAREN)) {
+      if (this.check(TokenType.STRING)) {
+        // This is the title
+        title = this.advance().value.slice(1, -1); // Remove quotes
+      } else {
+        src += this.advance().value;
+      }
+    }
+
+    src = src.trim();
+
+    // Expect )
+    if (!this.match(TokenType.RPAREN)) {
+      this.addError('Expected ) after image src', {
+        code: 'WLS-PRS-003' as WLSErrorCode,
+        suggestion: 'Add ) to close the image',
+      });
+    }
+
+    // Parse optional attributes {width:100 class:foo}
+    const attributes = this.parseMediaAttributes();
+
+    return {
+      type: 'image',
+      alt,
+      src,
+      attributes: { ...attributes, ...(title ? { title } : {}) } as MediaAttributes,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse inline media directive: @image(src), @video(src), @embed(url)
+   */
+  private parseInlineMediaDirective(): ImageNode | VideoNode | EmbedNode {
+    const start = this.advance(); // consume directive
+    const directiveType = start.value.slice(1); // Remove @
+
+    // Expect (
+    if (!this.match(TokenType.LPAREN)) {
+      this.addError(`Expected ( after ${start.value}`, {
+        code: 'WLS-PRS-003' as WLSErrorCode,
+        suggestion: `Add (src) after ${start.value}`,
+      });
+    }
+
+    // Parse src until )
+    let src = '';
+    while (!this.isAtEnd() && !this.check(TokenType.RPAREN)) {
+      if (this.check(TokenType.STRING)) {
+        // STRING tokens already have quotes stripped by the lexer
+        src = this.advance().value;
+      } else {
+        src += this.advance().value;
+      }
+    }
+
+    src = src.trim();
+
+    // Expect )
+    if (!this.match(TokenType.RPAREN)) {
+      this.addError(`Expected ) after ${start.value} src`, {
+        code: 'WLS-PRS-003' as WLSErrorCode,
+        suggestion: 'Add ) to close the media element',
+      });
+    }
+
+    // Parse optional attributes
+    const attributes = this.parseMediaAttributes();
+
+    switch (directiveType) {
+      case 'image':
+        return {
+          type: 'image',
+          alt: '',
+          src,
+          attributes,
+          location: this.getLocation(start),
+        };
+      case 'video':
+        return {
+          type: 'video',
+          src,
+          attributes: attributes as VideoAttributes,
+          location: this.getLocation(start),
+        };
+      case 'embed':
+        return {
+          type: 'embed',
+          src,
+          attributes: attributes as EmbedAttributes,
+          location: this.getLocation(start),
+        };
+      default:
+        // Should never happen
+        return {
+          type: 'image',
+          alt: '',
+          src,
+          attributes,
+          location: this.getLocation(start),
+        };
+    }
+  }
+
+  /**
+   * Parse media attributes: {width:100 height:50 class:foo}
+   */
+  private parseMediaAttributes(): MediaAttributes {
+    const attributes: MediaAttributes = {};
+
+    if (!this.check(TokenType.LBRACE)) {
+      return attributes;
+    }
+
+    this.advance(); // consume {
+
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACE)) {
+      // Skip whitespace tokens
+      if (this.check(TokenType.TEXT) && this.peek().value.trim() === '') {
+        this.advance();
+        continue;
+      }
+
+      // Parse attribute name
+      if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.TEXT)) {
+        const name = this.advance().value.trim();
+
+        // Check for : separator
+        if (this.check(TokenType.COLON)) {
+          this.advance(); // consume :
+
+          // Parse attribute value
+          if (this.check(TokenType.NUMBER)) {
+            const value = this.advance().value;
+            if (name === 'width') attributes.width = value;
+            else if (name === 'height') attributes.height = value;
+          } else if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.TEXT)) {
+            const value = this.advance().value.trim();
+            if (name === 'class') attributes.class = value;
+            else if (name === 'align') {
+              if (value === 'left' || value === 'center' || value === 'right') {
+                attributes.align = value;
+              }
+            }
+          }
+        } else {
+          // Boolean attribute (just the name)
+          if (name === 'loop') (attributes as AudioAttributes).loop = true;
+          else if (name === 'autoplay') (attributes as AudioAttributes).autoplay = true;
+          else if (name === 'controls') (attributes as AudioAttributes).controls = true;
+          else if (name === 'muted') (attributes as AudioAttributes).muted = true;
+        }
+      } else {
+        // Skip unexpected tokens
+        this.advance();
+      }
+    }
+
+    // Consume }
+    this.match(TokenType.RBRACE);
+
+    return attributes;
   }
 
   // ============================================================================
@@ -2295,4 +3103,35 @@ export class Parser {
 export function parse(source: string): ParseResult {
   const parser = new Parser();
   return parser.parse(source);
+}
+
+/**
+ * Result of parsing a single passage
+ */
+export interface PassageParseResult {
+  content: ContentNode[];
+  errors: ParseError[];
+}
+
+/**
+ * Parse a passage content string (without passage marker)
+ * Useful for testing hook parsing
+ */
+export function parsePassage(content: string): PassageParseResult {
+  // Wrap content in a passage to parse it
+  const source = `:: TestPassage\n${content}`;
+  const parser = new Parser();
+  const result = parser.parse(source);
+
+  if (!result.ast || result.ast.passages.length === 0) {
+    return {
+      content: [],
+      errors: result.errors,
+    };
+  }
+
+  return {
+    content: result.ast.passages[0].content,
+    errors: result.errors,
+  };
 }

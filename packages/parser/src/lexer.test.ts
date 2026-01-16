@@ -603,6 +603,40 @@ describe('Lexer', () => {
       expect(result.errors.length).toBe(0);
       expect(hasToken(':: Start\nHello 世界!', TokenType.PASSAGE_MARKER, '::')).toBe(true);
     });
+
+    // Additional Unicode edge cases (M7 coverage)
+    it('should tokenize Korean text', () => {
+      const result = tokenize('안녕하세요');
+      expect(result.errors.length).toBe(0);
+      const textTokens = result.tokens.filter(t => t.type === TokenType.TEXT);
+      expect(textTokens.length).toBeGreaterThan(0);
+    });
+
+    it('should tokenize Arabic text', () => {
+      const result = tokenize('مرحبا');
+      expect(result.errors.length).toBe(0);
+      const textTokens = result.tokens.filter(t => t.type === TokenType.TEXT);
+      expect(textTokens.length).toBeGreaterThan(0);
+    });
+
+    it('should tokenize multiple emoji in sequence', () => {
+      const result = tokenize('Feeling 😊🌍🎉 today');
+      expect(result.errors.length).toBe(0);
+    });
+
+    it('should tokenize Unicode in variable interpolation context', () => {
+      const result = tokenize('$name says 你好');
+      expect(result.errors.length).toBe(0);
+      expect(hasToken('$name says 你好', TokenType.DOLLAR, '$')).toBe(true);
+    });
+
+    it('should tokenize Unicode in string literals', () => {
+      const result = tokenize('"Hello 世界"');
+      expect(result.errors.length).toBe(0);
+      const stringToken = result.tokens.find(t => t.type === TokenType.STRING);
+      expect(stringToken).toBeDefined();
+      expect(stringToken?.value).toBe('Hello 世界');
+    });
   });
 
   describe('collection keywords (WLS 1.0 - Gap 3)', () => {

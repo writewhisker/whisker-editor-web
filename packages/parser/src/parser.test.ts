@@ -330,6 +330,25 @@ Poor
       expect(alt.mode).toBe('once');
       expect(alt.options).toHaveLength(3);
     });
+
+    it('should parse once-only alternatives with single option', () => {
+      const result = parse(':: Start\n{!| only option }');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt.mode).toBe('once');
+      expect(alt.options).toHaveLength(1);
+    });
+
+    it('should parse once-only alternatives in sentence context', () => {
+      const result = parse(':: Start\nYou see {!| a dog | a cat | a bird } in the yard.');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt).toBeDefined();
+      expect(alt.mode).toBe('once');
+      expect(alt.options).toHaveLength(3);
+    });
   });
 
   describe('expressions', () => {

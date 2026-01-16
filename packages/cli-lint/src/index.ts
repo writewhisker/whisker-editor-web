@@ -2,10 +2,18 @@
  * Lint Library
  *
  * Programmatic API for linting Whisker story files.
+ * Integrates with WLS Chapter 14.1 error formatting.
  */
 
 import * as fs from 'fs';
-import { Parser } from '@writewhisker/parser';
+import {
+  Parser,
+  parseErrorToFormatted,
+  formatError,
+  formatErrors,
+  type FormattedError,
+  type OutputFormat,
+} from '@writewhisker/parser';
 
 /**
  * Lint issue severity
@@ -174,3 +182,61 @@ export async function hasErrors(filePath: string): Promise<boolean> {
   const result = await lintFile(filePath, { includeInfo: false, includeWarnings: false });
   return result.errorCount > 0;
 }
+
+/**
+ * Convert LintIssue to FormattedError for WLS Chapter 14.1 output
+ */
+export function lintIssueToFormatted(
+  issue: LintIssue,
+  content: string,
+  filePath?: string
+): FormattedError {
+  const lines = content.split('\n');
+  const line = issue.line ?? 1;
+  const column = issue.column ?? 1;
+  const contextCount = 2;
+
+  // Get context lines
+  const contextStart = Math.max(0, line - 1 - contextCount);
+  const context: string[] = [];
+  for (let i = contextStart; i < line - 1; i++) {
+    context.push(lines[i] || '');
+  }
+
+  const sourceLine = lines[line - 1] || '';
+
+  return {
+    code: issue.code || 'WLS-LINT-000',
+    message: issue.message,
+    line,
+    column,
+    context,
+    sourceLine,
+    caretPosition: column - 1,
+    caretLength: 1,
+    explanation: issue.message,
+    suggestion: issue.suggestion,
+    docUrl: `https://wls.whisker.dev/errors/${issue.code || 'WLS-LINT-000'}`,
+    severity: issue.severity,
+    filePath,
+  };
+}
+
+/**
+ * Format lint result using WLS Chapter 14.1 error format
+ */
+export function formatLintResult(
+  result: LintResult,
+  format: OutputFormat = 'text'
+): string {
+  const formattedErrors = result.issues.map(issue =>
+    lintIssueToFormatted(issue, result.content, result.file)
+  );
+
+  return formatErrors(formattedErrors, { format });
+}
+
+/**
+ * Re-export formatting utilities for CLI use
+ */
+export { formatError, formatErrors, type FormattedError, type OutputFormat };

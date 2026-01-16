@@ -1,12 +1,14 @@
 {
   "name": "@writewhisker/cli",
   "version": "0.1.0",
-  "description": "Main CLI tool for Whisker Editor",
+  "description": "Main CLI tool for Whisker Editor (WLS Chapter 14.4)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "whisker": "./dist/cli.js"
+    "whisker": "./dist/cli.js",
+    "whisker-fmt": "./dist/fmt.js",
+    "whisker-preview": "./dist/preview.js"
   },
   "exports": {
     ".": {
@@ -27,7 +29,8 @@
     "@writewhisker/cli-init": "workspace:*",
     "@writewhisker/cli-build": "workspace:*",
     "@writewhisker/cli-deploy": "workspace:*",
-    "@writewhisker/cli-migrate": "workspace:*"
+    "@writewhisker/cli-migrate": "workspace:*",
+    "@writewhisker/parser": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

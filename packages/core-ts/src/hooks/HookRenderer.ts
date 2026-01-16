@@ -236,15 +236,15 @@ export class HookRenderer {
   }
 
   private animateHide(element: HTMLElement, hook: Hook): void {
+    // Always set display:none immediately for state consistency
+    element.style.display = 'none'
+
     if (this.options.enableTransitions) {
       element.classList.add('whisker-hook--hiding')
 
       setTimeout(() => {
-        element.style.display = 'none'
         element.classList.remove('whisker-hook--hiding')
       }, 300)
-    } else {
-      element.style.display = 'none'
     }
   }
 

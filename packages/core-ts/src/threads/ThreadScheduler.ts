@@ -48,7 +48,7 @@ export class ThreadScheduler {
         operations.push({
           operation: operation as any,
           target,
-          content: opContent
+          content: opContent.trim()
         })
       }
     }

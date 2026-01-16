@@ -299,6 +299,7 @@ export interface ConditionalBranchNode extends BaseNode {
 export interface ChoiceNode extends BaseNode {
   type: 'choice';
   choiceType: 'once' | 'sticky';
+  label: string | null;
   condition: ExpressionNode | null;
   text: ContentNode[];
   target: string | null;

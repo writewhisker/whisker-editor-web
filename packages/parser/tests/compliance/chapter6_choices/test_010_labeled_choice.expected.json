@@ -1,0 +1,13 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "label": "door_red", "target": "RedRoom" },
+        { "label": "door_blue", "target": "BlueRoom" }
+      ]
+    },
+    { "name": "RedRoom" },
+    { "name": "BlueRoom" }
+  ]
+}

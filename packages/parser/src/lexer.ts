@@ -294,8 +294,13 @@ export class Lexer {
             }
             this.addToken(TokenType.HORIZONTAL_RULE, '***', start);
           } else if (this.peek() === ' ' || this.peek() === '\t') {
-            // * followed by space = unordered list marker
-            this.addToken(TokenType.LIST_MARKER_UNORDERED, '*', start);
+            // * followed by space - could be list marker OR sticky choice
+            // Look ahead past whitespace to check for choice indicators
+            if (this.isChoiceAhead()) {
+              this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
+            } else {
+              this.addToken(TokenType.LIST_MARKER_UNORDERED, '*', start);
+            }
           } else {
             this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
           }
@@ -523,6 +528,32 @@ export class Lexer {
       if (c !== ' ' && c !== '\t') return false;
     }
     return true;
+  }
+
+  /**
+   * Check if there's a choice indicator ahead (past whitespace)
+   * Used to distinguish between list markers and sticky choice markers
+   * Choice indicators: [ (text), { (condition), ( (label), -> (divert)
+   */
+  private isChoiceAhead(): boolean {
+    let lookAhead = this.pos;
+    // Skip whitespace
+    while (lookAhead < this.source.length) {
+      const c = this.source[lookAhead];
+      if (c !== ' ' && c !== '\t') break;
+      lookAhead++;
+    }
+    // Check for choice indicators
+    if (lookAhead < this.source.length) {
+      const c = this.source[lookAhead];
+      // [ = choice text, { = condition, ( = label
+      if (c === '[' || c === '{' || c === '(') return true;
+      // -> = divert without text
+      if (c === '-' && lookAhead + 1 < this.source.length && this.source[lookAhead + 1] === '>') {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

@@ -1775,6 +1775,15 @@ export class Parser {
     const text: ContentNode[] = [];
     let target: string | null = null;
     let action: ExpressionNode[] | null = null;
+    let label: string | null = null;
+
+    // Optional label (identifier) before condition or text
+    if (this.match(TokenType.LPAREN)) {
+      if (this.check(TokenType.IDENTIFIER)) {
+        label = this.advance().value;
+      }
+      this.expect(TokenType.RPAREN, 'Expected ")" after choice label');
+    }
 
     // Old-style condition { expr } before text (backward compatible)
     if (this.match(TokenType.LBRACE)) {
@@ -1896,6 +1905,7 @@ export class Parser {
     return {
       type: 'choice',
       choiceType,
+      label,
       condition,
       text,
       target,

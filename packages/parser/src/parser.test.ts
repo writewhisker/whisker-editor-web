@@ -209,6 +209,7 @@ Content`);
       const choiceNode: ChoiceNode = {
         type: 'choice',
         choiceType: 'once',
+        label: null,
         condition: null,
         text: [],
         target: 'test',
@@ -222,6 +223,7 @@ Content`);
       const choiceNode: ChoiceNode = {
         type: 'choice',
         choiceType: 'sticky',
+        label: null,
         condition: null,
         text: [],
         target: 'test',

@@ -138,7 +138,7 @@ describe('Coverage Expansion', () => {
         expect(isContent({ type: 'text', value: 'x', location: dummyLocation })).toBe(true);
         expect(isContent({ type: 'interpolation', expression: {} as any, isSimple: true, location: dummyLocation })).toBe(true);
         expect(isContent({ type: 'do_block', actions: [], location: dummyLocation })).toBe(true);
-        expect(isContent({ type: 'choice', choiceType: 'once', condition: null, text: [], target: null, action: null, location: dummyLocation })).toBe(true);
+        expect(isContent({ type: 'choice', choiceType: 'once', label: null, condition: null, text: [], target: null, action: null, location: dummyLocation })).toBe(true);
       });
 
       it('should return false for non-content nodes', () => {

@@ -1,0 +1,13 @@
+{
+  "passages": [
+    {
+      "name": "Start",
+      "choices": [
+        { "target": "Reward", "hasAction": true },
+        { "target": "Armory", "hasAction": true }
+      ]
+    },
+    { "name": "Reward" },
+    { "name": "Armory" }
+  ]
+}

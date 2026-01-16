@@ -2,6 +2,7 @@
  * Language Server
  *
  * Language Server Protocol implementation for WLS.
+ * Implements WLS Chapter 14.2 capabilities.
  */
 
 import {
@@ -20,13 +21,31 @@ import {
   Position,
   Diagnostic,
   DiagnosticSeverity,
+  CodeAction,
+  CodeActionKind,
+  CodeActionParams,
+  WorkspaceEdit,
+  TextEdit,
+  RenameParams,
+  DocumentSymbol,
+  DocumentSymbolParams,
+  SymbolKind,
+  FoldingRange,
+  FoldingRangeParams,
+  FoldingRangeKind,
 } from 'vscode-languageserver/node.js';
 
 import {
   TextDocument,
 } from 'vscode-languageserver-textdocument';
 
-import { Parser } from '@writewhisker/parser';
+import {
+  Parser,
+  parseErrorToFormatted,
+  generateSuggestion,
+  findSimilarName,
+  type FormattedError,
+} from '@writewhisker/parser';
 import type { StoryNode, PassageNode } from '@writewhisker/parser';
 import type { ValidationIssue, ValidationSeverity } from '@writewhisker/story-validation';
 
@@ -75,18 +94,27 @@ export class WhiskerLanguageServer {
         capabilities.workspace && !!capabilities.workspace.workspaceFolders
       );
 
+      // WLS Chapter 14.2.1 - Supported Capabilities
       const result: InitializeResult = {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Incremental,
           completionProvider: {
             resolveProvider: true,
-            triggerCharacters: ['$', '-', '>', '[', '.', ':'],
+            // WLS Chapter 14.2.2 - Completion Triggers
+            triggerCharacters: ['$', '-', '>', '[', '.', ':', '_'],
           },
           hoverProvider: true,
           definitionProvider: true,
           referencesProvider: true,
           documentSymbolProvider: true,
           foldingRangeProvider: true,
+          // WLS Chapter 14.2 - Additional capabilities
+          codeActionProvider: {
+            codeActionKinds: [CodeActionKind.QuickFix],
+          },
+          renameProvider: {
+            prepareProvider: true,
+          },
         },
       };
 
@@ -136,6 +164,30 @@ export class WhiskerLanguageServer {
     // References
     this.connection.onReferences((params) => {
       return this.getReferences(params.textDocument.uri, params.position);
+    });
+
+    // Code Actions (Quick Fixes) - WLS Chapter 14.2
+    this.connection.onCodeAction((params: CodeActionParams) => {
+      return this.getCodeActions(params);
+    });
+
+    // Document Symbols - WLS Chapter 14.2.1
+    this.connection.onDocumentSymbol((params: DocumentSymbolParams) => {
+      return this.getDocumentSymbols(params.textDocument.uri);
+    });
+
+    // Folding Ranges - WLS Chapter 14.2.1
+    this.connection.onFoldingRanges((params: FoldingRangeParams) => {
+      return this.getFoldingRanges(params.textDocument.uri);
+    });
+
+    // Rename - WLS Chapter 14.2.1
+    this.connection.onPrepareRename((params) => {
+      return this.prepareRename(params.textDocument.uri, params.position);
+    });
+
+    this.connection.onRenameRequest((params: RenameParams) => {
+      return this.doRename(params);
     });
   }
 
@@ -444,6 +496,297 @@ export class WhiskerLanguageServer {
       lines.push(`Initial value: ${JSON.stringify(variable.initialValue.value)}`);
     }
     return lines.join('\n');
+  }
+
+  // ==========================================================================
+  // Code Actions (Quick Fixes) - WLS Chapter 14.2
+  // ==========================================================================
+
+  /**
+   * Get code actions for diagnostics
+   */
+  private getCodeActions(params: CodeActionParams): CodeAction[] {
+    const document = this.documents.get(params.textDocument.uri);
+    if (!document) return [];
+
+    const cache = this.documentCache.get(params.textDocument.uri);
+    if (!cache?.story) return [];
+
+    const actions: CodeAction[] = [];
+
+    // Check each diagnostic for possible fixes
+    for (const diagnostic of params.context.diagnostics) {
+      const code = diagnostic.code?.toString() || '';
+
+      // Dead link - suggest similar passage names
+      if (code === 'WLS-LNK-001' || diagnostic.message.includes('non-existent passage')) {
+        const passageNames = cache.story.passages.map(p => p.name);
+        const match = diagnostic.message.match(/\"([^\"]+)\"/);
+        if (match) {
+          const targetName = match[1];
+          const similar = findSimilarName(targetName, passageNames);
+          if (similar) {
+            actions.push({
+              title: `Change to "${similar}"`,
+              kind: CodeActionKind.QuickFix,
+              diagnostics: [diagnostic],
+              edit: {
+                changes: {
+                  [params.textDocument.uri]: [{
+                    range: diagnostic.range,
+                    newText: similar,
+                  }],
+                },
+              },
+            });
+          }
+        }
+      }
+
+      // Unclosed conditional - add closing brace
+      if (code === 'WLS-SYN-005' || diagnostic.message.includes('closing brace')) {
+        const line = diagnostic.range.start.line;
+        actions.push({
+          title: 'Add {/} to close conditional',
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: {
+            changes: {
+              [params.textDocument.uri]: [{
+                range: Range.create(
+                  Position.create(line, 0),
+                  Position.create(line, 0)
+                ),
+                newText: '{/}\n',
+              }],
+            },
+          },
+        });
+      }
+
+      // Unclosed formatting - add closing marker
+      if (code === 'WLS-PRS-006' || diagnostic.message.includes('Unclosed')) {
+        const match = diagnostic.message.match(/expected\s+(\S+)/i);
+        if (match) {
+          const marker = match[1];
+          const endPos = diagnostic.range.end;
+          actions.push({
+            title: `Add closing ${marker}`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: {
+              changes: {
+                [params.textDocument.uri]: [{
+                  range: Range.create(endPos, endPos),
+                  newText: marker,
+                }],
+              },
+            },
+          });
+        }
+      }
+    }
+
+    return actions;
+  }
+
+  // ==========================================================================
+  // Document Symbols - WLS Chapter 14.2.1
+  // ==========================================================================
+
+  /**
+   * Get document symbols (outline)
+   */
+  private getDocumentSymbols(uri: string): DocumentSymbol[] {
+    const cache = this.documentCache.get(uri);
+    if (!cache?.story) return [];
+
+    const symbols: DocumentSymbol[] = [];
+
+    // Add passages
+    for (const passage of cache.story.passages) {
+      const passageSymbol: DocumentSymbol = {
+        name: passage.name,
+        kind: SymbolKind.Class,
+        range: Range.create(
+          Position.create(passage.location.start.line - 1, passage.location.start.column - 1),
+          Position.create(passage.location.end.line - 1, passage.location.end.column - 1)
+        ),
+        selectionRange: Range.create(
+          Position.create(passage.location.start.line - 1, passage.location.start.column - 1),
+          Position.create(passage.location.start.line - 1, passage.location.start.column - 1 + passage.name.length + 3)
+        ),
+        children: [],
+      };
+
+      // Add choices as children
+      for (const node of passage.content) {
+        if (node.type === 'choice') {
+          const choice = node as any;
+          passageSymbol.children!.push({
+            name: choice.text || `-> ${choice.target}`,
+            kind: SymbolKind.Method,
+            range: Range.create(
+              Position.create(node.location.start.line - 1, node.location.start.column - 1),
+              Position.create(node.location.end.line - 1, node.location.end.column - 1)
+            ),
+            selectionRange: Range.create(
+              Position.create(node.location.start.line - 1, node.location.start.column - 1),
+              Position.create(node.location.start.line - 1, node.location.start.column - 1 + 10)
+            ),
+          });
+        }
+      }
+
+      symbols.push(passageSymbol);
+    }
+
+    // Add variables
+    for (const variable of cache.story.variables) {
+      symbols.push({
+        name: `$${variable.name}`,
+        kind: SymbolKind.Variable,
+        range: Range.create(
+          Position.create((variable as any).location?.start?.line - 1 || 0, 0),
+          Position.create((variable as any).location?.end?.line - 1 || 0, 100)
+        ),
+        selectionRange: Range.create(
+          Position.create((variable as any).location?.start?.line - 1 || 0, 0),
+          Position.create((variable as any).location?.start?.line - 1 || 0, variable.name.length + 1)
+        ),
+      });
+    }
+
+    return symbols;
+  }
+
+  // ==========================================================================
+  // Folding Ranges - WLS Chapter 14.2.1
+  // ==========================================================================
+
+  /**
+   * Get folding ranges
+   */
+  private getFoldingRanges(uri: string): FoldingRange[] {
+    const cache = this.documentCache.get(uri);
+    if (!cache?.story) return [];
+
+    const ranges: FoldingRange[] = [];
+
+    // Fold passages
+    for (const passage of cache.story.passages) {
+      ranges.push({
+        startLine: passage.location.start.line - 1,
+        endLine: passage.location.end.line - 1,
+        kind: FoldingRangeKind.Region,
+      });
+    }
+
+    // Fold conditionals (would need AST traversal)
+    // For now, just fold passages
+
+    return ranges;
+  }
+
+  // ==========================================================================
+  // Rename - WLS Chapter 14.2.1
+  // ==========================================================================
+
+  /**
+   * Prepare rename - validate the symbol can be renamed
+   */
+  private prepareRename(uri: string, position: Position): Range | null {
+    const document = this.documents.get(uri);
+    if (!document) return null;
+
+    const word = this.getWordAtPosition(document, position);
+    if (!word) return null;
+
+    const cache = this.documentCache.get(uri);
+    if (!cache?.story) return null;
+
+    // Check if it's a passage name
+    const passage = cache.story.passages.find(p => p.name === word);
+    if (passage) {
+      const text = document.getText();
+      const lines = text.split('\n');
+      const lineText = lines[position.line];
+      const wordStart = lineText.indexOf(word);
+      if (wordStart >= 0) {
+        return Range.create(
+          Position.create(position.line, wordStart),
+          Position.create(position.line, wordStart + word.length)
+        );
+      }
+    }
+
+    // Check if it's a variable
+    if (word.startsWith('$')) {
+      const varName = word.substring(1);
+      const variable = cache.story.variables.find(v => v.name === varName);
+      if (variable) {
+        const text = document.getText();
+        const lines = text.split('\n');
+        const lineText = lines[position.line];
+        const wordStart = lineText.indexOf(word);
+        if (wordStart >= 0) {
+          return Range.create(
+            Position.create(position.line, wordStart),
+            Position.create(position.line, wordStart + word.length)
+          );
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Perform rename
+   */
+  private doRename(params: RenameParams): WorkspaceEdit | null {
+    const document = this.documents.get(params.textDocument.uri);
+    if (!document) return null;
+
+    const word = this.getWordAtPosition(document, params.position);
+    if (!word) return null;
+
+    const cache = this.documentCache.get(params.textDocument.uri);
+    if (!cache?.story) return null;
+
+    const text = document.getText();
+    const lines = text.split('\n');
+    const edits: TextEdit[] = [];
+
+    // Find all occurrences and create edits
+    const isVariable = word.startsWith('$');
+    const searchWord = isVariable ? word : word;
+    const newName = isVariable && !params.newName.startsWith('$')
+      ? `$${params.newName}`
+      : params.newName;
+
+    const regex = new RegExp(`\\b${searchWord.replace('$', '\\$')}\\b`, 'g');
+
+    for (let i = 0; i < lines.length; i++) {
+      let match;
+      while ((match = regex.exec(lines[i])) !== null) {
+        edits.push({
+          range: Range.create(
+            Position.create(i, match.index),
+            Position.create(i, match.index + searchWord.length)
+          ),
+          newText: newName,
+        });
+      }
+    }
+
+    if (edits.length === 0) return null;
+
+    return {
+      changes: {
+        [params.textDocument.uri]: edits,
+      },
+    };
   }
 }
 

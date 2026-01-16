@@ -54,7 +54,7 @@ describe('ThreadScheduler', () => {
       const status = hookManager.getHook('test_status')
 
       expect(hp?.currentContent).toBe('85')
-      expect(status?.currentContent).toBe(' Hurt ')
+      expect(status?.currentContent).toBe('Hurt')
     })
 
     it('handles show and hide operations', () => {

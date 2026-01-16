@@ -61,6 +61,13 @@ export class ListValue {
     return this._name;
   }
 
+  /**
+   * Get the list name (method form for compatibility)
+   */
+  getName(): string {
+    return this._name;
+  }
+
   // ==========================================================================
   // State Manipulation
   // ==========================================================================
@@ -335,10 +342,24 @@ export class ListValue {
   }
 
   /**
+   * Get all active states as array (alias for compatibility with ListStateMachine)
+   */
+  getActiveStates(): string[] {
+    return this.getActiveValues();
+  }
+
+  /**
    * Get all possible states as array
    */
   getPossibleValues(): string[] {
     return Array.from(this._possibleValues);
+  }
+
+  /**
+   * Get all valid states as array (alias for compatibility with ListStateMachine)
+   */
+  getValidStates(): string[] {
+    return this.getPossibleValues();
   }
 
   /**

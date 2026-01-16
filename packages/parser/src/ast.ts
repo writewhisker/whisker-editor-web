@@ -69,13 +69,14 @@ export interface MetadataNode extends BaseNode {
 }
 
 /**
- * Variable declaration in @vars block or inline
+ * Variable declaration in @vars block, inline, or top-level VAR/CONST
  */
 export interface VariableDeclarationNode extends BaseNode {
   type: 'variable_declaration';
   name: string;
   scope: 'story' | 'temp';
   initialValue: ExpressionNode | null;
+  isConst?: boolean;  // true for CONST declarations
 }
 
 // ============================================================================

@@ -307,6 +307,14 @@ export class Parser {
         // INCLUDE declaration
         const include = this.parseIncludeDeclaration();
         if (include) includes.push(include);
+      } else if (this.check(TokenType.CONST)) {
+        // CONST declaration
+        const constVar = this.parseConstDeclaration();
+        if (constVar) variables.push(constVar);
+      } else if (this.check(TokenType.VAR)) {
+        // VAR declaration (top-level)
+        const varDecl = this.parseVarDeclaration();
+        if (varDecl) variables.push(varDecl);
       } else if (this.check(TokenType.FUNCTION)) {
         // FUNCTION declaration
         const func = this.parseFunctionDeclaration();
@@ -1222,29 +1230,123 @@ export class Parser {
   // Module Declarations   // ============================================================================
 
   /**
-   * Parse an INCLUDE declaration: INCLUDE "path/to/file.ws"
+   * Parse an INCLUDE declaration: INCLUDE "path/to/file.ws" or INCLUDE path/to/file.ws
    */
   private parseIncludeDeclaration(): IncludeDeclarationNode | null {
     const start = this.advance(); // consume INCLUDE
     this.skipWhitespaceOnLine();
 
-    // Parse path string
-    if (!this.check(TokenType.STRING)) {
-      this.addError('Expected path string after INCLUDE', {
-        code: 'WLS-MOD-001' as WLSErrorCode,
-        suggestion: 'Provide a quoted path: INCLUDE "path/to/file.ws"',
-      });
-      this.skipToNextLine();
-      return null;
-    }
+    let path: string;
 
-    const path = this.advance().value;
+    // Parse path - can be quoted string or unquoted path
+    if (this.check(TokenType.STRING)) {
+      path = this.advance().value;
+    } else {
+      // Collect unquoted path (identifier, dots, slashes until newline)
+      let pathParts: string[] = [];
+      while (!this.isAtEnd() && !this.check(TokenType.NEWLINE) && !this.check(TokenType.EOF)) {
+        const token = this.advance();
+        pathParts.push(token.value);
+      }
+      path = pathParts.join('').trim();
+
+      if (!path) {
+        this.addError('Expected path after INCLUDE', {
+          code: 'WLS-MOD-001' as WLSErrorCode,
+          suggestion: 'Provide a path: INCLUDE "path/to/file.ws" or INCLUDE path/to/file.ws',
+        });
+        return null;
+      }
+    }
 
     this.skipToNextLine();
 
     return {
       type: 'include_declaration',
       path,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a CONST declaration: CONST name = value
+   */
+  private parseConstDeclaration(): VariableDeclarationNode | null {
+    const start = this.advance(); // consume CONST
+    this.skipWhitespaceOnLine();
+
+    // Parse variable name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected identifier after CONST', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+    this.skipWhitespaceOnLine();
+
+    // Expect = for assignment
+    if (!this.match(TokenType.ASSIGN)) {
+      this.addError('Expected "=" after CONST name', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+        suggestion: 'CONST declarations require an initial value: CONST NAME = value',
+      });
+      this.skipToNextLine();
+      return null;
+    }
+    this.skipWhitespaceOnLine();
+
+    // Parse initial value
+    const initialValue = this.parseExpression();
+
+    this.skipToNextLine();
+
+    return {
+      type: 'variable_declaration',
+      name,
+      scope: 'story',
+      initialValue,
+      isConst: true,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse a VAR declaration: VAR name = value
+   */
+  private parseVarDeclaration(): VariableDeclarationNode | null {
+    const start = this.advance(); // consume VAR
+    this.skipWhitespaceOnLine();
+
+    // Parse variable name
+    if (!this.check(TokenType.IDENTIFIER)) {
+      this.addError('Expected identifier after VAR', {
+        code: WLS_ERROR_CODES.EXPECTED_EXPRESSION,
+      });
+      this.skipToNextLine();
+      return null;
+    }
+
+    const name = this.advance().value;
+    this.skipWhitespaceOnLine();
+
+    let initialValue: ExpressionNode | null = null;
+
+    // Optional = for assignment
+    if (this.match(TokenType.ASSIGN)) {
+      this.skipWhitespaceOnLine();
+      initialValue = this.parseExpression();
+    }
+
+    this.skipToNextLine();
+
+    return {
+      type: 'variable_declaration',
+      name,
+      scope: 'story',
+      initialValue,
       location: this.getLocation(start),
     };
   }
@@ -1680,6 +1782,11 @@ export class Parser {
     // Rich text: Lists
     if (this.check(TokenType.LIST_MARKER_UNORDERED) || this.check(TokenType.LIST_MARKER_ORDERED)) {
       return this.parseList();
+    }
+
+    // Rich text: Bold+Italic (*** or ** followed by *)
+    if (this.check(TokenType.BOLD_MARKER) && this.peekNext()?.type === TokenType.ITALIC_MARKER) {
+      return this.parseBoldItalic();
     }
 
     // Rich text: Bold
@@ -2632,6 +2739,51 @@ export class Parser {
     return {
       type: 'formatted_text',
       format: 'italic',
+      content,
+      location: this.getLocation(start),
+    };
+  }
+
+  /**
+   * Parse bold+italic text (***text***)
+   * Handles the combined marker sequence: ** * content ** *
+   */
+  private parseBoldItalic(): FormattedTextNode {
+    const start = this.advance(); // consume **
+    this.advance(); // consume *
+    const content: ContentNode[] = [];
+
+    // Parse content until closing ** (which will be followed by *)
+    while (!this.isAtEnd() &&
+           !this.check(TokenType.NEWLINE) &&
+           !(this.check(TokenType.BOLD_MARKER) && this.peekNext()?.type === TokenType.ITALIC_MARKER)) {
+      // Also stop if we just see ** (might be malformed)
+      if (this.check(TokenType.BOLD_MARKER)) break;
+
+      const node = this.parseRichTextContent();
+      if (node) {
+        content.push(node);
+      } else {
+        break;
+      }
+    }
+
+    // Expect closing ** *
+    if (this.check(TokenType.BOLD_MARKER)) {
+      this.advance(); // consume **
+      if (this.check(TokenType.ITALIC_MARKER)) {
+        this.advance(); // consume *
+      }
+    } else {
+      this.addError('Unclosed bold+italic text - expected ***', {
+        code: 'WLS-PRS-006' as WLSErrorCode,
+        suggestion: 'Add closing *** to complete bold+italic text',
+      });
+    }
+
+    return {
+      type: 'formatted_text',
+      format: 'bold_italic',
       content,
       location: this.getLocation(start),
     };

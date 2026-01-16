@@ -107,6 +107,8 @@ export enum TokenType {
 
   // Module keywords
   INCLUDE = 'INCLUDE',                         // INCLUDE "path"
+  CONST = 'CONST',                             // CONST name = value
+  VAR = 'VAR',                                 // VAR name = value (top-level)
   FUNCTION = 'FUNCTION',                       // FUNCTION name(params)
   RETURN = 'RETURN',                           // RETURN value
   END = 'END',                                 // END (function/namespace)
@@ -213,6 +215,8 @@ export const KEYWORDS: Record<string, TokenType> = {
   'MAP': TokenType.MAP,
   // Module keywords
   'INCLUDE': TokenType.INCLUDE,
+  'CONST': TokenType.CONST,
+  'VAR': TokenType.VAR,
   'FUNCTION': TokenType.FUNCTION,
   'RETURN': TokenType.RETURN,
   'END': TokenType.END,

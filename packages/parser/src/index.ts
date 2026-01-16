@@ -146,3 +146,24 @@ export {
 
 // Error codes
 export { WLS_ERROR_CODES, type WLSErrorCode } from './ast';
+
+// Error formatting (WLS Chapter 14.1)
+export {
+  formatError,
+  formatErrors,
+  formatErrorText,
+  formatErrorJson,
+  formatErrorsSarif,
+  parseErrorToFormatted,
+  parseErrorsToFormatted,
+  generateSuggestion,
+  findSimilarName,
+  levenshteinDistance,
+  createFormattedError,
+  type FormattedError,
+  type Severity,
+  type OutputFormat,
+  type FormatOptions,
+  type SarifResult,
+  type SarifOutput,
+} from './error-formatter';

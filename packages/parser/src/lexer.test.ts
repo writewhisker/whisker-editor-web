@@ -46,7 +46,8 @@ describe('Lexer', () => {
     });
 
     it('should differentiate * at line start vs in expression', () => {
-      const result = tokenize('* choice\n2 * 3');
+      // In WLS, * at line start is choice marker; * in braces is multiply
+      const result = tokenize('* choice\n{2 * 3}');
       const types = result.tokens.map(t => t.type);
       expect(types).toContain(TokenType.STICKY_CHOICE_MARKER);
       expect(types).toContain(TokenType.STAR);
@@ -123,7 +124,8 @@ describe('Lexer', () => {
       });
 
       it('should tokenize multiply', () => {
-        expect(hasToken('2 * 3', TokenType.STAR)).toBe(true);
+        // In WLS, math expressions are inside braces
+        expect(hasToken('{2 * 3}', TokenType.STAR)).toBe(true);
       });
 
       it('should tokenize divide', () => {

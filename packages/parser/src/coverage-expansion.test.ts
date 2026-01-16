@@ -222,14 +222,16 @@ describe('Coverage Expansion', () => {
 
   describe('Parser edge cases', () => {
     describe('INCLUDE declaration', () => {
-      it('should emit error for INCLUDE without path string', () => {
+      it('should parse INCLUDE with unquoted path', () => {
+        // WLS allows unquoted paths for INCLUDE
         const result = parse(`INCLUDE identifier
 :: Start
 Content`);
-        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.ast?.includes).toHaveLength(1);
+        expect(result.ast?.includes?.[0].path).toBe('identifier');
       });
 
-      it('should parse valid INCLUDE declaration', () => {
+      it('should parse valid INCLUDE declaration with quoted path', () => {
         const result = parse(`INCLUDE "library.ws"
 :: Start
 Content`);

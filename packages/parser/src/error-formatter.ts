@@ -471,7 +471,7 @@ function extractBriefMessage(message: string): string {
 /**
  * Generate explanation from message and error code
  */
-function generateExplanation(message: string, code: string): string {
+function generateExplanation(message: string, _code: string): string {
   // For now, use the message as explanation
   // In the future, this could look up detailed explanations by code
   return message;

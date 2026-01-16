@@ -271,19 +271,8 @@ export class Lexer {
             this.scanLineComment(start);
           }
         } else if (this.isAtLineStart(start) && !this.isInExpressionContext()) {
-          // - at line start in content
-          if (this.peek() === ' ' || this.peek() === '\t') {
-            // - followed by space: could be list marker OR gather point
-            // If there was a choice marker since the last passage, this is a gather
-            if (this.hasRecentChoice()) {
-              this.addToken(TokenType.GATHER, '-', start);
-            } else {
-              this.addToken(TokenType.LIST_MARKER_UNORDERED, '-', start);
-            }
-          } else {
-            // - without space = Gather point
-            this.addToken(TokenType.GATHER, '-', start);
-          }
+          // - at line start in content = gather point (WLS)
+          this.addToken(TokenType.GATHER, '-', start);
         } else if (this.isGatherContext(start)) {
           // - at line start (similar to choice markers) is a gather point
           this.addToken(TokenType.GATHER, '-', start);
@@ -295,7 +284,7 @@ export class Lexer {
         if (this.match('=')) {
           this.addToken(TokenType.STAR_ASSIGN, '*=', start);
         } else if (this.isAtLineStart(start)) {
-          // At line start: could be choice marker, list marker, or horizontal rule
+          // At line start: could be choice marker or horizontal rule
           if (this.peek() === '*' && this.source[this.pos + 1] === '*') {
             // *** = horizontal rule
             this.advance(); // second *
@@ -304,15 +293,8 @@ export class Lexer {
               this.advance();
             }
             this.addToken(TokenType.HORIZONTAL_RULE, '***', start);
-          } else if (this.peek() === ' ' || this.peek() === '\t') {
-            // * followed by space - could be list marker OR sticky choice
-            // Look ahead past whitespace to check for choice indicators
-            if (this.isChoiceAhead()) {
-              this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
-            } else {
-              this.addToken(TokenType.LIST_MARKER_UNORDERED, '*', start);
-            }
           } else {
+            // * at line start = sticky choice marker (WLS)
             this.addToken(TokenType.STICKY_CHOICE_MARKER, '*', start);
           }
         } else if (this.peek() === '*') {
@@ -542,32 +524,6 @@ export class Lexer {
   }
 
   /**
-   * Check if there's a choice indicator ahead (past whitespace)
-   * Used to distinguish between list markers and sticky choice markers
-   * Choice indicators: [ (text), { (condition), ( (label), -> (divert)
-   */
-  private isChoiceAhead(): boolean {
-    let lookAhead = this.pos;
-    // Skip whitespace
-    while (lookAhead < this.source.length) {
-      const c = this.source[lookAhead];
-      if (c !== ' ' && c !== '\t') break;
-      lookAhead++;
-    }
-    // Check for choice indicators
-    if (lookAhead < this.source.length) {
-      const c = this.source[lookAhead];
-      // [ = choice text, { = condition, ( = label
-      if (c === '[' || c === '{' || c === '(') return true;
-      // -> = divert without text
-      if (c === '-' && lookAhead + 1 < this.source.length && this.source[lookAhead + 1] === '>') {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Check if we're in a gather context (for gather point markers)
    * Gathers can appear at line start or after another choice/gather marker
    */
@@ -580,24 +536,6 @@ export class Lexer {
     return prevType === TokenType.ONCE_CHOICE_MARKER ||
            prevType === TokenType.STICKY_CHOICE_MARKER ||
            prevType === TokenType.GATHER;
-  }
-
-  /**
-   * Check if there's been a choice marker since the last passage marker
-   * Used to distinguish gather points from list markers
-   */
-  private hasRecentChoice(): boolean {
-    for (let i = this.tokens.length - 1; i >= 0; i--) {
-      const token = this.tokens[i];
-      if (token.type === TokenType.PASSAGE_MARKER || token.type === TokenType.THREAD_MARKER) {
-        return false; // Hit passage boundary, no choices found
-      }
-      if (token.type === TokenType.ONCE_CHOICE_MARKER ||
-          token.type === TokenType.STICKY_CHOICE_MARKER) {
-        return true; // Found a choice marker
-      }
-    }
-    return false;
   }
 
   /**

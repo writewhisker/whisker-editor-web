@@ -1546,11 +1546,21 @@ export class Parser {
       qualifiedName = this.getNamespacePrefix() + name;
     }
 
-    // Parse optional tags [tag1, tag2]
+    // Parse optional tags [tag1, tag2] or [key: value]
     if (this.match(TokenType.LBRACKET)) {
       while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
         if (this.check(TokenType.IDENTIFIER)) {
-          tags.push(this.advance().value);
+          let tag = this.advance().value;
+          // Check for key: value syntax
+          if (this.match(TokenType.COLON)) {
+            if (this.check(TokenType.IDENTIFIER)) {
+              tag += ': ' + this.advance().value;
+            }
+          }
+          tags.push(tag);
+        } else {
+          // Skip unknown tokens to avoid infinite loop
+          this.advance();
         }
         this.match(TokenType.COMMA);
       }
@@ -1616,11 +1626,21 @@ export class Parser {
       name = 'unnamed_thread';
     }
 
-    // Parse optional tags [tag1, tag2]
+    // Parse optional tags [tag1, tag2] or [key: value]
     if (this.match(TokenType.LBRACKET)) {
       while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
         if (this.check(TokenType.IDENTIFIER)) {
-          tags.push(this.advance().value);
+          let tag = this.advance().value;
+          // Check for key: value syntax
+          if (this.match(TokenType.COLON)) {
+            if (this.check(TokenType.IDENTIFIER)) {
+              tag += ': ' + this.advance().value;
+            }
+          }
+          tags.push(tag);
+        } else {
+          // Skip unknown tokens to avoid infinite loop
+          this.advance();
         }
         this.match(TokenType.COMMA);
       }
@@ -2340,6 +2360,54 @@ export class Parser {
       this.advance();
       this.expect(TokenType.PIPE, 'Expected "|" after "!"');
       return this.parseAlternatives(start, 'once');
+    }
+
+    // Temp variable declaration: {temp _varName = value}
+    if (this.check(TokenType.TEMP)) {
+      this.advance(); // consume 'temp'
+
+      // Get variable name (should be _prefixed identifier or underscore + identifier)
+      let varName = '';
+      if (this.check(TokenType.UNDERSCORE)) {
+        this.advance(); // consume _
+        if (this.check(TokenType.IDENTIFIER)) {
+          varName = this.advance().value;
+        }
+      } else if (this.check(TokenType.IDENTIFIER)) {
+        varName = this.advance().value;
+      }
+
+      if (!varName) {
+        this.addError('Expected variable name after temp');
+        this.skipToNextLine();
+        return { type: 'text', value: '', location: this.getLocation(start) } as TextNode;
+      }
+
+      // Expect = for assignment
+      this.expect(TokenType.ASSIGN, 'Expected "=" after temp variable name');
+
+      // Parse value expression
+      const value = this.parseExpression();
+
+      this.expect(TokenType.RBRACE, 'Expected "}" after temp declaration');
+
+      // Return as do_block with assignment
+      return {
+        type: 'do_block',
+        actions: [{
+          type: 'assignment_expression',
+          operator: '=',
+          target: {
+            type: 'variable',
+            name: varName,
+            scope: 'temp',
+            location: this.getLocation(start),
+          },
+          value,
+          location: this.getLocation(start),
+        }],
+        location: { start: start.location.start, end: this.tokens[this.pos - 1].location.end },
+      } as DoBlockNode;
     }
 
     // Do block (action/script): {do expr; expr2; ...}

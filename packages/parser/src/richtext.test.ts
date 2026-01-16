@@ -288,4 +288,86 @@ describe('Rich Text Parsing', () => {
       expect(node).not.toBeNull();
     });
   });
+
+  describe('Bold Italic', () => {
+    it('should parse ***text*** as bold italic', () => {
+      const node = getFirstContent('***bold italic***');
+      expect(node).not.toBeNull();
+      // Could be bold containing italic or italic containing bold
+      expect(node.type).toBe('formatted_text');
+    });
+  });
+
+  describe('Escaping', () => {
+    it('should escape asterisks with backslash', () => {
+      const result = parse(':: Test\nSome text \\*not italic\\*');
+      expect(result.ast).not.toBeNull();
+      const content = result.ast!.passages[0].content;
+      // Should not have italic formatting
+      const hasItalic = content.some(n =>
+        n.type === 'formatted_text' && (n as FormattedTextNode).format === 'italic'
+      );
+      expect(hasItalic).toBe(false);
+    });
+
+    it('should escape double asterisks', () => {
+      const result = parse(':: Test\nSome text \\*\\*not bold\\*\\*');
+      expect(result.ast).not.toBeNull();
+      const content = result.ast!.passages[0].content;
+      // Should not have bold formatting
+      const hasBold = content.some(n =>
+        n.type === 'formatted_text' && (n as FormattedTextNode).format === 'bold'
+      );
+      expect(hasBold).toBe(false);
+    });
+
+    it('should escape backticks', () => {
+      const result = parse(':: Test\nUse \\`this\\` for code');
+      expect(result.ast).not.toBeNull();
+      // Should render the backticks literally, not as code
+    });
+  });
+
+  describe('Nested Lists', () => {
+    it('should parse nested unordered list', () => {
+      const source = `- Item 1
+  - Nested item
+- Item 2`;
+      const result = parse(`:: Test\n${source}`);
+      expect(result.ast).not.toBeNull();
+      const content = result.ast!.passages[0].content;
+      const list = content.find(n => n.type === 'list') as ListNode;
+      expect(list).not.toBeUndefined();
+    });
+
+    it('should parse mixed list nesting', () => {
+      const source = `1. First
+   - Sub bullet
+2. Second`;
+      const result = parse(`:: Test\n${source}`);
+      expect(result.ast).not.toBeNull();
+    });
+  });
+
+  describe('Error Handling - PRS Codes', () => {
+    it('should report unclosed bold (PRS-006)', () => {
+      const result = parse(':: Test\n**unclosed bold');
+      expect(result.errors.length).toBeGreaterThan(0);
+      // Should contain error about unclosed formatting
+      expect(result.errors[0].message).toContain('Unclosed');
+    });
+
+    it('should report unclosed italic (PRS-006)', () => {
+      // Note: * at line start is a sticky choice marker, so use prefix text
+      const result = parse(':: Test\nSome text *unclosed italic');
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0].message).toContain('Unclosed');
+    });
+
+    it('should report unclosed strikethrough (PRS-006)', () => {
+      const result = parse(':: Test\n~~unclosed');
+      expect(result.errors.length).toBeGreaterThan(0);
+      expect(result.errors[0].message).toContain('Unclosed');
+    });
+  });
 });

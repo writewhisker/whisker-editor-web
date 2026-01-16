@@ -80,6 +80,10 @@ describe('WLS Compliance - Chapter 5: Control Flow', () => {
   if (fs.existsSync(chapterDir)) {
     const testFiles = fs.readdirSync(chapterDir).filter(f => f.endsWith('.ws'));
 
+    if (testFiles.length === 0) {
+      it.skip('no tests yet', () => {});
+    }
+
     for (const testFile of testFiles) {
       const testName = testFile.replace('.ws', '').replace(/_/g, ' ');
       const inputPath = path.join(chapterDir, testFile);
@@ -95,6 +99,8 @@ describe('WLS Compliance - Chapter 5: Control Flow', () => {
         expect(result.passed).toBe(true);
       });
     }
+  } else {
+    it.skip('chapter5_control_flow directory not found', () => {});
   }
 });
 

@@ -169,25 +169,26 @@ describe('Rich Text Parsing', () => {
 
   describe('Lists', () => {
     describe('Unordered Lists', () => {
-      it('should parse - item as unordered list', () => {
+      it('should parse - item as gather point in WLS (not list)', () => {
+        // In WLS, - at line start is a gather point marker, not a list marker
         const source = '- First item';
         const result = parse(`:: Test\n${source}`);
         expect(result.ast).not.toBeNull();
         const content = result.ast!.passages[0].content;
-        const list = content.find(n => n.type === 'list') as ListNode;
-        expect(list).not.toBeUndefined();
-        expect(list.ordered).toBe(false);
-        expect(list.items).toHaveLength(1);
+        // Should be parsed as a gather point, not a list
+        const gather = content.find(n => n.type === 'gather');
+        expect(gather).not.toBeUndefined();
       });
 
-      it('should parse * item as unordered list', () => {
+      it('should parse * item as sticky choice in WLS (not list)', () => {
+        // In WLS, * at line start is a sticky choice marker, not a list marker
         const source = '* Star item';
         const result = parse(`:: Test\n${source}`);
         expect(result.ast).not.toBeNull();
         const content = result.ast!.passages[0].content;
-        const list = content.find(n => n.type === 'list') as ListNode;
-        expect(list).not.toBeUndefined();
-        expect(list.ordered).toBe(false);
+        // Should be parsed as a choice, not a list
+        const choice = content.find(n => n.type === 'choice');
+        expect(choice).not.toBeUndefined();
       });
     });
 
@@ -329,15 +330,17 @@ describe('Rich Text Parsing', () => {
   });
 
   describe('Nested Lists', () => {
-    it('should parse nested unordered list', () => {
+    it('should parse - items as gather points in WLS (not nested list)', () => {
+      // In WLS, - at line start is a gather point marker, not a list marker
       const source = `- Item 1
   - Nested item
 - Item 2`;
       const result = parse(`:: Test\n${source}`);
       expect(result.ast).not.toBeNull();
       const content = result.ast!.passages[0].content;
-      const list = content.find(n => n.type === 'list') as ListNode;
-      expect(list).not.toBeUndefined();
+      // Should be parsed as gather points, not list
+      const gather = content.find(n => n.type === 'gather');
+      expect(gather).not.toBeUndefined();
     });
 
     it('should parse mixed list nesting', () => {

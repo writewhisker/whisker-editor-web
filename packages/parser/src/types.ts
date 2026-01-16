@@ -95,6 +95,7 @@ export enum TokenType {
   ELSE = 'ELSE',                               // else
   ELIF = 'ELIF',                               // elif
   DO = 'DO',                                   // do (in choice actions)
+  TEMP = 'TEMP',                               // temp (temporary variable declaration)
 
   // Thread keywords
   AWAIT = 'AWAIT',                             // await (wait for thread)
@@ -206,6 +207,7 @@ export const KEYWORDS: Record<string, TokenType> = {
   'else': TokenType.ELSE,
   'elif': TokenType.ELIF,
   'do': TokenType.DO,
+  'temp': TokenType.TEMP,
   // Thread keywords
   'await': TokenType.AWAIT,
   'spawn': TokenType.SPAWN,

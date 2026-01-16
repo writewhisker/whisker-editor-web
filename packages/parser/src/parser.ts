@@ -56,6 +56,7 @@ import type {
   ListItemNode,
   HorizontalRuleNode,
   ImageNode,
+  AudioNode,
   VideoNode,
   EmbedNode,
   MediaAttributes,
@@ -1721,12 +1722,17 @@ export class Parser {
       return this.parseMarkdownImage();
     }
 
-    // Media: Directive-based media (@image, @video, @embed in content)
+    // Media: Directive-based media (@image, @audio, @video, @embed in content)
     if (this.check(TokenType.DIRECTIVE)) {
       const directive = this.peek().value;
-      if (directive === '@image' || directive === '@video' || directive === '@embed') {
+      if (directive === '@image' || directive === '@audio' || directive === '@video' || directive === '@embed') {
         return this.parseInlineMediaDirective();
       }
+    }
+
+    // Media: Bracket-based media ([audio], [video], [embed] syntax)
+    if (this.isBracketMediaElement()) {
+      return this.parseBracketMediaElement();
     }
 
     // Plain text and other tokens
@@ -2035,13 +2041,13 @@ export class Parser {
   }
 
   /**
-   * Check if current position is an inline media directive (@image, @video, @embed)
+   * Check if current position is an inline media directive (@image, @audio, @video, @embed)
    */
   private isInlineMediaDirective(): boolean {
     if (!this.check(TokenType.DIRECTIVE)) return false;
 
     const directiveValue = this.peek().value;
-    const mediaDirectives = ['@image', '@video', '@embed'];
+    const mediaDirectives = ['@image', '@audio', '@video', '@embed'];
     return mediaDirectives.includes(directiveValue);
   }
 
@@ -2936,9 +2942,9 @@ export class Parser {
   }
 
   /**
-   * Parse inline media directive: @image(src), @video(src), @embed(url)
+   * Parse inline media directive: @image(src), @audio(src), @video(src), @embed(url)
    */
-  private parseInlineMediaDirective(): ImageNode | VideoNode | EmbedNode {
+  private parseInlineMediaDirective(): ImageNode | AudioNode | VideoNode | EmbedNode {
     const start = this.advance(); // consume directive
     const directiveType = start.value.slice(1); // Remove @
 
@@ -2983,6 +2989,13 @@ export class Parser {
           attributes,
           location: this.getLocation(start),
         };
+      case 'audio':
+        return {
+          type: 'audio',
+          src,
+          attributes: attributes as AudioAttributes,
+          location: this.getLocation(start),
+        };
       case 'video':
         return {
           type: 'video',
@@ -3010,7 +3023,92 @@ export class Parser {
   }
 
   /**
-   * Parse media attributes: {width:100 height:50 class:foo}
+   * Check if this is a bracket-based media element: [audio], [video], [embed]
+   */
+  private isBracketMediaElement(): boolean {
+    if (!this.check(TokenType.LBRACKET)) return false;
+
+    // Lookahead to see if next token is audio, video, or embed
+    const nextPos = this.pos + 1;
+    if (nextPos >= this.tokens.length) return false;
+
+    const nextToken = this.tokens[nextPos];
+    if (nextToken.type !== TokenType.IDENTIFIER) return false;
+
+    const keyword = nextToken.value.toLowerCase();
+    return keyword === 'audio' || keyword === 'video' || keyword === 'embed';
+  }
+
+  /**
+   * Parse bracket-based media: [audio](src), [video](src), [embed](src)
+   */
+  private parseBracketMediaElement(): AudioNode | VideoNode | EmbedNode {
+    const start = this.advance(); // consume [
+
+    // Get media type
+    const mediaType = this.advance().value.toLowerCase();
+
+    // Expect ]
+    if (!this.match(TokenType.RBRACKET)) {
+      this.addError(`Expected ] after ${mediaType}`);
+    }
+
+    // Expect (
+    if (!this.match(TokenType.LPAREN)) {
+      this.addError(`Expected (src) after [${mediaType}]`);
+    }
+
+    // Parse src until )
+    let src = '';
+    while (!this.isAtEnd() && !this.check(TokenType.RPAREN)) {
+      if (this.check(TokenType.STRING)) {
+        src = this.advance().value;
+      } else {
+        src += this.advance().value;
+      }
+    }
+
+    src = src.trim();
+
+    // Expect )
+    this.match(TokenType.RPAREN);
+
+    // Parse optional attributes
+    const attributes = this.parseMediaAttributes();
+
+    switch (mediaType) {
+      case 'audio':
+        return {
+          type: 'audio',
+          src,
+          attributes: attributes as AudioAttributes,
+          location: this.getLocation(start),
+        };
+      case 'video':
+        return {
+          type: 'video',
+          src,
+          attributes: attributes as VideoAttributes,
+          location: this.getLocation(start),
+        };
+      case 'embed':
+      default:
+        return {
+          type: 'embed',
+          src,
+          attributes: attributes as EmbedAttributes,
+          location: this.getLocation(start),
+        };
+    }
+  }
+
+  /**
+   * Parse media attributes: {width:100 height:50 class:foo loop autoplay volume:0.5}
+   * Supports:
+   * - Common: width, height, class, align, id, title
+   * - Audio: loop, autoplay, controls, muted, volume, preload
+   * - Video: loop, autoplay, controls, muted, poster, preload
+   * - Embed: sandbox, allow
    */
   private parseMediaAttributes(): MediaAttributes {
     const attributes: MediaAttributes = {};
@@ -3041,14 +3139,39 @@ export class Parser {
             const value = this.advance().value;
             if (name === 'width') attributes.width = value;
             else if (name === 'height') attributes.height = value;
-          } else if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.TEXT)) {
-            const value = this.advance().value.trim();
+            else if (name === 'volume') (attributes as AudioAttributes).volume = parseFloat(value);
+          } else if (this.check(TokenType.STRING)) {
+            const value = this.advance().value;
             if (name === 'class') attributes.class = value;
+            else if (name === 'id') attributes.id = value;
+            else if (name === 'title') attributes.title = value;
+            else if (name === 'poster') (attributes as VideoAttributes).poster = value;
+            else if (name === 'allow') (attributes as EmbedAttributes).allow = value;
+            else if (name === 'preload') (attributes as AudioAttributes).preload = value;
+          } else if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.TEXT)) {
+            // Collect full value including dots (for file paths like thumb.png)
+            let value = this.advance().value.trim();
+            while (this.check(TokenType.DOT)) {
+              this.advance(); // consume .
+              if (this.check(TokenType.IDENTIFIER) || this.check(TokenType.TEXT)) {
+                value += '.' + this.advance().value;
+              }
+            }
+
+            if (name === 'class') attributes.class = value;
+            else if (name === 'id') attributes.id = value;
+            else if (name === 'title') attributes.title = value;
             else if (name === 'align') {
               if (value === 'left' || value === 'center' || value === 'right') {
                 attributes.align = value;
               }
             }
+            else if (name === 'poster') (attributes as VideoAttributes).poster = value;
+            else if (name === 'allow') (attributes as EmbedAttributes).allow = value;
+            else if (name === 'preload') (attributes as AudioAttributes).preload = value;
+            // Handle dimension values with units (e.g., 100px, 50%)
+            else if (name === 'width') attributes.width = value;
+            else if (name === 'height') attributes.height = value;
           }
         } else {
           // Boolean attribute (just the name)
@@ -3056,6 +3179,7 @@ export class Parser {
           else if (name === 'autoplay') (attributes as AudioAttributes).autoplay = true;
           else if (name === 'controls') (attributes as AudioAttributes).controls = true;
           else if (name === 'muted') (attributes as AudioAttributes).muted = true;
+          else if (name === 'sandbox') (attributes as EmbedAttributes).sandbox = true;
         }
       } else {
         // Skip unexpected tokens

@@ -5,7 +5,13 @@
  * Supports Twine 2.x story formats including Harlowe, Sugarcube, and Snowman.
  */
 
-import type { Story, Passage, Variable } from '@writewhisker/story-models';
+import {
+  Story as StoryClass,
+  Passage as PassageClass,
+  type Story,
+  type Passage,
+  type Variable,
+} from '@writewhisker/story-models';
 
 export interface TwineStory {
   name: string;
@@ -233,10 +239,9 @@ export class TwineImporter {
    * Convert Twine structure to Whisker Story
    */
   public convertToWhisker(twineStory: TwineStory): Story {
-    const { Story: StoryModel, Passage: PassageModel } = require('@writewhisker/story-models');
     const passages = twineStory.passages.map(p => this.convertPassageToWhisker(p));
 
-    const story = new StoryModel({
+    const story = new StoryClass({
       metadata: {
         title: twineStory.name,
         author: '',
@@ -258,8 +263,7 @@ export class TwineImporter {
   }
 
   private convertPassageToWhisker(passage: TwinePassage): Passage {
-    const { Passage: PassageModel } = require('@writewhisker/story-models');
-    return new PassageModel({
+    return new PassageClass({
       id: passage.pid || this.generateId(),
       title: passage.name,
       content: this.convertContentToWhisker(passage.text),

@@ -5,7 +5,13 @@
  * Ren'Py is a visual novel engine using Python-like syntax.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import {
+  Story as StoryClass,
+  Passage as PassageClass,
+  Variable as VariableClass,
+  type Story,
+  type Passage,
+} from '@writewhisker/story-models';
 
 export interface RenpyScript {
   name: string;
@@ -474,11 +480,10 @@ export class RenpyImporter {
   /**
    * Convert Ren'Py structure to Whisker Story
    */
-  public convertToWhisker(renpyScript: RenpyScript): any {
-    const { Story, Variable } = require('@writewhisker/story-models');
+  public convertToWhisker(renpyScript: RenpyScript): Story {
     const passages = renpyScript.labels.map((label, index) => this.convertLabelToPassage(label, index));
 
-    const story = new Story({
+    const story = new StoryClass({
       metadata: {
         title: renpyScript.name,
         author: '',
@@ -497,7 +502,7 @@ export class RenpyImporter {
 
     // Add variables
     for (const variable of renpyScript.variables) {
-      const storyVar = new Variable({
+      const storyVar = new VariableClass({
         name: variable.name,
         initial: variable.value,
       });
@@ -507,8 +512,7 @@ export class RenpyImporter {
     return story;
   }
 
-  private convertLabelToPassage(label: RenpyLabel, index: number): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertLabelToPassage(label: RenpyLabel, index: number): Passage {
     let content = label.content;
 
     // Add menu choices as links
@@ -519,7 +523,7 @@ export class RenpyImporter {
       }
     }
 
-    return new Passage({
+    return new PassageClass({
       id: this.generateId(),
       title: label.name,
       content: content.trim(),

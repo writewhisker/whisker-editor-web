@@ -5,7 +5,14 @@
  * ChatMapper is a professional dialogue tree editor for games.
  */
 
-import type { Story, Passage, Variable } from '@writewhisker/story-models';
+import {
+  Story as StoryClass,
+  Passage as PassageClass,
+  Variable as VariableClass,
+  type Story,
+  type Passage,
+  type Variable,
+} from '@writewhisker/story-models';
 
 export interface ChatMapperProject {
   title: string;
@@ -437,9 +444,8 @@ export class ChatMapperImporter {
   /**
    * Convert ChatMapper structure to Whisker Story
    */
-  public convertToWhisker(project: ChatMapperProject): any {
-    const { Story, Variable } = require('@writewhisker/story-models');
-    const passages = [];
+  public convertToWhisker(project: ChatMapperProject): Story {
+    const passages: Passage[] = [];
 
     // Convert all dialogue entries to passages
     for (const conversation of project.conversations) {
@@ -448,7 +454,7 @@ export class ChatMapperImporter {
       }
     }
 
-    const story = new Story({
+    const story = new StoryClass({
       metadata: {
         title: project.title,
         author: '',
@@ -468,7 +474,7 @@ export class ChatMapperImporter {
 
     // Add variables
     for (const variable of project.variables) {
-      const storyVar = new Variable({
+      const storyVar = new VariableClass({
         name: variable.name,
         initial: variable.initialValue,
       });
@@ -478,8 +484,7 @@ export class ChatMapperImporter {
     return story;
   }
 
-  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): Passage {
     let content = '';
 
     // Add actor dialogue if present
@@ -494,7 +499,7 @@ export class ChatMapperImporter {
       content += `\n\n[[Choice ${link.priority + 1}|Entry_${link.destinationDialogueId}]]`;
     }
 
-    return new Passage({
+    return new PassageClass({
       id: this.generateId(),
       title: entry.menuText || `Entry_${entry.id}`,
       content: content.trim(),

@@ -5,7 +5,13 @@
  * Ink is a narrative scripting language by Inkle Studios.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import {
+  Story as StoryClass,
+  Passage as PassageClass,
+  Variable as VariableClass,
+  type Story,
+  type Passage,
+} from '@writewhisker/story-models';
 
 export interface InkStory {
   title: string;
@@ -358,10 +364,9 @@ export class InkImporter {
    * Convert Ink structure to Whisker Story
    */
   public convertToWhisker(inkStory: InkStory): Story {
-    const { Story, Variable } = require('@writewhisker/story-models');
     const passages = inkStory.knots.map((knot, index) => this.convertKnotToPassage(knot, index));
 
-    const story = new Story({
+    const story = new StoryClass({
       metadata: {
         title: inkStory.title,
         author: inkStory.author || '',
@@ -380,7 +385,7 @@ export class InkImporter {
 
     // Add variables
     for (const variable of inkStory.globalVariables) {
-      const storyVar = new Variable({
+      const storyVar = new VariableClass({
         name: variable.name,
         initial: variable.value,
       });
@@ -390,8 +395,7 @@ export class InkImporter {
     return story;
   }
 
-  private convertKnotToPassage(knot: InkKnot, index: number): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertKnotToPassage(knot: InkKnot, index: number): Passage {
     // Combine content and choices into Whisker format
     let content = knot.content;
 
@@ -408,7 +412,7 @@ export class InkImporter {
       }
     }
 
-    return new Passage({
+    return new PassageClass({
       id: this.generateId(),
       title: knot.name,
       content: content.trim(),

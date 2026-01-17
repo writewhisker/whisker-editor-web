@@ -717,6 +717,83 @@ export const WLS_ERROR_CODES = {
   ORPHAN_TUNNEL_RETURN: 'WLS-FLW-009',    // <- outside tunnel context
   MISSING_TUNNEL_RETURN: 'WLS-FLW-010',   // Tunnel passage without <-
   INVALID_TUNNEL_SYNTAX: 'WLS-FLW-011',   // Malformed tunnel call
+
+  // Expression errors (EXP)
+  EMPTY_EXPRESSION: 'WLS-EXP-001',        // Empty ${} or {} block
+  UNCLOSED_BLOCK: 'WLS-EXP-002',          // Conditional block { not closed with {/}
+  ASSIGNMENT_IN_CONDITION: 'WLS-EXP-003', // = used where == likely intended
+  MISSING_OPERAND: 'WLS-EXP-004',         // Binary operator missing operand
+  INVALID_OPERATOR: 'WLS-EXP-005',        // Unknown or invalid operator
+  UNMATCHED_PARENTHESIS: 'WLS-EXP-006',   // Parentheses not balanced
+  INCOMPLETE_EXPRESSION: 'WLS-EXP-007',   // Expression syntactically incomplete
+
+  // Quality warnings (QUA)
+  LOW_BRANCHING: 'WLS-QUA-001',           // Low branching factor
+  HIGH_COMPLEXITY: 'WLS-QUA-002',         // Story complexity exceeds threshold
+  LONG_PASSAGE: 'WLS-QUA-003',            // Passage exceeds word count
+  DEEP_NESTING: 'WLS-QUA-004',            // Conditional nesting too deep
+  MANY_VARIABLES: 'WLS-QUA-005',          // Too many variables
+
+  // Asset errors (AST)
+  MISSING_ASSET_ID: 'WLS-AST-001',        // Asset reference missing ID
+  INVALID_ASSET_PATH: 'WLS-AST-002',      // Invalid asset file path
+  ASSET_NOT_FOUND: 'WLS-AST-003',         // Referenced asset does not exist
+  UNSUPPORTED_ASSET_TYPE: 'WLS-AST-004',  // Asset type not supported
+  ASSET_TOO_LARGE: 'WLS-AST-005',         // Asset exceeds size limit
+  DUPLICATE_ASSET_ID: 'WLS-AST-006',      // Duplicate asset identifier
+  UNUSED_ASSET: 'WLS-AST-007',            // Asset declared but never used
+
+  // Metadata errors (META)
+  MISSING_IFID: 'WLS-META-001',           // Story missing IFID
+  INVALID_IFID: 'WLS-META-002',           // IFID format invalid
+  INVALID_DIMENSIONS: 'WLS-META-003',     // Invalid width/height values
+  RESERVED_META_KEY: 'WLS-META-004',      // Using reserved metadata key
+  DUPLICATE_META_KEY: 'WLS-META-005',     // Duplicate metadata declaration
+
+  // Script errors (SCR)
+  EMPTY_SCRIPT: 'WLS-SCR-001',            // Empty script block
+  SCRIPT_SYNTAX_ERROR: 'WLS-SCR-002',     // Lua syntax error in script
+  UNSAFE_FUNCTION: 'WLS-SCR-003',         // Using unsafe Lua function
+  SCRIPT_TOO_LARGE: 'WLS-SCR-004',        // Script exceeds size limit
+
+  // Collection errors (COL)
+  DUPLICATE_LIST_VALUE: 'WLS-COL-001',    // Duplicate value in LIST
+  EMPTY_LIST: 'WLS-COL-002',              // LIST with no values
+  INVALID_LIST_VALUE: 'WLS-COL-003',      // Invalid value type in LIST
+  DUPLICATE_ARRAY_INDEX: 'WLS-COL-004',   // Duplicate index in ARRAY
+  ARRAY_INDEX_OUT_OF_BOUNDS: 'WLS-COL-005', // ARRAY index out of range
+  INVALID_ARRAY_TYPE: 'WLS-COL-006',      // Invalid type in ARRAY
+  DUPLICATE_MAP_KEY: 'WLS-COL-007',       // Duplicate key in MAP
+  INVALID_MAP_KEY: 'WLS-COL-008',         // Invalid MAP key type
+  UNDEFINED_COLLECTION: 'WLS-COL-009',    // Collection referenced but not defined
+  COLLECTION_TYPE_MISMATCH: 'WLS-COL-010', // Wrong operation for collection type
+
+  // Module errors (MOD)
+  INCLUDE_NOT_FOUND: 'WLS-MOD-001',       // Include file not found
+  CIRCULAR_INCLUDE: 'WLS-MOD-002',        // Circular include dependency
+  UNDEFINED_FUNCTION: 'WLS-MOD-003',      // Function called but not defined
+  DUPLICATE_FUNCTION: 'WLS-MOD-004',      // Function name already defined
+  NAMESPACE_CONFLICT: 'WLS-MOD-005',      // Namespace name conflicts
+  UNDEFINED_NAMESPACE: 'WLS-MOD-006',     // Namespace used but not defined
+  UNMATCHED_END_NAMESPACE: 'WLS-MOD-007', // END NAMESPACE without NAMESPACE
+  INVALID_EXPORT: 'WLS-MOD-008',          // Invalid export declaration
+
+  // Presentation errors (PRS)
+  INVALID_MARKDOWN: 'WLS-PRS-001',        // Malformed markdown syntax
+  INVALID_CSS_CLASS: 'WLS-PRS-002',       // Invalid CSS class name
+  UNDEFINED_CSS_CLASS: 'WLS-PRS-003',     // CSS class used but not defined
+  MISSING_MEDIA_SOURCE: 'WLS-PRS-004',    // Media element missing source
+  INVALID_MEDIA_FORMAT: 'WLS-PRS-005',    // Unsupported media format
+  THEME_NOT_FOUND: 'WLS-PRS-006',         // Theme reference not found
+  INVALID_STYLE_PROPERTY: 'WLS-PRS-007',  // Invalid CSS property
+  UNCLOSED_STYLE_BLOCK: 'WLS-PRS-008',    // Style block not closed
+
+  // Developer experience errors (DEV)
+  LSP_CONNECTION_FAILED: 'WLS-DEV-001',   // Language server connection failed
+  DEBUG_ADAPTER_ERROR: 'WLS-DEV-002',     // Debug adapter protocol error
+  FORMAT_PARSE_ERROR: 'WLS-DEV-003',      // Cannot format due to parse errors
+  PREVIEW_RUNTIME_ERROR: 'WLS-DEV-004',   // Runtime error during preview
+  BREAKPOINT_INVALID: 'WLS-DEV-005',      // Breakpoint at invalid location
 } as const;
 
 export type WLSErrorCode = typeof WLS_ERROR_CODES[keyof typeof WLS_ERROR_CODES];

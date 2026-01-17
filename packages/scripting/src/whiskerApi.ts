@@ -41,6 +41,15 @@ export interface WhiskerObject {
  */
 export type WhiskerValue = string | number | boolean | null | WhiskerValue[] | WhiskerObject;
 
+/**
+ * Hook object as exposed to Lua (WLS Chapter 7)
+ */
+export interface WhiskerHook {
+  name: string;
+  content: string;
+  visible: boolean;
+}
+
 // ============================================================================
 //  Collection Types
 // ============================================================================
@@ -144,6 +153,20 @@ export interface WhiskerRuntimeContext {
   // Visit tracking
   getVisitCount(passageId?: string): number;
 
+  // Hook management (WLS Chapter 7 - whisker.hook.*)
+  getHook(name: string): WhiskerHook | null;
+  hookExists(name: string): boolean;
+  hookVisible(name: string): boolean;
+  hookHidden(name: string): boolean;
+  hookGet(name: string): string | null;
+  hookContains(name: string, text: string): boolean;
+  hookNumber(name: string): number | null;
+  hookReplace(name: string, content: string): boolean;
+  hookAppend(name: string, content: string): boolean;
+  hookPrepend(name: string, content: string): boolean;
+  hookShow(name: string): boolean;
+  hookHide(name: string): boolean;
+
   // Debug output
   print(...args: unknown[]): void;
 }
@@ -169,6 +192,9 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   private lists: Map<string, WLSList> = new Map();
   private arrays: Map<string, WLSArray> = new Map();
   private maps: Map<string, WLSMap> = new Map();
+
+  //  Hook storage
+  private hooks: Map<string, WhiskerHook> = new Map();
 
   // State management
   getVariable(key: string): WhiskerValue | undefined {
@@ -498,6 +524,81 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
     return this.visitCounts.get(id) || 0;
   }
 
+  // ============================================
+  //  Hook Operations (WLS Chapter 7)
+  // ============================================
+
+  getHook(name: string): WhiskerHook | null {
+    return this.hooks.get(name) ?? null;
+  }
+
+  hookExists(name: string): boolean {
+    return this.hooks.has(name);
+  }
+
+  hookVisible(name: string): boolean {
+    const hook = this.hooks.get(name);
+    return hook?.visible ?? false;
+  }
+
+  hookHidden(name: string): boolean {
+    const hook = this.hooks.get(name);
+    return hook ? !hook.visible : false;
+  }
+
+  hookGet(name: string): string | null {
+    const hook = this.hooks.get(name);
+    return hook?.content ?? null;
+  }
+
+  hookContains(name: string, text: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    return hook.content.includes(text);
+  }
+
+  hookNumber(name: string): number | null {
+    const hook = this.hooks.get(name);
+    if (!hook) return null;
+    const num = parseFloat(hook.content);
+    return isNaN(num) ? null : num;
+  }
+
+  hookReplace(name: string, content: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    hook.content = content;
+    return true;
+  }
+
+  hookAppend(name: string, content: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    hook.content += content;
+    return true;
+  }
+
+  hookPrepend(name: string, content: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    hook.content = content + hook.content;
+    return true;
+  }
+
+  hookShow(name: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    hook.visible = true;
+    return true;
+  }
+
+  hookHide(name: string): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+    hook.visible = false;
+    return true;
+  }
+
   // Debug output
   print(...args: unknown[]): void {
     const message = args.map(arg => String(arg)).join('\t');
@@ -526,6 +627,14 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
 
   clearOutput(): void {
     this.output = [];
+  }
+
+  addHook(hook: WhiskerHook): void {
+    this.hooks.set(hook.name, hook);
+  }
+
+  removeHook(name: string): void {
+    this.hooks.delete(name);
   }
 }
 
@@ -938,6 +1047,154 @@ export class WhiskerChoiceApi {
 }
 
 // ============================================================================
+// Whisker Hook API (WLS Chapter 7)
+// ============================================================================
+
+/**
+ * whisker.hook namespace
+ * Provides hook manipulation functions per WLS specification
+ */
+export class WhiskerHookApi {
+  constructor(private context: WhiskerRuntimeContext) {}
+
+  /**
+   * Check if hook is visible
+   * @param name Hook name
+   * @returns true if hook exists and is visible
+   */
+  visible(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.visible() requires a string argument');
+    }
+    return this.context.hookVisible(name);
+  }
+
+  /**
+   * Check if hook is hidden
+   * @param name Hook name
+   * @returns true if hook exists and is hidden
+   */
+  hidden(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.hidden() requires a string argument');
+    }
+    return this.context.hookHidden(name);
+  }
+
+  /**
+   * Check if hook exists
+   * @param name Hook name
+   * @returns true if hook exists
+   */
+  exists(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.exists() requires a string argument');
+    }
+    return this.context.hookExists(name);
+  }
+
+  /**
+   * Get hook content
+   * @param name Hook name
+   * @returns Hook content or nil
+   */
+  get(name: string): string | null {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.get() requires a string argument');
+    }
+    return this.context.hookGet(name);
+  }
+
+  /**
+   * Check if hook contains text
+   * @param name Hook name
+   * @param text Text to search for
+   * @returns true if hook contains text
+   */
+  contains(name: string, text: string): boolean {
+    if (typeof name !== 'string' || typeof text !== 'string') {
+      throw new Error('whisker.hook.contains() requires two string arguments');
+    }
+    return this.context.hookContains(name, text);
+  }
+
+  /**
+   * Parse hook content as number
+   * @param name Hook name
+   * @returns Numeric value or nil
+   */
+  number(name: string): number | null {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.number() requires a string argument');
+    }
+    return this.context.hookNumber(name);
+  }
+
+  /**
+   * Replace hook content
+   * @param name Hook name
+   * @param content New content
+   * @returns true if successful
+   */
+  replace(name: string, content: string): boolean {
+    if (typeof name !== 'string' || typeof content !== 'string') {
+      throw new Error('whisker.hook.replace() requires two string arguments');
+    }
+    return this.context.hookReplace(name, content);
+  }
+
+  /**
+   * Append to hook content
+   * @param name Hook name
+   * @param content Content to append
+   * @returns true if successful
+   */
+  append(name: string, content: string): boolean {
+    if (typeof name !== 'string' || typeof content !== 'string') {
+      throw new Error('whisker.hook.append() requires two string arguments');
+    }
+    return this.context.hookAppend(name, content);
+  }
+
+  /**
+   * Prepend to hook content
+   * @param name Hook name
+   * @param content Content to prepend
+   * @returns true if successful
+   */
+  prepend(name: string, content: string): boolean {
+    if (typeof name !== 'string' || typeof content !== 'string') {
+      throw new Error('whisker.hook.prepend() requires two string arguments');
+    }
+    return this.context.hookPrepend(name, content);
+  }
+
+  /**
+   * Show hidden hook
+   * @param name Hook name
+   * @returns true if successful
+   */
+  show(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.show() requires a string argument');
+    }
+    return this.context.hookShow(name);
+  }
+
+  /**
+   * Hide visible hook
+   * @param name Hook name
+   * @returns true if successful
+   */
+  hide(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.hide() requires a string argument');
+    }
+    return this.context.hookHide(name);
+  }
+}
+
+// ============================================================================
 // Main Whisker API
 // ============================================================================
 
@@ -950,12 +1207,14 @@ export class WhiskerApi {
   public readonly passage: WhiskerPassageApi;
   public readonly history: WhiskerHistoryApi;
   public readonly choice: WhiskerChoiceApi;
+  public readonly hook: WhiskerHookApi;
 
   constructor(private context: WhiskerRuntimeContext) {
     this.state = new WhiskerStateApi(context);
     this.passage = new WhiskerPassageApi(context);
     this.history = new WhiskerHistoryApi(context);
     this.choice = new WhiskerChoiceApi(context);
+    this.hook = new WhiskerHookApi(context);
   }
 
   /**

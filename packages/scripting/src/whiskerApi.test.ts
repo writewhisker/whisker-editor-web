@@ -703,4 +703,155 @@ describe('WhiskerApi', () => {
       expect(api.state.mapSize('player')).toBe(3);
     });
   });
+
+  // ==========================================================================
+  // WLS Chapter 7: whisker.hook API
+  // ==========================================================================
+
+  describe('whisker.hook', () => {
+    beforeEach(() => {
+      // Set up test hooks
+      context.addHook({ name: 'status', content: 'Ready', visible: true });
+      context.addHook({ name: 'score', content: '42', visible: true });
+      context.addHook({ name: 'hidden', content: 'Secret', visible: false });
+      context.addHook({ name: 'inventory', content: 'sword, key, potion', visible: true });
+    });
+
+    describe('visible', () => {
+      it('returns true for visible hook', () => {
+        expect(api.hook.visible('status')).toBe(true);
+      });
+
+      it('returns false for hidden hook', () => {
+        expect(api.hook.visible('hidden')).toBe(false);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.visible('nonexistent')).toBe(false);
+      });
+
+      it('throws for non-string name', () => {
+        expect(() => api.hook.visible(123 as unknown as string)).toThrow('requires a string argument');
+      });
+    });
+
+    describe('hidden', () => {
+      it('returns true for hidden hook', () => {
+        expect(api.hook.hidden('hidden')).toBe(true);
+      });
+
+      it('returns false for visible hook', () => {
+        expect(api.hook.hidden('status')).toBe(false);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.hidden('nonexistent')).toBe(false);
+      });
+    });
+
+    describe('exists', () => {
+      it('returns true for existing hook', () => {
+        expect(api.hook.exists('status')).toBe(true);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.exists('nonexistent')).toBe(false);
+      });
+    });
+
+    describe('get', () => {
+      it('returns hook content', () => {
+        expect(api.hook.get('status')).toBe('Ready');
+      });
+
+      it('returns null for non-existent hook', () => {
+        expect(api.hook.get('nonexistent')).toBeNull();
+      });
+    });
+
+    describe('contains', () => {
+      it('returns true when hook contains text', () => {
+        expect(api.hook.contains('inventory', 'key')).toBe(true);
+      });
+
+      it('returns false when hook does not contain text', () => {
+        expect(api.hook.contains('inventory', 'gold')).toBe(false);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.contains('nonexistent', 'text')).toBe(false);
+      });
+    });
+
+    describe('number', () => {
+      it('parses numeric content', () => {
+        expect(api.hook.number('score')).toBe(42);
+      });
+
+      it('returns null for non-numeric content', () => {
+        expect(api.hook.number('status')).toBeNull();
+      });
+
+      it('returns null for non-existent hook', () => {
+        expect(api.hook.number('nonexistent')).toBeNull();
+      });
+    });
+
+    describe('replace', () => {
+      it('replaces hook content', () => {
+        expect(api.hook.replace('status', 'Done')).toBe(true);
+        expect(api.hook.get('status')).toBe('Done');
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.replace('nonexistent', 'content')).toBe(false);
+      });
+    });
+
+    describe('append', () => {
+      it('appends to hook content', () => {
+        expect(api.hook.append('status', '!')).toBe(true);
+        expect(api.hook.get('status')).toBe('Ready!');
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.append('nonexistent', 'content')).toBe(false);
+      });
+    });
+
+    describe('prepend', () => {
+      it('prepends to hook content', () => {
+        expect(api.hook.prepend('status', '>>> ')).toBe(true);
+        expect(api.hook.get('status')).toBe('>>> Ready');
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.prepend('nonexistent', 'content')).toBe(false);
+      });
+    });
+
+    describe('show', () => {
+      it('makes hidden hook visible', () => {
+        expect(api.hook.visible('hidden')).toBe(false);
+        expect(api.hook.show('hidden')).toBe(true);
+        expect(api.hook.visible('hidden')).toBe(true);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.show('nonexistent')).toBe(false);
+      });
+    });
+
+    describe('hide', () => {
+      it('makes visible hook hidden', () => {
+        expect(api.hook.visible('status')).toBe(true);
+        expect(api.hook.hide('status')).toBe(true);
+        expect(api.hook.visible('status')).toBe(false);
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.hide('nonexistent')).toBe(false);
+      });
+    });
+  });
 });

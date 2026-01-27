@@ -116,6 +116,10 @@ export interface AlternativesState {
   indices: Map<string, number>;
   /** Map of alternatives node location to shuffle order */
   shuffleOrders: Map<string, number[]>;
+  /** Map of named alternatives to their state (persists across passages) */
+  namedIndices: Map<string, number>;
+  /** Map of named alternatives to their shuffle order */
+  namedShuffleOrders: Map<string, number[]>;
 }
 
 /**
@@ -152,6 +156,8 @@ export class ContentRenderer {
     this.alternativesState = alternativesState || {
       indices: new Map(),
       shuffleOrders: new Map(),
+      namedIndices: new Map(),
+      namedShuffleOrders: new Map(),
     };
     this.choiceState = choiceState || {
       selectedChoices: new Set(),
@@ -386,18 +392,29 @@ export class ContentRenderer {
   }
 
   /**
-   * Render alternatives ({| a | b | c})
+   * Render alternatives ({| a | b | c}) or named alternatives (@name:mode[...])
    */
   private renderAlternatives(node: AlternativesNode, choices: RenderedChoice[]): string {
     if (node.options.length === 0) {
       return '';
     }
 
-    // Create a unique key for this alternatives node based on location
-    const key = `${node.location.start.line}:${node.location.start.column}`;
+    // Named alternatives use their name as key and persist state differently
+    const isNamed = !!node.name;
+    const key = isNamed
+      ? node.name!
+      : `${node.location.start.line}:${node.location.start.column}`;
+
+    // Select the appropriate state maps based on whether it's named
+    const indicesMap = isNamed
+      ? this.alternativesState.namedIndices
+      : this.alternativesState.indices;
+    const shuffleOrdersMap = isNamed
+      ? this.alternativesState.namedShuffleOrders
+      : this.alternativesState.shuffleOrders;
 
     // Get or initialize the current index for this alternatives
-    let index = this.alternativesState.indices.get(key) ?? 0;
+    let index = indicesMap.get(key) ?? 0;
 
     switch (node.mode) {
       case 'sequence':
@@ -412,11 +429,11 @@ export class ContentRenderer {
 
       case 'shuffle': {
         // Show options in random order
-        let order = this.alternativesState.shuffleOrders.get(key);
+        let order = shuffleOrdersMap.get(key);
         if (!order) {
           // Generate shuffle order
           order = this.generateShuffleOrder(node.options.length);
-          this.alternativesState.shuffleOrders.set(key, order);
+          shuffleOrdersMap.set(key, order);
         }
         index = order[index % order.length];
         break;
@@ -431,7 +448,7 @@ export class ContentRenderer {
     }
 
     // Increment the index for next time
-    this.alternativesState.indices.set(key, (this.alternativesState.indices.get(key) ?? 0) + 1);
+    indicesMap.set(key, (indicesMap.get(key) ?? 0) + 1);
 
     // Render the selected option
     const selectedOption = node.options[index];

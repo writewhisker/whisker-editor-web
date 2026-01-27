@@ -7,6 +7,45 @@
 
 import type { Story, Passage } from '@writewhisker/story-models';
 
+// Import grammar and configuration as raw JSON for bundling
+import whiskerGrammar from '../syntaxes/whisker.tmLanguage.json';
+import languageConfiguration from '../language-configuration.json';
+
+/**
+ * Get the TextMate grammar for Whisker syntax highlighting
+ */
+export function getTextMateGrammar(): object {
+  return whiskerGrammar;
+}
+
+/**
+ * Get the language configuration for VS Code
+ */
+export function getLanguageConfiguration(): object {
+  return languageConfiguration;
+}
+
+/**
+ * VS Code extension contribution configuration
+ */
+export const extensionContributes = {
+  languages: [
+    {
+      id: 'whisker',
+      aliases: ['Whisker', 'ws', 'Whisker Language'],
+      extensions: ['.ws', '.whisker'],
+      configuration: './language-configuration.json',
+    },
+  ],
+  grammars: [
+    {
+      language: 'whisker',
+      scopeName: 'source.whisker',
+      path: './syntaxes/whisker.tmLanguage.json',
+    },
+  ],
+};
+
 export interface VSCodeLanguageConfiguration {
   comments?: {
     lineComment?: string;

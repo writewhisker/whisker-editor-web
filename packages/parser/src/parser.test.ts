@@ -353,6 +353,63 @@ Poor
     });
   });
 
+  // ===========================================================================
+  // GAP-030: Named Alternatives
+  // ===========================================================================
+  describe('named alternatives (GAP-030)', () => {
+    it('should parse named sequence alternative @name:sequence[...]', () => {
+      const result = parse(':: Start\nHello @greeting:sequence[Hi|Hey|Hello] there!');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt).toBeDefined();
+      expect(alt.mode).toBe('sequence');
+      expect(alt.name).toBe('greeting');
+      expect(alt.options).toHaveLength(3);
+    });
+
+    it('should parse named cycle alternative @name:cycle[...]', () => {
+      const result = parse(':: Start\n@weather:cycle[sunny|rainy|cloudy]');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt).toBeDefined();
+      expect(alt.mode).toBe('cycle');
+      expect(alt.name).toBe('weather');
+      expect(alt.options).toHaveLength(3);
+    });
+
+    it('should parse named shuffle alternative @name:shuffle[...]', () => {
+      const result = parse(':: Start\n@colors:shuffle[red|green|blue]');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt).toBeDefined();
+      expect(alt.mode).toBe('shuffle');
+      expect(alt.name).toBe('colors');
+    });
+
+    it('should parse named once alternative @name:once[...]', () => {
+      const result = parse(':: Start\n@firstMeet:once[Nice to meet you!|Hello again]');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alt = passage?.content.find(c => c.type === 'alternatives') as AlternativesNode;
+      expect(alt).toBeDefined();
+      expect(alt.mode).toBe('once');
+      expect(alt.name).toBe('firstMeet');
+    });
+
+    it('should distinguish named alternatives from anonymous', () => {
+      const result = parse(':: Start\n{| a | b } vs @named:sequence[x|y]');
+      expect(result.errors).toHaveLength(0);
+      const passage = result.ast?.passages[0];
+      const alts = passage?.content.filter(c => c.type === 'alternatives') as AlternativesNode[];
+      expect(alts).toHaveLength(2);
+      expect(alts[0].name).toBeUndefined();
+      expect(alts[1].name).toBe('named');
+    });
+  });
+
   describe('expressions', () => {
     describe('literals', () => {
       it('should parse number literal', () => {

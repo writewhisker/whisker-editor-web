@@ -3,7 +3,28 @@
  *
  * Framework-agnostic color scheme engine.
  * Generate palettes, check contrast, ensure WCAG compliance.
+ *
+ * GAP-042: Implements WLS CSS variables specification (pres-017)
  */
+
+// Export CSS variables and theme types (GAP-042)
+export {
+  CSS_VARIABLES,
+  DEFAULT_LIGHT_THEME,
+  DEFAULT_DARK_THEME,
+  type CSSVariableName,
+  type WhiskerTheme,
+} from './variables';
+
+// Export theme provider functions (GAP-042)
+export {
+  applyTheme,
+  generateThemeCSS,
+  extractTheme,
+  createTheme,
+  validateCSSVariables,
+  getAllCSSVariableNames,
+} from './ThemeProvider';
 
 export interface RGB {
   r: number; // 0-255

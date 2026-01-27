@@ -79,6 +79,18 @@ export {
   type CollectionInfo,
 } from './collections';
 
+export {
+  validatePresentation,
+  type PresentationValidationResult,
+  CSS_CLASS_PATTERN,
+  RESERVED_CLASS_PREFIXES,
+  SUPPORTED_IMAGE_FORMATS,
+  SUPPORTED_AUDIO_FORMATS,
+  SUPPORTED_VIDEO_FORMATS,
+  KNOWN_CSS_PROPERTIES,
+  KNOWN_THEMES,
+} from './presentation';
+
 // Re-export validation diagnostic type for convenience
 import type { ValidationDiagnostic } from './links';
 import type { StoryNode } from '../ast';
@@ -99,6 +111,7 @@ export function validateAll(story: StoryNode): {
   const { validateMetadata } = require('./metadata');
   const { validateScripts } = require('./scripts');
   const { validateCollections } = require('./collections');
+  const { validatePresentation } = require('./presentation');
 
   const allDiagnostics: ValidationDiagnostic[] = [];
 
@@ -129,6 +142,9 @@ export function validateAll(story: StoryNode): {
 
   const collResult = validateCollections(story);
   allDiagnostics.push(...collResult.diagnostics);
+
+  const presResult = validatePresentation(story);
+  allDiagnostics.push(...presResult.diagnostics);
 
   return {
     valid: allDiagnostics.filter(d => d.severity === 'error').length === 0,

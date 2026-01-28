@@ -367,6 +367,34 @@ describe('Lexer', () => {
     it('should tokenize custom directive', () => {
       expect(hasToken('@custom123', TokenType.DIRECTIVE, '@custom123')).toBe(true);
     });
+
+    // =========================================================================
+    // GAP-030: Named Alternatives
+    // =========================================================================
+    it('should tokenize named sequence alternative', () => {
+      expect(hasToken('@greeting:sequence[', TokenType.NAMED_ALTERNATIVE, '@greeting:sequence[')).toBe(true);
+    });
+
+    it('should tokenize named cycle alternative', () => {
+      expect(hasToken('@weather:cycle[', TokenType.NAMED_ALTERNATIVE, '@weather:cycle[')).toBe(true);
+    });
+
+    it('should tokenize named shuffle alternative', () => {
+      expect(hasToken('@colors:shuffle[', TokenType.NAMED_ALTERNATIVE, '@colors:shuffle[')).toBe(true);
+    });
+
+    it('should tokenize named once alternative', () => {
+      expect(hasToken('@firstMeet:once[', TokenType.NAMED_ALTERNATIVE, '@firstMeet:once[')).toBe(true);
+    });
+
+    it('should not tokenize @name as named alternative without mode', () => {
+      expect(hasToken('@title', TokenType.NAMED_ALTERNATIVE)).toBe(false);
+      expect(hasToken('@title', TokenType.DIRECTIVE, '@title')).toBe(true);
+    });
+
+    it('should not tokenize @name:invalid as named alternative', () => {
+      expect(hasToken('@name:invalid[', TokenType.NAMED_ALTERNATIVE)).toBe(false);
+    });
   });
 
   describe('comments', () => {

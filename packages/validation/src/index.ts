@@ -31,6 +31,21 @@ export {
   type ReporterFormat,
 } from './reporters/index.js';
 
+// GAP-052: Export DEV errors
+export {
+  DEV_ERROR_CODES,
+  DEV_ERROR_MESSAGES,
+  DevErrors,
+  createDevError,
+  formatDevError,
+  isRecoverable,
+  isDevErrorCode,
+  getAllDevErrorCodes,
+  type DevErrorCode,
+  type DevErrorSeverity,
+  type DevError,
+} from './DevErrors.js';
+
 // Convenience function for validating stories
 import { createDefaultValidator, Story, type StoryData, type ValidationResult } from '@writewhisker/core-ts';
 

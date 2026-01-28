@@ -42,12 +42,20 @@ export interface WhiskerObject {
 export type WhiskerValue = string | number | boolean | null | WhiskerValue[] | WhiskerObject;
 
 /**
+ * Hook state tracking for distinguishing between default, modified, and cleared states (GAP-073)
+ */
+export type HookState = 'default' | 'modified' | 'cleared';
+
+/**
  * Hook object as exposed to Lua (WLS Chapter 7)
  */
 export interface WhiskerHook {
   name: string;
   content: string;
   visible: boolean;
+  state?: HookState;            // Track modification state (GAP-073)
+  defaultContent?: string;      // Original content for reset
+  defaultVisible?: boolean;     // Original visibility for reset
 }
 
 // ============================================================================
@@ -166,6 +174,10 @@ export interface WhiskerRuntimeContext {
   hookPrepend(name: string, content: string): boolean;
   hookShow(name: string): boolean;
   hookHide(name: string): boolean;
+  hookClear(name: string, resetVisibility?: boolean): boolean;  // GAP-073: Enhanced clear with optional visibility reset
+  hookGetOriginal(name: string): string | null;
+  hookGetState(name: string): HookState | null;  // GAP-073: Get hook modification state
+  hookGetAllNames(): string[];  // GAP-047: Get all hook names
 
   // Debug output
   print(...args: unknown[]): void;
@@ -195,6 +207,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
 
   //  Hook storage
   private hooks: Map<string, WhiskerHook> = new Map();
+  private originalHookContent: Map<string, string> = new Map();
 
   // State management
   getVariable(key: string): WhiskerValue | undefined {
@@ -568,6 +581,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
     const hook = this.hooks.get(name);
     if (!hook) return false;
     hook.content = content;
+    hook.state = 'modified';  // GAP-073: Track modification
     return true;
   }
 
@@ -575,6 +589,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
     const hook = this.hooks.get(name);
     if (!hook) return false;
     hook.content += content;
+    hook.state = 'modified';  // GAP-073: Track modification
     return true;
   }
 
@@ -582,6 +597,7 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
     const hook = this.hooks.get(name);
     if (!hook) return false;
     hook.content = content + hook.content;
+    hook.state = 'modified';  // GAP-073: Track modification
     return true;
   }
 
@@ -597,6 +613,49 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
     if (!hook) return false;
     hook.visible = false;
     return true;
+  }
+
+  /**
+   * Clear hook content (GAP-073)
+   * @param name Hook name
+   * @param resetVisibility If true, also reset visibility to default (default: false)
+   * @returns true if hook exists and was cleared
+   */
+  hookClear(name: string, resetVisibility: boolean = false): boolean {
+    const hook = this.hooks.get(name);
+    if (!hook) return false;
+
+    // Clear content to empty string
+    hook.content = '';
+
+    // Mark as cleared (distinct from modified)
+    hook.state = 'cleared';
+
+    // Optionally reset visibility to default
+    if (resetVisibility && hook.defaultVisible !== undefined) {
+      hook.visible = hook.defaultVisible;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get hook modification state (GAP-073)
+   */
+  hookGetState(name: string): HookState | null {
+    const hook = this.hooks.get(name);
+    return hook?.state ?? null;
+  }
+
+  /**
+   * Get all hook names (GAP-047)
+   */
+  hookGetAllNames(): string[] {
+    return Array.from(this.hooks.keys());
+  }
+
+  hookGetOriginal(name: string): string | null {
+    return this.originalHookContent.get(name) ?? null;
   }
 
   // Debug output
@@ -630,7 +689,18 @@ export class InMemoryRuntimeContext implements WhiskerRuntimeContext {
   }
 
   addHook(hook: WhiskerHook): void {
-    this.hooks.set(hook.name, hook);
+    // Store hook with default state tracking (GAP-073)
+    const fullHook: WhiskerHook = {
+      ...hook,
+      state: hook.state ?? 'default',
+      defaultContent: hook.defaultContent ?? hook.content,
+      defaultVisible: hook.defaultVisible ?? hook.visible,
+    };
+    this.hooks.set(hook.name, fullHook);
+    // Track original content for backward compatibility
+    if (!this.originalHookContent.has(hook.name)) {
+      this.originalHookContent.set(hook.name, hook.content);
+    }
   }
 
   removeHook(name: string): void {
@@ -1191,6 +1261,55 @@ export class WhiskerHookApi {
       throw new Error('whisker.hook.hide() requires a string argument');
     }
     return this.context.hookHide(name);
+  }
+
+  /**
+   * Clear hook content (GAP-073)
+   * Sets content to empty string and marks hook as cleared.
+   * Unlike replace('', ''), this tracks the cleared state semantically.
+   * @param name Hook name
+   * @param resetVisibility If true, also reset visibility to default (default: false)
+   * @returns true if successful
+   */
+  clear(name: string, resetVisibility: boolean = false): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.clear() requires a string argument');
+    }
+    return this.context.hookClear(name, resetVisibility);
+  }
+
+  /**
+   * Get all hook names (GAP-047)
+   * Returns an array of all hook names defined in the story.
+   * @returns Array of hook names
+   */
+  all(): string[] {
+    return this.context.hookGetAllNames();
+  }
+
+  /**
+   * Check if hook has been modified from default (GAP-073)
+   * @param name Hook name
+   * @returns true if hook has been modified or cleared
+   */
+  isModified(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.isModified() requires a string argument');
+    }
+    const state = this.context.hookGetState(name);
+    return state !== null && state !== 'default';
+  }
+
+  /**
+   * Check if hook has been explicitly cleared (GAP-073)
+   * @param name Hook name
+   * @returns true if hook has been cleared
+   */
+  isCleared(name: string): boolean {
+    if (typeof name !== 'string') {
+      throw new Error('whisker.hook.isCleared() requires a string argument');
+    }
+    return this.context.hookGetState(name) === 'cleared';
   }
 }
 

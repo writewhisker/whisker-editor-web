@@ -421,6 +421,11 @@ export class Lexer {
         }
         break;
       case '@':
+        // Check for named alternative syntax: @name:mode[
+        if (this.scanNamedAlternative(start)) {
+          // Successfully scanned named alternative
+          break;
+        }
         this.scanDirective(start);
         break;
       case ':':
@@ -627,6 +632,57 @@ export class Lexer {
     }
 
     this.addToken(TokenType.COMMENT, value, start);
+  }
+
+  /**
+   * Scan a named alternative (@name:mode[)
+   * Note: The @ has already been consumed by scanToken()
+   * Returns true if successfully scanned, false otherwise
+   */
+  private scanNamedAlternative(start: SourceLocation): boolean {
+    // Save position for potential rollback (position is after @)
+    const savedPos = this.pos;
+    const savedLine = this.line;
+    const savedColumn = this.column;
+
+    // Collect identifier (name after @)
+    let name = '';
+    while (!this.isAtEnd() && this.isAlphaNumeric(this.peek())) {
+      name += this.advance();
+    }
+
+    // Must have a name followed by colon
+    if (name.length === 0 || this.peek() !== ':') {
+      // Rollback
+      this.pos = savedPos;
+      this.line = savedLine;
+      this.column = savedColumn;
+      return false;
+    }
+
+    this.advance(); // consume :
+
+    // Collect mode keyword
+    let mode = '';
+    while (!this.isAtEnd() && this.isAlpha(this.peek())) {
+      mode += this.advance();
+    }
+
+    // Check if valid mode followed by [
+    const validModes = ['sequence', 'cycle', 'shuffle', 'once'];
+    if (!validModes.includes(mode) || this.peek() !== '[') {
+      // Rollback
+      this.pos = savedPos;
+      this.line = savedLine;
+      this.column = savedColumn;
+      return false;
+    }
+
+    this.advance(); // consume [
+
+    // Emit named alternative token with format: @name:mode[
+    this.addToken(TokenType.NAMED_ALTERNATIVE, `@${name}:${mode}[`, start);
+    return true;
   }
 
   /**

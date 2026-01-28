@@ -180,7 +180,13 @@ export class NamespaceResolver {
 
   /**
    * Resolve a reference to its fully qualified name
-   * Searches: 1) current namespace, 2) parent namespaces, 3) global
+   * WLS 1.0 Resolution Order (GAP-046):
+   * 1. Global reference (starts with ::) - strip prefix and lookup directly
+   * 2. Already qualified reference (contains ::) - lookup directly
+   * 3. Current namespace - most specific first
+   * 4. Parent namespaces - walk up the hierarchy
+   * 5. Global scope - unqualified name at root
+   * 6. Relative reference inside qualified names - e.g., Combat::Start from Combat::Sub
    */
   resolve(reference: string): ResolvedReference | null {
     const sep = this.options.separator;
@@ -198,7 +204,7 @@ export class NamespaceResolver {
       return null;
     }
 
-    // Already fully qualified
+    // Already fully qualified - try exact match first
     if (reference.includes(sep)) {
       if (this.registeredNames.has(reference)) {
         return {
@@ -207,10 +213,36 @@ export class NamespaceResolver {
           isGlobal: false,
         };
       }
+
+      // Try resolving relative to current namespace
+      // e.g., "Sub::Start" from "Combat" should resolve to "Combat::Sub::Start"
+      if (this.stack.length > 0) {
+        const relativeQualified = [...this.stack, reference].join(sep);
+        if (this.registeredNames.has(relativeQualified)) {
+          return {
+            original: reference,
+            qualified: relativeQualified,
+            isGlobal: false,
+          };
+        }
+
+        // Try from parent namespaces too
+        for (let i = this.stack.length - 1; i >= 0; i--) {
+          const partial = [...this.stack.slice(0, i), reference].join(sep);
+          if (this.registeredNames.has(partial)) {
+            return {
+              original: reference,
+              qualified: partial,
+              isGlobal: false,
+            };
+          }
+        }
+      }
+
       return null;
     }
 
-    // Try current namespace first
+    // Try current namespace first (most specific)
     const qualified = this.qualify(reference);
     if (this.registeredNames.has(qualified)) {
       return {
@@ -220,8 +252,9 @@ export class NamespaceResolver {
       };
     }
 
-    // Try parent namespaces
-    for (let i = this.stack.length - 1; i >= 0; i--) {
+    // Try parent namespaces (walk up the hierarchy, but not to global scope)
+    // Stop at i > 0 to leave global scope for separate handling with isGlobal: true
+    for (let i = this.stack.length - 1; i > 0; i--) {
       const partial = [...this.stack.slice(0, i), reference].join(sep);
       if (this.registeredNames.has(partial)) {
         return {
@@ -232,7 +265,7 @@ export class NamespaceResolver {
       }
     }
 
-    // Try global
+    // Try global scope (fallback, isGlobal: true for discoverability)
     if (this.registeredNames.has(reference)) {
       return {
         original: reference,
@@ -242,6 +275,22 @@ export class NamespaceResolver {
     }
 
     return null;
+  }
+
+  /**
+   * Resolve with fallback - returns the qualified name or null
+   * Convenience method for simple lookups
+   */
+  resolveToQualified(reference: string): string | null {
+    const result = this.resolve(reference);
+    return result?.qualified ?? null;
+  }
+
+  /**
+   * Check if a reference can be resolved
+   */
+  canResolve(reference: string): boolean {
+    return this.resolve(reference) !== null;
   }
 
   /**

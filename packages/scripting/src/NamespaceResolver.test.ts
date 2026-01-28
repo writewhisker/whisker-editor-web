@@ -185,6 +185,104 @@ describe('NamespaceResolver', () => {
     });
   });
 
+  // ===========================================================================
+  // GAP-046: Nested Namespace Resolution
+  // ===========================================================================
+  describe('nested namespace resolution (GAP-046)', () => {
+    beforeEach(() => {
+      // Set up a deeply nested structure
+      resolver.registerQualifiedName('Start');
+      resolver.registerQualifiedName('End');
+      resolver.registerQualifiedName('Game::Init');
+      resolver.registerQualifiedName('Game::Combat::Attack');
+      resolver.registerQualifiedName('Game::Combat::Defend');
+      resolver.registerQualifiedName('Game::Combat::Magic::Fireball');
+      resolver.registerQualifiedName('Game::Combat::Magic::Ice');
+      resolver.registerQualifiedName('Game::Exploration::Search');
+      resolver.registerQualifiedName('Combat::Training');  // Another Combat at global level
+    });
+
+    it('resolves from deepest level first', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+      resolver.enter('Magic');
+
+      // Should find Fireball in current namespace
+      const result = resolver.resolve('Fireball');
+      expect(result?.qualified).toBe('Game::Combat::Magic::Fireball');
+    });
+
+    it('resolves from parent namespace when not in current', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+      resolver.enter('Magic');
+
+      // Attack is in parent (Combat) level
+      const result = resolver.resolve('Attack');
+      expect(result?.qualified).toBe('Game::Combat::Attack');
+    });
+
+    it('resolves from grandparent namespace', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+      resolver.enter('Magic');
+
+      // Init is at Game level (grandparent)
+      const result = resolver.resolve('Init');
+      expect(result?.qualified).toBe('Game::Init');
+    });
+
+    it('resolves to global when not found in hierarchy', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+
+      // End is only at global level
+      const result = resolver.resolve('End');
+      expect(result?.qualified).toBe('End');
+      expect(result?.isGlobal).toBe(true);
+    });
+
+    it('resolves relative qualified reference within current namespace', () => {
+      resolver.enter('Game');
+
+      // Combat::Attack should resolve to Game::Combat::Attack
+      const result = resolver.resolve('Combat::Attack');
+      expect(result?.qualified).toBe('Game::Combat::Attack');
+    });
+
+    it('resolves relative qualified reference from parent namespace', () => {
+      resolver.enter('Game');
+      resolver.enter('Exploration');
+
+      // Combat::Attack should still resolve to Game::Combat::Attack
+      const result = resolver.resolve('Combat::Attack');
+      expect(result?.qualified).toBe('Game::Combat::Attack');
+    });
+
+    it('resolves explicit global reference', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+
+      // ::Combat::Training is the global Combat::Training, not Game::Combat::Training
+      const result = resolver.resolve('::Combat::Training');
+      expect(result?.qualified).toBe('Combat::Training');
+      expect(result?.isGlobal).toBe(true);
+    });
+
+    it('uses convenience methods', () => {
+      resolver.enter('Game');
+      resolver.enter('Combat');
+
+      // Test resolveToQualified
+      expect(resolver.resolveToQualified('Attack')).toBe('Game::Combat::Attack');
+      expect(resolver.resolveToQualified('NonExistent')).toBeNull();
+
+      // Test canResolve
+      expect(resolver.canResolve('Attack')).toBe(true);
+      expect(resolver.canResolve('NonExistent')).toBe(false);
+    });
+  });
+
   describe('find matches', () => {
     beforeEach(() => {
       resolver.registerQualifiedName('Start');

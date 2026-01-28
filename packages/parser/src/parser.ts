@@ -1779,6 +1779,11 @@ export class Parser {
       return this.parseConditionalOrAlternatives();
     }
 
+    // Named alternatives (@name:mode[...])
+    if (this.check(TokenType.NAMED_ALTERNATIVE)) {
+      return this.parseNamedAlternatives();
+    }
+
     // Expression interpolation
     if (this.check(TokenType.EXPR_START)) {
       return this.parseInterpolation();
@@ -2646,6 +2651,63 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse named alternatives: @name:mode[option1|option2|option3]
+   * Named alternatives maintain state across visits
+   */
+  private parseNamedAlternatives(): AlternativesNode {
+    const start = this.peek();
+    const tokenValue = this.advance().value; // @name:mode[
+
+    // Parse the token value to extract name and mode
+    // Format: @name:mode[
+    const match = tokenValue.match(/^@([^:]+):(\w+)\[$/);
+    if (!match) {
+      this.addError('Invalid named alternative syntax');
+      return {
+        type: 'alternatives',
+        mode: 'sequence',
+        options: [],
+        location: this.getLocation(start),
+      };
+    }
+
+    const name = match[1];
+    const mode = match[2] as 'sequence' | 'cycle' | 'shuffle' | 'once';
+
+    // Parse options until closing ]
+    const options: ContentNode[][] = [];
+    let currentOption: ContentNode[] = [];
+
+    while (!this.isAtEnd() && !this.check(TokenType.RBRACKET)) {
+      if (this.match(TokenType.PIPE)) {
+        options.push(currentOption);
+        currentOption = [];
+      } else {
+        const token = this.advance();
+        currentOption.push({
+          type: 'text',
+          value: token.value,
+          location: token.location,
+        });
+      }
+    }
+
+    if (currentOption.length > 0) {
+      options.push(currentOption);
+    }
+
+    this.expect(TokenType.RBRACKET, 'Expected "]" after named alternatives');
+
+    return {
+      type: 'alternatives',
+      mode,
+      options,
+      name,
+      location: this.getLocation(start),
+    };
+  }
+
   // ============================================================================
   // Interpolation Parsing
   // ============================================================================
@@ -2727,6 +2789,7 @@ export class Parser {
            !this.check(TokenType.STRIKETHROUGH_MARKER) &&
            !this.check(TokenType.INLINE_CODE) &&
            !this.check(TokenType.IMAGE_START) &&  // Stop for media
+           !this.check(TokenType.NAMED_ALTERNATIVE) && // Stop for named alternatives (GAP-030)
            !this.isHookOperation()) {              // Stop for hook operations
       value += this.advance().value;
     }

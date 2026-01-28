@@ -142,6 +142,7 @@ export enum TokenType {
   AMPERSAND = 'AMPERSAND',                     // & (cycle marker)
   TILDE = 'TILDE',                             // ~ (shuffle marker)
   EXCLAMATION = 'EXCLAMATION',                 // ! (once-only marker)
+  NAMED_ALTERNATIVE = 'NAMED_ALTERNATIVE',     // @name:mode[ (named alternative)
 
   // Special
   COLON = 'COLON',                             // : (inline conditional separator)

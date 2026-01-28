@@ -308,12 +308,14 @@ export interface ChoiceNode extends BaseNode {
 }
 
 /**
- * Text alternatives ({| a | b | c})
+ * Text alternatives ({| a | b | c}) or named (@name:sequence[...])
  */
 export interface AlternativesNode extends BaseNode {
   type: 'alternatives';
   mode: 'sequence' | 'cycle' | 'shuffle' | 'once';
   options: ContentNode[][];
+  /** Optional name for named alternatives (e.g., @greeting:sequence) */
+  name?: string;
 }
 
 /**

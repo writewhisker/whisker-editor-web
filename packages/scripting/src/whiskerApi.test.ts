@@ -853,5 +853,128 @@ describe('WhiskerApi', () => {
         expect(api.hook.hide('nonexistent')).toBe(false);
       });
     });
+
+    // ========================================================================
+    // GAP-073: whisker.hook.clear() - Dedicated hook clear
+    // ========================================================================
+
+    describe('clear (GAP-073)', () => {
+      it('clears hook content to empty string', () => {
+        expect(api.hook.get('status')).toBe('Ready');
+        expect(api.hook.clear('status')).toBe(true);
+        expect(api.hook.get('status')).toBe('');
+      });
+
+      it('returns false for non-existent hook', () => {
+        expect(api.hook.clear('nonexistent')).toBe(false);
+      });
+
+      it('marks hook as cleared', () => {
+        api.hook.clear('status');
+        expect(api.hook.isCleared('status')).toBe(true);
+        expect(api.hook.isModified('status')).toBe(true);
+      });
+
+      it('does not reset visibility by default', () => {
+        api.hook.hide('status');
+        expect(api.hook.visible('status')).toBe(false);
+        api.hook.clear('status');
+        expect(api.hook.visible('status')).toBe(false);
+      });
+
+      it('resets visibility when resetVisibility is true', () => {
+        api.hook.hide('status');
+        expect(api.hook.visible('status')).toBe(false);
+        api.hook.clear('status', true);
+        expect(api.hook.visible('status')).toBe(true);
+      });
+
+      it('throws for non-string name', () => {
+        expect(() => api.hook.clear(123 as unknown as string)).toThrow('requires a string argument');
+      });
+    });
+
+    describe('isModified (GAP-073)', () => {
+      it('returns false for unmodified hook', () => {
+        expect(api.hook.isModified('status')).toBe(false);
+      });
+
+      it('returns true after replace', () => {
+        api.hook.replace('status', 'Changed');
+        expect(api.hook.isModified('status')).toBe(true);
+      });
+
+      it('returns true after append', () => {
+        api.hook.append('status', '!');
+        expect(api.hook.isModified('status')).toBe(true);
+      });
+
+      it('returns true after prepend', () => {
+        api.hook.prepend('status', '>>> ');
+        expect(api.hook.isModified('status')).toBe(true);
+      });
+
+      it('returns true after clear', () => {
+        api.hook.clear('status');
+        expect(api.hook.isModified('status')).toBe(true);
+      });
+
+      it('throws for non-string name', () => {
+        expect(() => api.hook.isModified(123 as unknown as string)).toThrow('requires a string argument');
+      });
+    });
+
+    describe('isCleared (GAP-073)', () => {
+      it('returns false for uncleared hook', () => {
+        expect(api.hook.isCleared('status')).toBe(false);
+      });
+
+      it('returns false after replace', () => {
+        api.hook.replace('status', '');
+        expect(api.hook.isCleared('status')).toBe(false);
+      });
+
+      it('returns true after clear', () => {
+        api.hook.clear('status');
+        expect(api.hook.isCleared('status')).toBe(true);
+      });
+
+      it('throws for non-string name', () => {
+        expect(() => api.hook.isCleared(123 as unknown as string)).toThrow('requires a string argument');
+      });
+    });
+
+    // ========================================================================
+    // GAP-047: whisker.hook.all() - Enumerate hooks
+    // ========================================================================
+
+    describe('all (GAP-047)', () => {
+      it('returns array of hook names', () => {
+        const hooks = api.hook.all();
+        expect(Array.isArray(hooks)).toBe(true);
+        expect(hooks).toContain('status');
+        expect(hooks).toContain('score');
+        expect(hooks).toContain('hidden');
+        expect(hooks).toContain('inventory');
+      });
+
+      it('returns empty array when no hooks', () => {
+        // Create fresh context
+        const result = createTestWhiskerApi();
+        expect(result.api.hook.all()).toEqual([]);
+      });
+
+      it('includes dynamically added hooks', () => {
+        context.addHook({ name: 'dynamic', content: 'test', visible: true });
+        const hooks = api.hook.all();
+        expect(hooks).toContain('dynamic');
+      });
+
+      it('excludes removed hooks', () => {
+        context.removeHook('status');
+        const hooks = api.hook.all();
+        expect(hooks).not.toContain('status');
+      });
+    });
   });
 });

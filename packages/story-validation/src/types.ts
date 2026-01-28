@@ -23,6 +23,7 @@ export type ValidationCategory =
   | 'quality'
   | 'syntax'
   | 'expression'
+  | 'flow'
   | 'collections'
   | 'modules'
   | 'presentation';

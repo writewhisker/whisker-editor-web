@@ -5,7 +5,7 @@
  * Error codes: WLS-COL-001 through WLS-COL-010
  */
 
-import type { Story } from '@writewhisker/story-models';
+import type { Story, Passage } from '@writewhisker/story-models';
 import type { Validator } from '../StoryValidator';
 import type { ValidationIssue } from '../types';
 
@@ -261,9 +261,9 @@ export class WlsCollectionValidator implements Validator {
       return issues;
     }
 
-    const passageEntries = passages instanceof Map
+    const passageEntries: [string, Passage][] = passages instanceof Map
       ? Array.from(passages.entries())
-      : Object.entries(passages);
+      : Object.entries(passages) as [string, Passage][];
 
     for (const [passageId, passage] of passageEntries) {
       if (!passage.content) continue;

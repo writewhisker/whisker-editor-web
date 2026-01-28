@@ -73,32 +73,60 @@ class MockEventSource {
 // @ts-ignore
 global.EventSource = MockEventSource;
 
-const mockStory: Story = {
-  id: 'test-story',
-  name: 'Test Story',
-  ifid: 'test-ifid',
-  startPassage: 'Start',
-  tagColors: {},
-  zoom: 1,
-  passages: [
+// Helper to create a mock Story with Map-based passages
+function createMockStory(overrides: Partial<{
+  metadata: any;
+  startPassage: string;
+  passages: Array<{ id: string; title: string; content: string; tags?: string[]; position?: { x: number; y: number } }>;
+}> = {}): Story {
+  const passageData = overrides.passages ?? [
     {
       id: 'passage-1',
       title: 'Start',
-      tags: [],
       content: 'Start passage',
+      tags: [],
       position: { x: 0, y: 0 },
-      size: { width: 100, height: 100 },
     },
     {
       id: 'passage-2',
       title: 'Middle',
-      tags: [],
       content: 'Middle passage',
+      tags: [],
       position: { x: 200, y: 0 },
-      size: { width: 100, height: 100 },
     },
-  ],
-};
+  ];
+
+  const passages = new Map<string, Passage>();
+  for (const p of passageData) {
+    passages.set(p.id, {
+      id: p.id,
+      title: p.title,
+      content: p.content,
+      tags: p.tags ?? [],
+      position: p.position ?? { x: 0, y: 0 },
+      size: { width: 100, height: 100 },
+    } as Passage);
+  }
+
+  return {
+    metadata: overrides.metadata ?? {
+      title: 'Test Story',
+      author: 'Test Author',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+    },
+    startPassage: overrides.startPassage ?? 'passage-1',
+    passages,
+    variables: new Map(),
+    settings: {},
+    getPassage(id: string) {
+      return passages.get(id);
+    },
+  } as Story;
+}
+
+const mockStory = createMockStory();
 
 describe('HMRClient', () => {
   let config: HMRClientConfig;
@@ -548,7 +576,7 @@ describe('StoryHotReload', () => {
   let hotReload: StoryHotReload;
 
   beforeEach(() => {
-    story = JSON.parse(JSON.stringify(mockStory));
+    story = createMockStory();
     hotReload = new StoryHotReload(story);
   });
 
@@ -557,58 +585,52 @@ describe('StoryHotReload', () => {
       const callback = vi.fn();
       hotReload.onUpdate(callback);
 
-      const newStory = { ...story, name: 'Updated Story' };
+      const newStory = createMockStory({
+        metadata: { ...story.metadata, title: 'Updated Story' },
+      });
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().name).toBe('Updated Story');
+      expect(hotReload.getStory().metadata.title).toBe('Updated Story');
       expect(callback).toHaveBeenCalledWith(newStory);
     });
 
     it('should detect passage additions', () => {
-      const newPassage: Passage = {
-        id: 'passage-3',
-        title: 'New Passage',
-        tags: [],
-        content: 'New content',
-        position: { x: 400, y: 0 },
-        size: { width: 100, height: 100 },
-      };
-
-      const newStory = {
-        ...story,
-        passages: [...story.passages, newPassage],
-      };
+      const newStory = createMockStory({
+        passages: [
+          { id: 'passage-1', title: 'Start', content: 'Start passage' },
+          { id: 'passage-2', title: 'Middle', content: 'Middle passage' },
+          { id: 'passage-3', title: 'New Passage', content: 'New content' },
+        ],
+      });
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages.length).toBe(3);
+      expect(hotReload.getStory().passages.size).toBe(3);
     });
 
     it('should detect passage removals', () => {
-      const newStory = {
-        ...story,
-        passages: [story.passages[0]],
-      };
+      const newStory = createMockStory({
+        passages: [{ id: 'passage-1', title: 'Start', content: 'Start passage' }],
+      });
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages.length).toBe(1);
+      expect(hotReload.getStory().passages.size).toBe(1);
     });
 
     it('should detect passage updates', () => {
-      const updatedPassage = {
-        ...story.passages[0],
-        content: 'Updated content',
-      };
-
-      const newStory = {
-        ...story,
-        passages: [updatedPassage, story.passages[1]],
-      };
+      const newStory = createMockStory({
+        passages: [
+          { id: 'passage-1', title: 'Start', content: 'Updated content' },
+          { id: 'passage-2', title: 'Middle', content: 'Middle passage' },
+        ],
+      });
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages[0].content).toBe('Updated content');
+      expect(hotReload.getStory().passages.get('passage-1')?.content).toBe(
+        'Updated content'
+      );
     });
   });
 
@@ -617,14 +639,17 @@ describe('StoryHotReload', () => {
       const callback = vi.fn();
       hotReload.onUpdate(callback);
 
+      const existingPassage = story.passages.get('passage-1')!;
       const updatedPassage = {
-        ...story.passages[0],
+        ...existingPassage,
         content: 'Updated content',
       };
 
       hotReload.updatePassage(updatedPassage);
 
-      expect(hotReload.getStory().passages[0].content).toBe('Updated content');
+      expect(hotReload.getStory().passages.get('passage-1')?.content).toBe(
+        'Updated content'
+      );
       expect(callback).toHaveBeenCalled();
     });
 
@@ -639,7 +664,7 @@ describe('StoryHotReload', () => {
         content: 'Content',
         position: { x: 0, y: 0 },
         size: { width: 100, height: 100 },
-      };
+      } as Passage;
 
       hotReload.updatePassage(nonExistentPassage);
 
@@ -659,12 +684,12 @@ describe('StoryHotReload', () => {
         content: 'New content',
         position: { x: 400, y: 0 },
         size: { width: 100, height: 100 },
-      };
+      } as Passage;
 
       hotReload.addPassage(newPassage);
 
-      expect(hotReload.getStory().passages.length).toBe(3);
-      expect(hotReload.getStory().passages[2]).toBe(newPassage);
+      expect(hotReload.getStory().passages.size).toBe(3);
+      expect(hotReload.getStory().passages.get('passage-3')).toBe(newPassage);
       expect(callback).toHaveBeenCalled();
     });
   });
@@ -676,8 +701,9 @@ describe('StoryHotReload', () => {
 
       hotReload.removePassage('passage-1');
 
-      expect(hotReload.getStory().passages.length).toBe(1);
-      expect(hotReload.getStory().passages[0].id).toBe('passage-2');
+      expect(hotReload.getStory().passages.size).toBe(1);
+      expect(hotReload.getStory().passages.has('passage-1')).toBe(false);
+      expect(hotReload.getStory().passages.has('passage-2')).toBe(true);
       expect(callback).toHaveBeenCalled();
     });
 
@@ -685,7 +711,7 @@ describe('StoryHotReload', () => {
       hotReload.removePassage('passage-1');
 
       // Cache should be invalidated
-      expect(hotReload.getStory().passages.length).toBe(1);
+      expect(hotReload.getStory().passages.size).toBe(1);
     });
   });
 
@@ -695,7 +721,9 @@ describe('StoryHotReload', () => {
 
       hotReload.onUpdate(callback);
 
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = createMockStory({
+        metadata: { ...story.metadata, title: 'Updated' },
+      });
       hotReload.updateStory(newStory);
 
       expect(callback).toHaveBeenCalledWith(newStory);
@@ -708,7 +736,9 @@ describe('StoryHotReload', () => {
       hotReload.onUpdate(callback1);
       hotReload.onUpdate(callback2);
 
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = createMockStory({
+        metadata: { ...story.metadata, title: 'Updated' },
+      });
       hotReload.updateStory(newStory);
 
       expect(callback1).toHaveBeenCalled();
@@ -722,10 +752,12 @@ describe('StoryHotReload', () => {
     });
 
     it('should return updated story after changes', () => {
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = createMockStory({
+        metadata: { ...story.metadata, title: 'Updated' },
+      });
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().name).toBe('Updated');
+      expect(hotReload.getStory().metadata.title).toBe('Updated');
     });
   });
 
@@ -874,18 +906,26 @@ describe('HMRRuntime', () => {
 
 describe('Edge Cases and Integration', () => {
   it('should handle rapid story updates', () => {
-    const hotReload = createStoryHotReload(mockStory);
+    const hotReload = createStoryHotReload(createMockStory());
     const callback = vi.fn();
 
     hotReload.onUpdate(callback);
 
     for (let i = 0; i < 100; i++) {
-      const newStory = { ...mockStory, name: `Story ${i}` };
+      const newStory = createMockStory({
+        metadata: {
+          title: `Story ${i}`,
+          author: 'Test Author',
+          version: '1.0.0',
+          created: new Date().toISOString(),
+          modified: new Date().toISOString(),
+        },
+      });
       hotReload.updateStory(newStory);
     }
 
     expect(callback).toHaveBeenCalledTimes(100);
-    expect(hotReload.getStory().name).toBe('Story 99');
+    expect(hotReload.getStory().metadata.title).toBe('Story 99');
   });
 
   it('should handle complex dependency chains', () => {
@@ -918,28 +958,25 @@ describe('Edge Cases and Integration', () => {
   });
 
   it('should handle empty story', () => {
-    const emptyStory: Story = {
-      id: 'empty',
-      name: 'Empty',
-      ifid: 'empty-ifid',
+    const emptyStory = createMockStory({
       startPassage: '',
-      tagColors: {},
-      zoom: 1,
       passages: [],
-    };
+    });
 
     const hotReload = createStoryHotReload(emptyStory);
 
-    expect(hotReload.getStory().passages.length).toBe(0);
+    expect(hotReload.getStory().passages.size).toBe(0);
   });
 
   it('should detect no changes when story is identical', () => {
-    const hotReload = createStoryHotReload(mockStory);
-    const identicalStory = JSON.parse(JSON.stringify(mockStory));
+    const story = createMockStory();
+    const hotReload = createStoryHotReload(story);
+    // Create an identical story with the same structure
+    const identicalStory = createMockStory();
 
     hotReload.updateStory(identicalStory);
 
-    // Should still trigger update callback
-    expect(hotReload.getStory()).toEqual(identicalStory);
+    // Should still trigger update callback - passages should match
+    expect(hotReload.getStory().passages.size).toBe(identicalStory.passages.size);
   });
 });

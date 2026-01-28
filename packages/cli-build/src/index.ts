@@ -5,7 +5,7 @@
  */
 
 import type { Command, CommandContext } from './types.js';
-import type { Story } from '@writewhisker/story-models';
+import { Story } from '@writewhisker/story-models';
 
 /**
  * Validation result
@@ -39,9 +39,9 @@ export interface BuildOptions {
 export async function buildStory(options: BuildOptions): Promise<void> {
   const fs = await import('fs/promises');
 
-  // Read story file
+  // Read story file and deserialize to Story instance
   const storyContent = await fs.readFile(options.input, 'utf-8');
-  const story: Story = JSON.parse(storyContent);
+  const story = new Story(JSON.parse(storyContent));
 
   // Validate if requested
   if (options.validate) {
@@ -83,7 +83,9 @@ export async function buildStory(options: BuildOptions): Promise<void> {
  */
 async function buildHTML(story: Story, options: BuildOptions): Promise<string> {
   const template = await getHTMLTemplate();
-  const storyData = options.minify ? JSON.stringify(story) : JSON.stringify(story, null, 2);
+  // Use story.serialize() to properly convert Maps to plain objects
+  const serialized = story.serialize();
+  const storyData = options.minify ? JSON.stringify(serialized) : JSON.stringify(serialized, null, 2);
 
   return template
     .replace('{{STORY_TITLE}}', escapeHTML(story.metadata.title))
@@ -95,7 +97,8 @@ async function buildHTML(story: Story, options: BuildOptions): Promise<string> {
  * Build JSON output
  */
 async function buildJSON(story: Story, options: BuildOptions): Promise<string> {
-  return options.minify ? JSON.stringify(story) : JSON.stringify(story, null, 2);
+  const serialized = story.serialize();
+  return options.minify ? JSON.stringify(serialized) : JSON.stringify(serialized, null, 2);
 }
 
 /**
@@ -227,10 +230,11 @@ async function getHTMLTemplate(): Promise<string> {
     const storyData = {{STORY_DATA}};
     let currentPassage = storyData.startPassage;
 
-    function renderPassage(passageTitle) {
-      const passage = storyData.passages.find(p => p.title === passageTitle);
+    function renderPassage(passageId) {
+      // passages is an object keyed by ID, not an array
+      const passage = storyData.passages[passageId];
       if (!passage) {
-        return '<p>Passage not found: ' + passageTitle + '</p>';
+        return '<p>Passage not found: ' + passageId + '</p>';
       }
 
       let html = '<div class="passage">';
@@ -278,11 +282,12 @@ async function getHTMLTemplate(): Promise<string> {
 async function validateStory(story: Story): Promise<ValidationResult> {
   const errors: Array<{ type: string; message: string }> = [];
 
-  // Check for start passage
+  // Check for start passage (startPassage is a passage ID in the new format)
   if (!story.startPassage) {
     errors.push({ type: 'missing-start', message: 'Story has no start passage' });
   } else {
-    const startExists = story.somePassage(p => p.title === story.startPassage);
+    // Check if passage exists by ID
+    const startExists = story.passages.has(story.startPassage);
     if (!startExists) {
       errors.push({
         type: 'invalid-start',
@@ -292,14 +297,17 @@ async function validateStory(story: Story): Promise<ValidationResult> {
   }
 
   // Check for broken links
+  // Links can target either passage titles or passage IDs
   const passageTitles = new Set(story.mapPassages(p => p.title));
+  const passageIds = new Set(story.passages.keys());
   const linkRegex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
   for (const passage of story.passages.values()) {
     let match;
     while ((match = linkRegex.exec(passage.content)) !== null) {
       const target = match[2] || match[1];
-      if (!passageTitles.has(target)) {
+      // Check if target matches either a title or an ID
+      if (!passageTitles.has(target) && !passageIds.has(target)) {
         errors.push({
           type: 'broken-link',
           message: `Broken link in "${passage.title}": ${target}`,

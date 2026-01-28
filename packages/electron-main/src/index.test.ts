@@ -5,35 +5,56 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Story } from '@writewhisker/story-models';
 
-// Mock electron module
-const mockApp = {
-  getPath: vi.fn(),
-  on: vi.fn(),
-  quit: vi.fn(),
-  requestSingleInstanceLock: vi.fn(),
-  isPackaged: false
-};
+// Use vi.hoisted to ensure mock variables are hoisted with vi.mock
+const {
+  mockApp,
+  mockBrowserWindow,
+  mockWebContents,
+  mockIpcMain,
+  mockDialog,
+  mockMenu,
+  mockTray,
+} = vi.hoisted(() => {
+  const mockApp = {
+    getPath: vi.fn(),
+    on: vi.fn(),
+    quit: vi.fn(),
+    requestSingleInstanceLock: vi.fn(),
+    isPackaged: false,
+  };
 
-const mockBrowserWindow = vi.fn();
-const mockWebContents = {
-  openDevTools: vi.fn()
-};
+  const mockWebContents = {
+    openDevTools: vi.fn(),
+  };
 
-const mockIpcMain = {
-  handle: vi.fn()
-};
+  const mockBrowserWindow = vi.fn();
 
-const mockDialog = {
-  showOpenDialog: vi.fn(),
-  showSaveDialog: vi.fn(),
-  showMessageBox: vi.fn()
-};
+  const mockIpcMain = {
+    handle: vi.fn(),
+  };
 
-const mockMenu = {
-  buildFromTemplate: vi.fn()
-};
+  const mockDialog = {
+    showOpenDialog: vi.fn(),
+    showSaveDialog: vi.fn(),
+    showMessageBox: vi.fn(),
+  };
 
-const mockTray = vi.fn();
+  const mockMenu = {
+    buildFromTemplate: vi.fn(),
+  };
+
+  const mockTray = vi.fn();
+
+  return {
+    mockApp,
+    mockBrowserWindow,
+    mockWebContents,
+    mockIpcMain,
+    mockDialog,
+    mockMenu,
+    mockTray,
+  };
+});
 
 vi.mock('electron', () => ({
   app: mockApp,
@@ -41,20 +62,20 @@ vi.mock('electron', () => ({
   ipcMain: mockIpcMain,
   dialog: mockDialog,
   Menu: mockMenu,
-  Tray: mockTray
+  Tray: mockTray,
 }));
 
 vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
-  writeFile: vi.fn()
+  writeFile: vi.fn(),
 }));
 
 vi.mock('path', () => ({
-  join: vi.fn((...args) => args.join('/'))
+  join: vi.fn((...args: string[]) => args.join('/')),
 }));
 
 vi.mock('url', () => ({
-  fileURLToPath: vi.fn((url) => url.replace('file://', ''))
+  fileURLToPath: vi.fn((url: string) => url.replace('file://', '')),
 }));
 
 // Import after mocking
@@ -149,13 +170,24 @@ describe('setupIPC', () => {
       handlers.set(channel, handler);
     });
     mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      author: 'Test Author',
-      startPassage: 'Start',
-      passages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+      },
+      startPassage: 'passage-1',
+      passages: {
+        'passage-1': {
+          id: 'passage-1',
+          title: 'Start',
+          content: 'Hello',
+          position: { x: 0, y: 0 },
+        },
+      },
+      variables: {},
+      settings: {},
     };
   });
 
@@ -282,7 +314,10 @@ describe('setupIPC', () => {
     });
 
     it('should use "story.json" when story has no name', async () => {
-      const storyNoName = { ...mockStory, name: '' };
+      const storyNoName = {
+        ...mockStory,
+        metadata: { ...mockStory.metadata, title: '' },
+      };
       mockDialog.showSaveDialog.mockResolvedValue({ canceled: true, filePath: undefined });
       const handler = handlers.get('file:saveAs')!;
       await handler(null, storyNoName);

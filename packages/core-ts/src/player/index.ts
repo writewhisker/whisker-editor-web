@@ -17,7 +17,7 @@ export class WhiskerPlayerUI {
   private passageElement: HTMLElement
   private containerElement: HTMLElement
 
-  constructor(containerElement: HTMLElement, options?: PlayerOptions) {
+  constructor(containerElement: HTMLElement, _options?: PlayerOptions) {
     this.containerElement = containerElement
     this.passageElement = this.createPassageElement()
 
@@ -137,21 +137,21 @@ export class WhiskerPlayerUI {
   private setupChoiceHandlers(): void {
     const choices = this.passageElement.querySelectorAll('.whisker-choice')
 
-    choices.forEach((choice, index) => {
+    choices.forEach((choice: Element, index: number) => {
       choice.addEventListener('click', () => {
         this.handleChoice(index)
       })
     })
   }
 
-  private handleChoice(index: number): void {
+  private handleChoice(_index: number): void {
     // Parse hook operations from choice
     // Execute operations
     // Navigate if needed
     // Implementation depends on story format
   }
 
-  private getPassageContent(passageId: string): string {
+  private getPassageContent(_passageId: string): string {
     // Stub - would fetch from story data
     return ''
   }

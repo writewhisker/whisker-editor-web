@@ -260,6 +260,6 @@ export class HookRenderer {
       `[data-hook-id^="${passageId}_"]`
     )
 
-    hookElements.forEach(el => el.remove())
+    hookElements.forEach((el: Element) => el.remove())
   }
 }

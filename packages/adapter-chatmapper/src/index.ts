@@ -5,7 +5,7 @@
  * ChatMapper is a professional dialogue tree editor for games.
  */
 
-import type { Story, Passage, Variable } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface ChatMapperProject {
   title: string;
@@ -437,9 +437,8 @@ export class ChatMapperImporter {
   /**
    * Convert ChatMapper structure to Whisker Story
    */
-  public convertToWhisker(project: ChatMapperProject): any {
-    const { Story, Variable } = require('@writewhisker/story-models');
-    const passages = [];
+  public convertToWhisker(project: ChatMapperProject): Story {
+    const passages: Passage[] = [];
 
     // Convert all dialogue entries to passages
     for (const conversation of project.conversations) {
@@ -455,15 +454,26 @@ export class ChatMapperImporter {
         version: '1.0.0',
         created: new Date().toISOString(),
         modified: new Date().toISOString(),
-        ...project.metadata,
-        actors: project.actors,
       },
       startPassage: passages[0]?.id || 'start',
     });
 
+    // Clear the default passage created by Story constructor
+    story.passages.clear();
+
+    // Store extra metadata that doesn't fit the schema in settings
+    if (project.actors && project.actors.length > 0) {
+      story.settings.actors = project.actors;
+    }
+
     // Add passages to story
     for (const passage of passages) {
       story.passages.set(passage.id, passage);
+    }
+
+    // Update startPassage to the first actual passage
+    if (passages.length > 0) {
+      story.startPassage = passages[0].id;
     }
 
     // Add variables
@@ -478,8 +488,7 @@ export class ChatMapperImporter {
     return story;
   }
 
-  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertDialogueEntryToPassage(entry: ChatMapperDialogueEntry): Passage {
     let content = '';
 
     // Add actor dialogue if present

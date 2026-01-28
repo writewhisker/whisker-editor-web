@@ -5,7 +5,7 @@
  * Ren'Py is a visual novel engine using Python-like syntax.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface RenpyScript {
   name: string;
@@ -118,8 +118,10 @@ export class RenpyExporter {
       // Check for Whisker link syntax [[Target]] or [[Text|Target]]
       const linkMatch = trimmed.match(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
       if (linkMatch) {
-        const text = linkMatch[2] || linkMatch[1];
-        const target = linkMatch[2] ? linkMatch[1] : linkMatch[1];
+        // For [[Text|Target]], linkMatch[1] is the text, linkMatch[2] is the target
+        // For [[Target]], linkMatch[1] is used as both text and target
+        const text = linkMatch[1];
+        const target = linkMatch[2] || linkMatch[1];
         choices.push({
           text,
           target: this.sanitizeLabelName(target),
@@ -474,8 +476,7 @@ export class RenpyImporter {
   /**
    * Convert Ren'Py structure to Whisker Story
    */
-  public convertToWhisker(renpyScript: RenpyScript): any {
-    const { Story, Variable } = require('@writewhisker/story-models');
+  public convertToWhisker(renpyScript: RenpyScript): Story {
     const passages = renpyScript.labels.map((label, index) => this.convertLabelToPassage(label, index));
 
     const story = new Story({
@@ -485,14 +486,26 @@ export class RenpyImporter {
         version: '1.0.0',
         created: new Date().toISOString(),
         modified: new Date().toISOString(),
-        ...renpyScript.metadata,
       },
       startPassage: passages[0]?.id || 'start',
     });
 
+    // Clear the default passage created by Story constructor
+    story.passages.clear();
+
     // Add passages to story
     for (const passage of passages) {
       story.passages.set(passage.id, passage);
+    }
+
+    // Update startPassage to the first actual passage
+    if (passages.length > 0) {
+      story.startPassage = passages[0].id;
+    }
+
+    // Store characters in settings (not part of StoryMetadata type)
+    if (renpyScript.characters && renpyScript.characters.length > 0) {
+      story.settings.characters = renpyScript.characters;
     }
 
     // Add variables
@@ -507,8 +520,7 @@ export class RenpyImporter {
     return story;
   }
 
-  private convertLabelToPassage(label: RenpyLabel, index: number): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertLabelToPassage(label: RenpyLabel, index: number): Passage {
     let content = label.content;
 
     // Add menu choices as links
@@ -520,7 +532,7 @@ export class RenpyImporter {
     }
 
     return new Passage({
-      id: this.generateId(),
+      id: label.name, // Use label name as ID for consistent referencing
       title: label.name,
       content: content.trim(),
       tags: [],
@@ -529,10 +541,6 @@ export class RenpyImporter {
         y: Math.floor(index / 5) * 200,
       },
     });
-  }
-
-  private generateId(): string {
-    return Math.random().toString(36).substring(2, 15);
   }
 }
 

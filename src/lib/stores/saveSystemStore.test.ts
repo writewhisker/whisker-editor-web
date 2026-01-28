@@ -10,27 +10,26 @@ import {
   type SaveSlotType,
   type SaveMetadata,
 } from './saveSystemStore';
-import type { Story, Variable } from '@writewhisker/core-ts';
+import { Story, Variable } from '@writewhisker/story-models';
 
 describe('saveSystemStore', () => {
   let story: Story;
 
   beforeEach(() => {
-    story = {
+    story = new Story({
       metadata: {
         title: 'Test Story',
         author: 'Test Author',
         version: '1.0.0',
       },
-      variables: [
-        { name: 'health', type: 'number', initialValue: 100 },
-        { name: 'score', type: 'number', initialValue: 0 },
-        { name: 'playerName', type: 'string', initialValue: '' },
-        { name: 'isAlive', type: 'boolean', initialValue: true },
-      ] as unknown as Variable[],
-      passages: [],
       startPassage: '',
-    } as unknown as Story;
+    });
+
+    // Add variables
+    story.variables.set('health', new Variable({ name: 'health', type: 'number', initial: 100 }));
+    story.variables.set('score', new Variable({ name: 'score', type: 'number', initial: 0 }));
+    story.variables.set('playerName', new Variable({ name: 'playerName', type: 'string', initial: '' }));
+    story.variables.set('isAlive', new Variable({ name: 'isAlive', type: 'boolean', initial: true }));
 
     saveSystemStore.reset();
   });

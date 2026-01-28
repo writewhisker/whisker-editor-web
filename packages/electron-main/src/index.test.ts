@@ -5,35 +5,36 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Story } from '@writewhisker/story-models';
 
-// Mock electron module
-const mockApp = {
-  getPath: vi.fn(),
-  on: vi.fn(),
-  quit: vi.fn(),
-  requestSingleInstanceLock: vi.fn(),
-  isPackaged: false
-};
+// Use vi.hoisted() to ensure mocks are available before vi.mock is called
+const { mockApp, mockBrowserWindow, mockWebContents, mockIpcMain, mockDialog, mockMenu, mockTray } = vi.hoisted(() => {
+  const mockWebContents = {
+    openDevTools: vi.fn()
+  };
+  const mockApp = {
+    getPath: vi.fn(),
+    on: vi.fn(),
+    quit: vi.fn(),
+    requestSingleInstanceLock: vi.fn(),
+    isPackaged: false
+  };
+  const mockBrowserWindow = vi.fn().mockReturnValue({
+    webContents: mockWebContents
+  });
+  const mockIpcMain = {
+    handle: vi.fn()
+  };
+  const mockDialog = {
+    showOpenDialog: vi.fn(),
+    showSaveDialog: vi.fn(),
+    showMessageBox: vi.fn()
+  };
+  const mockMenu = {
+    buildFromTemplate: vi.fn()
+  };
+  const mockTray = vi.fn();
 
-const mockBrowserWindow = vi.fn();
-const mockWebContents = {
-  openDevTools: vi.fn()
-};
-
-const mockIpcMain = {
-  handle: vi.fn()
-};
-
-const mockDialog = {
-  showOpenDialog: vi.fn(),
-  showSaveDialog: vi.fn(),
-  showMessageBox: vi.fn()
-};
-
-const mockMenu = {
-  buildFromTemplate: vi.fn()
-};
-
-const mockTray = vi.fn();
+  return { mockApp, mockBrowserWindow, mockWebContents, mockIpcMain, mockDialog, mockMenu, mockTray };
+});
 
 vi.mock('electron', () => ({
   app: mockApp,
@@ -50,11 +51,11 @@ vi.mock('fs/promises', () => ({
 }));
 
 vi.mock('path', () => ({
-  join: vi.fn((...args) => args.join('/'))
+  join: vi.fn((...args: string[]) => args.join('/'))
 }));
 
 vi.mock('url', () => ({
-  fileURLToPath: vi.fn((url) => url.replace('file://', ''))
+  fileURLToPath: vi.fn((url: string) => url.replace('file://', ''))
 }));
 
 // Import after mocking
@@ -148,15 +149,25 @@ describe('setupIPC', () => {
     mockIpcMain.handle.mockImplementation((channel: string, handler: Function) => {
       handlers.set(channel, handler);
     });
+    // Use plain objects instead of Maps to match JSON.parse behavior
+    // (JSON serialization converts Maps to empty objects)
     mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      author: 'Test Author',
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+      },
       startPassage: 'Start',
-      passages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      passages: {},
+      variables: {},
+      settings: {},
+      stylesheets: [],
+      scripts: [],
+      assets: {},
+      luaFunctions: {},
+    } as unknown as Story;
   });
 
   it('should register IPC handlers', () => {
@@ -282,7 +293,7 @@ describe('setupIPC', () => {
     });
 
     it('should use "story.json" when story has no name', async () => {
-      const storyNoName = { ...mockStory, name: '' };
+      const storyNoName = { ...mockStory, metadata: { ...mockStory.metadata, title: '' } };
       mockDialog.showSaveDialog.mockResolvedValue({ canceled: true, filePath: undefined });
       const handler = handlers.get('file:saveAs')!;
       await handler(null, storyNoName);

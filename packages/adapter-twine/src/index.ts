@@ -5,7 +5,7 @@
  * Supports Twine 2.x story formats including Harlowe, Sugarcube, and Snowman.
  */
 
-import type { Story, Passage, Variable } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface TwineStory {
   name: string;
@@ -61,10 +61,15 @@ export class TwineExporter {
       return this.convertPassageToTwine(passage, pid++);
     });
 
+    // Get the start passage title from the story (Twine uses passage names, not IDs)
+    const startPassageTitle = story.passages.get(story.startPassage)?.title
+      || passages[0]?.name
+      || 'Start';
+
     return {
       name: story.metadata.title,
       ifid: story.metadata.ifid || this.generateIFID(),
-      startPassage: story.startPassage || passages[0]?.name || 'Start',
+      startPassage: startPassageTitle,
       format: 'Harlowe',
       formatVersion: '3.3.8',
       passages,
@@ -170,16 +175,20 @@ export class TwineImporter {
    */
   public parseHTML(html: string): TwineStory {
     // Simple regex-based parsing (in production, use DOMParser)
-    const nameMatch = html.match(/name="([^"]+)"/);
-    const ifidMatch = html.match(/ifid="([^"]+)"/);
-    const startMatch = html.match(/startnode="([^"]+)"/);
-    const formatMatch = html.match(/format="([^"]+)"/);
-    const formatVersionMatch = html.match(/format-version="([^"]+)"/);
+    // Extract attributes from tw-storydata tag specifically
+    const storydataMatch = html.match(/<tw-storydata([^>]*)>/);
+    const storydataAttrs = storydataMatch?.[1] || '';
+
+    const nameMatch = storydataAttrs.match(/name="([^"]+)"/);
+    const ifidMatch = storydataAttrs.match(/ifid="([^"]+)"/);
+    const startMatch = storydataAttrs.match(/startnode="([^"]+)"/);
+    const formatMatch = storydataAttrs.match(/format="([^"]+)"/);
+    const formatVersionMatch = storydataAttrs.match(/format-version="([^"]+)"/);
 
     const passages = this.extractPassages(html);
 
     return {
-      name: nameMatch?.[1] || 'Untitled',
+      name: this.unescapeHTML(nameMatch?.[1] || 'Untitled'),
       ifid: ifidMatch?.[1] || '',
       startPassage: startMatch?.[1] || passages[0]?.name || 'Start',
       format: formatMatch?.[1] || 'Harlowe',
@@ -197,7 +206,7 @@ export class TwineImporter {
       const passageHTML = match[0];
       const pidMatch = passageHTML.match(/pid="([^"]+)"/);
       const nameMatch = passageHTML.match(/name="([^"]+)"/);
-      const tagsMatch = passageHTML.match(/tags="([^"]+)"/);
+      const tagsMatch = passageHTML.match(/tags="([^"]*)"/); // Allow empty tags
       const posMatch = passageHTML.match(/position="([^"]+)"/);
       const sizeMatch = passageHTML.match(/size="([^"]+)"/);
 
@@ -207,11 +216,8 @@ export class TwineImporter {
         pid: pidMatch?.[1] || '',
         name: this.unescapeHTML(nameMatch?.[1] || ''),
         text: this.unescapeHTML(text),
+        tags: tagsMatch ? tagsMatch[1].split(' ').filter(t => t) : undefined,
       };
-
-      if (tagsMatch?.[1]) {
-        passage.tags = tagsMatch[1].split(' ').filter(t => t);
-      }
 
       if (posMatch?.[1]) {
         const [x, y] = posMatch[1].split(',').map(Number);
@@ -233,10 +239,9 @@ export class TwineImporter {
    * Convert Twine structure to Whisker Story
    */
   public convertToWhisker(twineStory: TwineStory): Story {
-    const { Story: StoryModel, Passage: PassageModel } = require('@writewhisker/story-models');
     const passages = twineStory.passages.map(p => this.convertPassageToWhisker(p));
 
-    const story = new StoryModel({
+    const story = new Story({
       metadata: {
         title: twineStory.name,
         author: '',
@@ -249,18 +254,23 @@ export class TwineImporter {
       startPassage: twineStory.startPassage,
     });
 
+    // Clear the default passage created by the Story constructor
+    story.passages.clear();
+
     // Add passages to story
     for (const passage of passages) {
       story.passages.set(passage.id, passage);
     }
 
+    // Restore the correct startPassage (constructor may have overwritten it with a random ID)
+    story.startPassage = twineStory.startPassage || (passages.length > 0 ? passages[0].id : '');
+
     return story;
   }
 
   private convertPassageToWhisker(passage: TwinePassage): Passage {
-    const { Passage: PassageModel } = require('@writewhisker/story-models');
-    return new PassageModel({
-      id: passage.pid || this.generateId(),
+    return new Passage({
+      id: passage.name, // Use passage name as ID (consistent with Twine's startPassage reference)
       title: passage.name,
       content: this.convertContentToWhisker(passage.text),
       tags: passage.tags || [],

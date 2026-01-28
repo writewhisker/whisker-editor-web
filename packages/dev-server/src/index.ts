@@ -96,7 +96,7 @@ export async function createDevServer(config: ServerConfig): Promise<DevServer> 
 
           // Watch for file changes
           if (config.watch) {
-            const watcher = watchFile(config.storyPath, () => {
+            const watcher = await watchFile(config.storyPath, () => {
               res.write('data: reload\n\n');
             });
             watchers.push(watcher);
@@ -347,8 +347,8 @@ async function generateHTML(storyPath: string): Promise<string> {
 /**
  * Watch a file for changes
  */
-function watchFile(filePath: string, onChange: () => void): any {
-  const fs = require('fs');
+async function watchFile(filePath: string, onChange: () => void): Promise<any> {
+  const fs = await import('fs');
   const watcher = fs.watch(filePath, (eventType: string) => {
     if (eventType === 'change') {
       onChange();

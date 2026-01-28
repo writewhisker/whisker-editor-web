@@ -122,10 +122,16 @@ export function generateStoryFromTemplate(config: ProjectConfig): Story {
     startPassage: passages[0].id,
   });
 
+  // Clear the default passage created by the Story constructor
+  story.passages.clear();
+
   // Add passages to the story using the Map
   passages.forEach(passage => {
     story.passages.set(passage.id, passage);
   });
+
+  // Set the startPassage to the first template passage (the constructor may have overwritten it)
+  story.startPassage = passages[0].id;
 
   return story;
 }

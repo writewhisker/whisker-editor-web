@@ -73,32 +73,51 @@ class MockEventSource {
 // @ts-ignore
 global.EventSource = MockEventSource;
 
-const mockStory: Story = {
-  id: 'test-story',
-  name: 'Test Story',
-  ifid: 'test-ifid',
-  startPassage: 'Start',
-  tagColors: {},
-  zoom: 1,
-  passages: [
-    {
-      id: 'passage-1',
-      title: 'Start',
-      tags: [],
-      content: 'Start passage',
-      position: { x: 0, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-2',
-      title: 'Middle',
-      tags: [],
-      content: 'Middle passage',
-      position: { x: 200, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-  ],
+// Create mock passages as a Map
+const createMockPassagesMap = () => {
+  const passages = new Map<string, Passage>();
+  passages.set('passage-1', {
+    id: 'passage-1',
+    title: 'Start',
+    tags: [],
+    content: 'Start passage',
+    position: { x: 0, y: 0 },
+    size: { width: 100, height: 100 },
+  } as Passage);
+  passages.set('passage-2', {
+    id: 'passage-2',
+    title: 'Middle',
+    tags: [],
+    content: 'Middle passage',
+    position: { x: 200, y: 0 },
+    size: { width: 100, height: 100 },
+  } as Passage);
+  return passages;
 };
+
+const mockStory: Story = {
+  metadata: {
+    title: 'Test Story',
+    author: '',
+    version: '1.0.0',
+    created: new Date().toISOString(),
+    modified: new Date().toISOString(),
+    ifid: 'test-ifid',
+    tags: [],
+    createdBy: 'local',
+  },
+  startPassage: 'passage-1',
+  passages: createMockPassagesMap(),
+  variables: new Map(),
+  settings: {},
+  stylesheets: [],
+  scripts: [],
+  assets: new Map(),
+  luaFunctions: new Map(),
+  getPassage(id: string) {
+    return this.passages.get(id);
+  },
+} as unknown as Story;
 
 describe('HMRClient', () => {
   let config: HMRClientConfig;
@@ -543,12 +562,30 @@ describe('ModuleCache', () => {
   });
 });
 
+// Helper to clone a Story with Map-based passages
+const cloneStory = (storyObj: Story): Story => {
+  const clonedPassages = new Map<string, Passage>();
+  for (const [id, passage] of storyObj.passages) {
+    clonedPassages.set(id, { ...passage } as Passage);
+  }
+  return {
+    ...storyObj,
+    passages: clonedPassages,
+    variables: new Map(storyObj.variables),
+    assets: new Map(storyObj.assets),
+    luaFunctions: new Map(storyObj.luaFunctions),
+    getPassage(id: string) {
+      return this.passages.get(id);
+    },
+  } as Story;
+};
+
 describe('StoryHotReload', () => {
   let story: Story;
   let hotReload: StoryHotReload;
 
   beforeEach(() => {
-    story = JSON.parse(JSON.stringify(mockStory));
+    story = cloneStory(mockStory);
     hotReload = new StoryHotReload(story);
   });
 
@@ -557,10 +594,11 @@ describe('StoryHotReload', () => {
       const callback = vi.fn();
       hotReload.onUpdate(callback);
 
-      const newStory = { ...story, name: 'Updated Story' };
+      const newStory = cloneStory(story);
+      newStory.metadata = { ...newStory.metadata, title: 'Updated Story' };
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().name).toBe('Updated Story');
+      expect(hotReload.getStory().metadata.title).toBe('Updated Story');
       expect(callback).toHaveBeenCalledWith(newStory);
     });
 
@@ -572,43 +610,35 @@ describe('StoryHotReload', () => {
         content: 'New content',
         position: { x: 400, y: 0 },
         size: { width: 100, height: 100 },
-      };
+      } as Passage;
 
-      const newStory = {
-        ...story,
-        passages: [...story.passages, newPassage],
-      };
+      const newStory = cloneStory(story);
+      newStory.passages.set('passage-3', newPassage);
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages.length).toBe(3);
+      expect(hotReload.getStory().passages.size).toBe(3);
     });
 
     it('should detect passage removals', () => {
-      const newStory = {
-        ...story,
-        passages: [story.passages[0]],
-      };
+      const newStory = cloneStory(story);
+      newStory.passages.delete('passage-2');
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages.length).toBe(1);
+      expect(hotReload.getStory().passages.size).toBe(1);
     });
 
     it('should detect passage updates', () => {
-      const updatedPassage = {
-        ...story.passages[0],
-        content: 'Updated content',
-      };
-
-      const newStory = {
-        ...story,
-        passages: [updatedPassage, story.passages[1]],
-      };
+      const newStory = cloneStory(story);
+      const passage = newStory.passages.get('passage-1');
+      if (passage) {
+        newStory.passages.set('passage-1', { ...passage, content: 'Updated content' } as Passage);
+      }
 
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().passages[0].content).toBe('Updated content');
+      expect(hotReload.getStory().passages.get('passage-1')?.content).toBe('Updated content');
     });
   });
 
@@ -617,14 +647,15 @@ describe('StoryHotReload', () => {
       const callback = vi.fn();
       hotReload.onUpdate(callback);
 
+      const existingPassage = story.passages.get('passage-1');
       const updatedPassage = {
-        ...story.passages[0],
+        ...existingPassage,
         content: 'Updated content',
-      };
+      } as Passage;
 
       hotReload.updatePassage(updatedPassage);
 
-      expect(hotReload.getStory().passages[0].content).toBe('Updated content');
+      expect(hotReload.getStory().passages.get('passage-1')?.content).toBe('Updated content');
       expect(callback).toHaveBeenCalled();
     });
 
@@ -639,7 +670,7 @@ describe('StoryHotReload', () => {
         content: 'Content',
         position: { x: 0, y: 0 },
         size: { width: 100, height: 100 },
-      };
+      } as Passage;
 
       hotReload.updatePassage(nonExistentPassage);
 
@@ -659,12 +690,12 @@ describe('StoryHotReload', () => {
         content: 'New content',
         position: { x: 400, y: 0 },
         size: { width: 100, height: 100 },
-      };
+      } as Passage;
 
       hotReload.addPassage(newPassage);
 
-      expect(hotReload.getStory().passages.length).toBe(3);
-      expect(hotReload.getStory().passages[2]).toBe(newPassage);
+      expect(hotReload.getStory().passages.size).toBe(3);
+      expect(hotReload.getStory().passages.get('passage-3')).toBe(newPassage);
       expect(callback).toHaveBeenCalled();
     });
   });
@@ -676,8 +707,8 @@ describe('StoryHotReload', () => {
 
       hotReload.removePassage('passage-1');
 
-      expect(hotReload.getStory().passages.length).toBe(1);
-      expect(hotReload.getStory().passages[0].id).toBe('passage-2');
+      expect(hotReload.getStory().passages.size).toBe(1);
+      expect(hotReload.getStory().passages.has('passage-2')).toBe(true);
       expect(callback).toHaveBeenCalled();
     });
 
@@ -685,7 +716,7 @@ describe('StoryHotReload', () => {
       hotReload.removePassage('passage-1');
 
       // Cache should be invalidated
-      expect(hotReload.getStory().passages.length).toBe(1);
+      expect(hotReload.getStory().passages.size).toBe(1);
     });
   });
 
@@ -695,7 +726,8 @@ describe('StoryHotReload', () => {
 
       hotReload.onUpdate(callback);
 
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = cloneStory(story);
+      newStory.metadata = { ...newStory.metadata, title: 'Updated' };
       hotReload.updateStory(newStory);
 
       expect(callback).toHaveBeenCalledWith(newStory);
@@ -708,7 +740,8 @@ describe('StoryHotReload', () => {
       hotReload.onUpdate(callback1);
       hotReload.onUpdate(callback2);
 
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = cloneStory(story);
+      newStory.metadata = { ...newStory.metadata, title: 'Updated' };
       hotReload.updateStory(newStory);
 
       expect(callback1).toHaveBeenCalled();
@@ -718,14 +751,17 @@ describe('StoryHotReload', () => {
 
   describe('getStory', () => {
     it('should return current story', () => {
-      expect(hotReload.getStory()).toEqual(story);
+      const currentStory = hotReload.getStory();
+      expect(currentStory.metadata.title).toBe(story.metadata.title);
+      expect(currentStory.passages.size).toBe(story.passages.size);
     });
 
     it('should return updated story after changes', () => {
-      const newStory = { ...story, name: 'Updated' };
+      const newStory = cloneStory(story);
+      newStory.metadata = { ...newStory.metadata, title: 'Updated' };
       hotReload.updateStory(newStory);
 
-      expect(hotReload.getStory().name).toBe('Updated');
+      expect(hotReload.getStory().metadata.title).toBe('Updated');
     });
   });
 
@@ -874,18 +910,20 @@ describe('HMRRuntime', () => {
 
 describe('Edge Cases and Integration', () => {
   it('should handle rapid story updates', () => {
-    const hotReload = createStoryHotReload(mockStory);
+    const initialStory = cloneStory(mockStory);
+    const hotReload = createStoryHotReload(initialStory);
     const callback = vi.fn();
 
     hotReload.onUpdate(callback);
 
     for (let i = 0; i < 100; i++) {
-      const newStory = { ...mockStory, name: `Story ${i}` };
+      const newStory = cloneStory(mockStory);
+      newStory.metadata = { ...newStory.metadata, title: `Story ${i}` };
       hotReload.updateStory(newStory);
     }
 
     expect(callback).toHaveBeenCalledTimes(100);
-    expect(hotReload.getStory().name).toBe('Story 99');
+    expect(hotReload.getStory().metadata.title).toBe('Story 99');
   });
 
   it('should handle complex dependency chains', () => {
@@ -919,27 +957,40 @@ describe('Edge Cases and Integration', () => {
 
   it('should handle empty story', () => {
     const emptyStory: Story = {
-      id: 'empty',
-      name: 'Empty',
-      ifid: 'empty-ifid',
+      metadata: {
+        title: 'Empty',
+        author: '',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+        ifid: 'empty-ifid',
+        tags: [],
+        createdBy: 'local',
+      },
       startPassage: '',
-      tagColors: {},
-      zoom: 1,
-      passages: [],
-    };
+      passages: new Map(),
+      variables: new Map(),
+      settings: {},
+      stylesheets: [],
+      scripts: [],
+      assets: new Map(),
+      luaFunctions: new Map(),
+    } as unknown as Story;
 
     const hotReload = createStoryHotReload(emptyStory);
 
-    expect(hotReload.getStory().passages.length).toBe(0);
+    expect(hotReload.getStory().passages.size).toBe(0);
   });
 
   it('should detect no changes when story is identical', () => {
-    const hotReload = createStoryHotReload(mockStory);
-    const identicalStory = JSON.parse(JSON.stringify(mockStory));
+    const initialStory = cloneStory(mockStory);
+    const hotReload = createStoryHotReload(initialStory);
+    const identicalStory = cloneStory(mockStory);
 
     hotReload.updateStory(identicalStory);
 
     // Should still trigger update callback
-    expect(hotReload.getStory()).toEqual(identicalStory);
+    expect(hotReload.getStory().metadata.title).toBe(identicalStory.metadata.title);
+    expect(hotReload.getStory().passages.size).toBe(identicalStory.passages.size);
   });
 });

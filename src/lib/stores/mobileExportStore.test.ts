@@ -12,47 +12,40 @@ import {
   type MobilePlayerConfig,
   type AppStoreMetadata,
 } from './mobileExportStore';
-import type { Story } from './projectStore';
+import { Story, Passage } from '@writewhisker/story-models';
 
 describe('mobileExportStore', () => {
   let story: Story;
 
   beforeEach(() => {
-    story = {
+    story = new Story({
       metadata: {
         title: 'Test Story',
         author: 'Test Author',
         version: '1.0.0',
       },
-      passages: [
-        {
-          id: 'passage-1',
-          title: 'Start',
-          content: 'Welcome to the story. [[Continue|passage-2]]',
-          choices: [],
-          x: 0,
-          y: 0,
-        },
-        {
-          id: 'passage-2',
-          title: 'Middle',
-          content: 'The middle of the story. [[End|passage-3]]',
-          choices: [],
-          x: 100,
-          y: 0,
-        },
-        {
-          id: 'passage-3',
-          title: 'End',
-          content: 'The end of the story.',
-          choices: [],
-          x: 200,
-          y: 0,
-        },
-      ],
       startPassage: 'passage-1',
-      variables: [],
-    } as unknown as Story;
+    });
+
+    story.passages.clear();
+    story.passages.set('passage-1', new Passage({
+      id: 'passage-1',
+      title: 'Start',
+      content: 'Welcome to the story. [[Continue|passage-2]]',
+      position: { x: 0, y: 0 },
+    }));
+    story.passages.set('passage-2', new Passage({
+      id: 'passage-2',
+      title: 'Middle',
+      content: 'The middle of the story. [[End|passage-3]]',
+      position: { x: 100, y: 0 },
+    }));
+    story.passages.set('passage-3', new Passage({
+      id: 'passage-3',
+      title: 'End',
+      content: 'The end of the story.',
+      position: { x: 200, y: 0 },
+    }));
 
     mobileExportStore.reset();
   });
@@ -342,7 +335,8 @@ describe('mobileExportStore', () => {
 
       const html = files.get('index.html')!;
       expect(html).toContain('const story =');
-      expect(html).toContain(Array.from(story.passages.values())[0].title);
+      const firstPassage = Array.from(story.passages.values())[0];
+      expect(html).toContain(firstPassage.title);
     });
   });
 
@@ -539,17 +533,15 @@ describe('mobileExportStore', () => {
 
   describe('edge cases', () => {
     it('should handle story with no passages', () => {
-      const emptyStory: Story = {
-        passages: [],
-        metadata: story.metadata,
+      const emptyStory = new Story({
+        metadata: {
+          title: story.metadata.title,
+          author: story.metadata.author,
+          version: story.metadata.version,
+        },
         startPassage: story.startPassage,
-        variables: new Map(),
-        settings: {},
-        stylesheets: [],
-        scripts: [],
-        assets: new Map(),
-        luaFunctions: new Map(),
-      } as unknown as Story;
+      });
+      emptyStory.passages.clear();
 
       const { files } = mobileExportStore.generateExport(emptyStory);
       const html = files.get('index.html')!;
@@ -558,24 +550,18 @@ describe('mobileExportStore', () => {
     });
 
     it('should handle story with special characters in title', () => {
-      const specialStory: Story = {
+      const specialStory = new Story({
         metadata: {
           title: 'Story "with" <special> & characters',
-          id: story.metadata.id,
           author: story.metadata.author,
           version: story.metadata.version,
-          created: story.metadata.created,
-          modified: story.metadata.modified,
         },
         startPassage: story.startPassage,
-        passages: story.passages,
-        variables: new Map(),
-        settings: {},
-        stylesheets: [],
-        scripts: [],
-        assets: new Map(),
-        luaFunctions: new Map(),
-      } as unknown as Story;
+      });
+      // Copy passages from original story
+      for (const [id, passage] of story.passages) {
+        specialStory.passages.set(id, passage);
+      }
 
       const { files } = mobileExportStore.generateExport(specialStory);
       const html = files.get('index.html')!;

@@ -54,11 +54,11 @@ describe('generateStoryFromTemplate', () => {
 
     const story = generateStoryFromTemplate(config);
 
-    expect(story).toHaveProperty('name', 'Test Story');
-    expect(story).toHaveProperty('author', 'Test Author');
-    expect(story).toHaveProperty('passages');
-    expect(Array.isArray(story.passages)).toBe(true);
-    expect(story.passages.length).toBe(templates.basic.passages);
+    expect(story.metadata.title).toBe('Test Story');
+    expect(story.metadata.author).toBe('Test Author');
+    expect(story.passages).toBeDefined();
+    expect(story.passages instanceof Map).toBe(true);
+    expect(story.passages.size).toBe(templates.basic.passages);
   });
 
   it('should generate an interactive story', () => {
@@ -69,7 +69,7 @@ describe('generateStoryFromTemplate', () => {
 
     const story = generateStoryFromTemplate(config);
 
-    expect(story.passages.length).toBe(templates.interactive.passages);
+    expect(story.passages.size).toBe(templates.interactive.passages);
   });
 
   it('should generate a branching story', () => {
@@ -80,7 +80,7 @@ describe('generateStoryFromTemplate', () => {
 
     const story = generateStoryFromTemplate(config);
 
-    expect(story.passages.length).toBe(templates.branching.passages);
+    expect(story.passages.size).toBe(templates.branching.passages);
   });
 
   it('should generate an RPG story', () => {
@@ -91,7 +91,7 @@ describe('generateStoryFromTemplate', () => {
 
     const story = generateStoryFromTemplate(config);
 
-    expect(story.passages.length).toBe(templates.rpg.passages);
+    expect(story.passages.size).toBe(templates.rpg.passages);
     expect(story.variables).toBeDefined();
   });
 
@@ -103,7 +103,7 @@ describe('generateStoryFromTemplate', () => {
 
     const story = generateStoryFromTemplate(config);
 
-    expect(story.passages.length).toBe(templates['visual-novel'].passages);
+    expect(story.passages.size).toBe(templates['visual-novel'].passages);
   });
 
   it('should include metadata', () => {
@@ -117,7 +117,7 @@ describe('generateStoryFromTemplate', () => {
     const story = generateStoryFromTemplate(config);
 
     expect(story.metadata).toBeDefined();
-    expect(story.metadata?.createdAt).toBeDefined();
+    expect(story.metadata?.created).toBeDefined();
   });
 
   it('should set start passage', () => {
@@ -129,7 +129,8 @@ describe('generateStoryFromTemplate', () => {
     const story = generateStoryFromTemplate(config);
 
     expect(story.startPassage).toBeDefined();
-    expect(story.passages.some(p => p.title === story.startPassage)).toBe(true);
+    // startPassage is the passage ID, so we check if a passage with that ID exists
+    expect(story.passages.has(story.startPassage)).toBe(true);
   });
 });
 

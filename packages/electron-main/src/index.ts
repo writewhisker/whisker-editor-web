@@ -4,7 +4,7 @@
  * Main process utilities for Whisker Editor in Electron.
  */
 
-import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu, Tray } from 'electron';
 import type { Story } from '@writewhisker/story-models';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
@@ -258,7 +258,6 @@ export function createTray(iconPath: string, callbacks: {
   onClick?: () => void;
   onRightClick?: () => void;
 } = {}) {
-  const { Tray } = require('electron');
   const tray = new Tray(iconPath);
 
   tray.on('click', () => {

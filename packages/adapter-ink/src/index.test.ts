@@ -7,7 +7,7 @@ import {
   type InkKnot,
   type InkVariable,
 } from './index';
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 describe('InkExporter', () => {
   let exporter: InkExporter;
@@ -15,36 +15,37 @@ describe('InkExporter', () => {
 
   beforeEach(() => {
     exporter = new InkExporter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'passage-1',
-          title: 'Start',
-          content: 'Welcome to the story!\n[[Continue|next_passage]]',
-          tags: [],
-          position: { x: 100, y: 100 },
-        },
-        {
-          id: 'passage-2',
-          title: 'Next Passage',
-          content: 'This is the next part.',
-          tags: [],
-          position: { x: 300, y: 100 },
-        },
-      ],
+    mockStory = new Story({
       metadata: {
+        title: 'Test Story',
         author: 'Test Author',
-        variables: {
-          playerName: 'Hero',
-          score: 0,
-        },
+        version: '1.0.0',
       },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+      startPassage: 'passage-1',
+    });
+
+    // Clear default passages and add test passages
+    mockStory.passages.clear();
+
+    mockStory.passages.set('passage-1', new Passage({
+      id: 'passage-1',
+      title: 'Start',
+      content: 'Welcome to the story!\n[[Continue|next_passage]]',
+      tags: [],
+      position: { x: 100, y: 100 },
+    }));
+
+    mockStory.passages.set('passage-2', new Passage({
+      id: 'passage-2',
+      title: 'Next Passage',
+      content: 'This is the next part.',
+      tags: [],
+      position: { x: 300, y: 100 },
+    }));
+
+    // Add variables
+    mockStory.variables.set('playerName', new Variable({ name: 'playerName', initial: 'Hero', type: 'string' }));
+    mockStory.variables.set('score', new Variable({ name: 'score', initial: 0, type: 'number' }));
   });
 
   describe('convertToInk', () => {
@@ -81,7 +82,13 @@ describe('InkExporter', () => {
     });
 
     it('should handle passages without variables', () => {
-      const storyNoVars = { ...mockStory, metadata: {} };
+      const storyNoVars = new Story({
+        metadata: {
+          title: 'Test Story',
+          author: 'Test Author',
+        },
+        startPassage: 'start',
+      });
       const result = exporter.convertToInk(storyNoVars);
 
       expect(result.globalVariables).toHaveLength(0);
@@ -112,7 +119,12 @@ describe('InkExporter', () => {
     });
 
     it('should handle story without author', () => {
-      const storyNoAuthor = { ...mockStory, metadata: {} };
+      const storyNoAuthor = new Story({
+        metadata: {
+          title: 'Test Story',
+        },
+        startPassage: 'start',
+      });
       const script = exporter.exportToInk(storyNoAuthor);
 
       expect(script).toContain('// Test Story');
@@ -120,17 +132,17 @@ describe('InkExporter', () => {
     });
 
     it('should sanitize knot names with numbers', () => {
-      const storyWithNumbers = {
-        ...mockStory,
-        passages: [
-          {
-            id: 'p1',
-            title: '1st Passage',
-            content: 'Test',
-            tags: [],
-          },
-        ],
-      };
+      const storyWithNumbers = new Story({
+        metadata: { title: 'Test Story' },
+        startPassage: 'p1',
+      });
+      storyWithNumbers.passages.clear();
+      storyWithNumbers.passages.set('p1', new Passage({
+        id: 'p1',
+        title: '1st Passage',
+        content: 'Test',
+        tags: [],
+      }));
 
       const script = exporter.exportToInk(storyWithNumbers);
 
@@ -138,17 +150,17 @@ describe('InkExporter', () => {
     });
 
     it('should sanitize knot names with special characters', () => {
-      const storyWithSpecialChars = {
-        ...mockStory,
-        passages: [
-          {
-            id: 'p1',
-            title: 'Test-Passage!@#',
-            content: 'Test',
-            tags: [],
-          },
-        ],
-      };
+      const storyWithSpecialChars = new Story({
+        metadata: { title: 'Test Story' },
+        startPassage: 'p1',
+      });
+      storyWithSpecialChars.passages.clear();
+      storyWithSpecialChars.passages.set('p1', new Passage({
+        id: 'p1',
+        title: 'Test-Passage!@#',
+        content: 'Test',
+        tags: [],
+      }));
 
       const script = exporter.exportToInk(storyWithSpecialChars);
 
@@ -304,9 +316,9 @@ This is the next part.
 
       const result = importer.convertToWhisker(inkStory);
 
-      expect(result.name).toBe('Test Story');
+      expect(result.metadata.title).toBe('Test Story');
       expect(result.startPassage).toBe('start');
-      expect(result.passages).toHaveLength(1);
+      expect(result.passages.size).toBe(1);
       expect(result.metadata.author).toBe('Test Author');
     });
 
@@ -328,7 +340,7 @@ This is the next part.
       };
 
       const result = importer.convertToWhisker(inkStory);
-      const passage = result.passages[0];
+      const passage = Array.from(result.passages.values())[0];
 
       expect(passage.content).toContain('[[Option 1|choice1]]');
       expect(passage.content).toContain('[[Option 2|choice2]]');
@@ -355,7 +367,7 @@ This is the next part.
       };
 
       const result = importer.convertToWhisker(inkStory);
-      const passage = result.passages[0];
+      const passage = Array.from(result.passages.values())[0];
 
       expect(passage.content).toContain('Main content');
       expect(passage.content).toContain('## substitch');
@@ -374,13 +386,14 @@ This is the next part.
       };
 
       const result = importer.convertToWhisker(inkStory);
+      const passages = Array.from(result.passages.values());
 
-      expect(result.passages[0].position).toEqual({ x: 0, y: 0 });
-      expect(result.passages[1].position).toEqual({ x: 200, y: 0 });
-      expect(result.passages[2].position).toEqual({ x: 400, y: 0 });
+      expect(passages[0].position).toEqual({ x: 0, y: 0 });
+      expect(passages[1].position).toEqual({ x: 200, y: 0 });
+      expect(passages[2].position).toEqual({ x: 400, y: 0 });
     });
 
-    it('should preserve variables in metadata', () => {
+    it('should preserve variables in story', () => {
       const inkStory: InkStory = {
         title: 'Test',
         knots: [],
@@ -392,10 +405,8 @@ This is the next part.
 
       const result = importer.convertToWhisker(inkStory);
 
-      expect(result.metadata.variables).toEqual({
-        health: 100,
-        name: 'Player',
-      });
+      expect(result.variables.get('health')?.initial).toBe(100);
+      expect(result.variables.get('name')?.initial).toBe('Player');
     });
   });
 
@@ -403,11 +414,11 @@ This is the next part.
     it('should import complete Ink script to Whisker story', () => {
       const result = importer.importFromInk(mockInkScript);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(2);
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(2);
       expect(result.metadata.author).toBe('Test Author');
-      expect(result.created).toBeDefined();
-      expect(result.modified).toBeDefined();
+      expect(result.metadata.created).toBeDefined();
+      expect(result.metadata.modified).toBeDefined();
     });
   });
 });
@@ -418,30 +429,26 @@ describe('InkAdapter', () => {
 
   beforeEach(() => {
     adapter = new InkAdapter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'p1',
-          title: 'Start',
-          content: 'Test content\n[[Continue|next]]',
-          tags: [],
-        },
-        {
-          id: 'p2',
-          title: 'Next',
-          content: 'Next content',
-          tags: [],
-        },
-      ],
+    mockStory = new Story({
       metadata: {
+        title: 'Test Story',
         author: 'Test Author',
       },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+      startPassage: 'p1',
+    });
+    mockStory.passages.clear();
+    mockStory.passages.set('p1', new Passage({
+      id: 'p1',
+      title: 'Start',
+      content: 'Test content\n[[Continue|next]]',
+      tags: [],
+    }));
+    mockStory.passages.set('p2', new Passage({
+      id: 'p2',
+      title: 'Next',
+      content: 'Next content',
+      tags: [],
+    }));
   });
 
   describe('export', () => {
@@ -464,8 +471,8 @@ describe('InkAdapter', () => {
     it('should import Ink script to story', () => {
       const result = adapter.import(mockInkScript);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(1);
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(1);
     });
   });
 
@@ -474,27 +481,33 @@ describe('InkAdapter', () => {
       const exported = adapter.export(mockStory);
       const imported = adapter.import(exported);
 
-      expect(imported.name).toBe(mockStory.name);
-      expect(imported.passages).toHaveLength(mockStory.passages.length);
+      expect(imported.metadata.title).toBe(mockStory.metadata.title);
+      expect(imported.passages.size).toBe(mockStory.passages.size);
     });
 
     it('should preserve metadata through round-trip', () => {
-      const storyWithMetadata = {
-        ...mockStory,
+      const storyWithMetadata = new Story({
         metadata: {
+          title: 'Test Story',
           author: 'Test Author',
-          variables: {
-            score: 100,
-            name: 'Player',
-          },
         },
-      };
+        startPassage: 'p1',
+      });
+      storyWithMetadata.passages.clear();
+      storyWithMetadata.passages.set('p1', new Passage({
+        id: 'p1',
+        title: 'Start',
+        content: 'Test content',
+        tags: [],
+      }));
+      storyWithMetadata.variables.set('score', new Variable({ name: 'score', initial: 100, type: 'number' }));
+      storyWithMetadata.variables.set('name', new Variable({ name: 'name', initial: 'Player', type: 'string' }));
 
       const exported = adapter.export(storyWithMetadata);
       const imported = adapter.import(exported);
 
       expect(imported.metadata.author).toBe('Test Author');
-      expect(imported.metadata.variables).toBeDefined();
+      expect(imported.variables.size).toBeGreaterThan(0);
     });
   });
 });

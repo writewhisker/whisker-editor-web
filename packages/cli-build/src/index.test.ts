@@ -39,30 +39,37 @@ vi.mock('child_process', () => {
 describe('buildStory', () => {
   let fs: any;
 
-  const mockStory: Story = {
-    id: 'test-story',
-    name: 'Test Story',
-    passages: [
-      {
+  // Mock story using the new Story API format (Map-based passages)
+  const mockStory = {
+    metadata: {
+      title: 'Test Story',
+      author: 'Test Author',
+      description: 'Test Description',
+      version: '1.0.0',
+      created: '2024-01-01T00:00:00.000Z',
+      modified: '2024-01-01T00:00:00.000Z',
+    },
+    startPassage: 'passage-1',  // Use passage ID, not title
+    passages: {
+      'passage-1': {
         id: 'passage-1',
         title: 'Start',
-        content: 'This is the start.\n\n[[Next|Next Passage]]',
+        content: 'This is the start.\n\n[[Next|passage-2]]',  // Use passage ID in link
         tags: ['start'],
+        position: { x: 0, y: 0 },
       },
-      {
+      'passage-2': {
         id: 'passage-2',
         title: 'Next Passage',
         content: 'This is the next passage.',
         tags: [],
+        position: { x: 200, y: 0 },
       },
-    ],
-    startPassage: 'Start',
-    metadata: {
-      author: 'Test Author',
-      description: 'Test Description',
-      createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z',
     },
+    variables: {},
+    settings: {},
+    stylesheets: [],
+    scripts: [],
   };
 
   beforeEach(async () => {
@@ -109,8 +116,9 @@ describe('buildStory', () => {
       const writeCall = (fs.writeFile as any).mock.calls[0];
       const htmlContent = writeCall[1];
 
-      // Minified JSON should not have pretty-printing (no newlines between properties)
-      expect(htmlContent).toContain('"true"');
+      // Minified JSON is HTML-escaped, so quotes become &quot;
+      // Check that the story data is on one line (minified)
+      expect(htmlContent).toContain('storyData = {&quot;metadata&quot;');
     });
 
     it('should include story data in HTML', async () => {
@@ -246,7 +254,8 @@ describe('buildStory', () => {
       const writeCall = (fs.writeFile as any).mock.calls[0];
       const mdContent = writeCall[1];
 
-      expect(mdContent).toContain('# Test Story');
+      // Story constructor defaults to 'Untitled Story' when metadata is missing
+      expect(mdContent).toContain('# Untitled Story');
       expect(mdContent).not.toContain('**Author:**');
     });
   });
@@ -323,14 +332,15 @@ describe('buildStory', () => {
     it('should detect broken links', async () => {
       const storyWithBrokenLink = {
         ...mockStory,
-        passages: [
-          {
+        passages: {
+          'passage-1': {
             id: 'passage-1',
             title: 'Start',
             content: '[[Broken Link]]',
             tags: [],
+            position: { x: 0, y: 0 },
           },
-        ],
+        },
       };
 
       (fs.readFile as any).mockResolvedValue(JSON.stringify(storyWithBrokenLink));
@@ -348,20 +358,22 @@ describe('buildStory', () => {
     it('should detect duplicate passage titles', async () => {
       const storyWithDuplicates = {
         ...mockStory,
-        passages: [
-          {
+        passages: {
+          'passage-1': {
             id: 'passage-1',
             title: 'Same Title',
             content: 'First',
             tags: [],
+            position: { x: 0, y: 0 },
           },
-          {
+          'passage-2': {
             id: 'passage-2',
             title: 'Same Title',
             content: 'Second',
             tags: [],
+            position: { x: 200, y: 0 },
           },
-        ],
+        },
       };
 
       (fs.readFile as any).mockResolvedValue(JSON.stringify(storyWithDuplicates));
@@ -379,21 +391,23 @@ describe('buildStory', () => {
     it('should handle link format with text and target', async () => {
       const storyWithLinks = {
         ...mockStory,
-        passages: [
-          {
+        passages: {
+          'passage-1': {
             id: 'passage-1',
             title: 'Start',
-            content: '[[Click here|Next Passage]]',
+            content: '[[Click here|passage-2]]',  // Use passage ID in link target
             tags: [],
+            position: { x: 0, y: 0 },
           },
-          {
+          'passage-2': {
             id: 'passage-2',
             title: 'Next Passage',
             content: 'Next content',
             tags: [],
+            position: { x: 200, y: 0 },
           },
-        ],
-        startPassage: 'Start',
+        },
+        startPassage: 'passage-1',
       };
 
       (fs.readFile as any).mockResolvedValue(JSON.stringify(storyWithLinks));
@@ -515,21 +529,31 @@ describe('buildCommand', () => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.clearAllMocks();
 
-    const mockStory = {
-      id: 'test-story',
-      name: 'Test Story',
-      passages: [
-        {
+    const mockStoryForCommand = {
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: '2024-01-01T00:00:00.000Z',
+        modified: '2024-01-01T00:00:00.000Z',
+      },
+      startPassage: 'passage-1',
+      passages: {
+        'passage-1': {
           id: 'passage-1',
           title: 'Start',
           content: 'Start content',
           tags: [],
+          position: { x: 0, y: 0 },
         },
-      ],
-      startPassage: 'Start',
+      },
+      variables: {},
+      settings: {},
+      stylesheets: [],
+      scripts: [],
     };
 
-    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockStory));
+    (fs.readFile as any).mockResolvedValue(JSON.stringify(mockStoryForCommand));
     (fs.writeFile as any).mockResolvedValue(undefined);
     (fs.mkdir as any).mockResolvedValue(undefined);
   });

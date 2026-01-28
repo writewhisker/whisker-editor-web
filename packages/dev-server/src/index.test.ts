@@ -14,16 +14,57 @@ import {
   type Middleware,
 } from './index';
 
-// Mock Node.js modules
-const mockServer = {
-  listen: vi.fn(),
-  close: vi.fn(),
-  on: vi.fn(),
-};
+// Use vi.hoisted to ensure mocks are available before vi.mock calls
+const { mockServer, mockWatcher, mockFsWatch, mockStory, serverErrorState } = vi.hoisted(() => {
+  const mockServer = {
+    listen: vi.fn(),
+    close: vi.fn(),
+    on: vi.fn(),
+  };
 
-const mockWatcher = {
-  close: vi.fn(),
-};
+  const mockWatcher = {
+    close: vi.fn(),
+  };
+
+  const mockFsWatch = vi.fn(() => mockWatcher);
+
+  // State object to control mock behavior (using object so it can be mutated)
+  const serverErrorState = { simulate: false };
+
+  // Mock story using plain objects (JSON-serializable format for dev server)
+  const mockStory = {
+    metadata: {
+      title: 'Test Story',
+      author: 'Test Author',
+      version: '1.0.0',
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+    },
+    startPassage: 'passage-1',
+    passages: {
+      'passage-1': {
+        id: 'passage-1',
+        title: 'Start',
+        tags: [],
+        content: 'This is the start.\n\n[[Next Passage|passage-2]]',
+        position: { x: 0, y: 0 },
+      },
+      'passage-2': {
+        id: 'passage-2',
+        title: 'Next Passage',
+        tags: [],
+        content: 'This is the next passage.',
+        position: { x: 200, y: 0 },
+      },
+    },
+    variables: {},
+    settings: {},
+    stylesheets: [],
+    scripts: [],
+  };
+
+  return { mockServer, mockWatcher, mockFsWatch, mockStory, serverErrorState };
+});
 
 const mockRequest = {
   url: '/',
@@ -38,55 +79,54 @@ const mockResponse = {
   setHeader: vi.fn(),
 };
 
-const mockStory: Story = {
-  id: 'test-story',
-  name: 'Test Story',
-  ifid: 'test-ifid',
-  startPassage: 'Start',
-  tagColors: {},
-  zoom: 1,
-  passages: [
-    {
-      id: 'passage-1',
-      title: 'Start',
-      tags: [],
-      content: 'This is the start.\n\n[[Next Passage]]',
-      position: { x: 0, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-2',
-      title: 'Next Passage',
-      tags: [],
-      content: 'This is the next passage.',
-      position: { x: 200, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-  ],
-};
 
 vi.mock('http', () => ({
+  createServer: vi.fn((handler) => {
+    mockServer.listen = vi.fn((port, host, callback) => {
+      if (!serverErrorState.simulate) {
+        callback();
+      }
+      return mockServer;
+    });
+    mockServer.on = vi.fn((event, handler) => {
+      if (event === 'error' && serverErrorState.simulate) {
+        handler(new Error('Port already in use'));
+      }
+    });
+    return mockServer;
+  }),
   default: {
     createServer: vi.fn((handler) => {
       mockServer.listen = vi.fn((port, host, callback) => {
-        callback();
+        if (!serverErrorState.simulate) {
+          callback();
+        }
         return mockServer;
+      });
+      mockServer.on = vi.fn((event, handler) => {
+        if (event === 'error' && serverErrorState.simulate) {
+          handler(new Error('Port already in use'));
+        }
       });
       return mockServer;
     }),
   },
 }));
 
-vi.mock('fs/promises', () => ({
-  default: {
-    readFile: vi.fn((path: string) => {
-      if (path.includes('story.json')) {
-        return Promise.resolve(JSON.stringify(mockStory));
-      }
-      return Promise.resolve('');
-    }),
-  },
-}));
+vi.mock('fs/promises', () => {
+  const readFileMock = vi.fn((path: string) => {
+    if (path.includes('story.json')) {
+      return Promise.resolve(JSON.stringify(mockStory));
+    }
+    return Promise.resolve('');
+  });
+  return {
+    readFile: readFileMock,
+    default: {
+      readFile: readFileMock,
+    },
+  };
+});
 
 vi.mock('path', () => ({
   default: {},
@@ -98,9 +138,9 @@ vi.mock('child_process', () => ({
 
 vi.mock('fs', () => ({
   default: {
-    watch: vi.fn(() => mockWatcher),
+    watch: mockFsWatch,
   },
-  watch: vi.fn(() => mockWatcher),
+  watch: mockFsWatch,
 }));
 
 describe('DevServer', () => {
@@ -168,17 +208,10 @@ describe('DevServer', () => {
     });
 
     it('should handle server errors on start', async () => {
-      mockServer.listen = vi.fn((port, host, callback) => {
-        mockServer.on = vi.fn((event, handler) => {
-          if (event === 'error') {
-            handler(new Error('Port already in use'));
-          }
-        });
-        return mockServer;
-      });
-
+      serverErrorState.simulate = true;
       const server = await createDevServer(config);
       await expect(server.start()).rejects.toThrow('Port already in use');
+      serverErrorState.simulate = false;
     });
 
     it('should open browser if config.open is true', async () => {
@@ -239,7 +272,7 @@ describe('DevServer', () => {
 
     beforeEach(async () => {
       const http = await import('http');
-      vi.mocked(http.default.createServer).mockImplementation((handler) => {
+      vi.mocked(http.createServer).mockImplementation((handler: any) => {
         requestHandler = handler;
         return mockServer as any;
       });

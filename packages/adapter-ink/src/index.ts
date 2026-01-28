@@ -5,7 +5,7 @@
  * Ink is a narrative scripting language by Inkle Studios.
  */
 
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 export interface InkStory {
   title: string;
@@ -90,8 +90,10 @@ export class InkExporter {
       // Check for Whisker link syntax [[Target]] or [[Text|Target]]
       const linkMatch = line.match(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
       if (linkMatch) {
-        const text = linkMatch[2] || linkMatch[1];
-        const target = linkMatch[2] ? linkMatch[1] : linkMatch[1];
+        // For [[Text|Target]], linkMatch[1] is the text, linkMatch[2] is the target
+        // For [[Target]], linkMatch[1] is used as both text and target
+        const text = linkMatch[1];
+        const target = linkMatch[2] || linkMatch[1];
         choices.push({
           text,
           target: this.sanitizeKnotName(target),
@@ -358,7 +360,6 @@ export class InkImporter {
    * Convert Ink structure to Whisker Story
    */
   public convertToWhisker(inkStory: InkStory): Story {
-    const { Story, Variable } = require('@writewhisker/story-models');
     const passages = inkStory.knots.map((knot, index) => this.convertKnotToPassage(knot, index));
 
     const story = new Story({
@@ -373,9 +374,17 @@ export class InkImporter {
       startPassage: passages[0]?.id || 'start',
     });
 
+    // Clear the default passage created by Story constructor
+    story.passages.clear();
+
     // Add passages to story
     for (const passage of passages) {
       story.passages.set(passage.id, passage);
+    }
+
+    // Update startPassage to the first actual passage
+    if (passages.length > 0) {
+      story.startPassage = passages[0].id;
     }
 
     // Add variables
@@ -390,8 +399,7 @@ export class InkImporter {
     return story;
   }
 
-  private convertKnotToPassage(knot: InkKnot, index: number): any {
-    const { Passage } = require('@writewhisker/story-models');
+  private convertKnotToPassage(knot: InkKnot, index: number): Passage {
     // Combine content and choices into Whisker format
     let content = knot.content;
 
@@ -409,7 +417,7 @@ export class InkImporter {
     }
 
     return new Passage({
-      id: this.generateId(),
+      id: knot.name, // Use knot name as ID for consistent referencing
       title: knot.name,
       content: content.trim(),
       tags: [],
@@ -418,10 +426,6 @@ export class InkImporter {
         y: Math.floor(index / 5) * 200,
       },
     });
-  }
-
-  private generateId(): string {
-    return Math.random().toString(36).substring(2, 15);
   }
 }
 

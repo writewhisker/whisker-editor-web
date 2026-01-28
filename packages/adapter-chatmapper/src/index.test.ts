@@ -7,7 +7,7 @@ import {
   type ChatMapperConversation,
   type ChatMapperActor,
 } from './index';
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 describe('ChatMapperExporter', () => {
   let exporter: ChatMapperExporter;
@@ -15,35 +15,39 @@ describe('ChatMapperExporter', () => {
 
   beforeEach(() => {
     exporter = new ChatMapperExporter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'passage-1',
-          title: 'Start',
-          content: 'NPC: "Welcome!"\n[[Continue|Next]]',
-          tags: [],
-          position: { x: 100, y: 100 },
-          size: { width: 200, height: 100 },
-        },
-        {
-          id: 'passage-2',
-          title: 'Next',
-          content: 'This is the next dialogue.',
-          tags: [],
-        },
-      ],
+    mockStory = new Story({
       metadata: {
-        variables: {
-          questComplete: false,
-          score: 0,
-        },
+        title: 'Test Story',
+        author: 'Test Author',
+        version: '1.0.0',
       },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+      startPassage: 'passage-1',
+    });
+
+    // Clear default passages and add our test passages
+    mockStory.passages.clear();
+
+    const passage1 = new Passage({
+      id: 'passage-1',
+      title: 'Start',
+      content: 'NPC: "Welcome!"\n[[Continue|Next]]',
+      tags: [],
+      position: { x: 100, y: 100 },
+      size: { width: 200, height: 100 },
+    });
+    mockStory.passages.set('passage-1', passage1);
+
+    const passage2 = new Passage({
+      id: 'passage-2',
+      title: 'Next',
+      content: 'This is the next dialogue.',
+      tags: [],
+    });
+    mockStory.passages.set('passage-2', passage2);
+
+    // Add variables
+    mockStory.variables.set('questComplete', new Variable({ name: 'questComplete', initial: false, type: 'boolean' }));
+    mockStory.variables.set('score', new Variable({ name: 'score', initial: 0, type: 'number' }));
   });
 
   describe('convertToChatMapper', () => {
@@ -79,13 +83,16 @@ describe('ChatMapperExporter', () => {
       expect(playerActor?.isPlayer).toBe(true);
     });
 
-    it('should extract variables from metadata', () => {
+    it('should extract variables from story', () => {
       const result = exporter.convertToChatMapper(mockStory);
 
       expect(result.variables).toHaveLength(2);
-      expect(result.variables[0].name).toBe('questComplete');
-      expect(result.variables[0].type).toBe('Boolean');
-      expect(result.variables[1].type).toBe('Number');
+      const questVar = result.variables.find(v => v.name === 'questComplete');
+      const scoreVar = result.variables.find(v => v.name === 'score');
+      expect(questVar).toBeDefined();
+      expect(questVar?.type).toBe('Boolean');
+      expect(scoreVar).toBeDefined();
+      expect(scoreVar?.type).toBe('Number');
     });
 
     it('should set first entry as root', () => {
@@ -108,14 +115,14 @@ describe('ChatMapperExporter', () => {
     });
 
     it('should detect Text type variables', () => {
-      const storyWithTextVar = {
-        ...mockStory,
+      const storyWithTextVar = new Story({
         metadata: {
-          variables: {
-            playerName: 'Hero',
-          },
+          title: 'Test Story',
+          author: 'Test Author',
         },
-      };
+        startPassage: 'start',
+      });
+      storyWithTextVar.variables.set('playerName', new Variable({ name: 'playerName', initial: 'Hero', type: 'string' }));
 
       const result = exporter.convertToChatMapper(storyWithTextVar);
 
@@ -161,18 +168,20 @@ describe('ChatMapperExporter', () => {
     });
 
     it('should escape XML entities', () => {
-      const storyWithSpecialChars = {
-        ...mockStory,
-        name: 'Test & <Story>',
-        passages: [
-          {
-            id: 'p1',
-            title: 'Test "Passage"',
-            content: 'Content with <tags> & "quotes"',
-            tags: [],
-          },
-        ],
-      };
+      const storyWithSpecialChars = new Story({
+        metadata: {
+          title: 'Test & <Story>',
+          author: 'Test Author',
+        },
+        startPassage: 'p1',
+      });
+      storyWithSpecialChars.passages.clear();
+      storyWithSpecialChars.passages.set('p1', new Passage({
+        id: 'p1',
+        title: 'Test "Passage"',
+        content: 'Content with <tags> & "quotes"',
+        tags: [],
+      }));
 
       const xml = exporter.exportToXML(storyWithSpecialChars);
 
@@ -346,8 +355,8 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(1);
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(1);
     });
 
     it('should convert dialogue entries to passages', () => {
@@ -377,8 +386,9 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.passages[0].title).toBe('Entry 1');
-      expect(result.passages[0].content).toBe('Test dialogue');
+      const passage = Array.from(result.passages.values())[0];
+      expect(passage.title).toBe('Entry 1');
+      expect(passage.content).toBe('Test dialogue');
     });
 
     it('should convert actor dialogue to formatted content', () => {
@@ -409,7 +419,8 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.passages[0].content).toBe('NPC: "Hello!"');
+      const passage = Array.from(result.passages.values())[0];
+      expect(passage.content).toBe('NPC: "Hello!"');
     });
 
     it('should convert outgoing links to Whisker links', () => {
@@ -442,11 +453,12 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.passages[0].content).toContain('[[Choice 1|Entry_2]]');
-      expect(result.passages[0].content).toContain('[[Choice 2|Entry_3]]');
+      const passage = Array.from(result.passages.values())[0];
+      expect(passage.content).toContain('[[Choice 1|Entry_2]]');
+      expect(passage.content).toContain('[[Choice 2|Entry_3]]');
     });
 
-    it('should preserve variables in metadata', () => {
+    it('should preserve variables in story', () => {
       const chatMapperProject: ChatMapperProject = {
         title: 'Test',
         version: '1.0',
@@ -461,8 +473,9 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.metadata.variables).toEqual({ health: 100 });
-      expect(result.metadata.actors).toBeDefined();
+      expect(result.variables.get('health')).toBeDefined();
+      expect(result.variables.get('health')?.initial).toBe(100);
+      expect(result.settings.actors).toBeDefined();
     });
 
     it('should preserve canvas positions', () => {
@@ -492,8 +505,9 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.convertToWhisker(chatMapperProject);
 
-      expect(result.passages[0].position).toEqual({ x: 100, y: 200 });
-      expect(result.passages[0].size).toEqual({ width: 300, height: 150 });
+      const passage = Array.from(result.passages.values())[0];
+      expect(passage.position).toEqual({ x: 100, y: 200 });
+      expect(passage.size).toEqual({ width: 300, height: 150 });
     });
   });
 
@@ -501,10 +515,10 @@ describe('ChatMapperImporter', () => {
     it('should import complete XML to Whisker story', () => {
       const result = importer.importFromXML(mockChatMapperXML);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(2);
-      expect(result.created).toBeDefined();
-      expect(result.modified).toBeDefined();
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(2);
+      expect(result.metadata.created).toBeDefined();
+      expect(result.metadata.modified).toBeDefined();
     });
   });
 
@@ -535,8 +549,8 @@ describe('ChatMapperImporter', () => {
 
       const result = importer.importFromJSON(JSON.stringify(project));
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(1);
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(1);
     });
   });
 });
@@ -547,22 +561,20 @@ describe('ChatMapperAdapter', () => {
 
   beforeEach(() => {
     adapter = new ChatMapperAdapter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'p1',
-          title: 'Start',
-          content: 'NPC: "Hello!"',
-          tags: [],
-        },
-      ],
-      metadata: {},
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    mockStory = new Story({
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+      },
+      startPassage: 'p1',
+    });
+    mockStory.passages.clear();
+    mockStory.passages.set('p1', new Passage({
+      id: 'p1',
+      title: 'Start',
+      content: 'NPC: "Hello!"',
+      tags: [],
+    }));
   });
 
   describe('export', () => {
@@ -609,14 +621,14 @@ describe('ChatMapperAdapter', () => {
     it('should import from XML by default', () => {
       const result = adapter.import(mockXML);
 
-      expect(result.name).toBe('Test');
-      expect(result.passages).toHaveLength(1);
+      expect(result.metadata.title).toBe('Test');
+      expect(result.passages.size).toBe(1);
     });
 
     it('should import from XML format explicitly', () => {
       const result = adapter.import(mockXML, 'xml');
 
-      expect(result.name).toBe('Test');
+      expect(result.metadata.title).toBe('Test');
     });
 
     it('should import from JSON format', () => {
@@ -630,7 +642,7 @@ describe('ChatMapperAdapter', () => {
 
       const result = adapter.import(jsonContent, 'json');
 
-      expect(result.name).toBe('Test');
+      expect(result.metadata.title).toBe('Test');
     });
   });
 
@@ -639,16 +651,16 @@ describe('ChatMapperAdapter', () => {
       const exported = adapter.export(mockStory, 'xml');
       const imported = adapter.import(exported, 'xml');
 
-      expect(imported.name).toBe(mockStory.name);
-      expect(imported.passages).toHaveLength(mockStory.passages.length);
+      expect(imported.metadata.title).toBe(mockStory.metadata.title);
+      expect(imported.passages.size).toBe(mockStory.passages.size);
     });
 
     it('should preserve story data through JSON export and import', () => {
       const exported = adapter.export(mockStory, 'json');
       const imported = adapter.import(exported, 'json');
 
-      expect(imported.name).toBe(mockStory.name);
-      expect(imported.passages).toHaveLength(mockStory.passages.length);
+      expect(imported.metadata.title).toBe(mockStory.metadata.title);
+      expect(imported.passages.size).toBe(mockStory.passages.size);
     });
   });
 });

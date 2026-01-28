@@ -7,7 +7,7 @@ import {
   type TwineStory,
   type TwinePassage,
 } from './index';
-import type { Story, Passage } from '@writewhisker/story-models';
+import { Story, Passage, Variable } from '@writewhisker/story-models';
 
 describe('TwineExporter', () => {
   let exporter: TwineExporter;
@@ -15,32 +15,30 @@ describe('TwineExporter', () => {
 
   beforeEach(() => {
     exporter = new TwineExporter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      ifid: 'test-ifid-123',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'passage-1',
-          title: 'Start',
-          content: 'Welcome to the story!\n\n[[Continue|Next]]',
-          tags: ['start'],
-          position: { x: 100, y: 100 },
-          size: { width: 200, height: 100 },
-        },
-        {
-          id: 'passage-2',
-          title: 'Next',
-          content: 'This is the next passage.\n\n[[Back to Start|Start]]',
-          tags: [],
-          position: { x: 300, y: 100 },
-        },
-      ],
-      metadata: { author: 'Test Author' },
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    mockStory = new Story({
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+        ifid: 'test-ifid-123',
+      },
+      startPassage: 'passage-1',
+    });
+    mockStory.passages.clear();
+    mockStory.passages.set('passage-1', new Passage({
+      id: 'passage-1',
+      title: 'Start',
+      content: 'Welcome to the story!\n\n[[Continue|Next]]',
+      tags: ['start'],
+      position: { x: 100, y: 100 },
+      size: { width: 200, height: 100 },
+    }));
+    mockStory.passages.set('passage-2', new Passage({
+      id: 'passage-2',
+      title: 'Next',
+      content: 'This is the next passage.\n\n[[Back to Start|Start]]',
+      tags: [],
+      position: { x: 300, y: 100 },
+    }));
   });
 
   describe('convertToTwine', () => {
@@ -56,7 +54,12 @@ describe('TwineExporter', () => {
     });
 
     it('should generate IFID if not provided', () => {
-      const storyWithoutIfid = { ...mockStory, ifid: undefined };
+      const storyWithoutIfid = new Story({
+        metadata: { title: 'Test Story' },
+        startPassage: 'p1',
+      });
+      storyWithoutIfid.passages.clear();
+      storyWithoutIfid.passages.set('p1', new Passage({ id: 'p1', title: 'Start', content: 'Test' }));
       const result = exporter.convertToTwine(storyWithoutIfid);
 
       expect(result.ifid).toBeDefined();
@@ -64,7 +67,11 @@ describe('TwineExporter', () => {
     });
 
     it('should use first passage as start if not specified', () => {
-      const storyWithoutStart = { ...mockStory, startPassage: undefined };
+      const storyWithoutStart = new Story({
+        metadata: { title: 'Test Story' },
+      });
+      storyWithoutStart.passages.clear();
+      storyWithoutStart.passages.set('p1', new Passage({ id: 'p1', title: 'Start', content: 'Test' }));
       const result = exporter.convertToTwine(storyWithoutStart);
 
       expect(result.startPassage).toBe('Start');
@@ -105,18 +112,17 @@ describe('TwineExporter', () => {
     });
 
     it('should escape HTML entities', () => {
-      const storyWithSpecialChars = {
-        ...mockStory,
-        name: 'Test & <Story>',
-        passages: [
-          {
-            id: 'p1',
-            title: 'Test "Passage"',
-            content: 'Content with <tags> & "quotes"',
-            tags: [],
-          },
-        ],
-      };
+      const storyWithSpecialChars = new Story({
+        metadata: { title: 'Test & <Story>' },
+        startPassage: 'p1',
+      });
+      storyWithSpecialChars.passages.clear();
+      storyWithSpecialChars.passages.set('p1', new Passage({
+        id: 'p1',
+        title: 'Test "Passage"',
+        content: 'Content with <tags> & "quotes"',
+        tags: [],
+      }));
 
       const html = exporter.exportToHTML(storyWithSpecialChars);
 
@@ -257,10 +263,10 @@ describe('TwineImporter', () => {
 
       const result = importer.convertToWhisker(twineStory);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.ifid).toBe('test-ifid');
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.metadata.ifid).toBe('test-ifid');
       expect(result.startPassage).toBe('Start');
-      expect(result.passages).toHaveLength(1);
+      expect(result.passages.size).toBe(1);
     });
 
     it('should generate ID if not provided', () => {
@@ -275,8 +281,8 @@ describe('TwineImporter', () => {
 
       const result = importer.convertToWhisker(twineStory);
 
-      expect(result.id).toBeDefined();
-      expect(typeof result.id).toBe('string');
+      expect(result.metadata.ifid).toBeDefined();
+      expect(typeof result.metadata.ifid).toBe('string');
     });
 
     it('should preserve metadata', () => {
@@ -292,7 +298,7 @@ describe('TwineImporter', () => {
 
       const result = importer.convertToWhisker(twineStory);
 
-      expect(result.metadata).toEqual({ author: 'Test Author' });
+      expect(result.metadata.author).toBe('Test Author');
     });
   });
 
@@ -300,10 +306,10 @@ describe('TwineImporter', () => {
     it('should import complete HTML to Whisker story', () => {
       const result = importer.importFromHTML(mockTwineHTML);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(2);
-      expect(result.created).toBeDefined();
-      expect(result.modified).toBeDefined();
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(2);
+      expect(result.metadata.created).toBeDefined();
+      expect(result.metadata.modified).toBeDefined();
     });
   });
 
@@ -311,8 +317,8 @@ describe('TwineImporter', () => {
     it('should import archive format', () => {
       const result = importer.importFromArchive(mockTwineHTML);
 
-      expect(result.name).toBe('Test Story');
-      expect(result.passages).toHaveLength(2);
+      expect(result.metadata.title).toBe('Test Story');
+      expect(result.passages.size).toBe(2);
     });
   });
 });
@@ -359,22 +365,20 @@ describe('TwineAdapter', () => {
 
   beforeEach(() => {
     adapter = new TwineAdapter();
-    mockStory = {
-      id: 'story-1',
-      name: 'Test Story',
-      startPassage: 'Start',
-      passages: [
-        {
-          id: 'p1',
-          title: 'Start',
-          content: 'Test content',
-          tags: [],
-        },
-      ],
-      metadata: {},
-      created: Date.now(),
-      modified: Date.now(),
-    };
+    mockStory = new Story({
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+      },
+      startPassage: 'p1',
+    });
+    mockStory.passages.clear();
+    mockStory.passages.set('p1', new Passage({
+      id: 'p1',
+      title: 'Start',
+      content: 'Test content',
+      tags: [],
+    }));
   });
 
   describe('export', () => {
@@ -409,20 +413,20 @@ describe('TwineAdapter', () => {
     it('should import from HTML by default', () => {
       const result = adapter.import(mockHTML);
 
-      expect(result.name).toBe('Test');
-      expect(result.passages).toHaveLength(1);
+      expect(result.metadata.title).toBe('Test');
+      expect(result.passages.size).toBe(1);
     });
 
     it('should import from HTML format explicitly', () => {
       const result = adapter.import(mockHTML, 'html');
 
-      expect(result.name).toBe('Test');
+      expect(result.metadata.title).toBe('Test');
     });
 
     it('should import from archive format', () => {
       const result = adapter.import(mockHTML, 'archive');
 
-      expect(result.name).toBe('Test');
+      expect(result.metadata.title).toBe('Test');
     });
   });
 
@@ -439,9 +443,11 @@ describe('TwineAdapter', () => {
       const exported = adapter.export(mockStory);
       const imported = adapter.import(exported);
 
-      expect(imported.name).toBe(mockStory.name);
-      expect(imported.passages).toHaveLength(mockStory.passages.length);
-      expect(imported.passages[0].title).toBe(mockStory.passages[0].title);
+      expect(imported.metadata.title).toBe(mockStory.metadata.title);
+      expect(imported.passages.size).toBe(mockStory.passages.size);
+      const importedPassage = Array.from(imported.passages.values())[0];
+      const mockPassage = Array.from(mockStory.passages.values())[0];
+      expect(importedPassage.title).toBe(mockPassage.title);
     });
   });
 });

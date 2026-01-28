@@ -72,10 +72,10 @@ export interface LogEntry {
  */
 export interface SandboxedApis {
   fetch?: typeof fetch;
-  setTimeout?: typeof setTimeout;
-  setInterval?: typeof setInterval;
-  clearTimeout?: typeof clearTimeout;
-  clearInterval?: typeof clearInterval;
+  setTimeout?: (callback: (...args: unknown[]) => void, delay?: number, ...args: unknown[]) => ReturnType<typeof setTimeout>;
+  setInterval?: (callback: (...args: unknown[]) => void, delay?: number, ...args: unknown[]) => ReturnType<typeof setInterval>;
+  clearTimeout?: (timerId: ReturnType<typeof setTimeout>) => void;
+  clearInterval?: (timerId: ReturnType<typeof setInterval>) => void;
   console?: Console;
   crypto?: Crypto;
 }
@@ -225,10 +225,10 @@ export class PluginSandbox {
 
     // Timers (if timer permission granted)
     if (this.hasPermission('timer')) {
-      apis.setTimeout = this.createSandboxedSetTimeout();
-      apis.setInterval = this.createSandboxedSetInterval();
-      apis.clearTimeout = this.createSandboxedClearTimeout();
-      apis.clearInterval = this.createSandboxedClearInterval();
+      apis.setTimeout = this.createSandboxedSetTimeout() as SandboxedApis['setTimeout'];
+      apis.setInterval = this.createSandboxedSetInterval() as SandboxedApis['setInterval'];
+      apis.clearTimeout = this.createSandboxedClearTimeout() as SandboxedApis['clearTimeout'];
+      apis.clearInterval = this.createSandboxedClearInterval() as SandboxedApis['clearInterval'];
     }
 
     // Console (if console permission granted)

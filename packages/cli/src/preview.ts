@@ -88,11 +88,14 @@ class PreviewEngine {
     };
 
     // Initialize variables from declarations
-    for (const meta of ast.metadata) {
-      if (meta.type === 'variable_declaration') {
-        const varDecl = meta as any;
-        this.state.variables.set(varDecl.name, varDecl.value?.value ?? null);
+    for (const varDecl of ast.variables) {
+      // Extract value from initialValue (which is an ExpressionNode)
+      const initialValue = varDecl.initialValue;
+      let value: unknown = null;
+      if (initialValue && initialValue.type === 'literal') {
+        value = (initialValue as { value: unknown }).value;
       }
+      this.state.variables.set(varDecl.name, value);
     }
   }
 

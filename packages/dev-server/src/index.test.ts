@@ -14,92 +14,116 @@ import {
   type Middleware,
 } from './index';
 
-// Mock Node.js modules
-const mockServer = {
-  listen: vi.fn(),
-  close: vi.fn(),
-  on: vi.fn(),
-};
+// Use vi.hoisted to ensure mock objects are hoisted with vi.mock
+const {
+  mockServer,
+  mockWatcher,
+  mockRequest,
+  mockResponse,
+  mockStory,
+  serverErrorState,
+} = vi.hoisted(() => {
+    const serverErrorState = { shouldError: false };
 
-const mockWatcher = {
-  close: vi.fn(),
-};
+    const mockServer: any = {
+      listen: vi.fn(),
+      close: vi.fn(),
+      on: vi.fn((event: string, handler: (err: Error) => void) => {
+        if (event === 'error' && serverErrorState.shouldError) {
+          handler(new Error('Port already in use'));
+        }
+      }),
+    };
 
-const mockRequest = {
-  url: '/',
-  method: 'GET',
-  on: vi.fn(),
-};
+    const mockWatcher = {
+      close: vi.fn(),
+    };
 
-const mockResponse = {
-  writeHead: vi.fn(),
-  end: vi.fn(),
-  write: vi.fn(),
-  setHeader: vi.fn(),
-};
+    const mockRequest = {
+      url: '/',
+      method: 'GET',
+      on: vi.fn(),
+    };
 
-const mockStory: Story = {
-  id: 'test-story',
-  name: 'Test Story',
-  ifid: 'test-ifid',
-  startPassage: 'Start',
-  tagColors: {},
-  zoom: 1,
-  passages: [
-    {
-      id: 'passage-1',
-      title: 'Start',
-      tags: [],
-      content: 'This is the start.\n\n[[Next Passage]]',
-      position: { x: 0, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-    {
-      id: 'passage-2',
-      title: 'Next Passage',
-      tags: [],
-      content: 'This is the next passage.',
-      position: { x: 200, y: 0 },
-      size: { width: 100, height: 100 },
-    },
-  ],
-};
+    const mockResponse = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+      write: vi.fn(),
+      setHeader: vi.fn(),
+    };
+
+    const mockStory = {
+      metadata: {
+        title: 'Test Story',
+        author: 'Test Author',
+        version: '1.0.0',
+        created: new Date().toISOString(),
+        modified: new Date().toISOString(),
+      },
+      startPassage: 'passage-1',
+      passages: {
+        'passage-1': {
+          id: 'passage-1',
+          title: 'Start',
+          tags: [],
+          content: 'This is the start.\n\n[[Next Passage]]',
+          position: { x: 0, y: 0 },
+          size: { width: 100, height: 100 },
+        },
+        'passage-2': {
+          id: 'passage-2',
+          title: 'Next Passage',
+          tags: [],
+          content: 'This is the next passage.',
+          position: { x: 200, y: 0 },
+          size: { width: 100, height: 100 },
+        },
+      },
+      variables: {},
+      settings: {},
+    };
+
+    return {
+      mockServer,
+      mockWatcher,
+      mockRequest,
+      mockResponse,
+      mockStory,
+      serverErrorState,
+    };
+  });
 
 vi.mock('http', () => ({
-  default: {
-    createServer: vi.fn((handler) => {
-      mockServer.listen = vi.fn((port, host, callback) => {
-        callback();
+  createServer: vi.fn(() => {
+    // Reset listen mock for each createServer call
+    mockServer.listen = vi.fn(
+      (port: number, host: string, callback: () => void) => {
+        if (!serverErrorState.shouldError) {
+          callback();
+        }
         return mockServer;
-      });
-      return mockServer;
-    }),
-  },
+      }
+    );
+    return mockServer;
+  }),
 }));
 
 vi.mock('fs/promises', () => ({
-  default: {
-    readFile: vi.fn((path: string) => {
-      if (path.includes('story.json')) {
-        return Promise.resolve(JSON.stringify(mockStory));
-      }
-      return Promise.resolve('');
-    }),
-  },
+  readFile: vi.fn((path: string) => {
+    if (path.includes('story.json')) {
+      return Promise.resolve(JSON.stringify(mockStory));
+    }
+    return Promise.resolve('');
+  }),
 }));
 
-vi.mock('path', () => ({
-  default: {},
-}));
+vi.mock('path', () => ({}));
 
 vi.mock('child_process', () => ({
   exec: vi.fn(),
 }));
 
 vi.mock('fs', () => ({
-  default: {
-    watch: vi.fn(() => mockWatcher),
-  },
   watch: vi.fn(() => mockWatcher),
 }));
 
@@ -168,17 +192,12 @@ describe('DevServer', () => {
     });
 
     it('should handle server errors on start', async () => {
-      mockServer.listen = vi.fn((port, host, callback) => {
-        mockServer.on = vi.fn((event, handler) => {
-          if (event === 'error') {
-            handler(new Error('Port already in use'));
-          }
-        });
-        return mockServer;
-      });
+      serverErrorState.shouldError = true;
 
       const server = await createDevServer(config);
       await expect(server.start()).rejects.toThrow('Port already in use');
+
+      serverErrorState.shouldError = false;
     });
 
     it('should open browser if config.open is true', async () => {
@@ -239,7 +258,7 @@ describe('DevServer', () => {
 
     beforeEach(async () => {
       const http = await import('http');
-      vi.mocked(http.default.createServer).mockImplementation((handler) => {
+      vi.mocked(http.createServer).mockImplementation((handler: any) => {
         requestHandler = handler;
         return mockServer as any;
       });
@@ -326,7 +345,7 @@ describe('DevServer', () => {
 
     it('should handle errors with 500 response', async () => {
       const fs = await import('fs/promises');
-      vi.mocked(fs.default.readFile).mockRejectedValueOnce(
+      vi.mocked(fs.readFile).mockRejectedValueOnce(
         new Error('File not found')
       );
 
@@ -623,7 +642,7 @@ describe('Edge Cases', () => {
     };
 
     const fs = await import('fs/promises');
-    vi.mocked(fs.default.readFile).mockResolvedValueOnce(
+    vi.mocked(fs.readFile).mockResolvedValueOnce(
       JSON.stringify(specialStory)
     );
 

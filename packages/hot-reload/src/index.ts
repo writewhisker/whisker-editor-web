@@ -83,6 +83,12 @@ export class HMRClient {
 
       if (this.config.reconnect) {
         this.reconnect();
+      } else {
+        // Clean up the event source when not reconnecting
+        if (this.eventSource) {
+          this.eventSource.close();
+          this.eventSource = null;
+        }
       }
     });
   }

@@ -149,7 +149,7 @@ export class CompactExporter implements IExporter {
 
       return {
         success: true,
-        content: new Blob([buffer], { type: this.mimeType }),
+        content: new Blob([buffer as BlobPart], { type: this.mimeType }),
         filename,
         mimeType: this.mimeType,
         size: buffer.length,

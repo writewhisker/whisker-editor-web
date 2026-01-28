@@ -5,7 +5,7 @@
  * passage popularity, choice distributions, and path analytics.
  */
 
-import type { Playthrough, PlaythroughStepData } from './PlaythroughRecorder';
+import type { Playthrough } from './PlaythroughRecorder';
 
 /**
  * Passage analytics data

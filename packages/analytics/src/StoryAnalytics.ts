@@ -67,7 +67,7 @@ export class StoryAnalytics {
   /**
    * Analyze story and return full metrics
    */
-  analyze(options: StoryAnalyticsOptions = {}): StoryMetrics {
+  analyze(_options: StoryAnalyticsOptions = {}): StoryMetrics {
     const totalPassages = this.passageMap.size;
     const issues: AnalyticsIssue[] = [];
 
@@ -317,7 +317,7 @@ export class StoryAnalytics {
    */
   private calculateComplexityScore(
     passages: number,
-    choices: number,
+    _choices: number,
     depth: number,
     breadth: number,
     brokenLinks: number

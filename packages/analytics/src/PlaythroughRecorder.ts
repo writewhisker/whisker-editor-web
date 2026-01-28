@@ -286,7 +286,7 @@ export class PlaythroughRecorder {
     // Remove from storage if available
     if (this.storage) {
       const key = this.config.storageKeyPrefix + playthroughId;
-      this.storage.removeItem?.(key);
+      this.storage.remove?.(key);
     }
 
     return true;
@@ -359,7 +359,7 @@ export class PlaythroughRecorder {
 
     const key = this.config.storageKeyPrefix + playthroughId;
     try {
-      this.storage.setItem?.(key, JSON.stringify(playthrough));
+      this.storage.set?.(key, playthrough);
     } catch (error) {
       this.logger?.error?.(`Failed to persist playthrough ${playthroughId}`, error);
     }

@@ -263,7 +263,7 @@ export class PluginSandbox {
   /**
    * Create sandboxed setTimeout
    */
-  private createSandboxedSetTimeout(): typeof setTimeout {
+  private createSandboxedSetTimeout(): (callback: (...args: unknown[]) => void, delay?: number, ...args: unknown[]) => ReturnType<typeof setTimeout> {
     const sandbox = this;
 
     return function sandboxedSetTimeout(
@@ -288,7 +288,7 @@ export class PluginSandbox {
   /**
    * Create sandboxed setInterval
    */
-  private createSandboxedSetInterval(): typeof setInterval {
+  private createSandboxedSetInterval(): (callback: (...args: unknown[]) => void, delay?: number, ...args: unknown[]) => ReturnType<typeof setInterval> {
     const sandbox = this;
 
     return function sandboxedSetInterval(
@@ -312,7 +312,7 @@ export class PluginSandbox {
   /**
    * Create sandboxed clearTimeout
    */
-  private createSandboxedClearTimeout(): typeof clearTimeout {
+  private createSandboxedClearTimeout(): (timerId: ReturnType<typeof setTimeout>) => void {
     const sandbox = this;
 
     return function sandboxedClearTimeout(timerId: ReturnType<typeof setTimeout>): void {
@@ -324,7 +324,7 @@ export class PluginSandbox {
   /**
    * Create sandboxed clearInterval
    */
-  private createSandboxedClearInterval(): typeof clearInterval {
+  private createSandboxedClearInterval(): (timerId: ReturnType<typeof setInterval>) => void {
     const sandbox = this;
 
     return function sandboxedClearInterval(timerId: ReturnType<typeof setInterval>): void {

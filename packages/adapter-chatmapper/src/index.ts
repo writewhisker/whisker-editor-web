@@ -462,9 +462,11 @@ export class ChatMapperImporter {
         created: new Date().toISOString(),
         modified: new Date().toISOString(),
         ...project.metadata,
-        actors: project.actors,
       },
       startPassage: passages[0]?.id || 'start',
+      settings: {
+        actors: project.actors,
+      },
     });
 
     // Add passages to story

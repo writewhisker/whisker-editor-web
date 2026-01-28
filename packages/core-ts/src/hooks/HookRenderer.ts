@@ -235,7 +235,7 @@ export class HookRenderer {
     }
   }
 
-  private animateHide(element: HTMLElement, hook: Hook): void {
+  private animateHide(element: HTMLElement, _hook: Hook): void {
     // Always set display:none immediately for state consistency
     element.style.display = 'none'
 

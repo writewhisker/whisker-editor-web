@@ -47,6 +47,8 @@
       html: '.html',
       'html-standalone': '.html',
       markdown: '.md',
+      text: '.txt',
+      ink: '.ink',
       package: '.zip',
       epub: '.epub',
       twine: '.html',

@@ -19,7 +19,7 @@
  * - [Metadata]
  */
 
-import type { Story } from '@writewhisker/core-ts';
+import type { Story, Passage, Variable } from '@writewhisker/core-ts';
 import type {
   ExportContext,
   ExportResult,
@@ -273,7 +273,7 @@ export class CompactExporter implements IExporter {
     story: Story,
     stringTable: StringTable
   ): void {
-    const passages = Array.from(story.passages.values());
+    const passages: Passage[] = Array.from(story.passages.values());
 
     // Write count
     writer.writeVarint(passages.length);
@@ -324,7 +324,7 @@ export class CompactExporter implements IExporter {
     story: Story,
     stringTable: StringTable
   ): void {
-    const variables = Array.from(story.variables.values());
+    const variables: Variable[] = Array.from(story.variables.values());
 
     // Write count
     writer.writeVarint(variables.length);

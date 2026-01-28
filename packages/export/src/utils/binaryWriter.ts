@@ -204,7 +204,7 @@ export class BinaryWriter {
    * Get the buffer as an ArrayBuffer
    */
   getArrayBuffer(): ArrayBuffer {
-    return this.getBuffer().buffer.slice(0, this.position);
+    return this.getBuffer().buffer.slice(0, this.position) as ArrayBuffer;
   }
 
   /**

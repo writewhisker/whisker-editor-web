@@ -73,6 +73,7 @@
         errors: [],
         context: {
           variables: new Map(),
+          localScopes: [],
           functions: new Map(),
           output: [],
           errors: [],
